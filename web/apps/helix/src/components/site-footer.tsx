@@ -4,6 +4,7 @@ import { site } from '@/lib/site';
 
 import { DiscordIcon, GithubIcon, TwitterIcon } from './icons';
 import { Logo } from './logo';
+import { ThemeToggleSegmented } from './theme-toggle-segmented';
 
 const footerLinks = [
   { label: 'Platform', href: '/product' },
@@ -59,9 +60,12 @@ export const SiteFooter = () => (
         </div>
       </div>
 
-      <div className="border-border/60 text-muted-foreground mt-10 flex flex-col gap-2 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-border/60 text-muted-foreground mt-10 flex flex-col gap-4 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} Hardik Jain. Licensed under AGPL-3.0-only.</p>
-        <p>Helix is unreleased software, built in the open.</p>
+        <div className="flex items-center gap-4">
+          <p>Helix is unreleased software, built in the open.</p>
+          <ThemeToggleSegmented />
+        </div>
       </div>
     </div>
   </footer>

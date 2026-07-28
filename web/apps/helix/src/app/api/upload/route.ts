@@ -3,8 +3,23 @@ import { randomUUID } from 'node:crypto';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+import { env } from '@/lib/env';
 import { getAdminUser } from '@/server/require-admin';
 import { storage } from '@/server/storage';
+
+// Public assets live under this prefix; the CDN (CloudFront OriginPath=/public)
+// maps its root to it, so the prefix is stripped from the public URL.
+const PUBLIC_PREFIX = 'public/';
+
+const publicAssetUrl = async (key: string): Promise<string> => {
+  const cdnBase = env.STORAGE_PUBLIC_ASSET_URL;
+  if (cdnBase != null && cdnBase !== '') {
+    const path = key.startsWith(PUBLIC_PREFIX) ? key.slice(PUBLIC_PREFIX.length) : key;
+    return `${cdnBase.replace(/\/$/, '')}/${path}`;
+  }
+  // No CDN configured (dev / FS): fall back to a presigned URL.
+  return (await storage.getSignedUrlForDownload({ key })).url;
+};
 
 const MAX_BYTES = 20_971_520;
 
@@ -38,10 +53,10 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ error: 'File too large (max 20MB)' }, { status: 400 });
   }
 
-  const key = `blog/${randomUUID()}.${extensionFor(file.type)}`;
+  const key = `${PUBLIC_PREFIX}blog/${randomUUID()}.${extensionFor(file.type)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   await storage.upload({ key, data: buffer, contentType: file.type });
-  const signed = await storage.getSignedUrlForDownload({ key });
+  const url = await publicAssetUrl(key);
 
-  return NextResponse.json({ url: signed.url, key });
+  return NextResponse.json({ url, key });
 };

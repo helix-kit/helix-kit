@@ -11,7 +11,6 @@ import {
 } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@helix/design-system/components/card';
 import { cn } from '@helix/design-system/lib/utils';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -62,61 +61,56 @@ export const CodeBlock = (props: CodeBlockProps) => {
 
   const Icon = isCopied ? CheckIcon : CopyIcon;
 
-  const renderCodeBlock = useCallback(
-    (preClassName?: string): JSX.Element => (
-      <pre
-        {...preProps}
-        ref={ref}
-        className={cn(
-          'not-prose bg-background flex-1 overflow-x-auto rounded-sm border py-3 text-sm outline-none',
-          '[&>code]:grid [&>code]:min-w-max',
-          className,
-          preClassName,
-        )}
-        style={style}
-        tabIndex={tabIndex}
-      >
-        {children}
-      </pre>
-    ),
-    [children, className, preProps, style, tabIndex],
+  const copyButton = (floating: boolean): JSX.Element => (
+    <Button
+      aria-label="Copy code"
+      className={cn(
+        'text-muted-foreground hover:text-foreground size-7 shrink-0',
+        floating &&
+          'bg-background/60 absolute top-2.5 right-2.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100',
+      )}
+      size="icon"
+      variant="ghost"
+      onClick={copyToClipboard}
+    >
+      <Icon size={14} />
+    </Button>
   );
 
-  if (title === undefined || title === '') {
-    return (
-      <div className="relative mb-6">
-        {renderCodeBlock(hasLineNumbers ? 'line-numbers' : undefined)}
-        <Button
-          className="bg-background/80 absolute top-[5px] right-[5px] backdrop-blur-sm"
-          size="icon"
-          variant="ghost"
-          onClick={copyToClipboard}
-        >
-          <Icon size={14} />
-        </Button>
-      </div>
-    );
-  }
+  const codePre = (
+    <pre
+      {...preProps}
+      ref={ref}
+      className={cn(
+        'not-prose blog-code-scroll m-0 overflow-x-auto bg-transparent px-4 py-4 text-[13px] leading-relaxed outline-none',
+        '[&>code]:grid [&>code]:min-w-max',
+        hasLineNumbers && 'line-numbers',
+        className,
+      )}
+      style={style}
+      tabIndex={tabIndex}
+    >
+      {children}
+    </pre>
+  );
 
   return (
-    <Card className="not-prose mb-6 gap-0 overflow-hidden rounded-sm p-0 shadow-none">
-      <CardHeader className="bg-sidebar text-muted-foreground flex items-center gap-2 border-b py-1.5! pr-1.5 pl-4">
-        {icon === undefined ? null : <div className="flex size-3.5 shrink-0">{icon}</div>}
-        <CardTitle className="flex-1 font-mono text-sm font-normal tracking-tight">
-          {title}
-        </CardTitle>
-        <Button
-          className={cn('shrink-0', className)}
-          size="icon"
-          variant="ghost"
-          onClick={copyToClipboard}
-        >
-          <Icon size={14} />
-        </Button>
-      </CardHeader>
-      <CardContent className="p-0">
-        {renderCodeBlock(cn('rounded-none border-none', hasLineNumbers ? 'line-numbers' : ''))}
-      </CardContent>
-    </Card>
+    <div className="not-prose group border-border/70 bg-muted/40 relative my-6 overflow-hidden rounded-xl border shadow-sm">
+      {title === undefined || title === '' ? (
+        <>
+          {codePre}
+          {copyButton(true)}
+        </>
+      ) : (
+        <>
+          <div className="border-border/60 bg-muted/60 text-muted-foreground flex items-center gap-2 border-b py-2.5 pr-2 pl-4">
+            {icon === undefined ? null : <div className="flex size-3.5 shrink-0">{icon}</div>}
+            <span className="flex-1 font-mono text-xs tracking-tight">{title}</span>
+            {copyButton(false)}
+          </div>
+          {codePre}
+        </>
+      )}
+    </div>
   );
 };

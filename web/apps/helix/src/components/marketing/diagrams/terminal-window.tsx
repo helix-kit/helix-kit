@@ -16,7 +16,7 @@ export const TerminalWindow = ({
 }) => (
   <div
     className={cn(
-      'border-border/70 overflow-hidden rounded-xl border bg-[#0a0e13] shadow-2xl shadow-black/40',
+      'dark border-border/70 overflow-hidden rounded-xl border bg-[#0a0e13] text-foreground shadow-2xl shadow-black/40',
       className,
     )}
   >

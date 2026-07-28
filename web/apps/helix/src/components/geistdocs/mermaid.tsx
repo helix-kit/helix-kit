@@ -37,7 +37,7 @@ const MermaidContent = ({ chart }: { chart: string }) => {
     startOnLoad: false,
     securityLevel: 'loose',
     fontFamily: 'inherit',
-    themeCSS: 'margin: 1.5rem auto 0;',
+    themeCSS: 'margin: 0 auto;',
     theme: resolvedTheme === 'dark' ? 'dark' : 'default',
   });
 
@@ -48,19 +48,22 @@ const MermaidContent = ({ chart }: { chart: string }) => {
   );
 
   return (
-    <div
-      ref={(container) => {
-        if (container === null) {
-          return;
-        }
+    <div className="not-prose border-border/60 from-muted/50 to-muted/10 dark:from-muted/30 dark:to-background/0 my-6 flex justify-center overflow-x-auto rounded-xl border bg-gradient-to-b p-6">
+      <div
+        ref={(container) => {
+          if (container === null) {
+            return;
+          }
 
-        const parsedSvg = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
-        container.replaceChildren(parsedSvg);
+          const parsedSvg = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+          container.replaceChildren(parsedSvg);
 
-        if (typeof bindFunctions === 'function') {
-          bindFunctions(container);
-        }
-      }}
-    />
+          if (typeof bindFunctions === 'function') {
+            bindFunctions(container);
+          }
+        }}
+        className="[&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full"
+      />
+    </div>
   );
 };

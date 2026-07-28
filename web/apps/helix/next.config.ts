@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: process.env.HELIX_IMAGES_UNOPTIMIZED === 'true',
     formats: ['image/avif', 'image/webp'],
+    // Public assets (blog images) are served from the CloudFront-fronted CDN host.
+    remotePatterns: [{ protocol: 'https', hostname: 'assets.helix-kit.com' }],
   },
   transpilePackages: [
     '@helix/design-system',

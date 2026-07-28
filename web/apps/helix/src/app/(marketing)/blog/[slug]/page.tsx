@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { logger } from '@helix/logger';
 import { ArrowLeft } from 'lucide-react';
 
 import { PostCard } from '@/components/blog/post-card';
@@ -44,7 +45,38 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
     trpc.blogPublic.getRelated.queryOptions({ slug, tags: post.tags, limit: 3 }),
   ).catch(() => []);
 
-  const { body, toc } = await compilePost(post.content);
+  // Blog content is authored MDX (compiled at request time), so a single malformed
+  // post must degrade gracefully rather than 500 the whole route.
+  let compiled: Awaited<ReturnType<typeof compilePost>> | null = null;
+  try {
+    compiled = await compilePost(post.content);
+  } catch (error) {
+    logger.error(`Failed to compile blog post "${slug}":`, error);
+  }
+
+  if (compiled === null) {
+    return (
+      <Section className="border-b-0">
+        <Link
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+          href="/blog"
+        >
+          <ArrowLeft className="size-4" />
+          All posts
+        </Link>
+        <article className="mx-auto mt-8 max-w-3xl">
+          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+            {post.title}
+          </h1>
+          <p className="text-muted-foreground mt-6">
+            This post couldn’t be rendered right now. Please check back soon.
+          </p>
+        </article>
+      </Section>
+    );
+  }
+
+  const { body, toc } = compiled;
   const publishedLabel =
     post.publishedAt !== null
       ? new Date(post.publishedAt).toLocaleDateString('en-US', {

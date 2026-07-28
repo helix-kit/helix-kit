@@ -41,6 +41,12 @@ export const env = createEnv({
     // firmware builder shows a "not configured" notice.
     HELIX_BUILD_WORKER_URL: z.string().optional(),
     HELIX_BUILD_CALLBACK_BASE_URL: z.string().optional(),
+
+    // Public CDN base for publicly-served assets (blog images). Objects under the
+    // `public/` key prefix are fronted by CloudFront at this host; when set, uploads
+    // return a stable `${STORAGE_PUBLIC_ASSET_URL}/<key-without-public/>` URL instead
+    // of an expiring presigned one. Unset ⇒ fall back to presigned (dev/FS).
+    STORAGE_PUBLIC_ASSET_URL: z.url().optional(),
   },
   shared: {
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -70,6 +76,7 @@ export const env = createEnv({
     TURN_CREDENTIAL_TTL_SECONDS: process.env['TURN_CREDENTIAL_TTL_SECONDS'],
     HELIX_BUILD_WORKER_URL: process.env['HELIX_BUILD_WORKER_URL'],
     HELIX_BUILD_CALLBACK_BASE_URL: process.env['HELIX_BUILD_CALLBACK_BASE_URL'],
+    STORAGE_PUBLIC_ASSET_URL: process.env['STORAGE_PUBLIC_ASSET_URL'],
     NODE_ENV: process.env['NODE_ENV'],
     NEXT_PUBLIC_BASE_URL: process.env['NEXT_PUBLIC_BASE_URL'],
     NEXT_PUBLIC_HELIX_SOURCE_URL: process.env['NEXT_PUBLIC_HELIX_SOURCE_URL'],

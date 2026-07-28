@@ -1,26 +1,31 @@
-/* Shiki token colors for blog posts.
- *
- * fumadocs' rehypeCode highlights with a light/dark theme pair and emits the
- * result as per-token CSS variables (--shiki-light / --shiki-dark) rather than
- * baked-in colors. The /docs route gets the variable -> color mapping from
- * fumadocs-ui/css/preset.css, but that stylesheet is deliberately confined to
- * the docs route group (see src/app/docs/docs.css) so the Geist docs theme never
- * leaks into the marketing site. The blog therefore applies the mapping itself —
- * without this, every code block renders with no syntax coloring. */
+/* Map shiki's per-token CSS variables to colors (the fumadocs-ui preset that
+ * normally does this is confined to /docs). Tokens carry foreground color only;
+ * the CodeBlock component owns the surface, so no per-token background. */
 .shiki,
 .shiki span {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
 }
 
 .dark .shiki,
 .dark .shiki span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
 }
 
-/* The CodeBlock component supplies its own surface; only the tokens should carry
- * shiki's background, never the <pre> itself. */
-.shiki {
-  background-color: transparent;
+/* Thin, unobtrusive horizontal scrollbar for wide code blocks. */
+.blog-code-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.blog-code-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.blog-code-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.blog-code-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
 }

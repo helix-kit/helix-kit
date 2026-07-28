@@ -34,8 +34,7 @@ def _provision(base_url: str, device_id: str, token: str, csr_pem: str) -> dict[
 def provision_pool(
     appliance: Appliance, base_url: str, count: int, work_dir: Path
 ) -> list[DeviceCert]:
-    """Seed `count` devices and provision a real step-ca cert for each, so the
-    generator publishes over genuine mTLS just like production devices."""
+    """Seed `count` devices and provision a real step-ca cert for each (genuine mTLS)."""
     work_dir.mkdir(parents=True, exist_ok=True)
     devices: list[DeviceCert] = []
     for index in range(count):

@@ -1,7 +1,4 @@
-// Sustained NPU throughput benchmark for the YOLOv5 .nb model.
-// Preprocesses one image, then loops set_input -> run -> get_output N times to
-// measure the warmed-up NPU inference rate (the hard ceiling shared by all
-// streams, since core_count=1).
+// Sustained NPU throughput benchmark for the YOLOv5 .nb model (warmed-up inference rate).
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -21,7 +18,6 @@ int main(int argc, char** argv){
     unsigned char* in = yolov5_pre_process(img, &fsz);
     void* inbuf[] = { in };
 
-    // warmup
     for (int i=0;i<5;i++){ awnn_set_input_buffers(ctx, inbuf); awnn_run(ctx); awnn_get_output_buffers(ctx); }
 
     double t0 = now_ms();

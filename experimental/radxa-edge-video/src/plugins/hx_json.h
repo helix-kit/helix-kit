@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// hx_json — tiny header-only JSON parser + dumper (C++), used by the host to read the
-// pipeline config and by plugins to read their `params` string. Deliberately minimal
-// (objects/arrays/strings/numbers/bools/null): the 1 GB board OOM-kills heavy header libs
-// like nlohmann/json, and this avoids any external/vendored dependency. NOT part of the
-// C ABI (that is helix_pipeline.h) — this is an internal convenience header.
+// hx_json — tiny header-only JSON parser + dumper. Deliberately minimal: the 1 GB board
+// OOM-kills heavy header libs like nlohmann/json.
 #ifndef HX_JSON_H
 #define HX_JSON_H
 
@@ -114,7 +111,6 @@ inline bool parse_val(const char *&p, Value &out) {
     if (!strncmp(p, "true", 4)) { out.type = Value::Bool; out.b = true; p += 4; return true; }
     if (!strncmp(p, "false", 5)) { out.type = Value::Bool; out.b = false; p += 5; return true; }
     if (!strncmp(p, "null", 4)) { out.type = Value::Null; p += 4; return true; }
-    // number
     char *end = nullptr;
     double d = strtod(p, &end);
     if (end == p) return false;

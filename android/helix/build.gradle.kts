@@ -2,8 +2,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    // Kotlin compilation is provided by AGP 9's built-in Kotlin support; the
-    // standalone org.jetbrains.kotlin.android plugin is no longer applied.
+    // Kotlin compilation comes from AGP 9's built-in Kotlin support.
     alias(libs.plugins.kotlin.serialization)
     `maven-publish`
 }
@@ -25,10 +24,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // The Helix Android SDK: protocol (core + service) and transports (BLE, MQTT
-    // gateway) in one installable module. BLE needs the Android platform, so the
-    // whole SDK ships as an Android library; the pure-Kotlin protocol/service/
-    // mqtt code runs on the JVM in local unit tests.
+    // Ships as an Android library because BLE needs the platform; pure-Kotlin code runs on the JVM in tests.
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -51,10 +47,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 }
 
-// Point the MQTT integration test at a running Helix gateway (the appliance, via
-// `helix e2e run`). A Gradle property survives daemon reuse where a stale env
-// would not; an env var is accepted too for a quick local run. Unset -> the test
-// skips, so `check` stays green without a gateway.
+// Point the MQTT integration test at a running gateway; unset -> the test skips.
 tasks.withType<Test>().configureEach {
     val gatewayUrl = providers.gradleProperty("mqttGatewayUrl").orNull
         ?: System.getenv("HELIX_MQTT_GATEWAY_URL")

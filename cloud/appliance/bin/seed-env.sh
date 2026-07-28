@@ -160,7 +160,6 @@ OTEL_SERVICE_NAME=helix-app
 EOF
 chmod 600 "${INTERNAL}"
 
-# ---- site.env — operator-provided, seeded with safe placeholders ------------
 if [[ ! -f "${SITE}" ]]; then
   if [[ -f "${SITE_SRC}" ]]; then
     echo "seed-env: importing operator site.env from ${SITE_SRC}"
@@ -254,11 +253,7 @@ EOF
 fi
 
 # Mirror the public URL into the NEXT_PUBLIC_* names the app reads at runtime.
-# NB: NEXT_PUBLIC_* are also build-inlined into the client bundle at host-build
-# time — for a per-site public URL, build the cloud-app bundle with the right
-# value or rely on the app's runtime config path. See README "Known limitations".
-# Extract via grep (don't `source` — site.env is operator-edited and may hold
-# values with spaces that would break shell parsing).
+# Extract via grep, not `source` — operator-edited values may hold spaces.
 PUBLIC_APP_URL="$(sed -n 's/^PUBLIC_APP_URL=//p' "${SITE}" | tail -1)"
 PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://localhost:3000}"
 {
@@ -267,21 +262,15 @@ PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://localhost:3000}"
   echo "NEXT_PUBLIC_HELIX_CLOUD_GATEWAY_BASE_URL=${PUBLIC_APP_URL}"
 } >> "${INTERNAL}"
 
-# Caddy's global ACME options are substituted as one line (see cloud/Caddyfile).
-# A Cloudflare token turns on the DNS-01 challenge — the only way to get the
-# *.port.<domain> wildcard cert, and the only challenge that survives a proxied
-# domain. Caddy reads the token itself at runtime, so it never lands in the
-# Caddyfile. No token → the line is empty and Caddy falls back to HTTP-01.
+# A Cloudflare token enables ACME DNS-01 (required for the *.port.<domain> wildcard
+# cert and proxied domains); no token falls back to HTTP-01.
 if grep -q '^CLOUDFLARE_API_TOKEN=.' "${SITE}"; then
   echo 'CADDY_ACME_DNS=acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}' >> "${INTERNAL}"
 else
   echo 'CADDY_ACME_DNS=' >> "${INTERNAL}"
 fi
 
-# TURN URLs for the WebRTC data plane. Advertise all three variants of the same
-# relay and let ICE pick: UDP is fastest, TCP gets through UDP-blocking networks,
-# and TLS on 5349 gets through networks that also inspect traffic (it looks like
-# HTTPS — the only variant that worked from a corporate VPN in testing).
+# TURN URLs for the WebRTC data plane: advertise UDP/TCP/TLS variants and let ICE pick.
 TURN_DOMAIN_VALUE="$(sed -n 's/^TURN_DOMAIN=//p' "${SITE}" | tail -1)"
 TURN_SERVER_URL_VALUE="$(sed -n 's/^TURN_SERVER_URL=//p' "${SITE}" | tail -1)"
 if [[ -z "${TURN_SERVER_URL_VALUE}" && -n "${TURN_DOMAIN_VALUE}" ]]; then

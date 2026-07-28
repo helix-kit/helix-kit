@@ -11,11 +11,8 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// Reconcile brings systemd into line with the desired managed-service catalog:
-// it renders/updates units for every desired service, removes units for
-// services no longer present, enables/starts (or disables/stops) each per its
-// Enabled flag, and reloads the daemon when anything changed. Core services are
-// processed first. It is safe to call on boot and after every install/remove.
+// Reconcile brings systemd into line with the desired catalog: renders/removes units, enables/starts
+// (or disables/stops) each per its Enabled flag, and reloads on change. Idempotent; safe on boot and after install/remove.
 func Reconcile(sd Systemd, log *slog.Logger) error {
 	desired, err := loadDesired()
 	if err != nil {
@@ -65,8 +62,7 @@ func Reconcile(sd Systemd, log *slog.Logger) error {
 		}
 	}
 
-	// Apply enable/start state. Do this after daemon-reload so systemd sees the
-	// current unit definitions.
+	// After daemon-reload, so systemd sees the current unit definitions.
 	for i := range desired {
 		d := &desired[i]
 		unit := d.UnitName()
@@ -95,8 +91,7 @@ func ensureStarted(sd Systemd, unit string, log *slog.Logger) error {
 	return sd.Start(unit)
 }
 
-// staleManagedUnits lists rendered helix-*.service unit files that are no longer
-// desired.
+// staleManagedUnits lists rendered helix-*.service unit files no longer desired.
 func staleManagedUnits(desired map[string]bool) ([]string, error) {
 	matches, err := filepath.Glob(filepath.Join(config.SystemdUnitDir(), "helix-*.service"))
 	if err != nil {

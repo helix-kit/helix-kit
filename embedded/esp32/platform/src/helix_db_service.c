@@ -41,8 +41,6 @@ static const hdb_table_t USERS = {
     .row_size = sizeof(user_row_t),
 };
 
-// ---- JSON <-> row ----------------------------------------------------------
-
 static cJSON *row_to_json(const user_row_t *r)
 {
     cJSON *o = cJSON_CreateObject();
@@ -90,8 +88,7 @@ static const hdb_column_t *find_col(const char *name)
     return NULL;
 }
 
-// Parse {where:[{col,op,val}], orderBy, desc, limit, offset} into a query.
-// `conds` must have room for MAX_CONDS entries. Returns false on malformed input.
+// Parse {where:[{col,op,val}], orderBy, desc, limit, offset} into a query; `conds` needs MAX_CONDS entries.
 static bool parse_query(const cJSON *payload, hdb_query_t *q, hdb_cond_t *conds)
 {
     memset(q, 0, sizeof(*q));
@@ -135,7 +132,6 @@ static bool parse_query(const cJSON *payload, hdb_query_t *q, hdb_cond_t *conds)
     return true;
 }
 
-// ---- handlers --------------------------------------------------------------
 
 static esp_err_t handle_insert(const helix_service_invocation_t *inv, const cJSON *payload)
 {

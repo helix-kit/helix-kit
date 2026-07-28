@@ -9,9 +9,7 @@ import (
 	"strings"
 )
 
-// version is a parsed dotted numeric version (major.minor.patch, extra parts
-// tolerated). Pre-release/build suffixes are not modeled — device packages use
-// plain numeric semver.
+// version is a dotted numeric version; no pre-release/build suffixes.
 type version []int
 
 var versionRE = regexp.MustCompile(`^\d+(\.\d+)*$`)
@@ -32,8 +30,7 @@ func parseVersion(s string) (version, error) {
 	return v, nil
 }
 
-// compare returns -1, 0, or 1 for a<b, a==b, a>b, treating missing trailing
-// components as zero.
+// compare returns -1, 0, or 1 for a<b, a==b, a>b; missing trailing components are zero.
 func (a version) compare(b version) int {
 	n := max(len(a), len(b))
 	for i := 0; i < n; i++ {
@@ -54,8 +51,7 @@ func (a version) compare(b version) int {
 	return 0
 }
 
-// Dependency is a parsed "name (op version)" constraint. Op is empty for a bare
-// name (any version satisfies).
+// Dependency is a parsed "name (op version)" constraint; empty Op matches any version.
 type Dependency struct {
 	Name    string
 	Op      string // one of >= > = <= <  (empty = any)
@@ -107,8 +103,7 @@ func (d Dependency) SatisfiedBy(installed string) bool {
 	return false
 }
 
-// CheckDepends verifies every dependency of m is satisfied by an installed
-// package in db. It returns the list of unmet dependency specs (empty = ok).
+// CheckDepends returns the list of m's dependency specs not satisfied by db (empty = ok).
 func CheckDepends(m *Manifest, db *DB) ([]string, error) {
 	var unmet []string
 	for _, spec := range m.Depends {

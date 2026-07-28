@@ -5,12 +5,7 @@ import kotlinx.serialization.Serializable
 
 private val SHA256_HEX = Regex("^[a-fA-F0-9]{64}$")
 
-/**
- * A flashable ESP32 firmware manifest, mirroring the web
- * `@helix/esp32-flasher` `Esp32FirmwareManifest` so the Android app consumes the
- * same server payload (`helix release serve-firmware` or the appliance). Each
- * artifact is one binary written at [Esp32Artifact.offset].
- */
+/** A flashable ESP32 firmware manifest; each artifact is one binary written at [Esp32Artifact.offset]. */
 @Serializable
 data class Esp32FirmwareManifest(
     val chip: String,

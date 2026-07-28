@@ -1,22 +1,10 @@
 #!/usr/bin/env python3
-"""Long-running ESP32 build service.
+"""Long-running ESP32 build service (runs in the lean ESP-IDF container, repo at /repo).
 
-Runs inside the lean ESP-IDF container with the repo mounted at /repo. It:
-
-  - publishes the build-options catalog (apps, feature fragments, chips, flash
-    sizes, sdkconfig knobs) over `GET /catalog`, so the cloud backend can proxy it
-    to the admin build UI without hardcoding any option list;
-  - accepts build jobs over `POST /build`, produces a customized firmware with the
-    helix CLI, and drives the cloud release backend's build-callback protocol
-    (content-addressed artifact upload + completion) to register an owned,
-    OTA-ready release.
-
-The heavy lifting (build, upload, complete) is shared with the CLI worker via
-`tooling.release.build_worker.complete_build`, so there is one implementation of
-the worker side of the protocol. Set `HELIX_BUILD_FAKE=1` (or send `fake: true`
-in a job) to synthesize artifacts instead of running a real ESP-IDF build — used
-for fast end-to-end verification of the request -> dispatch -> callback -> release
-flow without a multi-minute compile.
+Publishes the build-options catalog over `GET /catalog` and accepts build jobs over
+`POST /build`, driving the release backend's build-callback protocol. Build/upload/complete
+are shared with the CLI worker via `tooling.release.build_worker.complete_build`.
+Set `HELIX_BUILD_FAKE=1` (or `fake: true` in a job) to synthesize artifacts instead of compiling.
 """
 
 from __future__ import annotations
@@ -50,8 +38,7 @@ def _fake_complete(
     selector: JsonDict,
     config: JsonDict,
 ) -> JsonDict:
-    """Synthetic build: upload stand-in artifacts and complete, with no ESP-IDF
-    compile. Exercises the full callback path in seconds."""
+    """Synthetic build: upload stand-in artifacts and complete, no ESP-IDF compile."""
     started = time.monotonic()
     artifacts = synth_esp32_artifacts(config)
     for artifact in artifacts:

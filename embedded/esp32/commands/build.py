@@ -212,8 +212,7 @@ def link(
     write_app_selection(selected)
     build_dir = esp32_root() / (build_dir_opt or DEFAULT_BUILD_DIR)
 
-    # A selected app's declared features are as good as ones asked for on the
-    # command line: `link ui_demo` should not also need `--feature ui`.
+    # A selected app's declared features count as requested: `link ui_demo` needn't also pass `--feature ui`.
     enabled = list(features) + [f for f in app_features(selected) if f not in features]
     defaults = [esp32_root() / "sdkconfig.defaults", *resolve_feature_fragments(enabled)]
     if overrides:
@@ -289,11 +288,7 @@ def qemu(idf_args: tuple[str, ...]) -> None:
 @click.option("--docker-image", default="")
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
 def qemu_test(docker_image: str, pytest_args: tuple[str, ...]) -> None:
-    """Run the QEMU e2e tests (file-transfer over serial) in the ESP-IDF image.
-
-    Espressif's QEMU + idf.py only exist inside the Docker image, so this
-    re-execs there and drives the emulated firmware over a TCP-backed UART.
-    """
+    """Run the QEMU e2e tests (file-transfer over serial) in the ESP-IDF image."""
     import importlib.util
     import os
     import sys
@@ -303,10 +298,7 @@ def qemu_test(docker_image: str, pytest_args: tuple[str, ...]) -> None:
         rerun_in_esp_idf_docker(forwarded, resolve_docker_image(docker_image))
         return
 
-    # Build the image these tests run against, rather than inheriting whatever is
-    # in the build directory: the app selection is a generated component shared by
-    # every build dir, and `idf.py qemu` (which is all the simulator runs) would
-    # otherwise reconfigure it against the wrong sdkconfig defaults.
+    # Build the image these tests run against; the app selection is shared across build dirs and would otherwise reconfigure against the wrong defaults.
     write_app_selection([])
     idf_build(
         esp32_root() / DEFAULT_QEMU_BUILD_DIR,
@@ -314,9 +306,7 @@ def qemu_test(docker_image: str, pytest_args: tuple[str, ...]) -> None:
         ["build"],
     )
 
-    # pytest is not part of the base ESP-IDF image and its python env is a
-    # read-only virtualenv, so install into a scratch dir on PYTHONPATH. This is
-    # a no-op once pytest is baked into the image (docker/esp-idf-lean.Dockerfile).
+    # pytest isn't in the base ESP-IDF image and its python env is read-only, so install into a scratch dir on PYTHONPATH.
     pytest_home: str | None = None
     if importlib.util.find_spec("pytest") is None:
         pytest_home = "/tmp/helix-pytest"
@@ -358,11 +348,7 @@ def qemu_test(docker_image: str, pytest_args: tuple[str, ...]) -> None:
 @click.option("--port", default="/dev/ttyUSB0", show_default=True)
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
 def hw_test(port: str, pytest_args: tuple[str, ...]) -> None:
-    """Run the ESP32 e2e suite against a real board over USB serial.
-
-    Assumes the board is already flashed (see `flash --feature hw-test` builds).
-    Runs on the host (pyserial), not in Docker.
-    """
+    """Run the ESP32 e2e suite against a real, already-flashed board over USB serial (on host, not Docker)."""
     import os
     import sys
 

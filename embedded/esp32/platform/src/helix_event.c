@@ -27,8 +27,7 @@ esp_err_t helix_event_publish(const char *service, const char *type, cJSON *payl
     }
 
 #if CONFIG_HELIX_EVENT_QUEUE
-    // Durable path: persist locally first; the queue owns delivery + retry. The
-    // transient MQTT msg_id is not known at enqueue time.
+    // Durable path: persist first; the queue owns delivery, so no msg_id yet.
     if (out_msg_id != NULL) {
         *out_msg_id = 0;
     }

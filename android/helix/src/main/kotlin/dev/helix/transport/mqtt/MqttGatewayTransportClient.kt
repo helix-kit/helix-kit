@@ -22,12 +22,7 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
-/**
- * WebSocket-to-MQTT-gateway implementation of [HelixTransport]. It connects to
- * the Helix gateway's `/ws` endpoint with a `deviceId` (and optional `token`),
- * and the gateway routes packets to and from the device over MQTT. Behaviour
- * mirrors the web `MqttGatewayTransportClient`.
- */
+/** WebSocket-to-MQTT-gateway [HelixTransport]; connects to the gateway's `/ws` with a `deviceId`. */
 class MqttGatewayTransportClient(
     private val options: MqttGatewayOptions,
 ) : HelixTransport {

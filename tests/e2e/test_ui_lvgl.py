@@ -1,13 +1,6 @@
 """End-to-end proof that a shared LVGL screen renders on an emulated ESP32 and is
 driveable from the host: pixels stream out over the binary side-channel, pointer
-events go back in over the `ui` service, and the widget tree reacts.
-
-The emulator runs inside the ESP-IDF image (that is the only place Espressif's
-QEMU exists) with its UART published on a TCP port, so unlike the other
-esp32_qemu tests this one runs on the *host*. Build the firmware first:
-
-    helix ui build
-    helix e2e run tests/e2e/test_ui_lvgl.py   # or: pytest tests/e2e/test_ui_lvgl.py
+events go back in over the `ui` service. Build the firmware first with `helix ui build`.
 """
 
 from __future__ import annotations
@@ -46,8 +39,7 @@ def ui() -> Iterator[UiSession]:
 def test_screen_streams_to_the_host(ui: UiSession) -> None:
     assert ui.frame is not None
     assert (ui.frame.width, ui.frame.height) == (240, 240)
-    # Six 40-line slices cover a 240px-tall screen; none of them may be lost, or
-    # the framing/CRC contract with helix_transport_serial.c is broken.
+    # Six 40-line slices cover a 240px-tall screen; a lost one means broken framing/CRC.
     assert ui.frame.frames_applied >= 6
     assert ui.frame.frames_dropped == 0
     assert not ui.frame.is_blank()

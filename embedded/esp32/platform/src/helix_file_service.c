@@ -95,8 +95,6 @@ static bool json_uint(const cJSON *payload, const char *key, uint32_t *out)
     return true;
 }
 
-// ---- control-plane handlers -------------------------------------------------
-
 static esp_err_t handle_begin(const helix_service_invocation_t *invocation, const cJSON *payload)
 {
     const char *dest = json_string(payload, "dest");
@@ -137,7 +135,7 @@ static esp_err_t handle_begin(const helix_service_invocation_t *invocation, cons
         strlcpy(session->expected_sha, expected_sha, sizeof(session->expected_sha));
     }
     mbedtls_sha256_init(&session->sha);
-    mbedtls_sha256_starts(&session->sha, 0 /* SHA-256 */);
+    mbedtls_sha256_starts(&session->sha, 0);
     const uint16_t id = session->id;
     xSemaphoreGive(s_mutex);
 
@@ -228,8 +226,6 @@ static esp_err_t handle_abort(const helix_service_invocation_t *invocation, cons
     return service_dispatcher_respond(invocation, "file-abort", reply);
 }
 
-// Read a stored FAT file back and report size + sha256 so a host can verify a
-// completed transfer without extracting the flash image. `fs:` scheme only.
 static esp_err_t handle_stat(const helix_service_invocation_t *invocation, const cJSON *payload)
 {
     const char *dest = json_string(payload, "dest");
@@ -299,8 +295,6 @@ static esp_err_t file_service_handle_command(
     }
     return service_dispatcher_fail(invocation, "unknown file method");
 }
-
-// ---- data plane -------------------------------------------------------------
 
 static esp_err_t file_service_ingest_chunk(
     uint16_t session_id,

@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package stream is HelixStream: a reusable, transport-agnostic multiplexer that
-// carries many independent bidirectional byte streams over one message-oriented
-// connection (a WebSocket today; QUIC/WebRTC later). It is the shared data-plane
-// substrate for apps like port-forwarding and remote-shell — it knows nothing
-// about HTTP, TCP, or PTYs; those are opaque bytes.
-//
-// This lives OUTSIDE helixd: it is a library an app imports and uses over its
-// own outbound connection to the gateway. Session/target/identity are set on
-// the control plane (IPC + MQTT), never in these frames.
+// Package stream is HelixStream: a transport-agnostic multiplexer carrying many bidirectional byte streams over one message-oriented connection.
 //
 // Wire format (one binary message per frame):
 //

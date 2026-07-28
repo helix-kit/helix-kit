@@ -6,8 +6,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 type Status = "connecting" | "connected" | "disconnected";
 type ThemeName = "Black" | "Dark" | "Light" | "White";
 
-// GitHub-style ANSI palettes so TUIs (top, ls --color, vim) render legibly on
-// both dark and light backgrounds.
+// GitHub-style ANSI palettes so TUIs render legibly on dark and light backgrounds.
 const DARK_ANSI = {
   black: "#484f58", red: "#ff7b72", green: "#3fb950", yellow: "#d29922",
   blue: "#58a6ff", magenta: "#bc8cff", cyan: "#39c5cf", white: "#b1bac4",
@@ -23,7 +22,7 @@ const LIGHT_ANSI = {
   brightCyan: "#3192aa", brightWhite: "#8c959f",
 };
 
-// Order here is the dropdown order (matches Cockpit: Black, Dark, Light, White).
+// Order here is the dropdown order.
 const THEMES: Record<ThemeName, ITheme> = {
   Black: { background: "#000000", foreground: "#e6e6e6", cursor: "#ffffff", cursorAccent: "#000000", selectionBackground: "#3a3d41", ...DARK_ANSI },
   Dark: { background: "#0b0f14", foreground: "#e6edf3", cursor: "#3fb950", cursorAccent: "#0b0f14", selectionBackground: "#284b63", ...DARK_ANSI },
@@ -38,9 +37,7 @@ const DEFAULT_THEME: ThemeName = "Dark";
 
 const WS_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/__shell_ws__`;
 
-// Measured on this stack (see experimental/bandwidth): the EC2 egress to the
-// viewer is ~1.065x the plaintext payload, and total instance NIC use is ~2.13x
-// (the gateway is a relay, so payload crosses the box twice).
+// Measured (experimental/bandwidth): EC2 egress ~1.065x payload; instance NIC ~2.13x (relay crosses the box twice).
 const EGRESS_FACTOR = 1.065;
 const INSTANCE_FACTOR = 2.13;
 
@@ -65,7 +62,6 @@ export function App() {
   const [status, setStatus] = useState<Status>("connecting");
   const [nonce, setNonce] = useState(0); // bump to force reconnect
 
-  // Appearance settings, persisted across sessions.
   const [fontSize, setFontSize] = useState<number>(() => {
     const v = Number(localStorage.getItem("helix.fontSize"));
     return v >= MIN_FONT && v <= MAX_FONT ? v : DEFAULT_FONT;
@@ -75,8 +71,6 @@ export function App() {
     return v && v in THEMES ? v : DEFAULT_THEME;
   });
 
-  // Live per-session byte counters (this tab). out = PTY output received,
-  // in = keystrokes sent. Counted client-side so they're exact for this session.
   const bytesRef = useRef({ in: 0, out: 0 });
   const rateRef = useRef({ last: 0, t: 0 });
   const [stats, setStats] = useState({ in: 0, out: 0, rate: 0 });
@@ -113,7 +107,7 @@ export function App() {
         return;
       }
       const buf = ev.data as ArrayBuffer;
-      bytesRef.current.out += buf.byteLength; // PTY output received
+      bytesRef.current.out += buf.byteLength;
       term.write(new Uint8Array(buf));
     };
 
@@ -121,7 +115,6 @@ export function App() {
     ws.onerror = () => setStatus("disconnected");
   }, []);
 
-  // Initialize the terminal once.
   useEffect(() => {
     if (!wrapRef.current || termRef.current) return;
 
@@ -139,17 +132,15 @@ export function App() {
     termRef.current = term;
     fitRef.current = fit;
 
-    // Keystrokes -> gateway (as binary stdin).
     term.onData((data) => {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         const bytes = new TextEncoder().encode(data);
-        bytesRef.current.in += bytes.length; // keystrokes sent
+        bytesRef.current.in += bytes.length;
         ws.send(bytes);
       }
     });
 
-    // Terminal geometry changes -> tell the device to resize the PTY.
     term.onResize(({ cols, rows }) => {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -157,8 +148,7 @@ export function App() {
       }
     });
 
-    // Coalesce resize notifications into one fit() per frame so a burst of
-    // layout changes can't drive a synchronous refit storm.
+    // Coalesce resizes into one fit() per frame to avoid a synchronous refit storm.
     let raf = 0;
     const ro = new ResizeObserver(() => {
       cancelAnimationFrame(raf);
@@ -178,13 +168,11 @@ export function App() {
     };
   }, []);
 
-  // (Re)connect the socket when nonce changes.
   useEffect(() => {
     connect();
     return () => wsRef.current?.close();
   }, [connect, nonce]);
 
-  // Refresh the header readout + rolling throughput once per second.
   useEffect(() => {
     const id = setInterval(() => {
       const { in: i, out: o } = bytesRef.current;
@@ -199,7 +187,6 @@ export function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Apply font-size changes: update xterm, refit (which resizes the PTY), persist.
   useEffect(() => {
     const term = termRef.current;
     if (!term) return;
@@ -208,7 +195,6 @@ export function App() {
     localStorage.setItem("helix.fontSize", String(fontSize));
   }, [fontSize]);
 
-  // Apply theme changes.
   useEffect(() => {
     const term = termRef.current;
     if (term) term.options.theme = THEMES[themeName];

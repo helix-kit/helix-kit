@@ -1,14 +1,4 @@
-// Helix port-forwarding gateway (experimental).
-//
-// Sits behind Caddy, which TLS-terminates *.port.helix-kit.com and
-// reverse-proxies plain HTTP/1.1 (with WebSocket upgrades) to this process.
-//
-//   Device agent  --- outbound WSS --->  connect.port.helix-kit.com/__tunnel__
-//   Browser       --- HTTPS        --->  <session>.port.helix-kit.com
-//
-// The gateway multiplexes every browser connection for a session over the one
-// persistent WebSocket the owning agent holds open. It never parses response
-// bodies and never buffers whole responses -- everything is streamed.
+// Helix port-forwarding gateway: multiplexes every browser connection for a session over the one persistent WebSocket the owning agent holds open, streaming everything (never buffering whole responses).
 
 import http from "node:http";
 import type { Duplex } from "node:stream";
@@ -24,13 +14,8 @@ import {
 const PORT = Number(process.env.PORT ?? 9000);
 const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "port.helix-kit.com";
 const TUNNEL_PATH = "/__tunnel__";
-// Sessions live at <id>.port.helix-kit.com; this subdomain is reserved for the
-// agent control channel and can never be a session id.
+// Reserved for the agent control channel; can never be a session id.
 const CONNECT_SUBDOMAIN = "connect";
-
-// ---------------------------------------------------------------------------
-// Session registry: one connected agent per session id.
-// ---------------------------------------------------------------------------
 
 interface Stream {
   onHead?(status: number, headers: Record<string, string>): void;
@@ -45,10 +30,6 @@ class Agent {
   private nextStreamId = 2; // 0 = control, evens = gateway-allocated
   private readonly streams = new Map<number, Stream>();
 
-  // Per-session application-payload byte counters (plaintext, pre-TLS):
-  //   down = bytes relayed device -> browser (responses / WS output)
-  //   up   = bytes relayed browser -> device (requests / WS input)
-  // The real ens5 (billed) bytes are these, TLS+framed, on BOTH legs.
   up = 0;
   down = 0;
   readonly connectedAt = Date.now();
@@ -139,16 +120,11 @@ class Agent {
 
 const agents = new Map<string, Agent>();
 
-// ---------------------------------------------------------------------------
-// Host parsing.
-// ---------------------------------------------------------------------------
-
 function subdomainOf(hostHeader: string | undefined): string | null {
   if (!hostHeader) return null;
   const host = hostHeader.split(":")[0].toLowerCase();
   if (!host.endsWith("." + BASE_DOMAIN)) return null;
   const label = host.slice(0, host.length - BASE_DOMAIN.length - 1);
-  // Only accept a single leftmost label (<id>.port.helix-kit.com).
   if (label.includes(".")) return label.split(".")[0];
   return label;
 }
@@ -165,14 +141,8 @@ function filterHeaders(
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// HTTP request proxying.
-// ---------------------------------------------------------------------------
-
 const server = http.createServer((req, res) => {
-  // Per-session payload counters (for bandwidth reconciliation). Handled before
-  // host routing so it works on any host; intended for local access via
-  // `docker exec ... wget localhost:9000/__helixstats__`.
+  // Handled before host routing so it works on any host.
   if ((req.url ?? "").startsWith("/__helixstats__")) {
     const now = Date.now();
     const sessions = [...agents.values()].map((a) => ({
@@ -238,17 +208,13 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// WebSocket upgrade handling: agent control channel + proxied browser sockets.
-// ---------------------------------------------------------------------------
-
 const tunnelWss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const sub = subdomainOf(req.headers.host);
 
-  // (1) Agent control channel.
+  // Agent control channel.
   if (url.pathname === TUNNEL_PATH && sub === CONNECT_SUBDOMAIN) {
     tunnelWss.handleUpgrade(req, socket, head, (ws) =>
       handleAgentConnection(ws),
@@ -256,7 +222,7 @@ server.on("upgrade", (req, socket, head) => {
     return;
   }
 
-  // (2) Browser WebSocket to a proxied local service -> raw byte pipe.
+  // Browser WebSocket to a proxied local service -> raw byte pipe.
   if (!sub) {
     socket.destroy();
     return;
@@ -313,10 +279,6 @@ function proxyWebSocket(
     agent.closeStream(streamId);
   });
 }
-
-// ---------------------------------------------------------------------------
-// Agent connection lifecycle.
-// ---------------------------------------------------------------------------
 
 function handleAgentConnection(ws: WebSocket) {
   let agent: Agent | null = null;
@@ -378,8 +340,6 @@ function handleAgentConnection(ws: WebSocket) {
   ws.on("close", () => cleanup("agent disconnected"));
   ws.on("error", () => cleanup("agent socket error"));
 }
-
-// ---------------------------------------------------------------------------
 
 server.listen(PORT, () => {
   console.log(

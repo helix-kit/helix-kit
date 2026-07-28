@@ -1,6 +1,7 @@
 {
   "name": "helix-teams-bot",
   "version": "0.1.0",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Experimental Helix Teams bot prototype (Vercel Chat SDK) — proves inbound events + server-initiated proactive notifications",

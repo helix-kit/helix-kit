@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Stage 30 — lay down config from the overlay, wire the network + boot identity,
-# and enable the services that make up a minimal bootable EC2 guest.
+# Stage 30 — lay down overlay config, wire the network + boot identity, enable base services.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
@@ -17,8 +16,7 @@ cat > "$ROOTFS/etc/hosts" <<EOF
 127.0.1.1 $AMI_HOSTNAME
 ::1 localhost ip6-localhost ip6-loopback
 EOF
-# Root fs is found by label (set by mkfs in stage 40) so nothing here depends on
-# a UUID computed later. discard = TRIM on the EBS-backed NVMe volume.
+# Root fs is found by label (set in stage 40); discard = TRIM on the EBS-backed NVMe.
 cat > "$ROOTFS/etc/fstab" <<EOF
 LABEL=helix-root / ext4 defaults,discard 0 1
 EOF
@@ -43,14 +41,11 @@ in_chroot systemctl enable \
   cloud-config.service \
   cloud-final.service \
   helix-swap.service
-# NB: the Helix stack units (helix-redpanda, helix-postgres, …) are generated +
-# enabled by gen-units.py in stage 28, not hand-enabled here. helix-swap.service
-# (zram + disk swap, for the 1 GiB target) ships in the overlay and is enabled
-# here.
+# The Helix stack units are generated + enabled by gen-units.py in stage 28, not here;
+# helix-swap.service (zram + disk swap for the 1 GiB target) ships in the overlay.
 
 chmod +x "$ROOTFS/opt/helix/bin/helix-swap.sh"
 
-# Drop the machine-id so systemd regenerates a unique one per instance on first
-# boot (a baked-in id would be shared by every launch of this AMI).
+# Drop the machine-id so systemd regenerates a unique one per instance on first boot.
 : > "$ROOTFS/etc/machine-id"
 rm -f "$ROOTFS/var/lib/dbus/machine-id"

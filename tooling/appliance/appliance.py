@@ -24,47 +24,33 @@ POSTGRES_RESTART_TIMEOUT_SECONDS = 30
 
 
 class Appliance:
-    """Drives a single Helix appliance container for local + e2e use.
-
-    Every launch is safe by construction: `--cgroupns=private` and NO host
-    cgroup bind mount, so the container's PID 1 systemd can never tear down the
-    host's login session (see cloud/appliance/README.md).
-    """
+    """Drives a single Helix appliance container for local + e2e use."""
 
     def __init__(self, config: ApplianceConfig) -> None:
         self.config = config
-        # When set, the *app* database lives in an external (uncapped) Postgres
-        # rather than the in-appliance one, so app-DB writes do not compete for
-        # the capped cores. `app_db_url` is reachable from inside the container
-        # (used by the prebaked app + in-container psql); `app_db_host_url` is
-        # the host-mapped form (used by drizzle migrations run on the host).
+        # External (uncapped) app DB: url = in-container, host_url = host-mapped for migrations.
         self.app_db_url: str | None = None
         self.app_db_host_url: str | None = None
         self.app_db_ip: str | None = None
         self.external_pg_container: str | None = None
         # One DBOS system-database URL per dispatch shard (separate PG processes).
         self.dbos_shard_urls: list[str] = []
-        # Set when Inngest runs in its own CPU-capped container (external) instead
-        # of as an in-appliance systemd unit, to isolate its cost from the app's.
+        # Set when Inngest runs in its own CPU-capped container, to isolate its cost.
         self.inngest_base_url_override: str | None = None
         self.workflow_serve_host_override: str | None = None
         self.inngest_pg_uri: str | None = None
         self.external_inngest_container: str | None = None
-        # Set when the summarize node uses step.ai.infer against a fake, sleeping
-        # OpenAI-compatible endpoint (to measure Inngest's recommended AI path).
+        # Set when the summarize node uses step.ai.infer against a fake sleeping endpoint.
         self.infer_base_url_override: str | None = None
 
     @property
     def dev_pki_dir(self) -> Path:
-        """Where this instance's PKI is exported for the host web apps. The
-        default instance keeps `.dev-pki`; a base-port instance gets its own
-        `.dev-pki-<suffix>` so parallel appliances don't clobber each other."""
+        """Where this instance's PKI is exported for the host web apps."""
         if self.config.container == "helix-e2e":
             return DEV_PKI_DIR
         suffix = self.config.container.removeprefix("helix-e2e-")
         return WEB_APPS / "helix-server" / f".dev-pki-{suffix}"
 
-    # ---- image -------------------------------------------------------------
     def image_exists(self) -> bool:
         result = run(
             ["docker", "image", "inspect", self.config.image],
@@ -80,7 +66,6 @@ class Appliance:
             cwd=REPO_ROOT,
         )
 
-    # ---- lifecycle ---------------------------------------------------------
     def is_running(self) -> bool:
         result = run(
             ["docker", "inspect", "-f", "{{.State.Running}}", self.config.container],
@@ -139,12 +124,8 @@ class Appliance:
                 check=False,
             )
 
-    # ---- external (uncapped) postgres --------------------------------------
     def _run_pg_container(self, name: str, host_port: int, password: str, fast: bool) -> str:
-        """Run one uncapped Postgres container and return its bridge IP. With
-        fast=True the data dir is tmpfs (RAM) and durability is off (fsync/
-        synchronous_commit/full_page_writes) — unsafe, but removes the WAL/commit
-        ceiling to probe the engine's true limit, not Postgres's disk."""
+        # fast=True: tmpfs + durability off, to remove the WAL/commit ceiling under load test.
         run(["docker", "rm", "-f", name], cwd=REPO_ROOT, capture_output=True, check=False)
         command = ["docker", "run", "-d", "--name", name]
         if fast:
@@ -198,8 +179,7 @@ class Appliance:
     def start_external_postgres(
         self, *, name: str, host_port: int, password: str, fast: bool = False
     ) -> None:
-        """Run the uncapped app-database Postgres OFF the appliance, so app-DB
-        writes stop competing for the capped cores."""
+        """Run the uncapped app-database Postgres off the appliance."""
         ip = self._run_pg_container(name, host_port, password, fast)
         self.external_pg_container = name
         self.app_db_ip = ip
@@ -209,9 +189,7 @@ class Appliance:
     def start_dbos_shard_pgs(
         self, *, name_prefix: str, count: int, base_host_port: int, password: str, fast: bool
     ) -> None:
-        """Run one Postgres container per dispatch shard so each DBOS instance has
-        its own database *process* (not just its own schema) — the only way to get
-        past a single Postgres's WAL/commit ceiling. Sets dbos_shard_urls."""
+        """Run one Postgres per dispatch shard so each DBOS instance has its own DB process."""
         urls: list[str] = []
         for index in range(count):
             name = f"{name_prefix}-{index}"
@@ -269,10 +247,8 @@ class Appliance:
             time.sleep(1)
         raise click.ClickException(f"remote port {ip}:{port} did not open in time.")
 
-    # ---- external (separately-capped) inngest + redis ----------------------
     def provision_external_inngest_db(self, *, password: str) -> str:
-        """Create the inngest role + database in the external Postgres (the same
-        cluster as the app DB) and return the inngest Postgres URI."""
+        """Create the inngest role + database in the external Postgres and return its URI."""
         if self.app_db_url is None or self.app_db_ip is None:
             raise click.ClickException("external app postgres must be started first.")
 
@@ -300,9 +276,7 @@ class Appliance:
         run(["docker", "rm", "-f", name], cwd=REPO_ROOT, capture_output=True, check=False)
 
     def start_fake_llm(self, name: str, *, delay_ms: int) -> None:
-        """Run a fake OpenAI-compatible endpoint (any POST sleeps delay_ms, then
-        returns a valid chat-completion) so step.ai.infer has something to call
-        without real API keys/cost. Inngest reaches it by container IP."""
+        """Run a fake OpenAI-compatible endpoint (POST sleeps delay_ms) for step.ai.infer."""
         script = (
             "const http=require('http');"
             "const delay=parseInt(process.env.DELAY_MS||'5000',10);"
@@ -338,9 +312,7 @@ class Appliance:
         self.infer_base_url_override = f"http://{ip}:11434/v1"
 
     def fake_llm_caller_summary(self, name: str) -> str:
-        """Summarize which container IPs called the fake LLM (from its logs). If
-        the calls come from the Inngest container, step.ai.infer offloaded them;
-        from the appliance, the SDK ran the request in-function instead."""
+        """Summarize which container IPs called the fake LLM (from its logs)."""
         out = run(["docker", "logs", name], cwd=REPO_ROOT, capture_output=True, check=False)
         text = (out.stdout or "") + (out.stderr or "")
         counts: dict[str, int] = {}
@@ -367,10 +339,7 @@ class Appliance:
         event_key: str,
         signing_key: str,
     ) -> None:
-        """Run the SAME inngest binary from the appliance image in its own
-        CPU-capped container, so its cost is isolated from the app's. Sets the
-        base-URL / serve-host overrides the app needs to talk to it and be called
-        back over the bridge network."""
+        """Run the inngest binary in its own CPU-capped container, isolated from the app."""
         run(["docker", "rm", "-f", name], cwd=REPO_ROOT, capture_output=True, check=False)
         run(
             [
@@ -406,8 +375,7 @@ class Appliance:
         self._wait_remote_port(ip, 8288)
         self.external_inngest_container = name
         self.inngest_base_url_override = f"http://{ip}:8288"
-        # The app's serve endpoint must advertise an address the inngest container
-        # can reach (the appliance's bridge IP), not loopback.
+        # Advertise an address the inngest container can reach (bridge IP), not loopback.
         self.workflow_serve_host_override = (
             f"http://{self._container_ip(self.config.container)}:4002"
         )
@@ -420,8 +388,7 @@ class Appliance:
         self.external_inngest_container = None
 
     def named_container_stats(self, name: str) -> dict[str, float]:
-        """Live CPU% / memory (MiB) of an arbitrary container (e.g. the external
-        inngest), so the load test can see which component is the bottleneck."""
+        """Live CPU% / memory (MiB) of an arbitrary container."""
         out = run(
             ["docker", "stats", "--no-stream", "--format", "{{.CPUPerc}};{{.MemUsage}}", name],
             cwd=REPO_ROOT,
@@ -435,7 +402,6 @@ class Appliance:
         mem_used = _parse_mem_mib(mem_raw.split("/")[0].strip())
         return {"cpu_percent": round(cpu, 1), "mem_mib": round(mem_used, 1)}
 
-    # ---- exec helpers ------------------------------------------------------
     def exec_shell(
         self, script: str, *, check: bool = True, capture: bool = False
     ) -> subprocess.CompletedProcess[str]:
@@ -449,8 +415,6 @@ class Appliance:
     def psql(
         self, sql: str, *, check: bool = True, capture: bool = True
     ) -> subprocess.CompletedProcess[str]:
-        # Target the app database. When it is external, psql (run inside the
-        # appliance) connects to that container's IP; otherwise the in-appliance PG.
         if self.app_db_url is not None:
             script = f'psql "{self.app_db_url}" -v ON_ERROR_STOP=1 -tAc {_shell_quote(sql)}'
         else:
@@ -463,8 +427,7 @@ class Appliance:
     def psql_inngest(
         self, sql: str, *, check: bool = True, capture: bool = True
     ) -> subprocess.CompletedProcess[str]:
-        """Run a query against Inngest's own database (its durable run-state
-        store), which lives in the same cluster as the app DB."""
+        """Run a query against Inngest's own database (its durable run-state store)."""
         if self.inngest_pg_uri is not None:
             script = f'psql "{self.inngest_pg_uri}" -v ON_ERROR_STOP=1 -tAc {_shell_quote(sql)}'
         else:
@@ -482,10 +445,8 @@ class Appliance:
         return result.stdout.strip()
 
     def read_seeded_env(self, name: str) -> str:
-        """Read a value from the container's generated env (secrets + internal).
-
-        site.env is deliberately not sourced — it is operator-edited and may
-        hold values with spaces that would break `source`."""
+        """Read a value from the container's generated env; site.env is not sourced
+        (operator-edited, may hold spaces that break `source`)."""
         result = self.exec_shell(
             "set -a; . /var/lib/helix/env/secrets.env; . /var/lib/helix/env/internal.env; "
             f'set +a; printf %s "${name}"',
@@ -493,7 +454,6 @@ class Appliance:
         )
         return result.stdout.strip()
 
-    # ---- readiness ---------------------------------------------------------
     def wait_ready(self, *, timeout: int = READY_TIMEOUT_SECONDS) -> None:
         probe = (
             "pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1 "
@@ -510,10 +470,8 @@ class Appliance:
             time.sleep(1)
         raise click.ClickException("appliance did not become ready within the timeout.")
 
-    # ---- postgres access from host ----------------------------------------
     def open_postgres_to_host(self) -> None:
-        """The appliance PG listens on container-loopback only; open it so a
-        host-side helix-server can connect over the mapped port."""
+        """Open the container-loopback PG so a host-side helix-server can reach it."""
         self.exec_shell(
             "grep -q \"^listen_addresses = '\\*'\" /var/lib/helix/postgres/postgresql.conf "
             "|| echo \"listen_addresses = '*'\" >> /var/lib/helix/postgres/postgresql.conf; "
@@ -535,8 +493,7 @@ class Appliance:
         raise click.ClickException("appliance Postgres did not restart in time.")
 
     def wait_inngest_ready(self, *, timeout: int = 60) -> None:
-        """Wait for the self-hosted Inngest server's HTTP API (8288) to accept
-        connections before syncing the workflow app to it."""
+        """Wait for the self-hosted Inngest server's HTTP API (8288) to accept connections."""
         self._wait_container_port(8288, timeout=timeout)
 
     def _wait_container_port(self, port: int, *, timeout: int = 60) -> None:
@@ -549,11 +506,8 @@ class Appliance:
         raise click.ClickException(f"container port {port} did not open in time.")
 
     def configure_redpanda_advertised(self) -> None:
-        """Redpanda advertises 127.0.0.1:9092 by default; a host Kafka client
-        reaching it over a remapped port needs the advertised address to match
-        that host port, or metadata redirects it to an unreachable 9092."""
-        # In prebaked mode helix-server is the only Kafka client and runs
-        # in-container, so it reaches redpanda at the real 127.0.0.1:9092.
+        """Match Redpanda's advertised Kafka address to the host port a client reaches it on."""
+        # Prebaked helix-server is in-container, so it reaches redpanda at the real :9092.
         if self.config.mode is ServerMode.PREBAKED:
             return
         host_port = self.config.redpanda_port
@@ -583,9 +537,7 @@ class Appliance:
         return internal.replace(":5432/", f":{self.config.postgres_port}/")
 
     def run_migrations(self) -> None:
-        """Apply the real drizzle migrations to the appliance database from the
-        host, over the mapped Postgres port. Migrations only need DATABASE_URL,
-        so skip the app's full env validation (it also requires auth/SMTP vars)."""
+        """Apply the drizzle migrations to the appliance DB from the host over the mapped port."""
         database_url = self.app_db_host_url or self.host_database_url()
         run(
             ["pnpm", "--filter", "helix", "db:migrate"],
@@ -598,9 +550,7 @@ class Appliance:
         )
 
     def seed_features(self) -> None:
-        """Seed the feature catalog from the app's FeatureRegistry. Run after
-        migrations so the `feature` table reflects exactly the features this
-        build registered. Idempotent (upsert-only), so safe to run every up."""
+        """Seed the feature catalog from the app's FeatureRegistry (idempotent upsert)."""
         database_url = self.app_db_host_url or self.host_database_url()
         run(
             ["pnpm", "--filter", "helix", "db:seed-features"],
@@ -612,12 +562,8 @@ class Appliance:
             },
         )
 
-    # ---- host dev env ------------------------------------------------------
     def write_dev_env(self, *, fresh: bool, echo_env: bool = False) -> None:
-        """Generate/sync the `.env` files for the web apps so a developer can
-        start the cloud app + server against this appliance in one go. Exports
-        the mTLS PKI the server needs to disk, then writes each app's `.env`.
-        With echo_env, also print each rendered `.env` so it can be copied out."""
+        """Generate/sync the `.env` files for the web apps against this appliance."""
         pki = self.export_pki(self.dev_pki_dir)
         for plan in self._dev_env_plans(pki):
             action = write_env(plan, fresh=fresh)
@@ -648,9 +594,7 @@ class Appliance:
             managed={
                 "DATABASE_URL": database_url,
                 "BETTER_AUTH_SECRET": auth_secret,
-                # step-ca wiring for the admin certificate-revocation surface
-                # (the /device/[id] Certificates panel). Same values helix-server
-                # uses, pointed at the host-mapped step-ca port + exported PKI.
+                # step-ca wiring for the admin certificate-revocation surface.
                 "MQTT_STEP_CA_URL": f"https://127.0.0.1:{cfg.step_ca_port}",
                 "MQTT_STEP_CA_ROOT_CERT_PATH": cert("root_ca"),
                 "MQTT_STEP_CA_DEVICE_PROVISIONER_NAME": provisioner,
@@ -715,17 +659,14 @@ class Appliance:
         return int(result.stdout.strip() or "0") > 0
 
     def stop_services(self, names: list[str]) -> None:
-        """Stop helix-<name>.service units (used to strip the appliance down to
-        the ingestion subset for load testing)."""
+        """Stop helix-<name>.service units."""
         if not names:
             return
         units = " ".join(f"helix-{name}.service" for name in names)
         self.exec_shell(f"systemctl stop {units}", check=False)
 
     def _isolate_keeping(self, keep: set[str]) -> None:
-        """Stop every running helix-*.service unit except those in `keep`, so the
-        container's CPU/memory cap covers only the subject-under-test (helix-server
-        runs as a bare in-container process, not a unit, so it is unaffected)."""
+        # Stop every running helix-*.service except `keep` (helix-server is a bare process).
         out = self.exec_shell(
             "systemctl list-units 'helix-*.service' --state=running --no-legend --plain "
             "| awk '{print $1}'",
@@ -738,18 +679,13 @@ class Appliance:
             self.exec_shell("systemctl stop " + " ".join(to_stop), check=False)
 
     def isolate_ingestion_subset(self) -> None:
-        """Strip the appliance down to the event-ingestion infra (postgres,
-        redpanda, mosquitto)."""
+        """Strip the appliance down to the event-ingestion infra (postgres, redpanda, mosquitto)."""
         self._isolate_keeping(
             {"helix-postgres.service", "helix-redpanda.service", "helix-mosquitto.service"}
         )
 
     def isolate_workflow_subset(self, *, external_infra: bool = False) -> None:
-        """Strip the appliance down to the workflow-processing infra. Normally that
-        is ingestion (postgres, redpanda, mosquitto) plus Inngest and its Redis
-        queue, all under the same cap. With external_infra, Postgres, Redis and
-        Inngest all run in their own containers, so the appliance keeps only the
-        MQTT + Kafka brokers and its 2 cores measure app (node) code alone."""
+        """Strip the appliance down to the workflow-processing infra."""
         keep = {"helix-redpanda.service", "helix-mosquitto.service"}
         if not external_infra:
             keep |= {
@@ -760,9 +696,7 @@ class Appliance:
         self._isolate_keeping(keep)
 
     def register_inngest_app(self, port: int = 4002) -> str:
-        """Sync the workflow serve endpoint with the self-hosted Inngest server.
-        A PUT to the SDK's serve path makes it post its function manifest to
-        Inngest so the function becomes invocable."""
+        """Sync the workflow serve endpoint with the self-hosted Inngest server."""
         return self.exec_shell(
             f"curl -sS -X PUT http://127.0.0.1:{port}/api/inngest -w '\\n[http %{{http_code}}]' "
             "|| echo '[register failed]'",
@@ -797,8 +731,7 @@ class Appliance:
         return int(result.stdout.strip() or "0")
 
     def workflow_latency_ms(self, run_id: str) -> dict[str, float]:
-        """p50/p95/p99 of completed_at - emitted_at_ns (device emit -> workflow
-        done), in milliseconds, over the completed runs of this load run."""
+        """p50/p95/p99 of completed_at - emitted_at_ns (device emit -> workflow done), in ms."""
         sql = (
             "SELECT coalesce(percentile_cont(0.5) within group (order by lat), 0), "
             "coalesce(percentile_cont(0.95) within group (order by lat), 0), "
@@ -814,8 +747,7 @@ class Appliance:
         return {key: round(float(parts[index] or 0), 1) for index, key in enumerate(keys)}
 
     def inngest_pending_runs(self) -> int:
-        """Point-in-time Inngest backlog: runs that started but have not finished
-        (function_runs minus function_finishes)."""
+        """Point-in-time Inngest backlog (function_runs minus function_finishes)."""
         out = self.psql_inngest(
             "SELECT (SELECT count(*) FROM function_runs) "
             "- (SELECT count(*) FROM function_finishes)",
@@ -853,9 +785,7 @@ class Appliance:
         return total
 
     def per_service_cpu(self, interval: float = 2.0) -> dict[str, float]:
-        """Per-service CPU% (100% = one core) sampled over `interval`, by summing
-        each process group's jiffies from /proc inside the container. Attributes
-        the total across mosquitto / node (helix-server) / postgres / redpanda."""
+        """Per-service CPU% (100% = one core) sampled over `interval` from /proc jiffies."""
         script = _PER_SERVICE_CPU_SCRIPT.replace("__INTERVAL__", str(interval))
         out = self.exec_shell(
             f"python3 -c {_shell_quote(script)}", check=False, capture=True
@@ -890,14 +820,12 @@ class Appliance:
         return {"cpu_percent": round(cpu, 1), "mem_mib": round(mem_used, 1)}
 
     def restart_service(self, name: str) -> None:
-        """Restart a helix-<name>.service inside the appliance and wait for its
-        listener to come back (used by resilience tests)."""
+        """Restart a helix-<name>.service inside the appliance and wait for its listener."""
         self.exec_shell(f"systemctl restart helix-{name}.service")
         wait_ports = {"redpanda": 9092, "mosquitto": 8884, "postgres": 5432}
         if name in wait_ports:
             self._wait_container_port(wait_ports[name])
 
-    # ---- pki export --------------------------------------------------------
     def export_pki(self, dest: Path) -> dict[str, Path]:
         dest.mkdir(parents=True, exist_ok=True)
         files = {
@@ -920,8 +848,7 @@ class Appliance:
         return exported
 
     def export_crl(self, out: Path) -> Path | None:
-        """Copy the current CRL out of the container (best-effort — None until
-        crl-sync has staged it)."""
+        """Copy the current CRL out of the container (None until crl-sync has staged it)."""
         result = run(
             [
                 "docker",
@@ -936,10 +863,7 @@ class Appliance:
         return out if result.returncode == 0 else None
 
     def revoke_certificate(self, serial_decimal: str) -> None:
-        """Revoke a device certificate by (decimal) serial via step-ca's
-        provisioner, mirroring what @helix/backend's revokeDeviceCertificate does
-        over /1.0/revoke. Pre-generates a revoke token (non-interactive) then
-        revokes with it."""
+        """Revoke a device certificate by (decimal) serial via step-ca's provisioner."""
         step = (
             f"step ca token {serial_decimal} --revoke --provisioner helix-device "
             "--provisioner-password-file "
@@ -953,13 +877,11 @@ class Appliance:
             "--ca-url https://127.0.0.1:9000 "
             "--root /var/lib/helix/step-ca/certs/root_ca.crt"
         )
-        # step-ca regenerates the CRL on its cacheDuration cadence; restart to
-        # force an immediate regen so the test isn't gated on that window.
+        # Restart to force an immediate CRL regen rather than wait for cacheDuration.
         self.exec_shell("systemctl restart helix-step-ca.service", check=False)
 
     def wait_for_crl_serial(self, serial_hex: str, *, timeout: int = 40) -> bool:
-        """Poll step-ca's CRL until it lists `serial_hex` (uppercase hex), i.e.
-        step-ca has regenerated the CRL after a revoke. Then stage it + reload."""
+        """Poll step-ca's CRL until it lists `serial_hex`, then stage it + reload."""
         script = (
             "curl -fsS --cacert /var/lib/helix/step-ca/certs/root_ca.crt "
             "https://127.0.0.1:9000/crl | openssl crl -inform DER -noout -text "
@@ -975,8 +897,7 @@ class Appliance:
         return False
 
     def refresh_crl(self) -> None:
-        """Force an immediate CRL fetch + broker reload (tests can't wait for the
-        crl-sync daemon's interval)."""
+        """Force an immediate CRL fetch + broker reload."""
         self.exec_shell("/opt/helix/bin/crl-sync.sh once")
         self.exec_shell("systemctl reload helix-mosquitto.service", check=False)
 

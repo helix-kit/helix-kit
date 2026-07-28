@@ -8,11 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-/**
- * The service-layer message carried inside [HelixPacket.message]. The device
- * service broker dispatches by [service] and [method]; [payload] is the
- * method-specific body and must never contain protocol metadata.
- */
+/** The service-layer message inside [HelixPacket.message]; dispatched by [service] and [method]. */
 @Serializable
 data class HelixMessage(
     val service: String,

@@ -1,11 +1,4 @@
-"""`helix device package` + `helix device test-host` — the device package tools.
-
-``package build`` compiles a package spec (under ``linux/device/packages/<name>``)
-into a ``.helixpkg`` using the Go ``helix-pkg`` tool. ``test-host`` boots the
-systemd-in-container image (the x86 test host) with a provisioned identity, and
-``package install/remove/list`` + ``config push`` drive the on-device
-runtime-manager through its control socket via ``docker exec``.
-"""
+"""`helix device package` + `helix device test-host` — the device package tools."""
 
 from __future__ import annotations
 
@@ -42,23 +35,18 @@ def _run(
     return result.stdout or ""
 
 
-# ── package build ────────────────────────────────────────────────────────────
-
-
 def _build_pkg(name: str, out: Path, arch: str = "amd64") -> Path:
     spec = PACKAGES_DIR / name
     if not (spec / "helix-control.json").exists():
         raise click.ClickException(f"no package spec at {spec}")
 
-    # Payload binaries are cross-compiled for the target; CGO stays off so the
-    # build is a pure static cross-compile (no toolchain per arch).
+    # CGO off keeps this a pure static cross-compile (no per-arch toolchain).
     build_env = {"GOOS": "linux", "GOARCH": arch, "CGO_ENABLED": "0"}
 
     with tempfile.TemporaryDirectory() as td:
         work = Path(td) / name
         shutil.copytree(spec, work)
 
-        # Compile declared Go binaries into the payload overlay.
         build_json = spec / "build.json"
         if build_json.exists():
             recipe = json.loads(build_json.read_text())
@@ -107,9 +95,6 @@ def package_build(name: str, out: Path | None, arch: str) -> None:
     out = out or (DEVICE_DIR / "docker" / ".bundle" / f"{name}{suffix}.helixpkg")
     _build_pkg(name, out, arch)
     click.echo(f"Built {out}")
-
-
-# ── test host (systemd-in-container) ─────────────────────────────────────────
 
 
 def _dexec(
@@ -191,7 +176,6 @@ def test_host_up(bundle: Path, rebuild: bool) -> None:
         ]
     )
 
-    # Wait for systemd to come up, then load the provisioned identity.
     for _ in range(60):
         r = _dexec("systemctl", "is-system-running", check=False, capture=True)
         if r.stdout.strip() in ("running", "degraded", "starting"):
@@ -205,7 +189,6 @@ def test_host_up(bundle: Path, rebuild: bool) -> None:
     _dexec("chmod", "0640", "/etc/helix/config.json")
     # 0640 root:helix (not 0600): helixd runs as helix and must read the device key.
     _dexec("chmod", "0640", "/etc/helix/pki/device.key")
-    # Restart core now that config is present (clearing any pre-provision failures).
     _dexec("systemctl", "reset-failed", check=False)
     _dexec("systemctl", "restart", "helixd.service", "helix-runtime-manager.service", check=False)
 
@@ -239,9 +222,6 @@ def test_host_status() -> None:
         click.echo(f"{TEST_CONTAINER}: not running")
         return
     _dexec("systemctl", "list-units", "helix*", "--no-pager", check=False)
-
-
-# ── package operations on the test host (via runtime-manager control) ────────
 
 
 def _ctl(method: str, params: dict[str, object] | None = None) -> str:

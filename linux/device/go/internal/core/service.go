@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package core is helixd: the single, app-agnostic device process that owns the
-// cloud MQTT link and the local IPC bus, routing between them. Inbound requests
-// on `helix/device/<id>/in` are dispatched by `message.service` to whichever
-// registered IPC service matches; helixd never interprets app payloads.
+// Package core is helixd: the app-agnostic device process bridging the cloud MQTT link and local IPC bus.
 package core
 
 import (
@@ -58,8 +55,6 @@ func NewService(cfg *config.Config, log *slog.Logger) (servicemain.Runner, error
 	return s, nil
 }
 
-// spoolingPublisher persists telemetry events before publish; responses pass
-// straight through.
 type spoolingPublisher struct {
 	mqtt  *mqttTransport
 	spool *spool
@@ -74,8 +69,7 @@ func (p *spoolingPublisher) PublishEvent(service string, env ipc.DeviceEventEnve
 }
 
 func (s *service) Run(ctx context.Context) error {
-	// Enroll a certificate on first boot if configured (no-op when the device
-	// was provisioned with a cert out-of-band).
+	// Enroll on first boot if configured; no-op when provisioned out-of-band.
 	if _, err := s.enroller.ensure(); err != nil {
 		s.log.Warn("initial enrollment failed", "err", err)
 	}
@@ -108,7 +102,6 @@ func (s *service) Close() {
 	}
 }
 
-// kickDrain nudges the drain loop (non-blocking).
 func (s *service) kickDrain() {
 	select {
 	case s.drainSignal <- struct{}{}:
@@ -116,7 +109,6 @@ func (s *service) kickDrain() {
 	}
 }
 
-// drainLoop flushes spooled events to the cloud whenever the link is up.
 func (s *service) drainLoop(ctx context.Context) {
 	ticker := time.NewTicker(drainInterval)
 	defer ticker.Stop()
@@ -136,7 +128,6 @@ func (s *service) drainLoop(ctx context.Context) {
 	}
 }
 
-// handleInbound routes a cloud request to the registered local service.
 func (s *service) handleInbound(packet ipc.HelixPacket) {
 	svc := packet.Message.Service
 	if !s.ipc.NotifyService(svc, ipc.CommandParams{

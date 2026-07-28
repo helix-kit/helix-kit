@@ -1,8 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { ROUTES, PROFILE } from '@/generated/routes';
 
-// Minimal hash router — zero dependencies. Enough to switch between the
-// generated (enabled-only) routes on a static SPA served with index.html fallback.
+// Minimal zero-dependency hash router.
 function subscribe(cb: () => void) {
   window.addEventListener('hashchange', cb);
   return () => window.removeEventListener('hashchange', cb);

@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 
-// The kiosk shell switches "screens" by loading a different hash route
-// (#/home, #/metrics, #/info). Each screen is a full-bleed panel so the
-// operator can tell at a glance which one is on the display.
+// The kiosk shell switches "screens" by loading a different hash route (#/home, #/metrics, #/info).
 
 type Screen = {
   id: string;
@@ -52,8 +50,7 @@ export function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // In-app screen switching so the page is self-contained under a single-URL
-  // browser like cog (WPE) that has no external shell to map keys to URLs.
+  // In-app screen switching for single-URL browsers (e.g. cog/WPE) with no external shell to map keys to URLs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cur = screenFromHash();

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Hourly retention sweep for the self-hosted Inngest observability tables.
-# Runs DELETEs only (see inngest-cleanup.sql) — autovacuum reclaims the space
-# for reuse, which bounds table growth. Connection params come from PG* env vars.
+# Hourly retention sweep for the self-hosted Inngest observability tables (DELETEs only).
 set -uo pipefail
 
 INTERVAL="${CLEANUP_INTERVAL_SECONDS:-3600}"

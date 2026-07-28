@@ -29,14 +29,10 @@ esp_err_t helix_mqtt_transport_publish_packet_json(const char *json, int *msg_id
 esp_err_t helix_mqtt_transport_publish_event_json(const char *service, const char *json, int *msg_id);
 bool helix_mqtt_transport_is_started(void);
 
-// True while the MQTT client is connected to the broker (set on
-// MQTT_EVENT_CONNECTED, cleared on disconnect/error). Distinct from
-// _is_started(), which only means the client object exists.
+// True while the MQTT client is connected to the broker (distinct from _is_started(), which only means the client object exists).
 bool helix_mqtt_transport_is_online(void);
 
-// Callback invoked (on the MQTT client task) when a QoS-1 publish is acked by
-// the broker (MQTT_EVENT_PUBLISHED), with the msg_id returned by the publish
-// call. Used by the event queue to mark stored events delivered. Keep it brief.
+// Callback (on the MQTT client task) when a QoS-1 publish is acked by the broker, with the publish's msg_id. Keep it brief.
 typedef void (*helix_mqtt_publish_ack_cb_t)(int msg_id, void *user_data);
 void helix_mqtt_transport_set_publish_callback(helix_mqtt_publish_ack_cb_t cb, void *user_data);
 

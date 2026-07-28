@@ -433,13 +433,8 @@ TimeEnd(1, "%s total: ", __func__);
     pthread_mutex_unlock(&info->mutex);
 }
 
-/* ---- Split run for NPU pipelining (added for the multi-model pipeline) ----
- * awnn_run() holds the (caller-serialized) NPU across BOTH the HW run and the full
- * output→fp32 copy, so the ~16ms copy needlessly stalls the shared single NPU core.
- * This splits it at the vip_run boundary: the caller holds its NPU lock only around
- * awnn_run_hw() (the HW call), then calls awnn_finish() OUTSIDE that lock to do the
- * cache-invalidate + output conversion (identical to awnn_run's second half), freeing
- * the core for the other worker during the copy. Read results via awnn_get_output_buffers(). */
+/* Split run for NPU pipelining: awnn_run_hw() is the HW call (hold the NPU lock here),
+ * awnn_finish() does the cache-invalidate + output copy outside it so the core is free during the ~16ms copy. */
 void awnn_run_hw(Awnn_Context_t *info) {
     pthread_mutex_lock(&info->mutex);
     if (vip_run_network(info->network) != VIP_SUCCESS)

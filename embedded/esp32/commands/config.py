@@ -93,11 +93,7 @@ def idf_build(
 ) -> None:
     """Configure and drive an ESP-IDF build.
 
-    `features` reaches CMake as HELIX_FEATURES in the environment: a feature
-    fragment can switch sdkconfig values on its own, but an optional *component*
-    (the LVGL UI stack) has to be kept out of the component list, which only CMake
-    can do -- and it must be visible to ESP-IDF's separate requirements pass too,
-    which only inherits the environment.
+    `features` reaches CMake as HELIX_FEATURES in the environment so an optional component (the LVGL UI stack) can be kept out of the component list, which only CMake can do.
     """
     defaults_arg = ";".join(str(path.relative_to(esp32_root())) for path in defaults)
     remove_sdkconfig_if_stale(build_dir, defaults)

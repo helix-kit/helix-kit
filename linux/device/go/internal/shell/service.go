@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package shell is the device-side remote-shell app. Control (open/close a shell
-// session) arrives over IPC as Helix commands; each stream the gateway opens on
-// the data plane is one terminal — the app forks a PTY running a login shell and
-// pipes bytes, honoring resize SIGNAL frames.
+// Package shell is the device-side remote-shell app; each data-plane stream is one PTY terminal.
 package shell
 
 import (
@@ -81,13 +78,7 @@ func (r *runner) handle(ctx context.Context, cmd ipc.CommandParams) {
 	generated.DispatchShell(ctx, r.client, r.log, cmd, r)
 }
 
-// HandleOpen opens one shell session's data plane — relayed through the gateway
-// or peer-to-peer, as the caller asked — and starts its accept loop; each stream
-// the far end opens on it is one terminal.
-//
-// On the p2p path this returns as soon as the SDP offer exists: the browser needs
-// the offer to answer, so blocking here until the peer connects would deadlock
-// the negotiation.
+// HandleOpen opens one shell session's data plane and starts its accept loop.
 func (r *runner) HandleOpen(
 	_ context.Context,
 	req generated.ShellOpenInput,
@@ -103,7 +94,6 @@ func (r *runner) HandleOpen(
 	return generated.ShellSessionOutput{SessionId: req.SessionId, Offer: offer}, nil
 }
 
-// openParams maps this service's generated contract types onto the transport's.
 func openParams(req generated.ShellOpenInput) dataplane.OpenParams {
 	servers := make([]peer.ICEServer, 0, len(req.IceServers))
 	for _, s := range req.IceServers {
@@ -123,9 +113,6 @@ func openParams(req generated.ShellOpenInput) dataplane.OpenParams {
 	}
 }
 
-// candidateSender trickles a locally-gathered ICE candidate back to the browser
-// as an unsolicited response (empty requestId). The gateway routes it to the
-// connection that owns this session.
 func (r *runner) candidateSender(sessionID string) func(string) {
 	return func(candidate string) {
 		ipcutil.Respond(r.client, r.log, "", dataplane.CandidateMethod, generated.ShellPeerCandidate{
@@ -135,8 +122,7 @@ func (r *runner) candidateSender(sessionID string) func(string) {
 	}
 }
 
-// HandleSignal carries the browser's half of the WebRTC handshake: its SDP answer
-// and its trickled ICE candidates.
+// HandleSignal carries the browser's half of the WebRTC handshake.
 func (r *runner) HandleSignal(
 	_ context.Context,
 	req generated.ShellSignalInput,

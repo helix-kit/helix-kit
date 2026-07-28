@@ -2,9 +2,7 @@
 
 buildscript {
     dependencies {
-        // AGP 9 provides built-in Kotlin (KGP 2.2.10). Pin it up to the catalog's
-        // `kotlin` version so the compiler matches the Compose/serialization
-        // plugins, which are versioned off the same catalog entry.
+        // Pin AGP 9's built-in Kotlin up to the catalog version so it matches the plugins.
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0")
     }
 }

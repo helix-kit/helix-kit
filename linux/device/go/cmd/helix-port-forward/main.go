@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-port-forward is the device port-forwarding app: control over
-// IPC (open/close/list a tunnel), data over a HelixStream connection to the
-// gateway.
+// Command helix-port-forward is the device port-forwarding app.
 package main
 
 import (

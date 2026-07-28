@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-shell is the device remote-shell app: control over IPC
-// (open/close a shell session), data (PTY bytes) over a HelixStream connection
-// to the gateway.
+// Command helix-shell is the device remote-shell app.
 package main
 
 import (

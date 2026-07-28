@@ -37,9 +37,7 @@ static int status_filter_from(const cJSON *payload)
     return -1;
 }
 
-// Wall-clock timestamps for display. Internal timing is monotonic, so derive
-// expiry/sent wall times from the enqueue wall time + the monotonic delta (0
-// when the enqueue clock was unset, e.g. pre-SNTP / QEMU).
+// Derive a display wall-clock time from monotonic internal timing (0 pre-SNTP).
 static double wall_from_mono(const helix_event_record_t *r, int64_t mono_ms)
 {
     if (r->created_ts <= 0 || mono_ms <= 0) return 0;

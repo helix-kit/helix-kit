@@ -5,14 +5,9 @@
 
 #include "esp_err.h"
 
-// The display seam. A Helix UI screen is written once against LVGL and rendered
-// through whichever driver the device provides: a streaming driver that ships
-// pixels to a host (QEMU today, a remote viewer tomorrow), an SPI panel on real
-// hardware, or a framebuffer on Linux. Drivers own pixel delivery and nothing
-// else -- no widgets, no input, no transport knowledge.
-//
-// Pixels are RGB565, little-endian, row-major within the flushed rectangle;
-// bounds are inclusive.
+// The display seam: an LVGL screen rendered through whichever driver the device provides
+// (streaming, SPI panel, framebuffer). Drivers own only pixel delivery.
+// Pixels are RGB565 LE, row-major within the flushed rectangle; bounds are inclusive.
 
 typedef struct helix_ui_display helix_ui_display_t;
 

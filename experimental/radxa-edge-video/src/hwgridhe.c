@@ -1,5 +1,4 @@
-// 4x Cedar HW decode -> compositor 2x2 -> tee -> [kmssink] + [Cedar HW encode -> RTMP].
-// Both decode AND encode run on the Allwinner VE (Cedar); CPU only composites/muxes.
+// 4x Cedar HW decode -> compositor 2x2 -> tee -> [kmssink] + [Cedar HW encode -> RTMP]; both decode and encode on the Allwinner VE, CPU only composites/muxes.
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -172,7 +171,6 @@ static void* encode_thread(void* arg) {
             int gib = GetOneAllocInputBuffer(venc, &in);
             if (n < 5) g_printerr("ENC iter %d: sample sz=%zu GetInBuf=%d virY=%p virC=%p\n", n, m.size, gib, in.pAddrVirY, in.pAddrVirC);
             if (gib == 0) {
-                // NV12 1280x720 tight: Y then UV
                 memcpy(in.pAddrVirY, m.data, (size_t)ENC_W * ENC_H);
                 memcpy(in.pAddrVirC, m.data + (size_t)ENC_W * ENC_H, (size_t)ENC_W * ENC_H / 2);
                 in.nPts = pts; pts += 40000; // ~25fps in us
@@ -263,7 +261,6 @@ int main(int argc, char** argv) {
     }
     gst_caps_unref(nv12);
 
-    // encoded-H264 -> RTMP publish (MediaMTX -> WebRTC)
     char encdesc[512];
     snprintf(encdesc, sizeof(encdesc),
         "appsrc name=encsrc is-live=true format=time do-timestamp=true ! "

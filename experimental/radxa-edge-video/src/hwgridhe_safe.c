@@ -1,8 +1,4 @@
-// 4x Cedar HW decode -> compositor 2x2 -> tee -> [kmssink] + [Cedar HW encode -> RTMP].
-// Both decode AND encode run on the Allwinner VE (Cedar); CPU only composites/muxes.
-// SAFE lifecycle: SIGINT/SIGTERM -> graceful teardown of ALL VE contexts (4 decoders
-// + 1 encoder), so a normal stop frees every dma_buf and leaves NO D-state. A watchdog
-// force-exits if teardown wedges. Reports dma_buf count at stop.
+// 4x Cedar HW decode -> compositor 2x2 -> tee -> [kmssink] + [Cedar HW encode -> RTMP]; SIGINT/SIGTERM graceful teardown of all VE contexts frees every dma_buf (watchdog force-exits if the VE wedges).
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -170,8 +166,7 @@ static void* encode_thread(void* arg) {
                 VideoEncodeOneFrame(venc);
                 AlreadyUsedInputBuffer(venc, &in);   // recycle input buffer (fixes 4-frame stall)
                 ReturnOneAllocInputBuffer(venc, &in);
-                // Drain all bitstream units. Output is already annexb (bEncH264Nalu=0);
-                // prepend SPS/PPS on keyframes so late WebRTC joiners can decode.
+                // Output is annexb (bEncH264Nalu=0); prepend SPS/PPS on keyframes so late WebRTC joiners can decode.
                 for (;;) {
                     VencOutputBuffer ob; memset(&ob, 0, sizeof(ob));
                     if (GetOneBitstreamFrame(venc, &ob) != 0) break;

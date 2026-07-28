@@ -14,7 +14,6 @@ _JS_IDENTIFIER = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
 
 
 def _ts_key(name: str) -> str:
-    """A TypeScript object key: bare when a valid identifier, else quoted."""
     return name if _JS_IDENTIFIER.match(name) else json.dumps(name)
 
 
@@ -39,20 +38,7 @@ def _read_contract_json(source: Path) -> Any:
 
 
 def _apply_includes(data: dict[str, Any], source: Path) -> None:
-    """Merge shared contract fragments into a service contract.
-
-    A fragment carries schemas/methods that several services share (peer signaling is
-    the reason this exists), plus `extends`: named field groups a service grafts onto
-    one of its OWN schemas. The including contract states that mapping, so the fragment
-    never has to guess at a service's schema names:
-
-        "includes": [
-          {
-            "path": "../../peer/contracts/peer.fragment.json",
-            "extends": { "peerOpenInput": "OpenInput", "peerSessionOutput": "SessionOutput" }
-          }
-        ]
-    """
+    """Merge shared contract fragments (schemas/methods + `extends` field groups) into a contract."""
     includes = data.pop("includes", [])
     if not isinstance(includes, list):
         raise click.ClickException("Contract includes must be an array when provided.")
@@ -207,12 +193,7 @@ def _pascal(value: str) -> str:
 
 
 def _schemas_in_dependency_order(schemas: dict[str, Any]) -> list[tuple[str, Any]]:
-    """Schemas ordered so one is always emitted after the schemas it references.
-
-    TypeScript `const` bindings are not hoisted, so `z.array(FooSchema)` inside a schema
-    declared above `FooSchema` is a TDZ error at module load. Authors used to hand-order
-    the JSON; an included fragment cannot, since it does not know where its schemas land.
-    """
+    """Order schemas so each is emitted after those it references: TS consts aren't hoisted (TDZ)."""
     ordered: list[tuple[str, Any]] = []
     emitted: set[str] = set()
     visiting: set[str] = set()
@@ -379,9 +360,7 @@ def _gofmt(source: str) -> str:
     gofmt = shutil.which("gofmt")
     if gofmt is None:
         return source
-    # Separate handlers, not a tuple: the ESP-IDF build image runs this CLI on
-    # CPython 3.12, where the repo's py314 formatting of `except (A, B):` as
-    # `except A, B:` (PEP 758) is a SyntaxError.
+    # Separate handlers, not a tuple: `except (A, B):` reformats to a PEP 758 SyntaxError on 3.12.
     try:
         result = subprocess.run([gofmt], input=source, capture_output=True, text=True, check=True)
     except OSError:
@@ -595,8 +574,7 @@ def _python_contract(data: dict[str, Any]) -> list[tuple[str, str]]:
     for key, definition in messages.items():
         header.append(f"{macro}_{_macro(key)}_MESSAGE = {json.dumps(definition['name'])}")
 
-    # Each block is one top-level construct; blocks are joined by two blank lines
-    # so the emitted module is already black-compatible and free of regen churn.
+    # One top-level construct per block, joined by two blank lines so output is black-compatible.
     blocks: list[str] = ["\n".join(header)]
 
     for schema_name, fields in schemas.items():

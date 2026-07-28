@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package portforward is the device-side port-forwarding app. Control
-// (open/close/list a forwarding session) arrives over IPC as Helix commands;
-// the actual bytes flow over a separate HelixStream data-plane connection this
-// app dials to the gateway. On each stream the gateway opens, it dials the
-// session's allow-listed local target and pipes raw bytes.
+// Package portforward is the device-side port-forwarding app; each data-plane stream dials an allow-listed target.
 package portforward
 
 import (
@@ -28,7 +24,6 @@ import (
 // ServiceName is the Helix `message.service` for this app.
 const ServiceName = generated.PortForwardService
 
-// appConfig is this app's section of the device config (apps."port-forward").
 type appConfig struct {
 	AllowedTargets []string `json:"allowedTargets"`
 }
@@ -83,10 +78,7 @@ func (r *runner) handle(ctx context.Context, cmd ipc.CommandParams) {
 	generated.DispatchPortForward(ctx, r.client, r.log, cmd, r)
 }
 
-// HandleOpen opens the data plane for one forwarding session (to an allow-listed
-// target) — relayed or peer-to-peer — and starts its accept loop; each stream is
-// piped to a fresh dial. On the p2p path it returns as soon as the SDP offer
-// exists, since the browser needs the offer before it can answer.
+// HandleOpen opens the data plane for one forwarding session and starts its accept loop.
 func (r *runner) HandleOpen(
 	_ context.Context,
 	req generated.PortForwardOpenInput,
@@ -108,7 +100,6 @@ func (r *runner) HandleOpen(
 	return generated.PortForwardSessionOutput{SessionId: req.SessionId, Offer: offer}, nil
 }
 
-// openParams maps this service's generated contract types onto the transport's.
 func openParams(req generated.PortForwardOpenInput) dataplane.OpenParams {
 	servers := make([]peer.ICEServer, 0, len(req.IceServers))
 	for _, s := range req.IceServers {
@@ -128,9 +119,6 @@ func openParams(req generated.PortForwardOpenInput) dataplane.OpenParams {
 	}
 }
 
-// candidateSender trickles a locally-gathered ICE candidate back to the browser
-// as an unsolicited response (empty requestId); the gateway routes it to the
-// connection that owns this session.
 func (r *runner) candidateSender(sessionID string) func(string) {
 	return func(candidate string) {
 		ipcutil.Respond(
@@ -140,8 +128,7 @@ func (r *runner) candidateSender(sessionID string) func(string) {
 	}
 }
 
-// HandleSignal carries the browser's half of the WebRTC handshake: its SDP answer
-// and its trickled ICE candidates.
+// HandleSignal carries the browser's half of the WebRTC handshake.
 func (r *runner) HandleSignal(
 	_ context.Context,
 	req generated.PortForwardSignalInput,
@@ -171,8 +158,7 @@ func (r *runner) HandleClose(
 	return generated.PortForwardSessionOutput{SessionId: req.SessionId}, nil
 }
 
-// HandleList reports every open forwarding tunnel: its target, age, and the
-// number of connections currently piped over it.
+// HandleList reports every open forwarding tunnel with its target, age, and connection count.
 func (r *runner) HandleList(
 	_ context.Context,
 	_ generated.PortForwardListInput,

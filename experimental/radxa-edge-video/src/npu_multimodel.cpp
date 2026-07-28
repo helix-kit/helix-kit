@@ -1,10 +1,5 @@
-// MULTI-MODEL NPU pipeline (headless / WebRTC-only).
-//   4x [rtspsrc ! omxh264dec ! videoconvert ! BGR appsink]  ->  per-stream MODEL
-//   assignment: each stream runs the model bound to it (e.g. 2 streams object
-//   detection, 2 streams pose). Each NPU worker is pinned to one model + its
-//   streams (own awnn context, no per-run network reload); the single NPU core is
-//   serialized by mtx_npu. Annotated cells -> 2x2 composite -> Cedar HW encode ->
-//   RTMP -> MediaMTX -> WebRTC. Reports PER-MODEL throughput.
+// Multi-model NPU pipeline: per-stream model assignment (each worker pinned to one
+// model + its streams), 2x2 composite -> Cedar HW encode -> RTMP -> WebRTC.
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -33,13 +28,13 @@
 extern "C" VeOpsS *GetVeOpsS(enum EVEOPSTYPE type);
 
 #define NCAM 4
-#define S 640 // model input side (both models are 640x640)
+#define S 640 // model input side
 #define GW 1280
 #define GH 720
 #define CW 640
 #define CH 360
 
-// ---- YOLOv5 decode (reused verbatim from the vendor yolov5_post_process.cpp) ----
+// YOLOv5 decode (reused verbatim from vendor yolov5_post_process.cpp).
 struct Object
 {
     cv::Rect_<float> rect;
@@ -242,7 +237,6 @@ static GstElement *pipes[NCAM];
 static GstElement *disp;
 static GstAppSrc *encsrc;
 
-// ================= YOLOv8-pose decode + draw (2nd model) =================
 // COCO 17-keypoint skeleton limbs (pairs of keypoint indices).
 static const int SKELETON[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}, {6, 12}, {5, 6}, {5, 7}, {6, 8}, {7, 9}, {8, 10}, {1, 2}, {0, 1}, {0, 2}, {1, 3}, {2, 4}, {3, 5}, {4, 6}};
 struct Pose
@@ -251,17 +245,10 @@ struct Pose
     float prob;
     float kx[17], ky[17], kc[17];
 };
-// yolov8-pose ONNX output is a single [1,56,8400] tensor, channel-major:
-// 56 = 4 box(cx,cy,w,h) + 1 person-conf + 17*(x,y,conf); coords in 640-input space.
-// NOTE: assumes the NBG preserves this concatenated output. Verify against the actual
-// .nb output count/shape once converted; adjust indexing if the NBG emits raw heads.
 static int pose_draw(cv::Mat &bgr, float **out)
 {
-    // The model is CUT at the 9 RAW conv heads (before any decode) so the logits quantize
-    // cleanly as uint8 (post-decode tensors mix 0-640 coords with 0-1 conf and get crushed).
-    // We do the full YOLOv8-pose decode here in float. Output order (== --outputs order):
-    //   out[0..2] box  [1,64,G,G]  (4 sides x 16 DFL bins), out[3..5] cls [1,1,G,G],
-    //   out[6..8] kpt  [1,51,G,G]  (17*(x,y,vis)),  G = 80/40/20 at stride 8/16/32.
+    // Model is CUT at the 9 raw conv heads so logits quantize cleanly as uint8; full decode in
+    // float here. out[0..2] box[1,64,G,G] DFL, out[3..5] cls, out[6..8] kpt[1,51,G,G]; G=80/40/20 @ stride 8/16/32.
     const int GR[3] = {80, 40, 20}, ST[3] = {8, 16, 32};
     std::vector<Pose> props;
     for (int s = 0; s < 3; s++)
@@ -357,22 +344,19 @@ static int pose_draw(cv::Mat &bgr, float **out)
     return (int)keep.size();
 }
 
-// ================= Model registry + per-stream / per-worker assignment =================
 struct Model
 {
     const char *name;
     const char *nb;
-    void (*pre)(const cv::Mat &, unsigned char *); // frame -> 640 CHW uint8 (both share the letterbox)
-    int (*post)(cv::Mat &, float **);              // decode + draw in place, returns object count
+    void (*pre)(const cv::Mat &, unsigned char *);
+    int (*post)(cv::Mat &, float **);
 };
-// Registry. MODELS[1].nb/post get swapped to the pose model once its .nb is converted;
-// until then both slots run YOLOv5 detection so the multi-model harness is testable.
 static Model MODELS[] = {
     {"det", "model/v3/yolov5.nb", preprocess, detect_draw},     // YOLOv5 detection
     {"pose", "model/v3/yolov8-pose.nb", preprocess, pose_draw}, // YOLOv8-pose (converted via ACUITY)
 };
 #define NMODEL ((int)(sizeof(MODELS) / sizeof(MODELS[0])))
-// Which model each of the 4 streams runs. Default: streams 0,1 -> model 0; 2,3 -> model 1.
+// which model each of the 4 streams runs
 static int STREAM_MODEL[NCAM] = {0, 0, 1, 1};
 
 static volatile int running = 1, teardown_done = 0;
@@ -381,9 +365,7 @@ static void on_sig(int s)
     (void)s;
     running = 0;
 }
-// One worker per stream: worker w drives stream w with that stream's model
-// (STREAM_MODEL[w]) and owns one awnn context of it — never reloads networks. The single
-// NPU core is time-shared across all 4 workers; more ready workers = less NPU idle time.
+// one worker per stream; each owns one awnn context so networks are never reloaded
 static Awnn_Context_t *ctxs[NWORK];
 static pthread_mutex_t mtx_npu = PTHREAD_MUTEX_INITIALIZER;    // serialize the single NPU core
 static pthread_mutex_t mtx_latest = PTHREAD_MUTEX_INITIALIZER; // guard the annotated cells
@@ -391,7 +373,7 @@ static cv::Mat latest[NCAM];
 static int updated[NCAM] = {0};
 static volatile long g_inf_m[8] = {0}, g_det_m[8] = {0}; // per-model counters
 
-// ---- Cedar libcedarc HW H.264 encoder (reused from hwgrid_hybrid) ----
+// Cedar libcedarc HW H.264 encoder (reused from hwgrid_hybrid).
 static struct ScMemOpsS *memops;
 static VeOpsS *veOps;
 static VideoEncoder *venc;
@@ -511,9 +493,8 @@ static void *watchdog(void *a)
     _exit(3);
 }
 
-// NPU worker: pull a frame, preprocess, run inference (NPU serialized by mtx_npu,
-// each worker owns its awnn context so its output persists for post outside the lock),
-// decode+draw, publish the annotated cell. CPU pre/post overlaps other workers' NPU runs.
+// NPU worker: pull a frame, preprocess, run inference (NPU serialized by mtx_npu), decode+draw,
+// publish the annotated cell. CPU pre/post overlaps other workers' NPU runs.
 static void *worker(void *arg)
 {
     int wid = (int)(intptr_t)arg;
@@ -544,13 +525,11 @@ static void *worker(void *arg)
             awnn_set_input_buffers(ctxs[wid], ib);
             awnn_run_hw(ctxs[wid]); // NPU HW run only — lock held just for this
             pthread_mutex_unlock(&mtx_npu);
-            // fp32 output copy OUTSIDE the NPU lock: with 4 workers contending, keeping it
-            // under the lock serializes the core badly (measured 28 vs 32 inf/s aggregate).
+            // fp32 output copy OUTSIDE the NPU lock: under the lock it serializes the core (28 vs 32 inf/s).
             awnn_finish(ctxs[wid]);
             float **out = awnn_get_output_buffers(ctxs[wid]);
             int n = M.post(frame, out);
-            // Decoder emits macroblock-padded frames (e.g. 1080p -> 1920x1088); trim a small
-            // bottom/right margin (>= max 15px MB padding) so cells composite seam-free.
+            // trim MB-padding margin (decoder emits e.g. 1080p as 1920x1088) so cells composite seam-free
             cv::Rect roi(0, 0, frame.cols - (frame.cols > 16 ? 16 : 0), frame.rows - (frame.rows > 16 ? 16 : 0));
             pthread_mutex_lock(&mtx_latest);
             cv::resize(frame(roi), latest[i], cv::Size(CW, CH));
@@ -564,8 +543,7 @@ static void *worker(void *arg)
     free(in);
     return NULL;
 }
-// Compositor + Cedar HW encoder thread (owns the encoder; runs at ~30fps regardless of
-// detection rate so the stream stays smooth, cells refresh as detections land).
+// Compositor + Cedar HW encoder thread; runs at ~30fps regardless of detection rate.
 static void *outputter(void *arg)
 {
     (void)arg;
@@ -590,11 +568,8 @@ static void *outputter(void *arg)
     return NULL;
 }
 
-// ============ On-demand OVERLAID single-camera clip recorder (in-memory GOP ring) ============
-// A dedicated x264 encoder (software — cheap at 640x360, no Cedar VE contention) encodes
-// stream REC_CAM's annotated cell at REC_FPS into a rolling in-memory ring of H.264 access
-// units, GOP-aligned and bounded to REC_RING_SEC seconds. On SIGUSR1 the ring (from its
-// oldest keyframe) is muxed to an mp4 clip — i.e. "save the last X seconds of the overlay".
+// On-demand overlaid single-camera clip recorder: a software x264 encoder feeds a rolling
+// in-memory ring of GOP-aligned H.264 AUs; SIGUSR1 saves the last REC_RING_SEC seconds.
 #define REC_CAM 3       // which stream to record overlaid (0-3)
 #define REC_FPS 10      // recorder sample/encode rate
 #define REC_RING_SEC 30 // in-memory pre-roll depth (tune vs RAM: ~190KB/s @640x360)
@@ -665,10 +640,7 @@ static void *recorder(void *arg)
     }
     return NULL;
 }
-// Save the current ring (oldest keyframe → now) as a clip. We write the raw AnnexB H.264
-// elementary stream (every keyframe carries SPS/PPS via config-interval=-1, so it's fully
-// playable) and then remux to mp4 with a one-shot gst-launch (-e finalizes the moov cleanly
-// — doing the mux inline via appsrc was leaving a 0-byte file).
+// Save the current ring (oldest keyframe -> now) as a raw AnnexB H.264 elementary stream.
 static void rec_dump_clip()
 {
     pthread_mutex_lock(&mtx_ring);
@@ -683,10 +655,7 @@ static void rec_dump_clip()
     int seq = rec_seq++;
     char h264[160];
     snprintf(h264, sizeof(h264), "/home/radxa/clips/overlay_cam%d_%03d.h264", REC_CAM, seq);
-    // Write the ring as a raw AnnexB H.264 elementary stream. Every keyframe carries SPS/PPS
-    // (config-interval=-1), so it's directly playable and losslessly remuxable to mp4 client-
-    // side (`ffmpeg -i clip.h264 -c copy clip.mp4`). On-board gst mp4mux won't finalize from
-    // stored AUs on this board, so we keep the elementary stream as the durable format.
+    // Elementary stream (not mp4): on-board gst mp4mux won't finalize from stored AUs.
     FILE *f = fopen(h264, "wb");
     size_t bytes = 0;
     if (f)
@@ -728,8 +697,7 @@ int main(int argc, char **argv)
     {
         char d[512];
         GError *e = NULL;
-        // videorate caps the CPU-side videoconvert to 8 fps/stream (was the source's ~25),
-        // so we stop color-converting frames the workers would only drop.
+        // videorate caps videoconvert to 8 fps/stream so we don't color-convert frames workers drop
         snprintf(d, sizeof(d),
                  "rtspsrc location=rtsp://%s:8554/stream%d protocols=tcp latency=100 ! rtph264depay ! h264parse ! "
                  "omxh264dec ! videorate drop-only=true ! video/x-raw,framerate=8/1 ! "

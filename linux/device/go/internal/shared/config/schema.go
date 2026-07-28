@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package config is the on-device runtime configuration shared by helixd and
-// every app. It follows the Linux FHS drop-in convention: a package ships its
-// defaults read-only under /usr/lib/helix, the admin (or the cloud, via
-// runtime-manager) overrides them in /etc/helix, and secrets live in separate
-// 0600 files that are never world-readable. Load resolves the effective config
-// for one service by layering those sources; see layer.go.
+// Package config is the on-device runtime configuration shared by helixd and apps.
 package config
 
 import (
@@ -19,8 +14,7 @@ import (
 // SchemaVersion is the current config document version.
 const SchemaVersion = 1
 
-// ClientTLS builds a client TLS config (mTLS if a client cert is set). Returns
-// nil if no CA and no client cert are configured (plaintext dev connections).
+// ClientTLS builds a client TLS config, or nil if no CA and no client cert are set.
 func ClientTLS(caCert, clientCert, clientKey string) (*tls.Config, error) {
 	if caCert == "" && clientCert == "" {
 		return nil, nil
@@ -54,7 +48,7 @@ type Device struct {
 
 // MQTT is the cloud control-plane transport.
 type MQTT struct {
-	BrokerURL    string `json:"brokerUrl"` // e.g. tls://broker:8883 or tcp://broker:1883
+	BrokerURL    string `json:"brokerUrl"`
 	CACert       string `json:"caCert,omitempty"`
 	ClientCert   string `json:"clientCert,omitempty"`
 	ClientKey    string `json:"clientKey,omitempty"`
@@ -68,7 +62,7 @@ type IPC struct {
 
 // Gateway is where apps dial their data-plane (bytestream) connections.
 type Gateway struct {
-	StreamURL  string `json:"streamUrl,omitempty"` // e.g. wss://gw/__stream__
+	StreamURL  string `json:"streamUrl,omitempty"`
 	CACert     string `json:"caCert,omitempty"`
 	ClientCert string `json:"clientCert,omitempty"`
 	ClientKey  string `json:"clientKey,omitempty"`
@@ -76,31 +70,25 @@ type Gateway struct {
 
 // Spool configures helixd's store-and-forward event spool.
 type Spool struct {
-	Path     string `json:"path,omitempty"`     // default config.SpoolPath()
+	Path     string `json:"path,omitempty"`
 	MaxBytes int64  `json:"maxBytes,omitempty"` // 0 = unbounded
 }
 
 // Enrollment configures helixd's CSR-based certificate enrollment and rotation.
 type Enrollment struct {
-	APIURL          string `json:"apiUrl,omitempty"`          // e.g. https://host/api/certificates/device
-	AccessTokenFile string `json:"accessTokenFile,omitempty"` // path to the bearer token (a secret file)
+	APIURL          string `json:"apiUrl,omitempty"`
+	AccessTokenFile string `json:"accessTokenFile,omitempty"`
 }
 
 // Metrics configures runtime-manager's metrics sampler.
 type Metrics struct {
-	// Providers is an optional allow-list of host-metrics provider names (by
-	// executable basename); empty runs every discovered provider.
+	// Providers is an allow-list of provider basenames; empty runs all discovered.
 	Providers []string `json:"providers,omitempty"`
-	// PluginDir overrides the default metrics plugin directory.
 	PluginDir string `json:"pluginDir,omitempty"`
-	// IntervalSec is the sampling interval (default 5).
-	IntervalSec int `json:"intervalSec,omitempty"`
+	IntervalSec int `json:"intervalSec,omitempty"` // default 5
 }
 
 // Config is the shared device document plus the resolved per-service section.
-// The shared fields come from /etc/helix/config.json; the app section is the
-// deep-merge of the package default and the admin/remote drop-in, decoded on
-// demand via AppSection. Secrets are the parsed 0600 EnvironmentFile overlay.
 type Config struct {
 	SchemaVersion int        `json:"schemaVersion,omitempty"`
 	Device        Device     `json:"device"`
@@ -111,11 +99,8 @@ type Config struct {
 	Enrollment    Enrollment `json:"enrollment,omitempty"`
 	Metrics       Metrics    `json:"metrics,omitempty"`
 
-	// service is the name this config was resolved for.
 	service string
-	// app is the resolved per-service section (defaults merged with drop-in).
 	app json.RawMessage
-	// secrets is the parsed per-service EnvironmentFile overlay.
 	secrets map[string]string
 }
 
@@ -148,7 +133,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// applyDefaults fills computed defaults for zero-valued fields.
 func (c *Config) applyDefaults() {
 	if c.IPC.SocketPath == "" {
 		c.IPC.SocketPath = IPCSocketPath()

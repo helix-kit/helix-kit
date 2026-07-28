@@ -1,17 +1,4 @@
-// Helix P2P transport device agent (experimental).
-//
-// A Linux device that establishes a *direct* WebRTC DataChannel to a browser
-// and streams bulk data over it. The cloud (EC2) only relays the handshake
-// (SDP/ICE) via the signaling server — once the DataChannel opens, every byte
-// of payload flows peer-to-peer and never crosses EC2. This is the reusable
-// P2P transport substrate: file transfer here, but the same channel carries any
-// bytes (media, streams, generic data).
-//
-//	agent --outbound WSS--> signaling(room) --brokers--> browser
-//	         then: DataChannel "helix" --DIRECT--> browser   (no EC2 in path)
-//
-// The device is the WebRTC *initiator*: it creates the DataChannel and the SDP
-// offer as soon as the signaling server reports both peers are present.
+// Package main is the Helix P2P transport device agent: it establishes a direct WebRTC DataChannel to a browser and streams bulk data over it, so payload never crosses EC2.
 package main
 
 import (
@@ -33,18 +20,15 @@ import (
 	"github.com/pion/webrtc/v4"
 )
 
-// signalMsg is the opaque envelope relayed by the signaling server. Only `type`
-// is meaningful to the server; the rest is WebRTC's business.
+// signalMsg is the opaque envelope relayed by the signaling server.
 type signalMsg struct {
 	Type      string                   `json:"type"`
 	Initiator bool                     `json:"initiator,omitempty"`
 	SDP       string                   `json:"sdp,omitempty"`
 	Candidate *webrtc.ICECandidateInit `json:"candidate,omitempty"`
-	// SDP offer/answer fields are carried via embedded SessionDescription below.
 }
 
-// fileMeta is the app-level header sent as a string message before the binary
-// chunks (mirrors the embedded "JSON control + binary data" precedent).
+// fileMeta is the app-level header sent as a string message before the binary chunks.
 type fileMeta struct {
 	Type   string `json:"type"`
 	Name   string `json:"name"`
@@ -108,18 +92,14 @@ func run(signal, room string, payload []byte, name, sha string, chunk int) error
 	sendSig := func(m any) { defer func() { recover() }(); out <- m }
 	defer func() { close(out); <-writerDone }()
 
-	// mDNS query+gather so we resolve a same-LAN browser's ".local" host
-	// candidates. For a cross-network peer (e.g. phone on cellular) these are
-	// unused and STUN server-reflexive candidates carry the connection.
+	// mDNS query+gather so we resolve a same-LAN browser's ".local" host candidates (cross-network peers fall back to STUN srflx).
 	se := webrtc.SettingEngine{}
 	se.SetICEMulticastDNSMode(ice.MulticastDNSModeQueryAndGather)
 	api := webrtc.NewAPI(webrtc.WithSettingEngine(se))
 
 	dev := &device{api: api, sendSig: sendSig, payload: payload, name: name, sha: sha, chunk: chunk}
 
-	// One WebRTC session per browser. A fresh PeerConnection is built for every
-	// "ready" (each new browser / page reload), so retries from a flaky mobile
-	// network always start clean instead of colliding on stale ICE state.
+	// Fresh PeerConnection per "ready" so retries never collide on stale ICE state.
 	for {
 		var m signalRaw
 		if err := ws.ReadJSON(&m); err != nil {
@@ -142,8 +122,7 @@ func run(signal, room string, payload []byte, name, sha string, chunk int) error
 	}
 }
 
-// device owns the signaling socket's sender and builds one PeerConnection per
-// connected browser.
+// device owns the signaling socket's sender and builds one PeerConnection per connected browser.
 type device struct {
 	api     *webrtc.API
 	sendSig func(any)
@@ -163,8 +142,7 @@ func (d *device) newSession() {
 		ICEServers: []webrtc.ICEServer{
 			{URLs: []string{"stun:stun.l.google.com:19302"}},
 			{
-				// TURN fallback (our coturn on EC2) for peers that can't go
-				// direct. ICE still prefers host/srflx; relay is last resort.
+				// TURN fallback (coturn on EC2) for peers that can't go direct; relay is last resort.
 				URLs: []string{
 					"turn:turn.port.helix-kit.com:3478?transport=udp",
 					"turn:turn.port.helix-kit.com:3478?transport=tcp",
@@ -263,8 +241,7 @@ func (d *device) closeSession() {
 	}
 }
 
-// signalRaw decodes inbound signaling, including SDP answers (which arrive as a
-// raw RTCSessionDescription: {type, sdp}).
+// signalRaw decodes inbound signaling, including SDP answers (raw RTCSessionDescription: {type, sdp}).
 type signalRaw struct {
 	Type      string                   `json:"type"`
 	Initiator bool                     `json:"initiator"`
@@ -272,19 +249,15 @@ type signalRaw struct {
 	Candidate *webrtc.ICECandidateInit `json:"candidate"`
 }
 
-// sendFile streams the payload over the DataChannel with backpressure: a string
-// meta header, then binary chunks, then a string "file-end". WebRTC preserves
-// message order on an ordered channel, so control and data interleave safely.
+// sendFile streams the payload over the DataChannel: string meta header, binary chunks, then a "file-end" string (ordered channel keeps control and data interleaved safely).
 func sendFile(dc *webrtc.DataChannel, payload []byte, name, sha string, chunk int) error {
 	meta, _ := json.Marshal(fileMeta{Type: "file-meta", Name: name, Size: len(payload), Mime: "application/octet-stream", SHA256: sha, Chunk: chunk})
 	if err := dc.SendText(string(meta)); err != nil {
 		return err
 	}
 
-	// Backpressure: pause sending when the send buffer grows past maxBuffered,
-	// resume when OnBufferedAmountLow fires. Without this a fast producer blows
-	// up memory / drops the channel.
-	const maxBuffered = 1 << 20 // 1 MiB
+	// Backpressure: without pausing on a full send buffer a fast producer blows up memory / drops the channel.
+	const maxBuffered = 1 << 20
 	dc.SetBufferedAmountLowThreshold(maxBuffered / 2)
 	resume := make(chan struct{}, 1)
 	dc.OnBufferedAmountLow(func() {

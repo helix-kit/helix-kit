@@ -1,11 +1,4 @@
-"""Real ESP32 custom-firmware build worker.
-
-Runs `helix embedded esp32 link` (which auto-dispatches into the lean ESP-IDF
-docker image), reads the produced manifest, and drives the release backend's
-custom-build callback endpoints with the real firmware artifacts — so a user's
-customization (apps + feature fragments + sdkconfig overrides + version) becomes
-a registered, OTA-ready release. Config-hash-keyed build dirs reuse the warm
-build tree across repeat builds of the same config."""
+"""Real ESP32 custom-firmware build worker."""
 
 from __future__ import annotations
 
@@ -45,8 +38,7 @@ def config_hash(config: JsonDict) -> str:
 
 
 def read_firmware_dir(out_dir: Path) -> tuple[list[JsonDict], JsonDict]:
-    """Read a built firmware output dir (its manifest.json + the flashable .bin
-    files) into (flashable artifacts with bytes+offsets, the manifest)."""
+    """Read a built firmware output dir into (flashable artifacts with bytes+offsets, the manifest)."""
     manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
     assert isinstance(manifest, dict)
     artifacts: list[JsonDict] = []
@@ -68,8 +60,7 @@ def read_firmware_dir(out_dir: Path) -> tuple[list[JsonDict], JsonDict]:
 def build_esp32_firmware(
     config: JsonDict, *, echo: Echo = print
 ) -> tuple[list[JsonDict], JsonDict]:
-    """Build a customized firmware via the helix CLI (auto-dockerized). Returns
-    (flashable artifacts with bytes+offsets, the build manifest)."""
+    """Build a customized firmware via the helix CLI (auto-dockerized)."""
     out_name = f"build-{config_hash(config)[:12]}"
     args = [
         sys.executable,
@@ -96,11 +87,7 @@ def build_esp32_firmware(
 
 
 def analyze_firmware(config: JsonDict, *, echo: Echo = print) -> JsonDict | None:
-    """Best-effort size analysis of a freshly built config's firmware.
-
-    Reuses the same config-hashed build/firmware dirs as `build_esp32_firmware`;
-    returns the parsed `esp32 analyze` report, or None if analysis fails (it is
-    supplementary metadata, never a reason to fail the build)."""
+    """Best-effort size analysis of a freshly built config's firmware."""
     out_name = f"build-{config_hash(config)[:12]}"
     args = [
         sys.executable,
@@ -139,13 +126,7 @@ def complete_build(
     echo: Echo = print,
     analyze: bool = False,
 ) -> JsonDict:
-    """Build the firmware for an already-requested build, upload its artifacts,
-    and post the completion callback — creating an owned, OTA-ready release.
-
-    The build row + callback token are created by the caller (the CLI's
-    `request_build`, or the cloud backend's dispatch); this drives only the worker
-    side of the protocol, so both the CLI and the long-running build container
-    share one implementation."""
+    """Build the firmware for an already-requested build, upload artifacts, and post completion."""
     started = time.monotonic()
     artifacts, manifest = build_esp32_firmware(config, echo=echo)
     for artifact in artifacts:
@@ -203,8 +184,7 @@ def run_custom_build(
     owner_user_id: str,
     echo: Echo = print,
 ) -> JsonDict:
-    """Request a custom build (Tier-0 dedupe), run the real build, upload the
-    artifacts, and complete — creating an owned, OTA-ready release."""
+    """Request a custom build (Tier-0 dedupe), run it, upload artifacts, and complete."""
     request = client.request_build(config, owner_user_id, selector)
     if request["status"] == "hit":
         echo(f"[build] Tier-0 cache hit -> release {request['releaseId']}")

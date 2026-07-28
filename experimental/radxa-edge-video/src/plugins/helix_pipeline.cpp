@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Helix edge-video pipeline HOST runtime.
-//   helix_pipeline <config.json> [host_ip]
-// Loads a JSON pipeline, dlopen()s the .so named for each node, checks the ABI, and drives
-// the graph with the exact threading model ported from npu_compare.cpp (per-stream worker
-// threads + single-NPU mutex + a compositor/sink outputter thread) — so performance is
-// preserved while every stage is a runtime-swappable module. The config is the seam a future
-// React graph editor will emit. `${HOST}` in the config is replaced by [host_ip] (default
-// 192.168.1.35) so one config is portable across boards.
+// Helix edge-video pipeline HOST runtime: helix_pipeline <config.json> [host_ip].
+// Loads a JSON pipeline, dlopen()s each node .so, checks the ABI, and drives the graph
+// (per-stream worker threads + single-NPU mutex + a compositor/sink outputter thread).
+// `${HOST}` in the config is replaced by [host_ip] (default 192.168.1.35).
 #include <gst/gst.h>
 #include <opencv2/opencv.hpp>
 #include <dlfcn.h>
@@ -40,9 +36,9 @@ static volatile int running = 1, teardown_done = 0;
 static pthread_mutex_t mtx_npu = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_latest = PTHREAD_MUTEX_INITIALIZER;
 static std::vector<cv::Mat> latest;
-static std::vector<int> g_updated;                  // 1 = cell has a new annotated frame since last output tick
-static std::vector<long> g_inf, g_det, g_time_us;   // per-stream counters (stable addresses)
-static bool g_serialize_infer = true;               // true = one infer at a time (single NPU); false = concurrent (GPU)
+static std::vector<int> g_updated;                  // 1 = cell has a new frame since last output tick
+static std::vector<long> g_inf, g_det, g_time_us;
+static bool g_serialize_infer = true;               // one infer at a time (single NPU) vs concurrent (GPU)
 
 static double now_ms() {
     struct timespec t;
@@ -52,8 +48,7 @@ static double now_ms() {
 static void on_sig(int) { running = 0; }
 
 static std::string g_bindir = ".";
-// Make a path absolute (relative -> cwd/path). Under sudo the loader runs in secure-execution
-// mode and refuses cwd-relative dlopen paths, so every candidate must be absolute.
+// Under sudo the loader runs in secure-execution mode and refuses cwd-relative dlopen paths.
 static std::string absolutize(const std::string &p) {
     if (!p.empty() && p[0] == '/') return p;
     char cwd[4096];
@@ -74,11 +69,10 @@ static void *dlopen_module(const std::string &module) {
             fprintf(stderr, "[host] dlopen %s: %s\n", canon, dlerror());
         }
     }
-    // last resort: bare name via loader search path
     return dlopen((module + ".so").c_str(), RTLD_NOW | RTLD_GLOBAL);
 }
 
-// Load one node .so, verify ABI, instantiate with its params (as a JSON string).
+// Load one node .so, verify ABI, instantiate with its params.
 static bool load_node(LoadedNode &n, const hxj::Value &spec, const char *want_kind) {
     n.module = hxj::jstr(spec, "module");
     if (n.module.empty()) { fprintf(stderr, "[host] node missing 'module' (kind %s)\n", want_kind); return false; }
@@ -104,8 +98,8 @@ static void destroy_node(LoadedNode &n) {
     n.inst = nullptr;
 }
 
-// NPU worker: source -> preprocess -> {lock; infer_submit; unlock; infer_collect} ->
-// postprocess -> overlay -> publish annotated frame. One per stream. Mirrors npu_compare worker.
+// One worker per stream: source -> preprocess -> {lock; infer_submit; unlock; infer_collect}
+// -> postprocess -> overlay -> publish annotated frame.
 static void *worker(void *arg) {
     int i = (int)(intptr_t)arg;
     StreamNodes &sn = g_streams[i];
@@ -152,15 +146,13 @@ static void *worker(void *arg) {
     return nullptr;
 }
 
-// Compositor + sink thread: snapshot the annotated cells, compose the grid, encode+push. ~30fps.
+// Compositor + sink thread: compose the grid from the annotated cells, encode+push. ~30fps.
 static void *outputter(void *) {
     int N = (int)g_streams.size();
     std::vector<helix_packet_t> cells(N);
     while (running) {
-        // Composite UNDER the lock (like the monolith's outputter) — the compositor reads each
-        // fresh latest[] cell directly and resizes it into its persistent grid, so there is NO
-        // snapshot copy. Only cells updated since the last tick are passed (others -> null ->
-        // compositor keeps their last content). The slow part (encode) runs outside the lock.
+        // Composite under the lock (no snapshot copy); the slow encode runs outside it. Only
+        // cells updated since the last tick are passed (others -> null -> keep last content).
         pthread_mutex_lock(&mtx_latest);
         for (int i = 0; i < N; i++) {
             cells[i].type = HX_PKT_FRAME;

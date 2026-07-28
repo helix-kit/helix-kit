@@ -1,5 +1,4 @@
-// Minimal Cedar (Allwinner VE) hardware H.264 decode via libvdecoder.
-// Milestone 1: decode an annexb .h264 file, save the first decoded NV12 frame.
+// Minimal Cedar (Allwinner VE) HW H.264 decode via libvdecoder; saves one NV12 frame.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +11,6 @@
 #include "vdecoder.h"
 
 // Exported by libVE / libvideoengine but not declared in the public headers.
-// Takes an EVEOPSTYPE (VE_OPS_TYPE_NORMAL for H.264).
 extern VeOpsS* GetVeOpsS(enum EVEOPSTYPE type);
 
 int main(int argc, char** argv) {
@@ -55,21 +53,17 @@ int main(int argc, char** argv) {
     printf("InitializeVideoDecoder=%d\n", r);
     if (r != 0) return 1;
 
-    // --- feed one access unit per submit, decode as we go ---
     #define NAL_TYPE(p) ((p)[0] & 0x1F)
     int decoded = 0, saved = 0;
     long i = 0;
-    // find first start code
     while (i + 3 < sz && !(data[i]==0&&data[i+1]==0&&data[i+2]==1)) i++;
     long au_start = i; int au_has_vcl = 0;
     long pos = i;
     while (pos + 3 < sz) {
-        // at a start code (00 00 01); locate NAL header byte
         long nal = pos + 3;
         int t = data[nal] & 0x1F;
         int isVCL = (t >= 1 && t <= 5);
         if (nal > au_start + 3 && au_has_vcl) {
-            // boundary: flush AU [au_start, pos)
             long alen = pos - au_start;
             char *pB=0,*pR=0; int bS=0,rS=0;
             if (RequestVideoStreamBuffer(dec, alen, &pB,&bS,&pR,&rS,0)==0 && bS+rS>=alen) {
@@ -102,12 +96,10 @@ int main(int argc, char** argv) {
             au_start = pos; au_has_vcl = 0;
         }
         au_has_vcl |= isVCL;
-        // advance to next start code
         long p = nal + 1;
         while (p + 3 < sz && !(data[p]==0&&data[p+1]==0&&data[p+2]==1)) p++;
         pos = (p + 3 < sz) ? p : sz;
     }
-    // flush remaining + EOS
     DecodeVideoStream(dec, 1, 0, 0, 0);
     { VideoPicture* pic; while ((pic = RequestPicture(dec, 0)) != NULL) { decoded++; ReturnPicture(dec, pic); } }
     printf("RESULT: decoded %d frames, saved %d\n", decoded, saved);

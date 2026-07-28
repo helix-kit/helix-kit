@@ -12,15 +12,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/stream"
 )
 
-// Manager owns a stream app's sessions: opening them over whichever transport was
-// asked for, accepting the streams the far end opens on them, and tearing them
-// down.
-//
-// Every stream app needs exactly this, and the only thing that differs between
-// them is what they DO with an accepted stream — a shell forks a PTY, port-forward
-// dials a TCP target, files serves a transfer. So that is the one thing an app
-// supplies (onStream); the lifecycle lives here once instead of being copied into
-// each service.
+// Manager owns a stream app's sessions: opening them, accepting the streams the far end opens, and tearing them down. Apps supply only onStream.
 type Manager struct {
 	cfg *config.Config
 	log *slog.Logger
@@ -42,9 +34,7 @@ type SessionInfo struct {
 	CreatedAt time.Time
 	// Streams currently open on it (terminals, connections, transfers).
 	Streams int
-	// Meta is whatever the app attached at Open — port-forward keeps its target
-	// here, so the manager can own the session table without knowing what an app's
-	// sessions mean.
+	// Meta is whatever the app attached at Open.
 	Meta any
 }
 
@@ -64,10 +54,7 @@ type OpenOptions struct {
 	OnStream func(*stream.Stream)
 }
 
-// Open starts a session and its accept loop, and returns the SDP offer (empty on
-// the relay transport). It never blocks on the peer connection: on the p2p path the
-// caller must answer the control-plane request with this offer before the browser
-// can complete the handshake.
+// Open starts a session and its accept loop and returns the SDP offer (empty for relay); it never blocks on the peer connection.
 func (m *Manager) Open(rootCtx context.Context, opts OpenOptions) (string, error) {
 	sCtx, cancel := context.WithCancel(rootCtx)
 	session, err := Open(sCtx, m.cfg, m.log, opts.Params, opts.SendCandidate)
@@ -110,9 +97,7 @@ func (m *Manager) acceptLoop(
 		e.session.Close()
 	}()
 
-	// Relay is live already; a peer becomes live once the browser answers and ICE
-	// completes. The loop below is identical either way — the whole point of
-	// modelling WebRTC as a transport under the mux.
+	// Relay is live already; a peer becomes live once the browser answers. The loop below is identical either way.
 	mux, err := e.session.Wait(ctx)
 	if err != nil {
 		m.log.Warn("data plane never came up", "session", id, "err", err)

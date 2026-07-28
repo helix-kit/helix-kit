@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// preprocess plugin: passthrough. Forwards the FRAME unchanged so a fused GPU infer node
-// (hx_infer_ort_gpu) can do the preprocessing itself on the GPU. Keeps the host's fixed
-// source->preprocess->infer topology intact.
+// Preprocess plugin: passthrough. Forwards the FRAME unchanged so a fused GPU infer node
+// (hx_infer_ort_gpu) can do the preprocessing itself on the GPU.
 #include "../helix_pipeline.h"
 
 struct helix_node_ctx { int _; };

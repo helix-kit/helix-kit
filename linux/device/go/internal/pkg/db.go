@@ -20,8 +20,7 @@ const (
 	StatusHalfInstalled = "half-installed"
 )
 
-// ConffileState records a tracked conffile's shipped-default and on-disk hashes
-// so upgrades can detect local modification (dpkg 3-way).
+// ConffileState records a tracked conffile's default and on-disk hashes (dpkg 3-way).
 type ConffileState struct {
 	Path         string `json:"path"`
 	InstalledSHA string `json:"installedSha"`

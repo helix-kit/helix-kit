@@ -1,7 +1,4 @@
-// Bridge: GStreamer pulls RTSP H.264 -> Cedar HW decode -> GStreamer displays.
-//   rtspsrc ! rtph264depay ! h264parse(au,byte-stream) ! appsink
-//     -> [decode thread: Cedar libvdecoder] ->
-//   appsrc(NV12) ! videoscale ! kmssink   (clean NV12 display, no green lines)
+// GStreamer RTSP H.264 -> Cedar HW decode (decode thread) -> appsrc NV12 -> kmssink.
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -37,12 +34,9 @@ static void push_pictures(void) {
             gst_caps_unref(c);
             caps_set = 1;
         }
-        // pData0 (Y) and pData1 (UV) are SEPARATE virtual mappings — flush each
-        // plane's own range so both are read fresh (a single contiguous flush
-        // from pData0 misses the UV plane -> stale chroma -> green lines).
+        // pData0 (Y) and pData1 (UV) are separate virtual mappings — flush each plane's own range or the UV plane goes stale (green lines).
         CdcMemFlushCache(memops, pic->pData0, (gsize)s * h);
         if (pic->pData1) CdcMemFlushCache(memops, pic->pData1, (gsize)s * h / 2);
-        // copy the decoded frame into a tight NV12 GstBuffer (stride==width here)
         GstBuffer* out = gst_buffer_new_allocate(NULL, (gsize)w * h * 3 / 2, NULL);
         GstMapInfo m;
         gst_buffer_map(out, &m, GST_MAP_WRITE);

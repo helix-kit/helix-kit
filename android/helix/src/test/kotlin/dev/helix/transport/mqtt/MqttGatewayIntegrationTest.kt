@@ -13,14 +13,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeNoException
 import org.junit.Test
 
-/**
- * Drives the gpio-control service end to end through a Helix WS->MQTT gateway to
- * a simulated device. The gateway URL comes from the `mqttGatewayUrl` Gradle
- * property (or `HELIX_MQTT_GATEWAY_URL`); the appliance-backed e2e
- * (`helix e2e run -k android_mqtt`) supplies it and the device simulator. When
- * no gateway is configured the test skips rather than fails, so `./gradlew
- * check` stays green standalone.
- */
+// Drives gpio-control end to end through a WS->MQTT gateway to a simulated device;
+// skips when no gateway is configured.
 @Serializable
 data class SetGpioRequest(val pin: Int, val high: Boolean)
 
@@ -38,8 +32,6 @@ private val readGpio = method("read-gpio", schema<ReadGpioRequest>(), schema<Gpi
 
 class MqttGatewayIntegrationTest {
 
-    // Set by the appliance-backed e2e (`helix e2e run`) via Gradle properties;
-    // the appliance gateway's public HTTP port in HOST mode is 24000.
     private val gatewayUrl: String =
         System.getProperty("helix.mqtt.gatewayUrl")
             ?: System.getenv("HELIX_MQTT_GATEWAY_URL")
@@ -68,15 +60,12 @@ class MqttGatewayIntegrationTest {
         transport.subscribe(HelixPacketHandler { client.receive(it) })
 
         try {
-            // set-gpio pin 2 high -> device reports level 1
             val setResult = withTimeout(12_000) { client.request(setGpio, SetGpioRequest(pin = 2, high = true)) }
             assertEquals(listOf(GpioPinState(pin = 2, level = 1)), setResult.pins)
 
-            // read-gpio pin 2 reflects the new level
             val readResult = withTimeout(12_000) { client.request(readGpio, ReadGpioRequest(pin = 2)) }
             assertEquals(listOf(GpioPinState(pin = 2, level = 1)), readResult.pins)
 
-            // set-gpio pin 2 low -> level 0
             val clearResult = withTimeout(12_000) { client.request(setGpio, SetGpioRequest(pin = 2, high = false)) }
             assertEquals(listOf(GpioPinState(pin = 2, level = 0)), clearResult.pins)
         } finally {
@@ -105,7 +94,6 @@ class MqttGatewayIntegrationTest {
         }
 
         try {
-            // Any request produces a gpio-control-state response the subscription also sees.
             client.request(setGpio, SetGpioRequest(pin = 17, high = true))
             val payload = withTimeout(12_000) { received.await() }
             assertEquals(1, payload.pins.single { it.pin == 17 }.level)

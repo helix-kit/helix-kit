@@ -7,7 +7,6 @@ import click
 
 from tooling.common.paths import REPO_ROOT
 
-# The root program name every invocation path is prefixed with.
 _PROG = "helix"
 
 

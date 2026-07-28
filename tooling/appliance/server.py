@@ -28,14 +28,11 @@ PREBAKED_DIST = "/opt/helix/loadtest-dist"
 PREBAKED_LOG = "/var/lib/helix/loadtest-server.log"
 PREBAKED_PATTERN = "loadtest-dist/index.js"
 
-# Bun runs the same self-contained ESM bundle as node. The host bun binary is a
-# static x86_64/glibc executable, so it is copied straight into the container
-# (which shares the host libc family) rather than installed there.
+# The static host bun binary is copied into the container (shared libc), not installed.
 HOST_BUN = Path.home() / ".bun" / "bin" / "bun"
 CONTAINER_BUN = "/opt/helix/bin/bun"
 
-# Readiness log markers each role prints once it is serving. A process's markers
-# are the union over the roles it runs; a combined process prints them all.
+# Readiness log markers each role prints once serving; a process's set is the union of its roles.
 ROLE_MARKERS: dict[str, tuple[str, ...]] = {
     "gateway": ("public HTTP listening", "device mTLS listening"),
     "ingest": ("device event ingestion listening",),
@@ -44,9 +41,7 @@ ROLE_MARKERS: dict[str, tuple[str, ...]] = {
     "workflow": ("workflow serve endpoint listening",),
 }
 
-# The roles helix-server runs when HELIX_SERVER_ROLES is unset (see parseRoles /
-# DEFAULT_ROLES in roles.ts). dispatch + workflow are opt-in, so a combined
-# process only prints these markers — not every ROLE_MARKERS key.
+# The roles helix-server runs when HELIX_SERVER_ROLES is unset (dispatch + workflow are opt-in).
 DEFAULT_PROCESS_ROLES: tuple[str, ...] = ("gateway", "ingest", "writer")
 
 
@@ -59,9 +54,7 @@ class _ServerProcess:
         # Slug joins roles with '-' (regex-safe) so pgrep patterns stay literal.
         self.label = "all" if roles is None else "-".join(roles)
         self.log = f"/var/lib/helix/loadtest-server-{index}-{self.label}.log"
-        # A per-process argv tag (last arg) so pgrep can tell siblings apart. The
-        # index prefix keeps replicated groups (e.g. several 'dispatch' processes
-        # for horizontal scaling) distinct; '$' anchors the match.
+        # Per-process argv tag ('$'-anchored, index-prefixed) so pgrep tells siblings apart.
         self.tag = f"--helix-role-group={index}-{self.label}"
         self.pattern = f"helix-role-group={index}-{self.label}$"
         effective = DEFAULT_PROCESS_ROLES if roles is None else roles
@@ -69,14 +62,7 @@ class _ServerProcess:
 
 
 class HelixServer:
-    """Runs the helix-server app against an appliance's infra.
-
-    HOST     — runs on the host from source (`pnpm dev`), wired to the mapped
-               infra ports and the appliance's exported step-ca material.
-    PREBAKED — builds helix-server and runs the bundle INSIDE the container, so
-               it shares the container's cgroup (and any CPU/memory cap) with the
-               broker/kafka/postgres.
-    """
+    """Runs the helix-server app against an appliance's infra (HOST or PREBAKED mode)."""
 
     def __init__(self, appliance: Appliance, work_dir: Path) -> None:
         self.appliance = appliance
@@ -95,8 +81,7 @@ class HelixServer:
 
     @property
     def crl_path(self) -> Path | None:
-        """The CRL file the mTLS gateway watches (host mode), if one was
-        exported; None otherwise."""
+        """The CRL file the mTLS gateway watches (host mode), if exported; None otherwise."""
         return self._pki.get("crl")
 
     def start(self) -> None:
@@ -115,7 +100,6 @@ class HelixServer:
         self.stop()
         self.start()
 
-    # ---- host mode ---------------------------------------------------------
     def _host_env(self) -> dict[str, str]:
         cfg = self.appliance.config
         pki = self._pki
@@ -154,8 +138,7 @@ class HelixServer:
 
         log_file = self._log_path.open("wb")
         click.echo("+ pnpm --filter @helix/server-app dev  (host mode)")
-        # New session so stop() can signal the whole pnpm -> tsx -> node tree;
-        # SIGTERM to the pnpm wrapper alone leaves node holding the ports.
+        # New session so stop() can signal the whole pnpm -> tsx -> node tree.
         self._process = subprocess.Popen(
             ["pnpm", "--filter", "@helix/server-app", "dev"],
             cwd=WEB_ROOT,
@@ -201,7 +184,6 @@ class HelixServer:
                 os.killpg(pgid, signal.SIGKILL)
             process.wait()
 
-    # ---- prebaked (in-container) mode -------------------------------------
     def _process_specs(self) -> list[_ServerProcess]:
         groups = self.appliance.config.server_roles
         if groups is None:
@@ -243,17 +225,13 @@ class HelixServer:
             tuning_export += (
                 f"export HELIX_WORKFLOW_INFER_BASE_URL={self.appliance.infer_base_url_override}; "
             )
-        # External app DB: override the internal DATABASE_URL for every prebaked
-        # process so app writes land on the uncapped Postgres, not the capped one.
+        # External app DB: override internal DATABASE_URL so app writes land on the uncapped PG.
         if self.appliance.app_db_url is not None:
             tuning_export += f"export DATABASE_URL={self.appliance.app_db_url}; "
-        # DBOS keeps its checkpoints in the app database (a 'dbos' schema), so it
-        # follows wherever DATABASE_URL points. This MUST come after the override
-        # above so $DATABASE_URL is already the external URL when captured.
+        # DBOS follows DATABASE_URL; MUST come after the override above so $DATABASE_URL is set.
         if cfg.workflow_mode == "dbos":
             tuning_export += 'export DBOS_SYSTEM_DATABASE_URL="$DATABASE_URL"; '
-        # External Inngest (own CPU-capped container): point the app at it and tell
-        # its serve endpoint the address Inngest must call back on (the bridge IP).
+        # External Inngest: point the app at it + advertise the serve host it must call back on.
         if self.appliance.inngest_base_url_override is not None:
             tuning_export += f"export INNGEST_BASE_URL={self.appliance.inngest_base_url_override}; "
         if self.appliance.workflow_serve_host_override is not None:
@@ -262,10 +240,7 @@ class HelixServer:
             )
 
         specs = self._process_specs()
-        # DBOS: migrate each system database once (blocking, sequential) before
-        # launching so concurrent launches don't deadlock on the migration. When
-        # sharded, each dispatch process points at its own Postgres process
-        # (dbos_shard_urls); otherwise all share the app database's 'dbos' schema.
+        # DBOS: migrate each system DB once before launch so concurrent launches don't deadlock.
         shard_urls = self.appliance.dbos_shard_urls if cfg.workflow_dbos_shard else []
         if cfg.workflow_mode == "dbos":
             migrate_urls = shard_urls or ['"$DATABASE_URL"']
@@ -355,9 +330,7 @@ class HelixServer:
         raise click.ClickException(f"prebaked helix-server did not become ready:\n{tails}")
 
     def _stop_prebaked(self) -> None:
-        # SIGTERM, then wait for the process(es) to actually release their ports
-        # before returning — otherwise an immediate restart races the old node on
-        # EADDRINUSE (:4000/:4001). Escalate to SIGKILL if graceful exit stalls.
+        # SIGTERM then wait for ports to release (else an immediate restart hits EADDRINUSE); then SIGKILL.
         self.appliance.exec_shell(f"pkill -f '{PREBAKED_PATTERN}'", check=False)
         deadline = time.monotonic() + PREBAKED_STOP_TIMEOUT_SECONDS
         while time.monotonic() < deadline:

@@ -19,19 +19,13 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// payloadPrefix is the tar path prefix for the filesystem overlay.
 const payloadPrefix = "payload/"
 
 // Clock is overridable in tests (production stamps wall time).
 var Clock = func() time.Time { return time.Now() }
 
-// Install unpacks and configures a .helixpkg onto the device, recording the
-// result in the package DB and publishing its service descriptor to the
-// managed-services catalog. It performs no systemd actions — runtime-manager
-// stops the old unit beforehand and reconciles the new one afterward.
-//
-// If expectedSHA is non-empty the package file's hash must match it before any
-// change is made. Local conffile modifications survive upgrades (dpkg 3-way).
+// Install unpacks and configures a .helixpkg, records it in the DB, and publishes its
+// service descriptor to the catalog. It performs no systemd actions (runtime-manager does).
 func Install(pkgPath, expectedSHA string) (*Manifest, error) {
 	sum, err := sha256File(pkgPath)
 	if err != nil {
@@ -122,9 +116,8 @@ func Install(pkgPath, expectedSHA string) (*Manifest, error) {
 	return m, nil
 }
 
-// Remove uninstalls a package: it deletes payload files (keeping conffiles
-// unless purge), runs prerm/postrm, updates the DB, and removes the service from
-// the catalog. runtime-manager stops+disables the unit before this is called.
+// Remove uninstalls a package: deletes payload files (keeping conffiles unless purge),
+// updates the DB, and removes the service from the catalog.
 func Remove(name string, purge bool) error {
 	db, err := LoadDB()
 	if err != nil {
@@ -135,8 +128,6 @@ func Remove(name string, purge bool) error {
 		return fmt.Errorf("package %q is not installed", name)
 	}
 
-	// Nothing to re-run maintainer scripts from unless we retained them; the
-	// slice relies on runtime-manager having stopped the unit already.
 	conffiles := map[string]bool{}
 	for _, c := range e.Conffiles {
 		conffiles[c.Path] = true
@@ -166,7 +157,6 @@ func Remove(name string, purge bool) error {
 	return syncCatalog(db)
 }
 
-// syncCatalog rebuilds the managed-services catalog from the installed packages.
 func syncCatalog(db *DB) error {
 	ms := &ManagedServices{}
 	for _, e := range db.List() {
@@ -186,9 +176,7 @@ func markHalfInstalled(db *DB, m *Manifest, sum string, files []string) {
 	_ = db.Save()
 }
 
-// extractPayload writes the package's filesystem overlay under the device root,
-// applying dpkg-style 3-way handling to declared conffiles. It returns the list
-// of installed on-device paths and the updated conffile states.
+// extractPayload writes the overlay under the device root with dpkg 3-way conffile handling.
 func extractPayload(pkgPath string, m *Manifest, prev *DBEntry) ([]string, []ConffileState, error) {
 	conffiles := map[string]Conffile{}
 	for _, c := range m.Conffiles {
@@ -238,8 +226,7 @@ func extractPayload(pkgPath string, m *Manifest, prev *DBEntry) ([]string, []Con
 			continue
 		case tar.TypeReg:
 		default:
-			// Symlinks and other special entries are rejected — packages ship
-			// plain files and dirs only.
+			// Packages ship plain files and dirs only.
 			return files, confStates, fmt.Errorf("unsupported tar entry %q (type %d)", h.Name, h.Typeflag)
 		}
 
@@ -273,8 +260,7 @@ func extractPayload(pkgPath string, m *Manifest, prev *DBEntry) ([]string, []Con
 	return files, confStates, nil
 }
 
-// applyConffile implements dpkg 3-way conffile handling and returns the new
-// tracked state.
+// applyConffile implements dpkg 3-way conffile handling and returns the new tracked state.
 func applyConffile(dest, onDevice string, shipped []byte, c Conffile, prev ConffileState) (ConffileState, error) {
 	shippedSHA := sha256Bytes(shipped)
 	mode := parseMode(c.Mode, 0o640)
@@ -309,8 +295,6 @@ func applyConffile(dest, onDevice string, shipped []byte, c Conffile, prev Conff
 	return ConffileState{Path: onDevice, InstalledSHA: curSHA, DefaultSHA: shippedSHA}, nil
 }
 
-// --- maintainer scripts + setup ---
-
 func extractMaintainerScripts(pkgPath string, m *Manifest) (dir string, cleanup func(), err error) {
 	cleanup = func() {}
 	if len(m.MaintainerScripts) == 0 {
@@ -328,8 +312,7 @@ func extractMaintainerScripts(pkgPath string, m *Manifest) (dir string, cleanup 
 	}
 	cleanup = func() { _ = os.RemoveAll(dir) }
 
-	// Map each shipped script path back to its hook name so it is extracted as
-	// dir/<hook> (runScript resolves hooks by that name).
+	// Extract each script as dir/<hook> so runScript can resolve it by hook name.
 	hookOf := map[string]string{}
 	for hook, p := range m.MaintainerScripts {
 		hookOf[p] = hook
@@ -373,8 +356,6 @@ func runScript(dir string, hook string, args ...string) error {
 	if dir == "" {
 		return nil
 	}
-	// The manifest maps a hook name to a script path; we extracted by basename.
-	// Resolve by convention: the file named exactly <hook> under dir, if present.
 	candidate := filepath.Join(dir, hook)
 	if _, err := os.Stat(candidate); err != nil {
 		return nil // hook not shipped
@@ -398,8 +379,6 @@ func runSetup(m *Manifest) error {
 	}
 	return nil
 }
-
-// --- small fs/hash helpers ---
 
 func rootJoin(onDevice string) string {
 	return filepath.Join(config.Root(), filepath.Clean(onDevice))
@@ -446,13 +425,10 @@ func parseMode(s string, def os.FileMode) os.FileMode {
 	return os.FileMode(n)
 }
 
-// applyOwner best-effort chowns a conffile to "user:group". It silently ignores
-// permission errors so installs work unprivileged in tests.
+// applyOwner best-effort chowns a conffile to "user:group", ignoring permission errors.
 func applyOwner(path, owner string) {
 	if owner == "" {
 		return
 	}
-	// Resolution of names→ids and the chown itself are best-effort; runtime-manager
-	// runs the installer as root on-device where this succeeds.
 	_ = chownByName(path, owner)
 }

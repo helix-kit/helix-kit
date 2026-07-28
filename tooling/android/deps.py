@@ -1,11 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Version-catalog update checker for the Android SDK/app.
-
-Reads ``android/gradle/libs.versions.toml`` and, for every ``[versions]`` entry
-referenced by a library or plugin, resolves the newest release published on the
-relevant Maven repository (Google Maven, Maven Central, or the Gradle Plugin
-Portal). This is the Android analogue of ``pnpm update:check`` in ``web/``.
-"""
+"""Version-catalog update checker for the Android SDK/app."""
 
 from __future__ import annotations
 
@@ -26,8 +20,7 @@ GOOGLE_MAVEN = "https://dl.google.com/dl/android/maven2"
 MAVEN_CENTRAL = "https://repo1.maven.org/maven2"
 PLUGIN_PORTAL = "https://plugins.gradle.org/m2"
 
-# A stable version is purely numeric dotted (e.g. 1.15.0, 2026.06.01). Anything
-# carrying a qualifier (alpha/beta/rc/eap/Beta/M/dev/snapshot) is a prerelease.
+# Stable = purely numeric dotted; any qualifier (alpha/beta/rc/eap/dev/snapshot) is a prerelease.
 _STABLE_RE = re.compile(r"^[0-9]+(\.[0-9]+)*$")
 
 _GOOGLE_GROUPS = ("androidx", "com.android", "com.google")
@@ -193,11 +186,7 @@ def check_updates(*, include_prerelease: bool = False, timeout: float = 15.0) ->
 
 
 def apply_updates(updates: list[DepUpdate]) -> list[DepUpdate]:
-    """Rewrite the catalog's [versions] block to the resolved latest versions.
-
-    Returns the subset actually written. Preserves formatting and comments by
-    doing a targeted line replacement inside the [versions] table.
-    """
+    """Rewrite the catalog's [versions] block to the resolved latest versions; return those written."""
     changes = {u.key: u.latest for u in updates if u.outdated and u.latest}
     if not changes:
         return []

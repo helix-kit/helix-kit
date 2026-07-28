@@ -1,8 +1,5 @@
-// veleak.c — prove the Cedar decoder start/stop lifecycle leaks NO dma_buf.
-// Creates N decoders, feeds them a file, decodes a few frames, then tears down
-// cleanly (DestroyVideoDecoder + CdcVeRelease per decoder, CdcMemClose) and
-// repeats ITERS times inside ONE process, printing the dma_buf object count each
-// cycle. If teardown is leak-free the count returns to baseline every iteration.
+// veleak.c — prove the Cedar decoder start/stop lifecycle leaks no dma_buf
+// (repeats ITERS create-N/decode/teardown cycles; count returns to baseline if leak-free).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

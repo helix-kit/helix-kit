@@ -1,6 +1,7 @@
 {
   "name": "helix-kiosk-site",
   "version": "0.1.0",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Dummy static React site for the experimental Helix QEMU kiosk display",

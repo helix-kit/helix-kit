@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-// Transport is a message-oriented binary carrier (e.g. a WebSocket). Each
-// ReadMessage/WriteMessage moves one whole HelixStream frame.
+// Transport is a message-oriented binary carrier; each ReadMessage/WriteMessage moves one whole HelixStream frame.
 type Transport interface {
 	ReadMessage() ([]byte, error)
 	WriteMessage([]byte) error
@@ -19,8 +18,7 @@ type Transport interface {
 
 // Config tunes a Session.
 type Config struct {
-	// Client selects the stream-id parity so both peers can open without
-	// collision: client uses odd ids, server uses even.
+	// Client selects the stream-id parity so both peers can open without collision: client odd, server even.
 	Client bool
 	// InitialWindow is the per-stream receive window in bytes (default 256 KiB).
 	InitialWindow int
@@ -176,7 +174,6 @@ func (s *Session) dispatch(t frameType, id uint32, payload []byte) {
 	case fPing:
 		_ = s.writeFrame(fPong, 0, nil)
 	case fPong:
-		// keepalive ack; nothing to do
 	case fOpen:
 		st := newStream(s, id, append([]byte(nil), payload...))
 		s.mu.Lock()

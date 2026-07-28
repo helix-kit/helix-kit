@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// overlay plugin: draw detection boxes + class labels on the frame (in place).
-// This is the DRAW half split out of detect_draw/yolo11_draw (npu_compare.cpp:193-205,
-// :411-421) so "what's on the overlay" is independently swappable and the detections stay
-// first-class. in = [ frame, detections ] ; draws in place, out = frame (pass-through).
-// params: { "color": "green" | "orange" | "red" | "blue" | "cyan" | "yellow" }
+// Overlay plugin: draw detection boxes + class labels on the frame in place.
+// in = [ frame, detections ] ; out = frame (pass-through). params: { "color": "green"|... }
 #include <opencv2/opencv.hpp>
 #include <cstdio>
 #include <string>

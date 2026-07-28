@@ -16,7 +16,6 @@ ARTIFACTS = AMI_DIR / "artifacts"
 RAW_IMAGE = ARTIFACTS / "helix-ami.raw"
 BUILDER_TAG = "helix/ami-builder:dev"
 
-# Defaults for the AWS import/launch path.
 DEFAULT_PROFILE = "admin"
 VMIMPORT_ROLE = "vmimport"
 
@@ -60,11 +59,7 @@ def ami() -> None:
 )
 def ami_build(size: str | None, stages: str | None, rebuild_builder: bool, arch: str) -> None:
     """Build the bootable raw disk image in a privileged builder container."""
-    # Run the builder container AS the target architecture (binfmt/qemu emulates
-    # arm64 on an x86 host), so debootstrap, the chroot, and grub-install are all
-    # native to the rootfs being built — no per-command qemu-static plumbing.
-    # Requires the arm64 binfmt handler:
-    #   docker run --privileged --rm tonistiigi/binfmt --install arm64
+    # Build AS the target arch (binfmt/qemu) so debootstrap/chroot/grub-install run native to the rootfs.
     platform = f"linux/{arch}"
     tag = f"{BUILDER_TAG}-{arch}"
 
@@ -81,8 +76,7 @@ def ami_build(size: str | None, stages: str | None, rebuild_builder: bool, arch:
         env_flags += ["-e", f"AMI_IMAGE_SIZE={size}"]
     if stages:
         env_flags += ["-e", f"STAGES={stages}"]
-    # TEST ONLY: pass a local smoke-test SSH key through to stage 28 (QEMU has no
-    # IMDS for cloud-init to inject one). Unset for a shipped build.
+    # TEST ONLY: pass a smoke-test SSH key (QEMU has no IMDS for cloud-init). Unset for shipped builds.
     test_key = os.environ.get("AMI_TEST_SSH_PUBKEY")
     if test_key:
         env_flags += ["-e", f"AMI_TEST_SSH_PUBKEY={test_key}"]
@@ -101,8 +95,7 @@ def ami_build(size: str | None, stages: str | None, rebuild_builder: bool, arch:
             f"{ARTIFACTS}:/out",
             "-v",
             f"{AMI_DIR}:/work",
-            # The repo (read-only) so stage 28 can install the appliance stack
-            # from cloud/appliance's shared configs + generators + bundles.
+            # Repo (read-only) so stage 28 installs the appliance stack from cloud/appliance.
             "-v",
             f"{REPO_ROOT}:/repo:ro",
             *env_flags,
@@ -133,8 +126,7 @@ def ami_qemu(memory: str, arch: str) -> None:
     if not RAW_IMAGE.exists():
         raise click.ClickException(f"{RAW_IMAGE} not found — run `helix ami build` first.")
     if arch == "arm64":
-        # aarch64 has no BIOS: boot the same way EC2 Graviton does, via UEFI
-        # (edk2). Debian ships the firmware as qemu-efi-aarch64.
+        # aarch64 has no BIOS: boot via UEFI (edk2) like EC2 Graviton does.
         firmware = next(
             (
                 p
@@ -183,8 +175,7 @@ def ami_qemu(memory: str, arch: str) -> None:
             memory,
             "-drive",
             f"file={RAW_IMAGE},format=raw,if=virtio",
-            # User-mode NIC so eth0 gets a DHCP lease and network-online is
-            # reached promptly (no IMDS here, so cloud-init falls back to None).
+            # User-mode NIC so eth0 gets a DHCP lease and network-online is reached promptly.
             "-netdev",
             "user,id=n0",
             "-device",
@@ -217,11 +208,6 @@ def ami_clean() -> None:
         cwd=REPO_ROOT,
     )
     click.echo("cleaned.")
-
-
-# --------------------------------------------------------------------------- #
-# AWS import / launch
-# --------------------------------------------------------------------------- #
 
 
 @ami.command("import")
@@ -346,10 +332,7 @@ def ami_import(profile: str, bucket: str | None, name: str, arch: str, disk_form
     click.echo(f"\nAMI registered: {image['ImageId']}")
 
 
-# The inbound rules a TURN relay needs. The relay range is the one people forget:
-# without it an allocation succeeds and then no bytes ever flow, which looks like a
-# WebRTC bug rather than a firewall one. 5349 is TURN-over-TLS — the path that
-# survives networks blocking UDP, because it looks like HTTPS.
+# The relay range is the one people forget: without it allocations succeed but no bytes flow.
 TURN_INGRESS: tuple[tuple[str, int, int, str], ...] = (
     ("udp", 3478, 3478, "STUN/TURN"),
     ("tcp", 3478, 3478, "TURN over TCP"),
@@ -366,12 +349,7 @@ TURN_INGRESS: tuple[tuple[str, int, int, str], ...] = (
     "--cidr", default="0.0.0.0/0", show_default=True, help="Source CIDR allowed to reach TURN."
 )
 def ami_sg_turn(profile: str, security_group: str, cidr: str) -> None:
-    """Open the TURN ports on a security group (idempotent).
-
-    The WebRTC data plane prefers a direct peer, but falls back to relaying through
-    coturn on the appliance when the two peers cannot reach each other. That
-    fallback is dead unless these ports are open.
-    """
+    """Open the TURN ports on a security group (idempotent)."""
     for protocol, from_port, to_port, purpose in TURN_INGRESS:
         result = _aws(
             [
@@ -465,11 +443,8 @@ def ami_launch(
     if ipv6_only:
         if subnet is None:
             raise click.ClickException("--ipv6-only requires --subnet (one with an IPv6 CIDR).")
-        # An IPv6-only instance has no IPv4 stack at all, so the link-local IMDS
-        # endpoint (169.254.169.254) is unreachable. Unless the IPv6 endpoint is
-        # enabled here — and cloud-init is pointed at fd00:ec2::254, see the AMI's
-        # cloud.cfg.d/99-helix.cfg — cloud-init cannot read the launch SSH key and
-        # the instance comes up with nobody able to log in.
+        # IPv6-only has no IPv4 IMDS: enable the IPv6 endpoint here (+ cloud-init at fd00:ec2::254)
+        # or cloud-init can't read the launch SSH key and nobody can log in.
         args += [
             "--network-interfaces",
             json.dumps(
@@ -506,11 +481,6 @@ def ami_launch(
     else:
         ip = instance.get("PublicIpAddress", "<none>")
         click.echo(f"\ninstance {instance_id} @ {ip}\n  ssh helix@{ip}")
-
-
-# --------------------------------------------------------------------------- #
-# helpers
-# --------------------------------------------------------------------------- #
 
 
 def _ensure_bucket(bucket: str, *, region: str, profile: str) -> None:

@@ -1,31 +1,4 @@
-"""Run the web apps locally against a REMOTE appliance (the live EC2 box).
-
-The appliance keeps every backing service on loopback — Postgres on
-127.0.0.1:5432, OpenFGA on :8080, step-ca on :9000, Redpanda on :9092 — and its
-env files address them exactly that way. That is the whole trick: forward each
-service to the SAME port number on your machine, and the appliance's own env is
-almost verbatim usable locally. `DATABASE_URL=…@127.0.0.1:5432/helix` means the
-appliance's Postgres when read on the box, and the tunnel to it when read here.
-
-Only four things cannot survive the trip, and they are what this module fixes up:
-
-  1. FILE paths (the mTLS/PKI certs) — they name files on the box, so we copy
-     them down and rewrite the *_PATH vars to point at the local copies.
-  2. ORIGIN urls (PUBLIC_APP_URL, BETTER_AUTH_URL, NEXT_PUBLIC_BASE_URL) — the
-     app now runs at http://localhost:3000, and better-auth issues cookies for
-     the origin it is told about, so a production origin here means you can never
-     log in.
-  3. FS storage — FS_STORAGE_ROOT is a directory on the box. Uploads go to a
-     local dir instead, so images uploaded in prod will 404 locally (and vice
-     versa). Nothing is corrupted; the DB rows just point at files you do not
-     have.
-  4. NODE_ENV — production here would enable prod-only behavior (and disable the
-     dev-only trusted origins better-auth needs for localhost).
-
-Everything else — the DB, the auth secret, OpenFGA, the event queue, the PKI —
-is the real thing. Which is the point, and also the danger: see the warning the
-command prints.
-"""
+"""Run the web apps locally against a REMOTE appliance (the live EC2 box)."""
 
 from __future__ import annotations
 
@@ -42,30 +15,17 @@ import click
 from tooling.common.paths import REPO_ROOT
 
 WEB_APPS = REPO_ROOT / "web" / "apps"
-# Everything this command writes lives here: the copied certs, the local storage
-# root. Gitignored, disposable, and obviously not part of the repo's own state.
+# Everything this command writes (copied certs, local storage root); gitignored, disposable.
 LOCAL_DIR = REPO_ROOT / ".helix-remote"
 
-# The env files the appliance loads into every unit, in the order systemd does
-# (later wins) — so a value set in site.env overrides internal.env, exactly as on
-# the box.
+# The appliance's env files, in systemd's load order (later wins).
 REMOTE_ENV_FILES = ("internal.env", "secrets.env", "site.env")
 REMOTE_ENV_DIR = "/var/lib/helix/env"
 
 
 @dataclass(frozen=True)
 class Tunnel:
-    """One forwarded service.
-
-    By default the local port equals the remote one, because the appliance's env
-    already says 127.0.0.1:<port> — forwarding to the same number makes that env
-    true here with no rewriting at all.
-
-    When one of those ports is already taken on your machine (a local appliance,
-    another project's container), --port-offset shifts every local port by a
-    fixed amount and the env is rewritten to match, so the two modes are
-    otherwise identical.
-    """
+    """One forwarded service (local port == remote port unless --port-offset shifts it)."""
 
     port: int
     name: str
@@ -77,9 +37,7 @@ TUNNELS: tuple[Tunnel, ...] = (
     Tunnel(8080, "openfga"),
     Tunnel(9000, "step-ca"),
     Tunnel(9092, "redpanda (event queue)"),
-    # Mosquitto has TWO listeners: 8883 is the DEVICE mTLS one, 8884 is the
-    # SERVICE one that helix-server actually dials (MQTT_BROKER_URL). Forwarding
-    # only 8883 leaves a locally-run helix-server unable to reach the broker.
+    # Mosquitto has TWO listeners: 8883 device mTLS, 8884 service (what helix-server dials).
     Tunnel(8883, "mosquitto (device mTLS)"),
     Tunnel(8884, "mosquitto (service)"),
     Tunnel(4000, "helix-server (http)"),
@@ -100,8 +58,7 @@ def _ssh_base(host: str, user: str, key: Path | None) -> list[str]:
 def _read_remote_env(host: str, user: str, key: Path | None) -> dict[str, str]:
     """Merge the appliance's three env files, in systemd's order."""
     files = " ".join(f"{REMOTE_ENV_DIR}/{name}" for name in REMOTE_ENV_FILES)
-    # `cat` in order: later files override earlier ones, which is what systemd's
-    # repeated EnvironmentFile= does, so the merged view matches the running app.
+    # `cat` in order: later files override earlier, matching systemd's repeated EnvironmentFile=.
     result = subprocess.run(
         _ssh_base(host, user, key) + [f"sudo cat {files}"],
         capture_output=True,
@@ -121,11 +78,7 @@ def _read_remote_env(host: str, user: str, key: Path | None) -> dict[str, str]:
 def _fetch_cert_files(
     env: dict[str, str], host: str, user: str, key: Path | None, dest: Path
 ) -> dict[str, str]:
-    """Copy every file a *_PATH var names, and return the rewritten vars.
-
-    The files are root-owned on the box, so they are staged into /tmp with
-    readable modes before scp — a plain `scp` of them would just fail.
-    """
+    # Copy every *_PATH file (staged to /tmp readable first, they're root-owned) + rewrite vars.
     remote_paths = {
         name: value
         for name, value in env.items()
@@ -165,13 +118,7 @@ def _fetch_cert_files(
 
 
 def _retarget_ports(env: dict[str, str], offset: int) -> dict[str, str]:
-    """Rewrite every 127.0.0.1:<remote-port> in the env to the local port.
-
-    A plain string substitution is enough and is deliberately blunt: these values
-    are URLs (postgres://…@127.0.0.1:5432/helix), broker lists
-    (127.0.0.1:9092) and bare origins, and the host:port pair is spelled the same
-    way in all of them.
-    """
+    """Rewrite every 127.0.0.1:<remote-port> in the env to the local port."""
     if offset == 0:
         return {}
     rewritten: dict[str, str] = {}
@@ -190,28 +137,17 @@ def _local_overrides(
     env: dict[str, str], certs: dict[str, str], storage: Path, port: int
 ) -> dict[str, str]:
     """The values that MUST differ locally. Everything else is used verbatim."""
-    # Must be the origin the dev server ACTUALLY serves on: it is better-auth's
-    # baseURL, which is checked against the request Origin (CSRF) and is what
-    # redirect/callback links are built from. Hence --port, and the check below.
+    # Must be the origin the dev server actually serves on (better-auth baseURL / CSRF check).
     local_origin = f"http://localhost:{port}"
     overrides: dict[str, str] = {
         **certs,
-        # The app runs here, not on the box. An https:// baseURL also makes
-        # better-auth mark the session cookie Secure/__Secure- — tolerated on
-        # localhost (a secure context) but not on a LAN IP, and prod auth emails
-        # would link back to the live site.
         "BETTER_AUTH_URL": local_origin,
         "NEXT_PUBLIC_BASE_URL": local_origin,
         "PUBLIC_APP_URL": local_origin,
-        # Dev mode: enables the dev-only trusted origins and Next's dev server.
         "NODE_ENV": "development",
-        # FS storage is a directory on the box. Point it somewhere local; prod
-        # uploads will not resolve here (the DB rows reference files we do not
-        # have), and anything uploaded here stays here.
         "FS_STORAGE_ROOT": str(storage),
     }
-    # The device data plane is NOT tunnelled: real devices keep talking to the
-    # real box, so the browser must be told to reach them there.
+    # The device data plane is NOT tunnelled: the browser must reach devices on the real box.
     domain = env.get("APP_DOMAIN")
     if domain:
         overrides["NEXT_PUBLIC_HELIX_DEVICE_STREAM_URL"] = f"wss://{domain}:4001/stream/device"
@@ -233,8 +169,7 @@ def _render_env(env: dict[str, str], overrides: dict[str, str]) -> str:
     ]
     for name in sorted(merged):
         value = merged[name]
-        # Keep it a valid dotenv line even when a value contains spaces (the
-        # Caddy ACME line does).
+        # Keep it a valid dotenv line even when a value contains spaces.
         lines.append(f"{name}={value}" if " " not in value else f'{name}="{value}"')
     return "\n".join(lines) + "\n"
 

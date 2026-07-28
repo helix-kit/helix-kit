@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// compositor plugin: N annotated cell frames -> one cols x rows grid frame.
-// Ported from the composite half of npu_compare.cpp outputter (:651-658). Keeps a persistent
-// grid so cells with no fresh frame (data==NULL) retain their last content.
-// in = [ frame0, frame1, ... frameN ] ; out = grid frame (borrowed until next call).
-// params: { "cols": 2, "rows": 2, "grid_w": 1280, "grid_h": 720 }
+// Compositor plugin: N annotated cell frames -> one cols x rows grid frame; a persistent grid
+// lets cells with no fresh frame (data==NULL) retain their last content.
 #include <opencv2/opencv.hpp>
 #include "../helix_pipeline.h"
 #include "../hx_json.h"

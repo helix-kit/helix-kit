@@ -18,21 +18,14 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// inboundFunc is called for every control request that arrives on `.../in`.
 type inboundFunc func(packet ipc.HelixPacket)
 
-// mqttTransport is helixd's cloud link, speaking the standard Helix wire format:
-//
-//	helix/device/<id>/in                     requests  (cloud -> device)
-//	helix/device/<id>/out                    responses (device -> cloud)
-//	helix/device/<id>/service/<svc>/event    telemetry (device -> cloud)
 type mqttTransport struct {
 	client  mqtt.Client
 	prefix  string
 	log     *slog.Logger
 	inbound inboundFunc
-	// afterConnect, if set, is invoked after each successful (re)subscribe — used
-	// to kick the spool drain once the link is back.
+	// afterConnect kicks the spool drain once the link is back.
 	afterConnect func()
 }
 
@@ -83,8 +76,7 @@ func buildTLS(cfg config.MQTT) (*tls.Config, error) {
 		tlsCfg.RootCAs = pool
 	}
 	if cfg.ClientCert != "" && cfg.ClientKey != "" {
-		// Load the client key pair lazily on each handshake so certificate
-		// rotation is picked up on reconnect without rebuilding the client.
+		// Load the key pair per handshake so cert rotation is picked up on reconnect.
 		certPath, keyPath := cfg.ClientCert, cfg.ClientKey
 		tlsCfg.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			cert, err := tls.LoadX509KeyPair(certPath, keyPath)
@@ -97,10 +89,7 @@ func buildTLS(cfg config.MQTT) (*tls.Config, error) {
 	return tlsCfg, nil
 }
 
-// connect starts the cloud link without blocking. With connect-retry enabled the
-// client keeps trying in the background, so helixd stays up and serves its local
-// IPC bus even when the broker is unreachable — a device must not die because the
-// cloud is briefly down. onConnect fires (subscribe + drain) once the link is up.
+// connect starts the cloud link without blocking; connect-retry runs in the background.
 func (t *mqttTransport) connect() {
 	t.client.Connect()
 }
@@ -119,13 +108,11 @@ func (t *mqttTransport) onConnect(_ mqtt.Client) {
 	}
 }
 
-// connected reports whether the cloud link is currently up.
 func (t *mqttTransport) connected() bool {
 	return t.client != nil && t.client.IsConnected()
 }
 
-// reloadTLS forces a reconnect so a freshly rotated client certificate is
-// presented on the next handshake (GetClientCertificate reloads it from disk).
+// reloadTLS forces a reconnect so a rotated client cert is presented next handshake.
 func (t *mqttTransport) reloadTLS() {
 	if t.client != nil && t.client.IsConnected() {
 		t.client.Disconnect(250)

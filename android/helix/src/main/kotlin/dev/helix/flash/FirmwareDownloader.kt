@@ -9,12 +9,7 @@ import okhttp3.Request
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
-/**
- * Fetches an [Esp32FirmwareManifest] and its artifacts from a firmware server
- * (`helix release serve-firmware` or the appliance), verifying each artifact's
- * size and SHA-256. Mirrors the download/verify half of the web
- * `@helix/esp32-flasher` `flashEsp32`.
- */
+/** Fetches an [Esp32FirmwareManifest] and its artifacts, verifying each artifact's size and SHA-256. */
 class FirmwareDownloader(
     private val client: OkHttpClient = defaultClient,
 ) {

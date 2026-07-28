@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-# Stage 20 — install the minimal package set into the rootfs.
-#
-# Deliberately lean: systemd as init, the Debian *cloud* kernel flavour (ships
-# the ena + nvme drivers Nitro needs, drops the desktop/legacy drivers), the
-# systemd-networkd/resolved network stack (no NetworkManager, no ifupdown),
-# openssh, and cloud-init for first-boot SSH-key injection + root-volume growth.
-# No snapd, no Ubuntu, no Docker.
+# Stage 20 — install the minimal package set: systemd, the Debian cloud kernel (ena +
+# nvme for Nitro), systemd-networkd/resolved, openssh, and cloud-init. No snapd/Docker.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
@@ -17,8 +12,7 @@ cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
 export DEBIAN_FRONTEND=noninteractive
 
-# arm64 EC2 (Graviton) is UEFI-only: it needs grub-efi-arm64, not the legacy
-# BIOS grub-pc that amd64 uses. The kernel flavour is arch-suffixed too.
+# arm64 EC2 (Graviton) is UEFI-only: grub-efi-arm64, not amd64's legacy-BIOS grub-pc.
 case "$AMI_ARCH" in
   amd64) KERNEL_PKG=linux-image-cloud-amd64; GRUB_PKG=grub-pc ;;
   arm64) KERNEL_PKG=linux-image-cloud-arm64; GRUB_PKG=grub-efi-arm64 ;;
@@ -44,8 +38,7 @@ packages=(
   vim-tiny
 )
 
-# Make sure the initramfs carries the NVMe + ENA drivers so the Nitro root
-# volume and network come up before pivot.
+# Ensure the initramfs carries the NVMe + ENA drivers for the Nitro root volume and network.
 mkdir -p "$ROOTFS/etc/initramfs-tools"
 printf '%s\n' nvme ena > "$ROOTFS/etc/initramfs-tools/modules"
 

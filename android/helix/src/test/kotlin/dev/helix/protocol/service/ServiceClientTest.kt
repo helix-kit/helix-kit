@@ -65,7 +65,6 @@ class ServiceClientTest {
             received.add(schema<GpioStatePayload>().parse(event.message.payload))
         }
 
-        // An async device message (no request id) for the subscribed method.
         client.receive(
             HelixPacket(
                 message = messageToElement(
@@ -77,7 +76,6 @@ class ServiceClientTest {
                 ),
             ),
         )
-        // A different method is filtered out.
         client.receive(
             HelixPacket(
                 message = messageToElement(createServiceMessage("gpio-control", "other")),

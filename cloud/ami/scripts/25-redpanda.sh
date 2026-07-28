@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Stage 25 — install redpanda from its apt repo (same source as the appliance,
-# cloud/appliance/Dockerfile). The .deb creates the `redpanda` user/group and
-# installs /usr/bin/rpk; the systemd unit is laid down in stage 30.
+# Stage 25 — install redpanda from its apt repo; the systemd unit is laid down in stage 30.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 

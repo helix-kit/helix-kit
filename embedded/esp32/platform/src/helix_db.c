@@ -58,8 +58,6 @@ esp_err_t helix_db_init(void)
 
 bool helix_db_ready(void) { return s_ready; }
 
-// ---- helpers ---------------------------------------------------------------
-
 static const hdb_column_t *find_col(const hdb_table_t *t, const char *name)
 {
     for (size_t i = 0; i < t->column_count; i++) {
@@ -171,8 +169,6 @@ static int row_cmp(const void *a, const void *b)
     return s_sort_desc ? -order : order;
 }
 
-// ---- CRUD ------------------------------------------------------------------
-
 esp_err_t hdb_insert(const hdb_table_t *t, const void *row, uint32_t *out_id)
 {
     if (!s_ready) return ESP_ERR_INVALID_STATE;
@@ -250,8 +246,6 @@ esp_err_t hdb_delete(const hdb_table_t *t, uint32_t id)
     xSemaphoreGive(s_api_lock);
     return (e == FDB_NO_ERR) ? ESP_OK : ESP_ERR_NOT_FOUND;
 }
-
-// ---- query -----------------------------------------------------------------
 
 int hdb_select(const hdb_table_t *t, const hdb_query_t *q, void *rows_out, size_t max_rows)
 {
@@ -337,8 +331,7 @@ int hdb_delete_where(const hdb_table_t *t, const hdb_query_t *q)
     if (rowbuf == NULL) { xSemaphoreGive(s_api_lock); return -ESP_ERR_NO_MEM; }
 
     int deleted = 0;
-    // Deleting during iteration is unsafe, so gather ids in batches and delete
-    // between passes until no more match.
+    // Deleting during iteration is unsafe: gather ids in batches and delete between passes until none match.
     enum { BATCH = 64 };
     bool more = true;
     while (more) {
@@ -358,7 +351,7 @@ int hdb_delete_where(const hdb_table_t *t, const hdb_query_t *q)
             char rk[KEY_MAX]; row_key(t, ids[i], rk);
             if (fdb_kv_del(&s_kvdb, rk) == FDB_NO_ERR) deleted++;
         }
-        more = (n == BATCH);  // possibly more matches remain
+        more = (n == BATCH);
     }
     free(rowbuf);
     xSemaphoreGive(s_api_lock);

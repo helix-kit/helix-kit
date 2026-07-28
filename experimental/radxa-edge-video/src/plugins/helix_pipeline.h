@@ -1,17 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Helix edge-video pipeline — stable C ABI for runtime-loaded (dlopen) stage plugins.
-//
-// A pipeline is a graph of NODES; each node is a .so exporting exactly ONE symbol:
+// A pipeline is a graph of NODES; each node is a .so exporting exactly one symbol:
 //     extern "C" const helix_node_vtable* helix_node_entry(void);
-// The host dlopen()s the .so named in the JSON config, reads the vtable, checks the
-// ABI version, and drives the node. This mirrors the repo's existing pluggable-module
-// idiom (embedded/protocol's helix_transport_t vtable + accessor), extended from
-// compile-time static registration to runtime loading.
-//
-// Plugins may use C++/OpenCV internally; ONLY this boundary is C so .so's stay swappable
-// without name-mangling / vtable hazards. Payloads that flow along edges are tagged
-// (helix_packet_t) so a detection list is a first-class thing any node can consume — that
-// is what lets the future graph editor "use detection outputs at any step".
+// Only this boundary is C so .so's stay swappable without name-mangling/vtable hazards.
 #ifndef HELIX_PIPELINE_H
 #define HELIX_PIPELINE_H
 
@@ -31,7 +22,7 @@ enum { HX_DT_U8 = 0, HX_DT_F32 };
 enum { HX_PKT_NONE = 0, HX_PKT_FRAME, HX_PKT_TENSOR, HX_PKT_TENSORS, HX_PKT_DETS };
 
 // A decoded image frame. `data` is borrowed (valid until the producing node's next call);
-// consumers copy if they must keep it. data==NULL means "no frame this tick".
+// data==NULL means "no frame this tick".
 typedef struct {
     uint8_t *data;
     int w, h, stride, format;
@@ -49,14 +40,13 @@ typedef struct {
 } helix_tensor_t;
 
 // The raw NPU output heads (float**), matching awnn_get_output_buffers(). `count` may be 0
-// when the producer doesn't report it — postprocess plugins know their own head layout.
+// when the producer doesn't report it (postprocess plugins know their own head layout).
 typedef struct {
     int count;
     float **heads;
 } helix_tensors_t;
 
-// One detection in ORIGINAL-FRAME pixel coordinates (letterbox-inverse already applied by
-// the postprocess node), so any downstream consumer gets real, usable coordinates.
+// One detection in ORIGINAL-FRAME pixel coordinates (letterbox-inverse already applied).
 // kpts (optional) = nkpt*(x,y,conf) triples in frame pixels, for pose.
 typedef struct {
     float x, y, w, h;
@@ -90,17 +80,15 @@ typedef struct {
     const char *kind;     // "source"|"preprocess"|"infer"|"postprocess"|"overlay"|"compositor"|"sink"
     const char *name;     // e.g. "hx_src_gst"
 
-    helix_node_ctx *(*create)(const char *params_json);  // instantiate from JSON params
+    helix_node_ctx *(*create)(const char *params_json);
     void (*destroy)(helix_node_ctx *);
 
-    // Generic transform: consume `n_in` input packets, produce one in `*out`.
-    // Return 1 on success (produced a packet), 0 on "no output this call" (e.g. a source
-    // with no frame ready), <0 on error.
+    // Consume `n_in` input packets, produce one in `*out`. Returns 1 (produced), 0 (nothing
+    // this call, e.g. a source with no frame ready), <0 on error.
     int (*process)(helix_node_ctx *, const helix_packet_t *in, int n_in, helix_packet_t *out);
 
-    // INFER specialization (NULL for other kinds) — preserves the run_hw/finish split that
-    // measured 28->32 inf/s: the host holds the single-NPU mutex around infer_submit only,
-    // then calls infer_collect (the fp32 read-back) outside the lock.
+    // INFER specialization (NULL for other kinds): the run_hw/finish split lets the host hold
+    // the single-NPU mutex around infer_submit only, calling infer_collect outside the lock.
     int (*infer_submit)(helix_node_ctx *, const helix_packet_t *in);   // NPU HW run
     int (*infer_collect)(helix_node_ctx *, helix_packet_t *out);       // output -> fp32 heads
 } helix_node_vtable;

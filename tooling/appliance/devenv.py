@@ -12,12 +12,7 @@ BACKUP_SUFFIX = ".bak"
 
 @dataclass(frozen=True)
 class AppEnvPlan:
-    """The desired `.env` for one web app.
-
-    `managed` keys are owned by the appliance — they are wired to the running
-    container and resynced on every start. `defaults` are seeded once and then
-    left alone, so user edits (SMTP creds, ports, …) survive a restart.
-    """
+    """The desired `.env` for one web app: `managed` keys resync each start, `defaults` seed once."""
 
     name: str
     path: Path
@@ -39,8 +34,7 @@ class AppEnvPlan:
 
 
 def _merge_managed(existing: str, managed: dict[str, str]) -> str:
-    """Return `existing` with only the managed keys replaced/added; every other
-    line (user edits, comments, blanks) is preserved verbatim."""
+    # Replace/add only the managed keys; every other line is preserved verbatim.
     remaining = dict(managed)
     out: list[str] = []
     for line in existing.splitlines():
@@ -59,14 +53,7 @@ def _merge_managed(existing: str, managed: dict[str, str]) -> str:
 
 
 def write_env(plan: AppEnvPlan, *, fresh: bool) -> str:
-    """Write `plan` to disk. Returns a short action word for logging.
-
-    fresh   — back up any existing file to `<name>.bak` and write a brand-new
-              file from the plan (the appliance was recreated, so its generated
-              secrets/URLs changed and a stale `.env` no longer matches).
-    restart — keep the existing file, resyncing only the managed keys; edits to
-              every other key are preserved. Creates the file if missing.
-    """
+    """Write `plan` to disk (fresh backs up + rewrites; otherwise resyncs managed keys only)."""
     plan.path.parent.mkdir(parents=True, exist_ok=True)
     if not plan.path.exists():
         plan.path.write_text(plan.render())

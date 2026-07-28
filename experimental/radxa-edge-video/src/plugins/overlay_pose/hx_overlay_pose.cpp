@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// overlay plugin: draw person box + 17-keypoint skeleton (in place).
-// DRAW half split out of pose_draw (npu_compare.cpp:344-358). Consumes detections whose
+// Overlay plugin: draw person box + 17-keypoint skeleton in place. Consumes detections whose
 // kpts = 17*(x,y,conf) in frame pixels. in = [ frame, detections ] ; out = frame.
 #include <opencv2/opencv.hpp>
 #include "../helix_pipeline.h"

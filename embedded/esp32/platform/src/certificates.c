@@ -286,9 +286,7 @@ static esp_err_t enroll_certificate(const helix_cloud_config_t *config, mqtt_cer
         .timeout_ms = HTTP_ENROLLMENT_TIMEOUT_MS,
         .buffer_size = HTTP_BUFFER_BYTES,
         .buffer_size_tx = HTTP_BUFFER_BYTES,
-        // Verify the enrollment endpoint's TLS cert against the bundled root
-        // store (the API is fronted by a public CA such as Let's Encrypt).
-        // Without this, esp-tls aborts with "No server verification option set".
+        // Required: without a verification option esp-tls aborts the handshake.
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&http_config);

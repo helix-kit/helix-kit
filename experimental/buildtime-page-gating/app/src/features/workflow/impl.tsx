@@ -13,8 +13,7 @@ const edges: Edge[] = [
   { id: 'e2-3', source: '2', target: '3' },
 ];
 
-// The heavy feature: @xyflow/react bundles a large graph-editor runtime. If this
-// feature is gated out, none of it should reach out/.
+// Heavy feature: @xyflow/react bundles a large graph-editor runtime.
 export default function WorkflowImpl() {
   return (
     <main>

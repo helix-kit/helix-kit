@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helixd is the single, app-agnostic Helix device core process: it owns
-// the cloud MQTT link and the local IPC bus and routes between them. Apps
-// (shell, port-forward, and user apps) connect to its IPC socket.
+// Command helixd is the app-agnostic device core bridging the cloud MQTT link and local IPC bus.
 package main
 
 import (

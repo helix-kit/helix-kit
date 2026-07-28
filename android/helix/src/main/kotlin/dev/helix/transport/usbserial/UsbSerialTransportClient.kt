@@ -28,17 +28,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.resume
 
-/**
- * USB-serial implementation of `HelixTransport`. It finds an attached ESP32
- * behind a USB-to-UART bridge (CP210x/CH340/FTDI) or a native-USB ESP32, opens
- * it at 115200-8N1, and speaks the newline-framed Helix serial protocol
- * (`SERVICE …` out, `HELIX_RESPONSE …` in). Behaviour mirrors the CLI
- * `helix device serial request` so the same firmware answers either client.
- *
- * The bridge driver lives in the `usb-serial-for-android` library because
- * Android ships no kernel driver for these vendor UART chips; a raw
- * reimplementation would duplicate well-tested per-chip control transfers.
- */
+/** USB-serial `HelixTransport`: an ESP32 behind a UART bridge, newline-framed serial protocol. */
 class UsbSerialTransportClient(
     context: Context,
     private val options: UsbSerialTransportOptions = UsbSerialTransportOptions(),
@@ -57,10 +47,7 @@ class UsbSerialTransportClient(
     private val readBuffer = StringBuilder()
     private val readLock = Any()
 
-    /**
-     * Finds and opens an attached Helix serial device, prompting for the USB
-     * permission if needed. Suspends until the port is ready or an error is set.
-     */
+    /** Finds and opens an attached Helix serial device, prompting for USB permission if needed. */
     suspend fun connect() {
         if (_status.value.connectionState != UsbConnectionState.Disconnected) return
         _status.value = UsbTransportStatus(connectionState = UsbConnectionState.Connecting)
@@ -121,8 +108,6 @@ class UsbSerialTransportClient(
         _status.value = UsbTransportStatus(connectionState = UsbConnectionState.Disconnected)
     }
 
-    // --- device discovery / open ------------------------------------------
-
     private fun findDriver(): UsbSerialDriver? =
         UsbSerialProber.getDefaultProber().findAllDrivers(usbManager).firstOrNull()
 
@@ -152,8 +137,6 @@ class UsbSerialTransportClient(
         port = null
         synchronized(readLock) { readBuffer.setLength(0) }
     }
-
-    // --- read path --------------------------------------------------------
 
     private val ioListener = object : SerialInputOutputManager.Listener {
         override fun onNewData(data: ByteArray) {
@@ -193,12 +176,6 @@ class UsbSerialTransportClient(
         for (handler in handlers) handler.handle(packet)
     }
 
-    /**
-     * Recovers the Helix packet JSON from a UART line. The device prefixes every
-     * packet with [HelixSerial.OUTPUT_PREFIX]; ESP-IDF log writes can prepend a
-     * line, so the prefix is located anywhere in the text. As a last resort the
-     * JSON body is found by its `requestId` key, mirroring the Python client.
-     */
     private fun extractPacketJson(text: String): String? {
         val prefixIndex = text.indexOf(HelixSerial.OUTPUT_PREFIX)
         if (prefixIndex >= 0) {
@@ -215,8 +192,6 @@ class UsbSerialTransportClient(
             error = message,
         )
     }
-
-    // --- USB permission ---------------------------------------------------
 
     private suspend fun requestPermission(device: UsbDevice): Boolean =
         suspendCancellableCoroutine { continuation ->
@@ -238,8 +213,7 @@ class UsbSerialTransportClient(
             }
             continuation.invokeOnCancellation { runCatching { appContext.unregisterReceiver(receiver) } }
 
-            // The system fills EXTRA_PERMISSION_GRANTED, so the PendingIntent must
-            // be mutable on S+; the explicit package keeps the broadcast internal.
+            // PendingIntent must be mutable on S+ so the system can fill EXTRA_PERMISSION_GRANTED.
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 PendingIntent.FLAG_MUTABLE
             } else {

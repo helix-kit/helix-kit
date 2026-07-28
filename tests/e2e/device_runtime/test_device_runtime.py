@@ -1,15 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""End-to-end test of the Linux device runtime foundation.
+"""End-to-end test of the Linux device runtime on a systemd-in-container test host.
 
-Exercises the whole path on a systemd-in-container test host (no cloud/appliance
-needed): provision a local identity -> boot (helixd + runtime-manager under
-systemd) -> build + install the helix-shell package -> runtime-manager
-auto-starts it as the helix user -> the shell app registers on helixd's IPC bus
--> push a config drop-in and confirm the service is reconfigured, not broken ->
-remove and confirm the unit + payload are gone.
-
-Driven entirely through the `helix device` CLI, so it doubles as coverage for the
-tooling. Skips cleanly when Docker is unavailable.
+Covers provision -> boot -> install/auto-start the shell package -> IPC registration
+-> config-push reconfigure -> remove. Driven through the `helix device` CLI; skips without Docker.
 """
 
 from __future__ import annotations
@@ -108,7 +101,6 @@ def test_install_autostarts_shell_as_helix(test_host: None) -> None:
     assert "User=helix" in props, f"shell not running as helix: {props}"
     assert "SubState=running" in props, f"shell not running: {props}"
 
-    # The shell app connected to helixd and claimed its service name on the bus.
     journal = dexec("journalctl", "-u", "helixd.service", "--no-pager").stdout
     assert "service=shell" in journal, "shell app did not register on the IPC bus"
 

@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-metrics-linux is the baseline host-metrics provider: it reports
-// generic Linux host metrics (CPU, memory, load, root-filesystem usage) from
-// /proc and statfs, which apply to every Linux target. It is a metrics plugin —
-// runtime-manager discovers and runs it, and it ships as its own package, so it
-// is the template for board-specific providers (radxa NPU/GPU, jetson tegrastats,
-// …) that add hardware metrics without touching runtime-manager.
+// Command helix-metrics-linux is the baseline host-metrics provider (CPU, memory, load, root disk).
 package main
 
 import (
@@ -43,8 +38,7 @@ func main() {
 	}
 }
 
-// cpuTimes reports the aggregate CPU jiffies from /proc/stat. runtime-manager
-// samples on an interval, so a consumer computes utilization from deltas.
+// cpuTimes reports aggregate CPU jiffies from /proc/stat; consumers compute utilization from deltas.
 func cpuTimes() (map[string]any, bool) {
 	f, err := os.Open("/proc/stat")
 	if err != nil {

@@ -1,13 +1,4 @@
-"""Repo-wide quality gate: `helix lint {go,python,web,all}`.
-
-One entry point for every language's lint/format/type tooling (CLAUDE.md §4), so
-a developer never has to remember `gofmt` vs `staticcheck` vs `pnpm turbo lint`.
-
-The Go suite mirrors one proven in a prior production device tree: gofmt, vet, gopls
-check, shadow, staticcheck (incl. ST1000 package comments), deadcode, dupl and
-govulncheck. Each analyzer is pinned and installed into `<module>/.bin` on first
-use, so the suite is reproducible and needs no global installs.
-"""
+"""Repo-wide quality gate: `helix lint {go,python,web,all}`."""
 
 from __future__ import annotations
 
@@ -22,8 +13,7 @@ import click
 
 from tooling.common.paths import REPO_ROOT
 
-# The primary Go module gets the full analyzer suite. The experimental agents are
-# throwaway prototypes on their own modules — they get format-only enforcement.
+# Experimental agents are format-only; the primary module gets the full suite.
 GO_MODULE = REPO_ROOT / "linux" / "device" / "go"
 GO_FORMAT_ONLY_MODULES = (
     REPO_ROOT / "experimental" / "port-forwarding" / "agent",
@@ -35,7 +25,6 @@ GO_SOURCE_DIRS = ("cmd", "internal")
 WEB_ROOT = REPO_ROOT / "web"
 DEVICE_PYTHON = REPO_ROOT / "linux" / "device" / "python"
 
-# Pinned analyzers (same versions as a prior production device tree).
 GO_TOOLS: dict[str, str] = {
     "gopls": "golang.org/x/tools/gopls@v0.20.0",
     "shadow": "golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@v0.44.0",
@@ -46,9 +35,7 @@ GO_TOOLS: dict[str, str] = {
 DUPL_PACKAGE = "github.com/mibk/dupl@v1.1.0"
 DUPL_THRESHOLD = "100"
 
-# Generated bindings are emitted by `helix protocol generate-all`, not hand-written:
-# they are excluded from the style/dead-code analyzers (they legitimately carry
-# unused exported helpers and no package comment).
+# Generated bindings are excluded from style/dead-code analyzers (unused exports, no package comment).
 GO_GENERATED_PACKAGE_RE = "/internal/[^/]+/generated"
 DEADCODE_FILTER = "github.com/helix-kit/helix-device/internal/.*"
 
@@ -213,8 +200,7 @@ def _lint_go(fix: bool, skip: tuple[str, ...]) -> list[Step]:
         output = (proc.stdout or "") + (proc.stderr or "")
         if output.strip():
             click.echo(output.rstrip())
-        # dupl exits 0 regardless of findings; it ends with "Found total N clone
-        # groups." — anything but 0 is a finding.
+        # dupl exits 0 regardless of findings; anything but "Found total 0 clone groups" is a finding.
         ok = "Found total 0 clone groups" in output or not output.strip()
         steps.append(Step("dupl", ok))
 
@@ -241,9 +227,7 @@ def _lint_python(fix: bool) -> list[Step]:
     ok, _ = _run(black, REPO_ROOT)
     steps.append(Step("black", ok))
 
-    # The device tree targets CPython 3.10 and black has no per-directory config, so
-    # it is excluded from the run above and formatted here with the right target —
-    # otherwise black applies 3.14-only rewrites (PEP 758) that break the device.
+    # Device tree needs py310 black (own config): the py314 run applies PEP 758 rewrites that break it.
     _echo_step("black (device python @ py310)")
     device_black = ["uv", "run", "black", "--config", str(DEVICE_PYTHON / "black.toml")]
     device_black += ["."] if fix else ["--check", "."]
@@ -254,12 +238,8 @@ def _lint_python(fix: bool) -> list[Step]:
     ok, _ = _run(["uv", "run", "mypy", "."], REPO_ROOT)
     steps.append(Step("mypy", ok))
 
-    # The device packages target CPython 3.10 with their own src-layout import
-    # roots, so they get their own config (see linux/device/python/mypy.ini).
     _echo_step("mypy (device python packages)")
-    # Address the packages by module name (-p), not path: mypy_path already maps the
-    # src-layout roots, and passing paths too would find each file under two module
-    # names ("helix_service_runtime" and "…src.helix_service_runtime").
+    # Address packages by module name (-p), not path: mypy_path maps the src-layout roots already.
     ok, _ = _run(
         [
             "uv",

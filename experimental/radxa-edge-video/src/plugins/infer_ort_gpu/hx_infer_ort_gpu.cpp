@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// GPU-RESIDENT infer plugin (x86): fuses preprocess + inference on the GPU.
-//   input FRAME (BGR) --upload--> cv::cuda letterbox + BGR->RGB + /255 + HWC->CHW (all on GPU)
-//   --> ORT Run with IoBinding on the GPU input buffer (NO host preprocess, NO input H2D copy)
-//   --> 6 raw heads copied to CPU for hx_post_yolo11 (unchanged).
-// Uses "GPU OpenCV" (cv::cuda) + ORT CUDA IoBinding. Pair with hx_pre_passthrough (the host still
-// calls a preprocess stage, which here just forwards the frame). Emits the same 6 heads as the awnn
-// / CPU-ORT paths, so the postprocess/overlay/compositor plugins are reused unchanged.
-// params: { "model": "/models/yolo11s_cut.onnx", "size": 640 }
+// GPU-RESIDENT infer plugin (x86): fuses preprocess + inference on the GPU. Frame (BGR) is
+// uploaded once, then cv::cuda does letterbox + BGR->RGB + /255 + HWC->CHW and ORT runs with
+// IoBinding on the GPU input buffer (no host preprocess). Pair with hx_pre_passthrough. Emits
+// the same 6 heads as the awnn / CPU-ORT paths, so downstream plugins are reused unchanged.
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
@@ -37,7 +33,7 @@ struct helix_node_ctx {
     // GPU work buffers (per stream) + the CHW float input on device
     cv::cuda::GpuMat g_bgr, g_rgb, g_resized, g_canvas, g_float;
     float *d_input = nullptr;                 // device buffer, 3*S*S floats (CHW)
-    Ort::MemoryInfo cuda_mem{nullptr};        // OrtMemoryInfo("Cuda")
+    Ort::MemoryInfo cuda_mem{nullptr};
     std::vector<Ort::Value> outs;             // CPU outputs (own the tensors)
     std::vector<float *> heads;
 };

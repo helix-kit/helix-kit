@@ -1,16 +1,4 @@
-"""Give a coding agent "eyes": drive a spare rooted Android phone over adb to
-wake, unlock (PIN), snap a photo with the default camera, and pull it back to a
-directory the agent can read.
-
-This is an experimental bring-up aid, not a shipped Helix feature: point the
-phone at a monitor and the agent gets an on-demand still image of whatever the
-display pipeline is doing.
-
-Multiple phones can be registered (``helix device eyes add``); with no
-``--device`` selector the agent auto-picks any available one, preferring an
-already-attached USB device over waking a wireless one. Config (device serials +
-PINs) lives in a user-level, gitignored file so no secret lands in the repo.
-"""
+"""Drive a spare rooted Android phone over adb as an on-demand camera for the agent."""
 
 from __future__ import annotations
 
@@ -28,7 +16,6 @@ import click
 
 CONFIG_PATH = Path(os.environ.get("HELIX_EYES_CONFIG", "~/.config/helix/eyes.json")).expanduser()
 
-# Android keycodes we drive.
 KEYCODE_WAKEUP = 224
 KEYCODE_SLEEP = 223
 KEYCODE_ENTER = 66
@@ -41,14 +28,6 @@ DEFAULT_CAMERA_DIRS = (
 )
 
 
-# --------------------------------------------------------------------------- #
-# config
-#
-# Shape:
-#   {"devices": [{"name": str, "serial": str, "pin": str?}, ...],
-#    "out_dir": str?}
-# A serial is either a USB serial (e.g. RZCX21PYBNL) or a wireless host:port.
-# --------------------------------------------------------------------------- #
 def _load_config() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
         return {"devices": []}
@@ -56,8 +35,7 @@ def _load_config() -> dict[str, Any]:
         cfg: dict[str, Any] = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise click.ClickException(f"corrupt config at {CONFIG_PATH}: {exc}") from exc
-    # Migrate the earlier single-device shape into the devices list.
-    if "device" in cfg and "devices" not in cfg:
+    if "device" in cfg and "devices" not in cfg:  # migrate the old single-device shape
         entry: dict[str, Any] = {"serial": cfg.pop("device")}
         if cfg.get("pin"):
             entry["pin"] = cfg.pop("pin")
@@ -97,9 +75,6 @@ def _upsert_device(
     return entry
 
 
-# --------------------------------------------------------------------------- #
-# adb plumbing
-# --------------------------------------------------------------------------- #
 def _adb(
     serial: str | None,
     *args: str,
@@ -143,12 +118,8 @@ def _list_devices() -> list[str]:
 
 
 def _connect_wireless(serial: str, connect_retries: int = 6) -> bool:
-    """Bring a host:port target online, absorbing Wi-Fi power-save wake latency.
-
-    A sleeping phone drops its Wi-Fi into power-save, so the first adb connect
-    after idle often lands while the radio is still waking. Retry a few times
-    before giving up. Returns True if the device came online.
-    """
+    # A sleeping phone's Wi-Fi drops to power-save; the first connect after idle
+    # often lands while the radio is still waking, so retry before giving up.
     click.echo(f"connecting to {serial} over adb tcpip ...", err=True)
     for attempt in range(1, connect_retries + 1):
         # adb keeps offline entries around; drop them so a retry is clean.
@@ -163,14 +134,7 @@ def _connect_wireless(serial: str, connect_retries: int = 6) -> bool:
 
 
 def _resolve_target(device: str | None, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Return the device entry to act on, ensuring it is online.
-
-    With no selector, pick any available configured device: an already-online
-    one (USB) first for zero latency, otherwise connect a wireless one. A
-    selector matches a configured name/serial, or is treated as an ad-hoc
-    serial/host:port not yet in the config. Pass ``cfg`` to have the returned
-    entry be a live member of that config (so coordinate caching persists).
-    """
+    """Return the device entry to act on, ensuring it is online."""
     if cfg is None:
         cfg = _load_config()
     devices: list[dict[str, Any]] = cfg["devices"]
@@ -185,15 +149,12 @@ def _resolve_target(device: str | None, cfg: dict[str, Any] | None = None) -> di
             return entry
         raise click.ClickException(f"device {device!r} is not reachable")
 
-    # Prefer a configured device that is already attached (USB / live wireless).
     for entry in devices:
         if entry["serial"] in online:
             return entry
-    # Otherwise wake a configured wireless device.
     for entry in devices:
         if ":" in entry["serial"] and _connect_wireless(entry["serial"]):
             return entry
-    # Fall back to a lone unconfigured device that happens to be attached.
     unconfigured = [s for s in online if not _find_entry(devices, s)]
     if not devices and len(online) == 1:
         return {"serial": online[0]}
@@ -214,9 +175,6 @@ def _pin_for(entry: dict[str, Any], explicit: str | None) -> str | None:
     return explicit or os.environ.get("HELIX_EYES_PIN") or entry.get("pin")
 
 
-# --------------------------------------------------------------------------- #
-# device actions
-# --------------------------------------------------------------------------- #
 def _screen_size(serial: str) -> tuple[int, int]:
     out = _shell(serial, "wm size")
     # e.g. "Physical size: 1080x2400" (may also carry an Override size line).
@@ -249,7 +207,6 @@ def _unlock(serial: str, pin: str | None) -> None:
     _wake(serial)
     time.sleep(0.6)
     w, h = _screen_size(serial)
-    # Swipe up from the lower third to the upper third to dismiss the keyguard.
     _shell(serial, f"input swipe {w // 2} {int(h * 0.8)} {w // 2} {int(h * 0.25)} 250")
     time.sleep(0.6)
     if pin:
@@ -260,10 +217,7 @@ def _unlock(serial: str, pin: str | None) -> None:
 
 
 def _ensure_unlocked(serial: str, pin: str | None) -> None:
-    """Wake the screen, and run the full unlock only if the keyguard is up.
-
-    Skipping the swipe+PIN sequence when already unlocked saves ~2.5s per snap.
-    """
+    # Skipping the swipe+PIN sequence when already unlocked saves ~2.5s per snap.
     _wake(serial)
     if _is_locked(serial) is not False:
         _unlock(serial, pin)
@@ -289,11 +243,8 @@ def _newest_video(serial: str) -> tuple[str, str] | None:
     return _newest_media(serial, "*.mp4 *.3gp *.mkv")
 
 
-# The stock camera opens on whichever lens was last used and ignores the
-# camera-facing intent extras, so we drive its on-screen controls instead:
-# read the accessibility tree, tap the switch-camera button by its content-desc,
-# then tap the shutter. This is resolution-independent and works over the secure
-# camera surface (the buttons are real views, only the preview is a surface).
+# The stock camera ignores camera-facing intent extras, so we drive its
+# on-screen controls (accessibility tree -> tap switch button -> tap shutter).
 CAMERA_COMPONENT = "com.sec.android.app.camera/.Camera"  # Samsung stock camera
 STILL_IMAGE_ACTION = "android.media.action.STILL_IMAGE_CAMERA"
 UI_DUMP_PATH = "/sdcard/helix_eyes_ui.xml"
@@ -333,11 +284,8 @@ def _tap(serial: str, xy: list[int]) -> None:
 def _detect_camera_ui(
     serial: str,
 ) -> tuple[tuple[int, int] | None, tuple[int, int] | None, str | None]:
-    """One uiautomator dump -> (shutter, switch, current-facing).
-
-    The switch button's content-desc names the lens it switches TO, so
-    'Switch to rear camera' being present means the front lens is active.
-    """
+    # The switch button's content-desc names the lens it switches TO, so
+    # 'Switch to rear camera' being present means the front lens is active.
     xml = _dump_ui(serial)
     shutter = _find_button(xml, ("take picture", "shutter", "capture"))
     switch = _find_button(xml, ("switch to rear camera", "switch to back camera"))
@@ -351,13 +299,9 @@ def _detect_camera_ui(
 def _prepare_camera(
     cfg: dict[str, Any], entry: dict[str, Any], serial: str, facing: str, redetect: bool
 ) -> list[int] | None:
-    """Make the requested lens active; return cached shutter coords (or None).
-
-    Coordinates and the last-known facing are cached per device, so the common
-    case (same phone, same lens) needs no uiautomator dump at all — the dumps
-    are what made a capture take ~25s, as they stall waiting for the live camera
-    preview to go idle.
-    """
+    # Coords + last-known facing are cached per device: the common case needs no
+    # uiautomator dump, which is what made a capture take ~25s (dumps stall on the
+    # live preview going idle). Returns cached shutter coords (or None).
     ui: dict[str, Any] = entry.get("ui") or {}
     changed = False
     if redetect or "shutter" not in ui or "switch" not in ui or entry.get("facing") is None:
@@ -433,7 +377,6 @@ def _capture(
 
 
 def _ensure_video_mode(serial: str) -> None:
-    """Switch the stock camera into video mode if it is not already."""
     xml = _dump_ui(serial)
     if _find_button(xml, ("record video", "start recording")):
         return
@@ -451,11 +394,7 @@ def _record(
     facing: str,
     redetect: bool,
 ) -> str:
-    """Record a camera video of ~duration seconds and return its remote path.
-
-    Drives the stock camera UI: pick the lens, switch to video mode, tap record,
-    wait the duration, tap stop, then wait for the file size to settle.
-    """
+    """Record a camera video of ~duration seconds and return its remote path."""
     serial = entry["serial"]
     before = _newest_video(serial)
     before_path = before[0] if before else None
@@ -487,9 +426,6 @@ def _record(
     return started
 
 
-# --------------------------------------------------------------------------- #
-# CLI
-# --------------------------------------------------------------------------- #
 @click.group()
 def eyes() -> None:
     """Drive a spare rooted Android phone as an on-demand camera for the agent."""

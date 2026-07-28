@@ -8,8 +8,6 @@
 
 static const char *TAG = "helix_xfer_sink";
 
-// Match "scheme:" at the start of dest; returns the remainder after the colon,
-// or NULL if `dest` doesn't start with the given scheme.
 static const char *match_scheme(const char *dest, const char *scheme)
 {
     size_t n = strlen(scheme);
@@ -32,8 +30,6 @@ helix_xfer_sink_t *helix_xfer_sink_open(const char *dest, size_t total_size, esp
     if (rest != NULL) {
         return helix_fs_sink_open(rest, total_size, err_out);
     }
-
-    // Future: match_scheme(dest, "ota") -> helix_ota_sink_open(...)
 
     ESP_LOGE(TAG, "unsupported transfer destination: %s", dest);
     if (err_out != NULL) {

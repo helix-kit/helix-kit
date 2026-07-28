@@ -15,13 +15,10 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// clkTck is the kernel USER_HZ. It is 100 on every Linux Helix targets, and
-// reading it needs cgo (sysconf), which our static builds disable — so it is
-// fixed here. CPU-time fields in /proc are in these ticks.
+// clkTck is the kernel USER_HZ (100 on Helix targets); fixed here because reading it needs cgo (sysconf), which static builds disable.
 const clkTck = 100.0
 
-// ServiceMetrics is one managed service's health + resource sample. State comes
-// from systemd; CPU/memory/uptime come from /proc/<MainPID> (generic Linux).
+// ServiceMetrics is one managed service's health + resource sample (systemd state + /proc/<MainPID>).
 type ServiceMetrics struct {
 	Name        string  `json:"name"`
 	Enabled     bool    `json:"enabled"`
@@ -40,8 +37,7 @@ type Snapshot struct {
 	Host        HostMetrics      `json:"host"`
 }
 
-// Collector samples service + host metrics on an interval and caches the latest
-// snapshot, so control requests return real CPU deltas without blocking.
+// Collector samples service + host metrics on an interval and caches the latest snapshot.
 type Collector struct {
 	sd      Systemd
 	procDir string
@@ -164,8 +160,7 @@ func (c *Collector) pruneCPU(live map[int]bool) {
 	}
 }
 
-// readCPUTicks returns utime+stime from /proc/<pid>/stat. The comm field can
-// contain spaces and parens, so fields are read from after the final ')'.
+// readCPUTicks returns utime+stime from /proc/<pid>/stat, read after the final ')' (comm may contain spaces/parens).
 func (c *Collector) readCPUTicks(pid int) (uint64, bool) {
 	data, err := os.ReadFile(filepath.Join(c.procDir, strconv.Itoa(pid), "stat"))
 	if err != nil {
@@ -237,8 +232,7 @@ func (c *Collector) readRSS(pid int) int64 {
 	return 0
 }
 
-// statFieldsAfterComm splits a /proc/<pid>/stat line into the fields following
-// the comm field (which is parenthesized and may contain spaces).
+// statFieldsAfterComm splits a /proc/<pid>/stat line into the fields after the parenthesized comm field.
 func statFieldsAfterComm(stat string) ([]string, bool) {
 	i := strings.LastIndex(stat, ")")
 	if i < 0 || i+2 > len(stat) {

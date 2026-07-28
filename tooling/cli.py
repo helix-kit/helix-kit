@@ -15,10 +15,7 @@ def cli() -> None:
 # `embedded` is always available (and is all the lean ESP-IDF build image needs).
 cli.add_command(embedded)
 
-# Optional command groups. Their extra dependencies (paho, pyserial, ...) are not
-# installed in lean environments such as the ESP-IDF build image, where only the
-# `embedded` group is exercised via `python -m tooling.cli embedded esp32 ...`.
-# Skip a group whose dependencies are missing rather than break the whole CLI.
+# Optional groups: skip any whose extra deps (paho, pyserial, ...) are absent rather than break the CLI.
 _OPTIONAL_GROUPS: tuple[tuple[str, str, str | None], ...] = (
     ("linux.platform_os.commands", "platform_os", "os"),
     ("tooling.android.commands", "android", None),

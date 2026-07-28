@@ -9,26 +9,11 @@ import (
 	"strings"
 )
 
-// ErrOutsideRoots is returned for any path that does not resolve inside a
-// configured root. It is deliberately vague: a file browser that reports "no such
-// file" vs "not allowed" leaks the existence of paths outside its roots.
+// ErrOutsideRoots is deliberately vague so it does not leak paths outside the roots.
 var ErrOutsideRoots = errors.New("path is not available")
 
-// resolve maps a requested path to a real one inside the allow-list, or fails.
-//
-// This is the security boundary of the whole app. A file browser is the classic
-// path-traversal target, and the checks that matter are:
-//
-//   - Resolve symlinks FIRST (filepath.EvalSymlinks), then compare. Comparing the
-//     lexical path lets a symlink inside a root point anywhere — /root/link -> /etc
-//     is textually "inside" the root but reads /etc.
-//   - Compare against the SYMLINK-RESOLVED root, so a root that is itself reached
-//     through a symlink still matches.
-//   - Compare path SEGMENTS, not string prefixes: "/srv/data-secret" has the string
-//     prefix "/srv/data" but is a different directory.
-//
-// A path that does not exist yet (an upload target) is resolved through its parent
-// directory, which must itself pass all of the above.
+// resolve maps a requested path into the allow-list — the app's security boundary:
+// symlinks are resolved first and roots compared by whole segments to stop traversal.
 func (r *runner) resolve(requested string) (string, error) {
 	if len(r.roots) == 0 {
 		return "", ErrOutsideRoots
@@ -43,8 +28,7 @@ func (r *runner) resolve(requested string) (string, error) {
 	cleaned := filepath.Clean(requested)
 	real, err := filepath.EvalSymlinks(cleaned)
 	if err != nil {
-		// Not there yet (an upload target): validate the parent, which must exist,
-		// and re-attach the final element.
+		// Upload target not there yet: validate the parent and re-attach the base.
 		parent, err := filepath.EvalSymlinks(filepath.Dir(cleaned))
 		if err != nil {
 			return "", ErrOutsideRoots
@@ -60,8 +44,7 @@ func (r *runner) resolve(requested string) (string, error) {
 	return "", ErrOutsideRoots
 }
 
-// contains reports whether path is root itself or lies beneath it, comparing whole
-// segments so "/srv/data" does not "contain" "/srv/data-secret".
+// contains reports whether path is root or beneath it, comparing whole segments.
 func contains(root string, path string) bool {
 	if path == root {
 		return true
@@ -69,9 +52,7 @@ func contains(root string, path string) bool {
 	return strings.HasPrefix(path, root+string(filepath.Separator))
 }
 
-// resolveRoots canonicalises the configured roots once, at startup. A root that
-// does not exist is a config error worth failing on — silently serving nothing is
-// worse than not starting.
+// resolveRoots canonicalises the configured roots at startup, failing on a missing root.
 func resolveRoots(configured []string) ([]string, error) {
 	roots := make([]string, 0, len(configured))
 	for _, root := range configured {

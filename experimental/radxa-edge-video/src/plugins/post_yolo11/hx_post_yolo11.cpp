@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// postprocess plugin: YOLO11 (anchor-free DFL) decode -> detections in frame pixels.
-// Serves YOLO11s AND YOLO11m (same Detect head). Ported from the DECODE half of
-// npu_compare.cpp yolo11_draw (:366-423); the drawing now lives in the overlay plugin.
-// in = [ tensors(6 raw heads), frame(for dims) ] ; out = detections.
+// Postprocess plugin: YOLO11 (anchor-free DFL) decode -> detections in frame pixels; serves
+// YOLO11s and YOLO11m (same Detect head). in = [ tensors(6 raw heads), frame ] ; out = dets.
 // heads: out[0..2] box[1,64,G,G] (4 sides x 16 DFL bins), out[3..5] cls[1,80,G,G], G=80/40/20.
-// params: { "conf": 0.35, "nms": 0.45 }
 #include <vector>
 #include "../helix_pipeline.h"
 #include "../hx_json.h"

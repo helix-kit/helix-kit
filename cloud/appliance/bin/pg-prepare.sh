@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# =============================================================================
-# pg-prepare.sh — initialise the Postgres data dir on the volume (ExecStartPre
-# of helix-postgres.service). Idempotent: only runs initdb on an empty volume.
-# One cluster hosts BOTH the app DB (helix) and the inngest DB.
-# =============================================================================
+# Initialise the Postgres data dir on the volume (ExecStartPre of helix-postgres.service);
+# idempotent — only runs initdb on an empty volume. One cluster hosts the helix + inngest DBs.
 set -euo pipefail
 
 PGDATA=/var/lib/helix/postgres

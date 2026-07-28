@@ -63,9 +63,7 @@ def stack() -> Iterator[Stack]:
     work_dir = Path(tempfile.mkdtemp(prefix="helix-e2e-"))
     server = HelixServer(appliance, work_dir)
     keep = bool(os.environ.get("HELIX_E2E_KEEP"))
-    # Reuse an already-running appliance (e.g. one brought up via `helix appliance
-    # up --port-base`) instead of recreating it — the suite only starts/stops the
-    # host helix-server and never purges the shared instance.
+    # Reuse an already-running appliance instead of recreating it (start/stop only the host server).
     reuse = bool(os.environ.get("HELIX_E2E_REUSE"))
 
     if not reuse:
@@ -145,6 +143,5 @@ def provisioned_device(stack: Stack) -> ProvisionedDevice:
 
 @pytest.fixture(scope="session")
 def http_device(stack: Stack) -> ProvisionedDevice:
-    """A device dedicated to the HTTP mTLS ingestion tests, so their
-    device_event counts stay isolated from the MQTT ingestion tests."""
+    """A device dedicated to the HTTP mTLS ingestion tests (isolates their event counts)."""
     return _provision_device(stack, "e2e-http-device")

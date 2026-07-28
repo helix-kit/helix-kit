@@ -14,8 +14,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// writeFakeStat writes a /proc/<pid>/stat with the given cpu ticks + starttime,
-// placing them at the right offsets after the parenthesized comm field.
+// writeFakeStat writes a /proc/<pid>/stat with the given cpu ticks + starttime at the right offsets after comm.
 func writeFakeStat(t *testing.T, procDir string, pid int, utime, stime, starttime uint64) {
 	t.Helper()
 	after := make([]string, 22)
@@ -36,8 +35,7 @@ func writeFakeStat(t *testing.T, procDir string, pid int, utime, stime, starttim
 	}
 }
 
-// fakeProc writes a minimal /proc/<pid>/{stat,status} + /proc/uptime tree and
-// returns a collector reading it, with a controllable clock.
+// fakeProc writes a minimal /proc tree and returns a collector reading it with a controllable clock.
 func fakeProc(t *testing.T, pid int, utime, stime, starttime uint64, rssKB int64) (*Collector, string) {
 	t.Helper()
 	proc := t.TempDir()
@@ -73,8 +71,7 @@ func TestCPUPercentDelta(t *testing.T) {
 	if p := c.cpuPercent(7); p != 0 {
 		t.Errorf("first cpu%% = %v, want 0", p)
 	}
-	// Advance 1s and add 50 ticks of CPU (utime 100->150). At CLK_TCK=100,
-	// 50 ticks / 100 / 1s = 50%.
+	// Advance 1s, add 50 ticks (utime 100->150): 50 ticks / 100 / 1s = 50%.
 	now = now.Add(time.Second)
 	writeFakeStat(t, c.procDir, 7, 150, 0, 0)
 	if p := c.cpuPercent(7); p < 49.9 || p > 50.1 {

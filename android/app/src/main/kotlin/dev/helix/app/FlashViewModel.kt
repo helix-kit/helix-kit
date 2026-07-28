@@ -30,12 +30,7 @@ data class FlashUiState(
 
 const val DEFAULT_MANIFEST_URL = "http://192.168.1.35:8123/manifest.json"
 
-/**
- * Downloads a firmware manifest from a release server and flashes the attached
- * ESP32 over USB-OTG via [Esp32Flasher]. The transport-neutral service layer is
- * untouched — this is a separate provisioning flow that owns the raw serial port
- * for the duration of the flash.
- */
+/** Downloads a firmware manifest and flashes the attached ESP32 over USB-OTG via [Esp32Flasher]. */
 class FlashViewModel(application: Application) : AndroidViewModel(application) {
 
     private val downloader = FirmwareDownloader()

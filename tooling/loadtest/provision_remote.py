@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""Provision a device-cert pool against a remote Helix appliance.
-
-Runs from a machine that can (a) SSH to the appliance host to seed `device` rows
-in the loopback-only Postgres, and (b) reach the public HTTPS cert-issuance API.
-For each device it seeds a row + access token, generates an EC P-256 key + CSR,
-and POSTs the CSR to /api/certificates/device (Bearer token) so step-ca issues a
-real device cert — exactly the material a production device presents over mTLS.
-
-Output: <out>/manifest.json + per-device chain/key/root PEMs, consumed by
-remote_harness.py's `--certs` pool.
-"""
+"""Provision a device-cert pool against a remote Helix appliance."""
 
 from __future__ import annotations
 
@@ -30,9 +20,7 @@ def _run(cmd: list[str], stdin: str | None = None) -> str:
 
 
 def _psql_remote(container: str | None) -> str:
-    """The remote shell that pipes stdin SQL into the appliance Postgres, sourcing
-    the generated env. `container` = docker-exec into the appliance container;
-    None = native host (the AMI delivery — no Docker)."""
+    # Remote shell piping stdin SQL into the appliance Postgres; None = native host (no Docker).
     load_env = (
         "set -a; . /var/lib/helix/env/secrets.env; . /var/lib/helix/env/internal.env; "
         'set +a; psql "$DATABASE_URL"'
@@ -68,10 +56,7 @@ def seed_devices(
 
 
 def issue_cert(issuer_url: str, device_id: str, token: str, csr_pem: str) -> dict[str, Any]:
-    """POST the CSR to helix-server's cert-issuance API. This is the pre-mTLS
-    bootstrap endpoint (bearer-token auth on the public HTTP server, port 4000),
-    reached here over an SSH tunnel — it is one-time setup, not measured load, so
-    plain HTTP is fine."""
+    """POST the CSR to helix-server's cert-issuance API (one-time SSH-tunneled bootstrap)."""
     parsed = urllib.parse.urlsplit(issuer_url)
     hostname = parsed.hostname
     if hostname is None:

@@ -9,12 +9,7 @@ import (
 	"strings"
 )
 
-// loadSecrets parses a service's EnvironmentFile-style secret overlay
-// (/etc/helix/secrets/<service>.env). Absent files yield an empty map. A secret
-// file that is readable by *others* (world) is refused outright — secrets must be
-// no broader than 0640 root:helix, so only the owning service group can read
-// them. The format is the systemd EnvironmentFile subset: KEY=VALUE per line,
-// blank lines and #-comments ignored, surrounding quotes stripped.
+// loadSecrets parses a service's EnvironmentFile secret overlay, refusing any world-readable file.
 func loadSecrets(service string) (map[string]string, error) {
 	path := SecretFilePath(service)
 	info, err := os.Stat(path)

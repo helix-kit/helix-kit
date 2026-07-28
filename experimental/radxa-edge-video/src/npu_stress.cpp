@@ -1,7 +1,4 @@
-// Stress test: hard-to-decode 4K H.264 stream + the strong YOLO11s detector on the A733.
-//   rtspsrc ! omxh264dec (Cedar VE 4K decode) ! BGR appsink  -> letterbox 640 -> YOLO11s (NPU)
-//   -> anchor-free DFL decode + 80-class -> draw -> 1280x720 -> x264 -> RTMP -> WebRTC.
-// Reports DECODE fps (can the VE keep up with 4K?) and inference ms.  Build: ./build.sh npu_stress
+// Stress test: 4K H.264 decode (Cedar VE) + YOLO11s on the A733 NPU -> x264 -> RTMP.
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>

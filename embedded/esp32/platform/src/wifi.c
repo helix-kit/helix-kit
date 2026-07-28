@@ -132,10 +132,7 @@ static esp_err_t connect_wifi_from_config(const helix_wifi_config_t *config)
         (err = esp_wifi_start()) != ESP_OK) {
         return err;
     }
-    // Disable Wi-Fi modem power-save: the default WIFI_PS_MIN_MODEM parks the
-    // radio between DTIM beacons (~100 ms), which adds large, jittery latency to
-    // downlink packets. For an interactive console bridge, low latency beats the
-    // small idle-power saving.
+    // Disable modem power-save: DTIM parking adds jittery downlink latency.
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     EventBits_t bits = xEventGroupWaitBits(

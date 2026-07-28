@@ -1,19 +1,7 @@
 #!/usr/bin/env bash
 # Stage 40 — lay the rootfs onto a partitioned, GRUB-installed raw disk image.
-#
-# The layout depends on how the target firmware boots:
-#
-#   amd64 (BootMode=legacy-bios)     arm64 (BootMode=uefi — Graviton is UEFI-only)
-#     p1  1 MiB  BIOS boot (EF02)      p1  64 MiB  EFI System Partition (EF00, FAT32)
-#     p2  rest   ext4 root             p2  rest    ext4 root
-#
-# On arm64 GRUB is installed with --removable, which puts the bootloader at the
-# fallback path \EFI\BOOT\BOOTAA64.EFI. That matters: an imported EC2 image gets
-# no persistent UEFI NVRAM boot entry, so the firmware will only find a
-# bootloader at the removable-media fallback path.
-#
-# cloud-init's growpart later expands the root partition to fill the real EBS
-# volume, so the built image stays small.
+# amd64 boots legacy-BIOS (p1 = 1MiB BIOS boot EF02); arm64 boots UEFI (p1 = 64MiB ESP);
+# p2 is the ext4 root in both. cloud-init growpart expands root on first boot.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
@@ -75,9 +63,8 @@ case "$AMI_ARCH" in
     mkfs.vfat -F32 -n ESP "${LOOP}p1"
     mkdir -p "$MNT/boot/efi"
     mount "${LOOP}p1" "$MNT/boot/efi"
-    # --removable  => \EFI\BOOT\BOOTAA64.EFI, the only path EC2's firmware finds
-    #                 without an NVRAM boot entry.
-    # --no-nvram   => there is no NVRAM to write to from inside a build chroot.
+    # --removable puts GRUB at \EFI\BOOT\BOOTAA64.EFI (the only path EC2 firmware
+    # finds without an NVRAM entry); --no-nvram since a build chroot has no NVRAM.
     grub-install --target=arm64-efi \
       --efi-directory="$MNT/boot/efi" \
       --boot-directory="$MNT/boot" \

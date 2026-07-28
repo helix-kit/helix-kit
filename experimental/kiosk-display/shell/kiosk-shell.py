@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Fullscreen WebKitGTK kiosk that switches between screens on keypress.
-
-Ported from a prior production system's qemu-display lab. The original switched between a
-GStreamer video sink and a web view; this variant is web-only and instead
-cycles a fixed list of URLs (the hash routes of the dummy React site), which
-is all the Helix kiosk needs.
-"""
+"""Fullscreen WebKitGTK kiosk that switches between screens on keypress."""
 
 from __future__ import annotations
 
@@ -29,8 +23,7 @@ DEFAULT_URLS = [
 ]
 
 
-# PyGObject ships no type information (Gtk is resolved at runtime through gi's
-# dynamic importer), so Gtk.Window is Any and subclassing it cannot be checked.
+# PyGObject ships no type info: Gtk.Window is Any, so subclassing it cannot be checked.
 class KioskShell(Gtk.Window):  # type: ignore[misc]
     def __init__(self, urls: list[str], fullscreen: bool) -> None:
         super().__init__(title="Helix Kiosk")
@@ -41,17 +34,13 @@ class KioskShell(Gtk.Window):  # type: ignore[misc]
         self.connect("key-press-event", self._on_key_press)
 
         self.webview = WebKit2.WebView()
-        # The kiosk may come up before the local site server is ready; keep
-        # retrying the current URL instead of parking on an error page.
+        # The kiosk may come up before the site server is ready; keep retrying instead of parking on an error page.
         self.webview.connect("load-failed", self._on_load_failed)
         self.add(self.webview)
         self.show_all()
         self._load(0)
         if fullscreen:
-            # fullscreen() only asks a window manager to maximize us. On a bare
-            # kiosk X session (xinit + this shell, no WM — the lightest way to
-            # run on a memory-constrained board) there is no WM to honor it, so
-            # also size the window to the monitor geometry explicitly.
+            # On a bare kiosk X session (no WM) fullscreen() has nothing to honor it, so also size to the monitor.
             self.fullscreen()
             self._fill_monitor()
 
@@ -80,10 +69,7 @@ class KioskShell(Gtk.Window):  # type: ignore[misc]
         return False
 
     def _on_key_press(self, _widget: Gtk.Widget, event: Gdk.EventKey) -> bool:
-        # The screen-switching keybindings only make sense for the multi-URL
-        # demo. With a single URL (a real kiosk app) they would swallow the
-        # user's typing — e.g. "n"/space would reload the page — so pass every
-        # key straight through to the web view.
+        # With a single URL the switching keys would swallow the user's typing, so pass everything through.
         if len(self.urls) <= 1:
             return False
         key = Gdk.keyval_name(event.keyval)

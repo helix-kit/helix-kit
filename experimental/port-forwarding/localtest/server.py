@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Tiny dynamic web app used to prove the port-forwarding tunnel is live.
-
-Serves an HTML page plus a /api/info endpoint returning a hit counter, the
-container hostname and a server-side timestamp -- values that cannot be cached,
-so a changing counter in the browser proves traffic is really reaching this
-process through the tunnel.
-"""
+"""Tiny dynamic web app that proves the port-forwarding tunnel is live via an uncacheable /api/info hit counter."""
 
 import datetime
 import json

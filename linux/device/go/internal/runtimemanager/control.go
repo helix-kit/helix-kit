@@ -18,23 +18,19 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/ipcutil"
 )
 
-// Controller executes runtime-manager's control operations. The same Controller
-// backs both the local control socket (trusted CLI) and the cloud-facing
-// `runtime` IPC service (untrusted — subject to per-service AllowControl gates).
+// Controller executes runtime-manager's control operations, backing both the trusted local
+// socket and the untrusted cloud-facing `runtime` IPC service (subject to AllowControl gates).
 type Controller struct {
 	sd        Systemd
 	collector *Collector
 	log       *slog.Logger
 }
 
-// NewController builds a controller over the given systemd driver. The collector
-// (metrics) may be nil, in which case get-status/get-metrics sample on demand.
+// NewController builds a controller over the given systemd driver; a nil collector samples on demand.
 func NewController(sd Systemd, collector *Collector, log *slog.Logger) *Controller {
 	return &Controller{sd: sd, collector: collector, log: log}
 }
 
-// snapshot returns the cached metrics snapshot, or a one-shot sample when no
-// collector is wired (e.g. in tests).
 func (c *Controller) snapshot(ctx context.Context) Snapshot {
 	col := c.collector
 	if col == nil {
@@ -43,8 +39,7 @@ func (c *Controller) snapshot(ctx context.Context) Snapshot {
 	return col.Snapshot(ctx)
 }
 
-// Handle dispatches one control request. trusted callers bypass the AllowControl
-// gates; cloud callers do not.
+// Handle dispatches one control request; trusted callers bypass the AllowControl gates.
 func (c *Controller) Handle(method string, params json.RawMessage, trusted bool) (json.RawMessage, error) {
 	switch method {
 	case "get-status":
@@ -133,8 +128,7 @@ func (c *Controller) serviceAction(method, service string, trusted bool) error {
 	return fmt.Errorf("unknown action %q", method)
 }
 
-// gateControl enforces a service's AllowControl flag for untrusted (cloud)
-// callers. Core services and the trusted local socket are always allowed.
+// gateControl enforces a service's AllowControl flag for untrusted callers; core and trusted callers pass.
 func (c *Controller) gateControl(service string, trusted bool) error {
 	if trusted {
 		return nil
@@ -157,8 +151,7 @@ func (c *Controller) gateControl(service string, trusted bool) error {
 	return fmt.Errorf("unknown service %q", service)
 }
 
-// ServeControlSocket runs the local control socket (trusted). The CLI connects
-// here to drive install/remove/status/config on the device.
+// ServeControlSocket runs the trusted local control socket the CLI connects to.
 func (c *Controller) ServeControlSocket(ctx context.Context) error {
 	path := config.RuntimeSocketPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -217,9 +210,7 @@ func (c *Controller) serveControlConn(conn net.Conn) {
 	}
 }
 
-// registerRuntimeService registers as the `runtime` service on helixd's IPC bus
-// so cloud requests on helix/device/<id>/in for service "runtime" route here.
-// Cloud calls are untrusted, so AllowControl gates apply.
+// registerRuntimeService registers as the `runtime` service on helixd's IPC bus; cloud calls are untrusted.
 func (c *Controller) registerRuntimeService(ctx context.Context, socketPath string) {
 	client := ipc.NewClient(socketPath, "runtime", c.log)
 	client.Start()

@@ -20,8 +20,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/stream"
 )
 
-// TestHandleListReportsSessions verifies the enriched `list` response: each open
-// tunnel is reported with its target, age, and live connection count.
+// TestHandleListReportsSessions verifies each open tunnel is reported with target, age, and connections.
 func TestHandleListReportsSessions(t *testing.T) {
 	ctx := context.Background()
 
@@ -70,16 +69,13 @@ func TestHandleListReportsSessions(t *testing.T) {
 	if got.Connections != 0 {
 		t.Fatalf("connections = %d, want 0", got.Connections)
 	}
-	// The manager stamps createdAt when it opens the session, so assert a window
-	// rather than an exact millisecond.
+	// createdAt is stamped at open, so assert a window not an exact millisecond.
 	if got.CreatedAt < int(created.UnixMilli()) || got.CreatedAt > int(time.Now().UnixMilli()) {
 		t.Fatalf("createdAt = %d, want within [%d, now]", got.CreatedAt, created.UnixMilli())
 	}
 }
 
-// TestTunnelHTTPThroughStream drives the app's data path end-to-end over a real
-// WebSocket: a "gateway" opens a stream, the device app dials the allow-listed
-// target and pipes raw bytes, and an HTTP request/response round-trips.
+// TestTunnelHTTPThroughStream drives the app's data path end-to-end over a real WebSocket.
 func TestTunnelHTTPThroughStream(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -114,8 +110,7 @@ func TestTunnelHTTPThroughStream(t *testing.T) {
 	defer wsSrv.Close()
 	wsURL := "ws" + strings.TrimPrefix(wsSrv.URL, "http")
 
-	// The device opens the session exactly as the control plane would: dial the
-	// gateway over the relay transport, then run the app's accept loop.
+	// The device opens the session exactly as the control plane would.
 	if _, err := r.HandleOpen(ctx, generated.PortForwardOpenInput{
 		SessionId: "sess-1",
 		Target:    targetAddr,

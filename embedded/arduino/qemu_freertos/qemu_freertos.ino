@@ -1,9 +1,4 @@
-// FreeRTOS-under-QEMU tick probe.
-//
-// Two independent tasks print counters at different rates. If the RTOS tick
-// fires under qemu-system-avr, we see interleaved "A" and "B" lines with B
-// roughly 4x slower than A. If the watchdog tick does NOT fire in QEMU, only
-// the first task to run ever prints (no preemption / no vTaskDelay wakeups).
+// FreeRTOS-under-QEMU tick probe: two tasks print at different rates; interleaved A/B means the RTOS tick fires, silence after the first task means it doesn't.
 
 #include <Arduino_FreeRTOS.h>
 
@@ -33,7 +28,7 @@ void setup() {
   xTaskCreate(taskA, "A", 128, NULL, 1, NULL);
   xTaskCreate(taskB, "B", 128, NULL, 1, NULL);
   vTaskStartScheduler();
-  Serial.println(F("SCHEDULER_RETURNED"));  // only if scheduler failed to start
+  Serial.println(F("SCHEDULER_RETURNED"));  // only if the scheduler failed to start
 }
 
 void loop() {}

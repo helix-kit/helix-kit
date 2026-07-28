@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Thin device-config access for Python apps.
-
-Hand-written for the minimal foundation; a generated typed config will replace
-this (mirroring the Go side) in a later milestone.
-"""
+"""Thin device-config access for Python apps."""
 
 from __future__ import annotations
 

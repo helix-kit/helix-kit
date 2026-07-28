@@ -1,14 +1,4 @@
-"""Reassemble a device's LVGL screen from the rectangles it streams to the host.
-
-The device flushes each dirty rectangle onto the binary side-channel as one
-logical stream: `session` is the frame id, `offset` the byte position within that
-frame, and the bytes are an 8-byte bounds header followed by RGB565 pixels (see
-ui/include/helix_ui_display_stream.h). Chunks can be dropped -- a log line
-spliced into a frame fails its CRC and never arrives -- so a frame is applied
-only once every byte of it is present.
-
-Click-free so both `helix ui` and the pytest e2e suite can drive it.
-"""
+"""Reassemble a device's LVGL screen from the rectangles it streams to the host."""
 
 from __future__ import annotations
 
@@ -97,8 +87,7 @@ class Framebuffer:
             target = ((frame.y1 + row) * self.width + frame.x1) * 3
             for column in range(width):
                 value = payload[source + column * 2] | (payload[source + column * 2 + 1] << 8)
-                # RGB565 -> RGB888, replicating the high bits into the low ones so
-                # white stays white instead of drifting to 0xF8.
+                # RGB565 -> RGB888, replicating high bits into low ones so white stays white.
                 red = (value >> 11) & 0x1F
                 green = (value >> 5) & 0x3F
                 blue = value & 0x1F

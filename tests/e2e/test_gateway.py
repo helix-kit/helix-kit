@@ -6,8 +6,7 @@ from _gateway import connect_ws, device_session, settle, ws_recv, ws_send
 
 
 def test_command_routes_to_device_and_response_returns(stack, provisioned_device) -> None:
-    """A WS client's command reaches the device on /in, and the device's
-    response on /out is routed back to that client by requestId."""
+    """A WS command reaches the device on /in, and its /out response routes back by requestId."""
     with device_session(stack, provisioned_device) as device:
         ws = connect_ws(stack, provisioned_device.device_id)
         settle()
@@ -30,8 +29,7 @@ def test_command_routes_to_device_and_response_returns(stack, provisioned_device
 
 
 def test_response_routes_only_to_the_requesting_client(stack, provisioned_device) -> None:
-    """With two clients on one device, a requestId response goes only to the
-    client that issued that request."""
+    """With two clients on one device, a requestId response goes only to the requesting client."""
     with device_session(stack, provisioned_device) as device:
         owner = connect_ws(stack, provisioned_device.device_id)
         other = connect_ws(stack, provisioned_device.device_id, timeout=2)
@@ -50,8 +48,7 @@ def test_response_routes_only_to_the_requesting_client(stack, provisioned_device
 
 
 def test_device_broadcast_reaches_all_clients(stack, provisioned_device) -> None:
-    """A device message with no requestId is broadcast to every client on that
-    device."""
+    """A device message with no requestId is broadcast to every client on that device."""
     with device_session(stack, provisioned_device) as device:
         client_a = connect_ws(stack, provisioned_device.device_id)
         client_b = connect_ws(stack, provisioned_device.device_id)
@@ -66,8 +63,7 @@ def test_device_broadcast_reaches_all_clients(stack, provisioned_device) -> None
 
 
 def test_client_disconnect_is_cleaned_up(stack, provisioned_device) -> None:
-    """When one client disconnects, the remaining client keeps receiving; the
-    router drops the gone client without erroring."""
+    """When one client disconnects, the remaining client keeps receiving without error."""
     with device_session(stack, provisioned_device) as device:
         leaving = connect_ws(stack, provisioned_device.device_id)
         staying = connect_ws(stack, provisioned_device.device_id)
@@ -82,10 +78,7 @@ def test_client_disconnect_is_cleaned_up(stack, provisioned_device) -> None:
 
 
 def test_connection_without_device_id_is_rejected(stack) -> None:
-    """The gateway closes a WS connection that carries no device identity
-    (parseConnection throws -> policy-violation close). Depending on the client
-    version that surfaces as an empty recv or a WebSocketException; either way
-    the socket must end up closed with no application data delivered."""
+    """The gateway closes a WS connection that carries no device identity, delivering no data."""
     url = f"ws://127.0.0.1:{stack.appliance.config.public_http_port}/ws"
     ws = websocket.create_connection(url, timeout=3)
     try:

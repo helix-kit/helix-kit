@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-echo is a smoke-test app for the IPC bus: it registers as
-// service "echo" and answers "ping" with "pong".
+// Command helix-echo is a smoke-test app that answers "ping" with "pong".
 package main
 
 import (

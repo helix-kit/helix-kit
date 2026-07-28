@@ -3,11 +3,7 @@
 
 #include "esp_err.h"
 
-// Registers the `console` service: bridges a target device's serial console
-// (on a spare hardware UART) to the Helix protocol so it can be driven
-// remotely — target-UART bytes are streamed out as `console-data` events and
-// host keystrokes arrive via the `write` method. Auto-opens the bridge with
-// compile-time defaults; `open`/`config` reconfigure it at runtime.
+// Registers the `console` service: bridges a target's serial console (on a spare UART) to the Helix protocol; target bytes stream out as `console-data`, host keystrokes arrive via `write`.
 esp_err_t console_bridge_start(void);
 
 #endif  // CONSOLE_BRIDGE_APP_H

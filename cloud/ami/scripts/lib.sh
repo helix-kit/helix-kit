@@ -3,8 +3,7 @@
 log()  { printf '\033[1;36m[ami]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[ami] ERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
-# Bind the host pseudo-filesystems into the rootfs so chroot'd apt/dpkg work,
-# and register a cleanup trap that unmounts them in reverse order on exit.
+# Bind host pseudo-filesystems into the rootfs so chroot'd apt/dpkg work; unbind_pseudo reverses it.
 _BOUND=()
 bind_pseudo() {
   local root="$1" name mp
@@ -24,5 +23,4 @@ unbind_pseudo() {
   _BOUND=()
 }
 
-# Run a command inside the rootfs.
 in_chroot() { chroot "$ROOTFS" "$@"; }

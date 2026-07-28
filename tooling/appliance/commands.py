@@ -53,9 +53,7 @@ def appliance_build() -> None:
     help="Target architecture. arm64 builds an arch-independent bundle (no native sharp).",
 )
 def appliance_bundles(version: str | None, only: str | None, skip_build: bool, arch: str) -> None:
-    """Build the web app bundles (Next standalone + helix-server) into
-    cloud/appliance/bundles/. Host-mount that dir into the appliance so app
-    changes redeploy without rebuilding the image."""
+    """Build the web app bundles (Next standalone + helix-server) into cloud/appliance/bundles/."""
     built = build_bundles(version=version, only=only, skip_build=skip_build, arch=arch)
     click.echo("")
     click.echo("bundles ready:")
@@ -165,14 +163,7 @@ def appliance_remote(
     port: int,
     port_offset: int,
 ) -> None:
-    """Run the web apps locally against a REMOTE (live) appliance.
-
-    Forwards the appliance's loopback services to the same ports here, and writes
-    an .env from the box's own env — so `pnpm dev` talks to the real Postgres,
-    the real auth secret and the real PKI.
-
-    This is a production connection: reads are free, writes are real.
-    """
+    """Run the web apps locally against a REMOTE (live) appliance."""
     run_remote_dev(
         host=host,
         user=user,

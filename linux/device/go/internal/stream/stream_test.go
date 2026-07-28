@@ -168,8 +168,7 @@ func TestStreamCount(t *testing.T) {
 		t.Fatalf("initial client count = %d, want 0", got)
 	}
 
-	// Open is synchronous on the opener's side: the stream is registered before
-	// the frame goes out, so the count reflects it immediately.
+	// Open is synchronous on the opener's side: the stream is registered before the frame goes out.
 	if _, err := client.Open(nil); err != nil {
 		t.Fatalf("open 1: %v", err)
 	}
@@ -180,8 +179,7 @@ func TestStreamCount(t *testing.T) {
 		t.Fatalf("client count after 2 opens = %d, want 2", got)
 	}
 
-	// The server registers each stream in dispatch before handing it to Accept,
-	// so once both are accepted its count matches.
+	// The server registers each stream in dispatch before handing it to Accept.
 	for i := 0; i < 2; i++ {
 		if _, err := server.Accept(); err != nil {
 			t.Fatalf("accept %d: %v", i, err)

@@ -1,9 +1,4 @@
-// Minimal QEMU AVR serial smoke test.
-//
-// Proves the qemu-system-avr USART <-> host chardev path works both ways:
-// prints a banner on boot, then echoes every received line back prefixed with
-// "ECHO ". Used only to validate the simulator harness before the real Helix
-// FreeRTOS firmware lands.
+// Minimal QEMU AVR serial smoke test: prints a banner then echoes each line prefixed "ECHO ", to validate the simulator harness.
 
 static const size_t LINE_MAX = 128;
 static char lineBuf[LINE_MAX];

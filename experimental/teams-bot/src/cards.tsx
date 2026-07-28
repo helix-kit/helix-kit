@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 //
-// A reusable Adaptive Card, authored once as JSX. Chat SDK renders it to each
-// platform's native card format (Adaptive Cards on Teams, Block Kit on Slack…).
-// The Button `id`s are what come back to bot.onAction() when a user clicks them.
+// A reusable card authored once as JSX; button `id`s come back to bot.onAction() on click.
 
 import { Card, CardText, Actions, Button } from "chat";
 import type { ChatElement } from "chat/jsx-runtime";

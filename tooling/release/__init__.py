@@ -1,6 +1,4 @@
-"""Release backend simulators: a synthetic ESP32 CI build and custom-build worker
-that drive the helix-server release/OTA HTTP API, for testing the control plane
-without a real ESP-IDF build."""
+"""Release backend simulators driving the helix-server release/OTA HTTP API."""
 
 from tooling.release.sim import (
     ESP32_TYPE_SEED_SQL,

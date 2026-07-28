@@ -1,23 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 // Package peer is the device side of the Helix WebRTC data-plane transport.
-//
-// It is the P2P counterpart of the relayed WebSocket data plane: instead of the
-// device dialing the gateway and every byte crossing the cloud, the device and
-// the browser negotiate a direct WebRTC connection over the ordinary control
-// plane and then talk to each other. The cloud brokers only SDP/ICE (kilobytes).
-//
-// The package is app-agnostic. It owns exactly two things:
-//
-//   - a reliable, ordered DataChannel, exposed as a stream.Transport, so the
-//     HelixStream mux — and therefore every stream app (shell, port-forward,
-//     file transfer) — runs over P2P unchanged; and
-//   - media tracks (see track.go), so live video/audio ride the SAME peer
-//     without a second stack.
-//
-// What the bytes mean is never decided here. The DEVICE is the offerer and
-// creates the DataChannel, so it needs no inbound reachability and `open` can
-// answer with the SDP offer in its normal control-plane response.
 package peer
 
 import (
@@ -35,11 +18,9 @@ import (
 	"github.com/helix-kit/helix-device/internal/stream"
 )
 
-// dataChannelLabel is the reliable channel that carries the HelixStream mux.
 const dataChannelLabel = "helix-stream"
 
-// ICEServer is a STUN/TURN server, decoupled from both the generated contract
-// types (one per service) and pion's own type.
+// ICEServer is a STUN/TURN server, decoupled from the generated contract and pion's own type.
 type ICEServer struct {
 	URLs       []string
 	Username   string
@@ -49,16 +30,11 @@ type ICEServer struct {
 // Config negotiates one peer.
 type Config struct {
 	ICEServers []ICEServer
-	// TransportPolicy is "relay" to force traffic through TURN (the escape hatch
-	// for networks that block direct paths, and the only way to prove the TURN
-	// path works); "" or "all" allows direct candidates.
+	// TransportPolicy is "relay" to force traffic through TURN; "" or "all" allows direct candidates.
 	TransportPolicy string
-	// SendCandidate ships one locally-gathered ICE candidate to the remote peer
-	// over the control plane. Called from pion's goroutines.
+	// SendCandidate ships one locally-gathered ICE candidate to the remote peer. Called from pion's goroutines.
 	SendCandidate func(candidate string)
-	// Tracks are the outbound media tracks (live video, audio). They MUST be
-	// declared here: they are attached before the offer is created, and Helix does
-	// not renegotiate. Retrieve them after New with Peer.Track(id).
+	// Tracks are outbound media tracks; they MUST be declared here since they attach before the offer and Helix does not renegotiate.
 	Tracks []TrackSpec
 	Logger *slog.Logger
 }
@@ -93,26 +69,17 @@ func toPionICEServers(servers []ICEServer) []webrtc.ICEServer {
 	return out
 }
 
-// New builds a peer, creates the reliable DataChannel and returns the SDP offer
-// the caller must hand back to the browser. ICE gathering continues in the
-// background: the caller responds immediately and the connection completes
-// asynchronously, so a slow TURN allocation never stalls the control-plane
-// request.
+// New builds a peer, creates the reliable DataChannel and returns the SDP offer for the browser; ICE gathering continues in the background.
 func New(cfg Config) (*Peer, string, error) {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
 
-	// Query+gather mDNS so we can resolve a browser's ".local" host candidates.
-	// Without it, two peers on the same LAN behind identical NAT routinely fail
-	// to connect even though a direct path exists.
+	// Query+gather mDNS to resolve a browser's ".local" host candidates; without it same-LAN peers behind identical NAT often fail.
 	settings := webrtc.SettingEngine{}
 	settings.SetICEMulticastDNSMode(ice.MulticastDNSModeQueryAndGather)
 
-	// A custom API starts with an EMPTY MediaEngine — unlike the package-level
-	// webrtc.NewPeerConnection, which registers the defaults for you. Without
-	// this, media tracks negotiate no codec and silently never flow (the
-	// DataChannel still works, which makes the failure easy to miss).
+	// A custom API starts with an EMPTY MediaEngine, so tracks would silently negotiate no codec without registering defaults.
 	media := &webrtc.MediaEngine{}
 	if err := media.RegisterDefaultCodecs(); err != nil {
 		return nil, "", fmt.Errorf("register codecs: %w", err)
@@ -145,7 +112,7 @@ func New(cfg Config) (*Peer, string, error) {
 		failed: make(chan struct{}),
 	}
 
-	// Before the offer: an m-line can only be negotiated if the track exists now.
+	// An m-line can only be negotiated if the track exists before the offer.
 	if trackErr := p.addTracks(cfg.Tracks); trackErr != nil {
 		_ = pc.Close()
 		return nil, "", trackErr
@@ -194,9 +161,7 @@ func New(cfg Config) (*Peer, string, error) {
 	return p, offer.SDP, nil
 }
 
-// AcceptAnswer applies the browser's SDP answer and flushes any ICE candidates
-// that arrived before it (the browser trickles as soon as it has them, which can
-// beat its own answer through the control plane).
+// AcceptAnswer applies the browser's SDP answer and flushes any ICE candidates that arrived before it.
 func (p *Peer) AcceptAnswer(sdp string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -217,8 +182,7 @@ func (p *Peer) AcceptAnswer(sdp string) error {
 	return nil
 }
 
-// AddCandidate applies one remote ICE candidate, buffering it when the answer
-// has not landed yet (pion rejects candidates before the remote description).
+// AddCandidate applies one remote ICE candidate, buffering it until the answer lands (pion rejects candidates before the remote description).
 func (p *Peer) AddCandidate(encoded string) error {
 	var candidate webrtc.ICECandidateInit
 	if err := json.Unmarshal([]byte(encoded), &candidate); err != nil {
@@ -239,8 +203,7 @@ func (p *Peer) AddCandidate(encoded string) error {
 // ErrPeerFailed is returned when the connection fails before the channel opens.
 var ErrPeerFailed = errors.New("peer connection failed")
 
-// Transport blocks until the DataChannel is open and returns it as a
-// stream.Transport, ready for stream.NewSession.
+// Transport blocks until the DataChannel is open and returns it as a stream.Transport.
 func (p *Peer) Transport(ctx context.Context) (stream.Transport, error) {
 	select {
 	case <-p.ready:

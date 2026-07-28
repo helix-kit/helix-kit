@@ -1,23 +1,8 @@
 #!/usr/bin/env python3
-"""Generate the appliance's systemd units from systemd-units.json.
+"""Generate the appliance's systemd units from systemd-units.json (at image-build time).
 
-Run at image-build time (see cloud/appliance/Dockerfile). Writes each unit to
-/etc/systemd/system, creates the WantedBy symlinks for enabled units, and masks
-the Debian-packaged services that would otherwise steal ports. This replaces ~24
-hand-written .service/.target files with one declarative manifest.
-
-Manifest shape (see systemd-units.json):
-  defaults: { envFiles, restart, restartSec, wantedBy }
-  masked:   [ "postgresql.service", ... ]   # symlinked to /dev/null
-  targets:  { "<name>.target": { description, requires, after, wants, install, extra } }
-  services: { "<short>": {                  # -> helix-<short>.service
-      description, type, remainAfterExit, comment,
-      after/before/requires/wants/partOf: [deps],   # bare "postgres" -> helix-postgres.service
-      user, group, workingDirectory, environment: {K:V},
-      envFiles: ["internal","secrets","site"] | "none",
-      execStartPre: [..], execStart: "..", execStartPost: [..],
-      restart, restartSec, wantedBy, enabled: bool,
-      extra: { Unit: {K:V}, Service: {K:V} } } }
+Writes each unit to /etc/systemd/system, creates the WantedBy symlinks for enabled
+units, and masks the Debian-packaged services that would otherwise steal ports.
 """
 
 import argparse

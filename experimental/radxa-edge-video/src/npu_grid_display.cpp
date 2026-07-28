@@ -1,8 +1,4 @@
-// 4-stream NPU object detection throughput test.
-//   4x [rtspsrc ! omxh264dec ! videoconvert ! BGR appsink]  ->  round-robin:
-//   letterbox->640x640 CHW uint8 -> awnn (YOLOv5 on the VIP9000 NPU) -> decode+NMS
-//   -> draw boxes. Reports per-stream and aggregate detection FPS.
-// Single shared NPU network (core_count=1), single detection thread for now.
+// 4-stream NPU object detection throughput test with direct-DRM local display.
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -47,7 +43,7 @@ extern "C" VeOpsS* GetVeOpsS(enum EVEOPSTYPE type);
 #define DW 1920   // display width  (DP-alt-mode preferred mode)
 #define DH 1080   // display height
 
-// ---- YOLOv5 decode (reused verbatim from the vendor yolov5_post_process.cpp) ----
+// YOLOv5 decode (reused verbatim from vendor yolov5_post_process.cpp).
 struct Object { cv::Rect_<float> rect; int label; float prob; };
 static inline float sigmoid(float x){ return 1.f/(1.f+expf(-x)); }
 static inline float desigmoid(float x){ return -logf(1.f/x-1.f); }
@@ -126,10 +122,8 @@ static GstElement* pipes[NCAM];
 static GstElement* disp;
 static GstAppSrc*  encsrc;
 
-// ---- Direct-DRM standalone display (RGB primary plane, no compositor/kmssink) ----
-// Scans the composited grid straight to the panel via drmModeSetCrtc on a dumb
-// XRGB8888 framebuffer. Double-buffered (SetCrtc alternates FBs). 1920x1080 only:
-// the DP-alt-mode link trains 2 lanes so 1440p is out of budget (see DW/DH above).
+// Direct-DRM standalone display: scans the grid to the panel via drmModeSetCrtc on a dumb
+// XRGB8888 framebuffer, no compositor. 1920x1080 only (DP-alt-mode 2-lane budget).
 struct DrmFb { uint32_t handle, fb, pitch; size_t size; uint8_t* map; };
 static int drm_fd=-1, drm_bi=0, drm_ready=0;
 static DrmFb drm_fb[2];
@@ -158,11 +152,8 @@ static int drm_init(void){
     }
     drm_ready=1; return 0;
 }
-// Draw a 1920x1080 BGR frame to the panel. Converts BGR->XRGB8888 straight into the
-// single scanout buffer's mmap (respecting DRM pitch). SetCrtc once (first frame) to
-// latch the mode; afterwards the DE keeps scanning the same buffer, so in-place writes
-// just appear. A single buffer avoids the colored tear a 2-buffer non-vsync swap made
-// (content-over-content on a 7fps CCTV update is imperceptible).
+// Draw a 1920x1080 BGR frame to the panel: BGR->XRGB8888 into the single scanout mmap,
+// SetCrtc once to latch the mode. Single buffer avoids the tear a non-vsync 2-buffer swap made.
 static void drm_show(const cv::Mat& bgr1080){
     if(!drm_ready) return;
     DrmFb& b=drm_fb[0];
@@ -184,7 +175,7 @@ static cv::Mat latest[NCAM]; static int updated[NCAM]={0};
 static int rr=0;
 static volatile long g_inf=0, g_det=0;
 
-// ---- Cedar libcedarc HW H.264 encoder (reused from hwgrid_hybrid) ----
+// Cedar libcedarc HW H.264 encoder (reused from hwgrid_hybrid).
 static struct ScMemOpsS* memops; static VeOpsS* veOps;
 static VideoEncoder* venc; static void* encVe;
 static unsigned char g_hdr[256]; static int g_hdrlen=0;
@@ -244,9 +235,8 @@ static void* watchdog(void* a){ int s=(int)(intptr_t)a;
     for(int i=0;i<s*10;i++){ if(teardown_done) return NULL; usleep(100000); }
     fprintf(stderr,"[WATCHDOG] teardown hung >%ds — _exit; power cycle may be needed\n",s); _exit(3); }
 
-// NPU worker: pull a frame, preprocess, run inference (NPU serialized by mtx_npu,
-// each worker owns its awnn context so its output persists for post outside the lock),
-// decode+draw, publish the annotated cell. CPU pre/post overlaps other workers' NPU runs.
+// NPU worker: pull a frame, preprocess, run inference (NPU serialized by mtx_npu), decode+draw,
+// publish the annotated cell. CPU pre/post overlaps other workers' NPU runs.
 static void* worker(void* arg){
     int wid=(int)(intptr_t)arg;
     unsigned char* in=(unsigned char*)malloc(S*S*3);
@@ -270,9 +260,7 @@ static void* worker(void* arg){
             oc[0]=out[0]; oc[1]=out[1]; oc[2]=out[2];
             pthread_mutex_unlock(&mtx_npu);
             int n=detect_draw(frame,oc);   // reads ctxs[wid]'s own buffers (safe until this worker's next run)
-            // The decoder emits macroblock-padded frames (e.g. 1080p -> 1920x1088); the
-            // padding strip is garbage that shows as a colored seam at cell edges. Trim a
-            // small bottom/right margin (>= max 15px MB padding) so cells composite clean.
+            // trim MB-padding margin (decoder emits e.g. 1080p as 1920x1088) so cells composite clean
             cv::Rect roi(0,0,frame.cols-(frame.cols>16?16:0),frame.rows-(frame.rows>16?16:0));
             pthread_mutex_lock(&mtx_latest);
             cv::resize(frame(roi),latest[i],cv::Size(CW,CH)); updated[i]=1;
@@ -283,8 +271,7 @@ static void* worker(void* arg){
     }
     free(in); return NULL;
 }
-// Compositor + Cedar HW encoder thread (owns the encoder; runs at ~30fps regardless of
-// detection rate so the stream stays smooth, cells refresh as detections land).
+// Compositor + Cedar HW encoder thread; runs at ~30fps regardless of detection rate.
 static void* outputter(void* arg){ (void)arg;
     unsigned char* nv12=(unsigned char*)malloc(GW*GH*3/2);
     cv::Mat grid(GH,GW,CV_8UC3,cv::Scalar(20,20,20));
@@ -315,8 +302,7 @@ int main(int argc,char**argv){
 
     for(int i=0;i<NCAM;i++){
         char d[512]; GError* e=NULL;
-        // videorate caps the CPU-side videoconvert to 8 fps/stream (was the source's ~25),
-        // so we stop color-converting frames the workers would only drop.
+        // videorate caps videoconvert to 8 fps/stream so we don't color-convert frames workers drop
         snprintf(d,sizeof(d),
           "rtspsrc location=rtsp://%s:8554/stream%d protocols=tcp latency=100 ! rtph264depay ! h264parse ! "
           "omxh264dec ! videorate drop-only=true ! video/x-raw,framerate=8/1 ! "
@@ -349,11 +335,8 @@ int main(int argc,char**argv){
     g_object_set(encsrc,"block",FALSE,"max-bytes",(guint64)4000000,"leaky-type",2,NULL);
     gst_element_set_state(disp,GST_STATE_PLAYING);
 
-    // Standalone LOCAL MONITOR display (opt-in: pass a 3rd arg to enable). Direct-DRM
-    // RGB primary-plane scanout at 1920x1080 (the DP-alt-mode port's link budget);
-    // needs `systemctl stop sddm` first so we can grab DRM master. Throttled to ~7fps
-    // in the outputter to leave CPU headroom for the 4 RTSP readers. A DRM failure just
-    // leaves drm_ready=0 → display silently off, streaming/inference continue.
+    // Standalone local monitor display (opt-in via 3rd arg); needs `systemctl stop sddm`
+    // to grab DRM master. A DRM failure leaves drm_ready=0 -> streaming/inference continue.
     if(argc>3){
         if(drm_init()==0) fprintf(stderr,"standalone DRM display enabled (1920x1080)\n");
         else fprintf(stderr,"DRM display unavailable (streaming continues)\n");

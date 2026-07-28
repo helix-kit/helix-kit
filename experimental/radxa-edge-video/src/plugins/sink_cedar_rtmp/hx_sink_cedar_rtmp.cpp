@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// sink plugin: BGR grid frame -> Cedar libcedarc H.264 encode -> RTMP (MediaMTX -> WebRTC).
-// Ports make_encoder/bgr_to_nv12/encode_push (npu_compare.cpp:471-569) + the RTMP appsrc
-// pipeline (:851-855) into a self-contained node. in = [ grid_frame ] ; terminal.
-// params: { "url": "rtmp://host:1935/detgrid", "width": 1280, "height": 720,
-//           "fps": 25, "bitrate": 4000000, "keyint": 30 }
+// Sink plugin: BGR grid frame -> Cedar libcedarc H.264 encode -> RTMP (MediaMTX -> WebRTC).
+// in = [ grid_frame ] ; terminal.
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <opencv2/opencv.hpp>

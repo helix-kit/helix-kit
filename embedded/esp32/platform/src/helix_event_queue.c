@@ -72,8 +72,6 @@ static int s_ring_head, s_ring_tail;
 
 static int64_t now_ms(void) { return esp_timer_get_time() / 1000; }
 
-// ---- delivered ring (cross-task) -------------------------------------------
-
 static void ring_push(bool by_row, int64_t value)
 {
     xSemaphoreTake(s_ring_lock, portMAX_DELAY);
@@ -91,8 +89,6 @@ static void mqtt_publish_ack(int msg_id, void *ctx)
     (void)ctx;
     ring_push(false, msg_id);
 }
-
-// ---- in-flight map (sweep task only) ---------------------------------------
 
 static void inflight_add(int msg_id, int64_t row_id)
 {
@@ -117,8 +113,7 @@ static int64_t inflight_take(int msg_id)
     return -1;
 }
 
-// ---- row helpers (call under s_op_lock) ------------------------------------
-
+// Row helpers (call under s_op_lock).
 static void mark_sent(int64_t row_id)
 {
     helix_event_record_t r;
@@ -129,8 +124,7 @@ static void mark_sent(int64_t row_id)
     hdb_update(&EVENTS_TABLE, (uint32_t)row_id, &r);
 }
 
-// Evict one row to make space, preferring already-terminal rows. Returns true if
-// something was removed. Order: oldest sent -> oldest expired -> oldest pending.
+// Evict one row to make space, preferring terminal rows (oldest sent -> expired -> pending).
 static bool evict_one(void)
 {
     static const int order[] = {HELIX_EVENT_SENT, HELIX_EVENT_EXPIRED, HELIX_EVENT_PENDING};
@@ -145,8 +139,6 @@ static bool evict_one(void)
     }
     return false;
 }
-
-// ---- init ------------------------------------------------------------------
 
 static void sweep_task(void *arg);
 
@@ -172,8 +164,6 @@ esp_err_t helix_event_queue_init(void)
 }
 
 bool helix_event_queue_ready(void) { return s_ready; }
-
-// ---- enqueue ---------------------------------------------------------------
 
 esp_err_t helix_event_queue_enqueue(const char *service, const char *type, cJSON *payload,
                                     uint32_t ttl_sec, int64_t *out_id, char *out_msg_id, size_t msg_id_len)
@@ -238,8 +228,6 @@ esp_err_t helix_event_queue_enqueue(const char *service, const char *type, cJSON
     return ESP_OK;
 }
 
-// ---- query accessors -------------------------------------------------------
-
 int helix_event_queue_count(int status_filter)
 {
     hdb_cond_t c = {.column = "status", .op = HDB_EQ, .i = status_filter};
@@ -264,8 +252,6 @@ esp_err_t helix_event_queue_get(int64_t id, helix_event_record_t *out)
 {
     return hdb_get(&EVENTS_TABLE, (uint32_t)id, out);
 }
-
-// ---- sweep -----------------------------------------------------------------
 
 static int64_t backoff_ms(int64_t attempts)
 {
@@ -292,8 +278,7 @@ static void drain_deliveries(void)
     }
 }
 
-// `rows` is a caller-provided scratch buffer of SWEEP_BATCH records (heap, to
-// keep these large structs off the task stack).
+// `rows` is a caller-provided heap scratch buffer of SWEEP_BATCH records (kept off the task stack).
 static int cleanup_terminal(int64_t now, int64_t retention_ms, helix_event_record_t *rows)
 {
     int cleaned = 0;
@@ -378,7 +363,7 @@ int helix_event_queue_clear(void)
 {
     if (!s_ready) return -1;
     xSemaphoreTake(s_op_lock, portMAX_DELAY);
-    hdb_query_t all = {0};  // no conditions -> matches every row
+    hdb_query_t all = {0};
     int n = hdb_delete_where(&EVENTS_TABLE, &all);
     xSemaphoreGive(s_op_lock);
     return n;

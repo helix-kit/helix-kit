@@ -1,20 +1,4 @@
-"""Interactive console to a device's `console` service over the HelixStream data plane.
-
-Pairs with the ESP32 `console_bridge` firmware. The control plane (MQTT, via the
-gateway `/ws`) carries only the session handshake; the console bytes ride a
-direct WebSocket to the gateway's `/stream/client` — the same low-latency
-data-plane the Linux remote shell uses, so typing is responsive (no per-keystroke
-broker round-trip).
-
-Flow (relay transport):
-  1. mint a sessionId
-  2. send `console.open {sessionId, transport:"relay", dataUrl}` over `/ws` → MQTT;
-     the device dials `wss://host:4001/stream/device?session=<id>` (mTLS) and the
-     gateway registers it
-  3. attach to `wss://host/stream/client?session=<id>&meta=...`; the gateway runs
-     the mux and relays raw bytes
-  4. stdin → binary frames (keystrokes); binary frames → stdout (target console)
-"""
+"""Interactive console to a device's `console` service over the HelixStream data plane."""
 
 from __future__ import annotations
 
@@ -104,12 +88,8 @@ def _open_session(ws_mod: Any, control_url: str, session_id: str, data_url: str)
 
 
 def _attach_stream(ws_mod: Any, client_url: str) -> Any:
-    """Attach to /stream/client, retrying until the device stream is registered.
-
-    The device dials /stream/device asynchronously after `opened`, so the client
-    attach can briefly race ahead — the gateway rejects with a close until the
-    device socket exists.
-    """
+    # The device dials /stream/device asynchronously after `opened`, so the client
+    # attach can race ahead; the gateway rejects with a close until it exists.
     for _ in range(15):
         socket = ws_mod.create_connection(client_url, timeout=15)
         socket.settimeout(0.5)
@@ -123,8 +103,7 @@ def _attach_stream(ws_mod: Any, client_url: str) -> Any:
             socket.close()
             time.sleep(1.0)
             continue
-        # Unexpected early binary: keep it by returning a wrapper isn't worth it;
-        # data volumes at attach are nil, so just proceed.
+        # Early binary at attach is negligible; drop it and proceed.
         return socket
     raise click.ClickException("could not attach to the device stream (session never registered)")
 
@@ -230,11 +209,6 @@ class GatewayConsoleSession:
 )
 @click.option("--insecure", is_flag=True, help="Use ws:// instead of wss:// (local testing).")
 def gateway_console(device_id: str, host: str, insecure: bool) -> None:
-    """Attach an interactive console to a device's `console` service via the gateway.
-
-    Streams the target device's UART console over the HelixStream data plane
-    (WebSocket, not per-keystroke MQTT) and forwards your keystrokes. Ctrl-] exits.
-    """
-
+    """Attach an interactive console to a device's `console` service via the gateway."""
     session = GatewayConsoleSession(host=host, device_id=device_id, secure=not insecure)
     raise SystemExit(session.run())

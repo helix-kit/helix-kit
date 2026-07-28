@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """End-to-end proof of the on-device single-table store (FlashDB KVDB) in QEMU:
-SQLite-like CRUD over the demo `users` table plus WHERE / ORDER BY / LIMIT /
-COUNT / LIKE — driven over serial via the `db` service.
-
-Requires the ESP-IDF QEMU image; run with `helix embedded esp32 qemu-test`.
+SQLite-like CRUD plus WHERE/ORDER BY/LIMIT/COUNT/LIKE over serial via the `db` service.
 """
 
 from __future__ import annotations

@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// infer plugin (x86): ONNX Runtime — the portable counterpart to hx_infer_awnn.
-// Loads the ORIGINAL (cut-6-heads) ONNX and picks the execution provider at runtime from what's
-// installed (CUDA on an NVIDIA GPU, else CPU; TensorRT/DirectML/ROCm can be added the same way) —
-// so it "adapts to available resources" with no model conversion. Emits the same 6 raw heads as
-// the awnn path (box[64,G,G] x3, cls[80,G,G] x3), so hx_post_yolo11 consumes it UNCHANGED.
-// params: { "model": "/models/yolo11s_cut.onnx", "providers": ["CUDA","CPU"], "size": 640 }
+// Infer plugin (x86): ONNX Runtime — the portable counterpart to hx_infer_awnn. Loads the
+// cut-6-heads ONNX and picks the execution provider at runtime from what's installed (CUDA
+// else CPU). Emits the same 6 raw heads as the awnn path, so hx_post_yolo11 consumes it unchanged.
 #include <onnxruntime_cxx_api.h>
 #include <cstdio>
 #include <cstring>
@@ -17,10 +14,8 @@
 #include "../helix_pipeline.h"
 #include "../hx_json.h"
 
-// One process-global env, and ONE Ort::Session SHARED across all streams that use the same model.
-// Ort::Session::Run is thread-safe, so the N per-stream workers call Run concurrently on the shared
-// session -> a single GPU memory arena (no per-session OOM on a 4 GB card) + overlap of the CPU-side
-// ORT work and H2D/D2H copies of different streams with GPU compute.
+// One process-global env, and one Ort::Session shared across all streams that use the same model
+// (Run is thread-safe): a single GPU memory arena, no per-session OOM on a 4 GB card.
 static Ort::Env &genv() {
     static Ort::Env e(ORT_LOGGING_LEVEL_WARNING, "hx_ort");
     return e;
@@ -62,8 +57,7 @@ static helix_node_ctx *create(const char *params_json) {
 
     bool share = hxj::jbool(p, "share_session", true);
     int cap_mb = hxj::jint(p, "gpu_mem_mb", 0);   // 0 = no cap
-    // Build (or reuse) the session. share_session=false -> a private session per stream (separate
-    // CUDA stream => true overlap, but N arenas => needs VRAM); true -> one shared session.
+    // share_session=false -> a private session per stream (true overlap, but N arenas need VRAM).
     std::unique_lock<std::mutex> lk(g_smtx);
     std::string key = share ? model : (model + "#" + std::to_string((uintptr_t)c));
     auto it = g_sessions.find(key);
@@ -123,7 +117,7 @@ static helix_node_ctx *create(const char *params_json) {
 }
 static void destroy(helix_node_ctx *c) { delete c; }
 
-// Run the ONNX under the host NPU/GPU mutex. Input = uint8 CHW RGB (from hx_pre_letterbox) -> f32/255.
+// Input = uint8 CHW RGB (from hx_pre_letterbox) -> f32/255.
 static int infer_submit(helix_node_ctx *c, const helix_packet_t *in) {
     if (!in || in->type != HX_PKT_TENSOR) return -1;
     const unsigned char *u = (const unsigned char *)in->tensor.data;

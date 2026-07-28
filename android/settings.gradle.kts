@@ -19,8 +19,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // usb-serial-for-android (CP210x/CH340/FTDI UART bridge drivers) is
-        // published only via JitPack.
+        // usb-serial-for-android is published only via JitPack.
         maven {
             url = uri("https://jitpack.io")
             content { includeGroup("com.github.mik3y") }
@@ -30,9 +29,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "helix-android"
 
-// The Helix Android SDK: protocol (core + service) and transports (BLE, MQTT
-// gateway) in one installable module.
 include(":helix")
-
-// Main app (mirror of web/apps/helix)
 include(":app")

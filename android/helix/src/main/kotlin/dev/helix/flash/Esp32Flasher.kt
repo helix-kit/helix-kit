@@ -10,17 +10,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 
-/**
- * A minimal ESP32 ROM-bootloader flasher — a focused Kotlin port of esptool's
- * `--no-stub` path — driving an open [UsbSerialPort]. It resets the chip into
- * download mode over DTR/RTS, speaks the SLIP-framed loader protocol, and writes
- * compressed (zlib) flash blocks. The web flashes via `esptool-js` over Web
- * Serial; this is the Android equivalent over USB-OTG, consuming the same
- * [Esp32FirmwareManifest].
- *
- * Pure ROM loader (no stub upload) keeps the library self-contained — no vendored
- * Espressif stub blob — at the cost of the ROM's 1 KB write blocks.
- */
+/** Minimal ESP32 ROM-bootloader flasher (Kotlin port of esptool's `--no-stub` path) over USB-OTG. */
 class Esp32Flasher(private val context: Context) {
 
     fun interface ProgressListener {
@@ -32,12 +22,7 @@ class Esp32Flasher(private val context: Context) {
     private var inLen = 0
     private var inPos = 0
 
-    /**
-     * Opens the attached ESP32 over USB, flashes every [artifacts] entry at its
-     * offset, then resets the chip to run the new firmware. [flashSizeBytes]
-     * sizes the erase parameters. The serial port is opened and closed here, so
-     * the caller never handles it.
-     */
+    /** Flashes every [artifacts] entry at its offset over USB, then resets the chip. */
     suspend fun flash(
         artifacts: List<DownloadedArtifact>,
         flashSizeBytes: Long,
@@ -102,8 +87,6 @@ class Esp32Flasher(private val context: Context) {
         }
     }
 
-    // --- loader connect ---------------------------------------------------
-
     private fun connectLoader(): Boolean {
         repeat(5) {
             classicReset()
@@ -129,8 +112,6 @@ class Esp32Flasher(private val context: Context) {
         return response.size >= 2 && (response[0].toInt() and 0xFF) == 0x01
     }
 
-    // --- loader commands --------------------------------------------------
-
     private fun spiAttach() {
         checkCommand(CMD_SPI_ATTACH, le32(0) + le32(0), timeoutMs = 3000)
     }
@@ -155,7 +136,6 @@ class Esp32Flasher(private val context: Context) {
         checkCommand(CMD_FLASH_DEFL_END, le32(1), timeoutMs = 3000)
     }
 
-    /** Sends a command and throws if the loader reports a non-zero status. */
     private fun checkCommand(op: Int, data: ByteArray, checksum: Int = 0, timeoutMs: Long) {
         sendCommand(op, data, checksum)
         val frame = readResponse(op, deadline(timeoutMs))
@@ -176,8 +156,6 @@ class Esp32Flasher(private val context: Context) {
             }
         }
     }
-
-    // --- SLIP framing -----------------------------------------------------
 
     private fun sendCommand(op: Int, data: ByteArray, checksum: Int) {
         val header = ByteArray(8)
@@ -251,9 +229,7 @@ class Esp32Flasher(private val context: Context) {
         inPos = 0
     }
 
-    // --- reset lines ------------------------------------------------------
-
-    /** Classic auto-reset into download mode (esptool ClassicReset). */
+    // Classic auto-reset into download mode (esptool ClassicReset).
     private fun classicReset() {
         port.setDTR(false)
         port.setRTS(true)
@@ -264,15 +240,12 @@ class Esp32Flasher(private val context: Context) {
         port.setDTR(false)
     }
 
-    /** Pulse EN to reboot the chip and run the freshly flashed app. */
     private fun hardReset() {
         port.setDTR(false)
         port.setRTS(true)
         SystemClock.sleep(100)
         port.setRTS(false)
     }
-
-    // --- helpers ----------------------------------------------------------
 
     private fun deadline(timeoutMs: Long): Long = SystemClock.elapsedRealtime() + timeoutMs
 

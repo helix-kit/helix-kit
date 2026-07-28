@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Stage mosquitto config + PKI into the /mosquitto layout the bundled
-# mosquitto.conf expects (it uses absolute /mosquitto/... paths), then symlink
-# /mosquitto -> the volume. Mirrors cloud/mosquitto/docker-entrypoint.sh.
+# Stage mosquitto config + PKI into the /mosquitto layout the bundled conf expects, then
+# symlink /mosquitto -> the volume. Mirrors cloud/mosquitto/docker-entrypoint.sh.
 set -euo pipefail
 ROOT=/var/lib/helix/mosquitto
 mkdir -p "${ROOT}/config" "${ROOT}/certs" "${ROOT}/data" "${ROOT}/pki/helix-server"
 
 cp /etc/helix/mosquitto/mosquitto.conf "${ROOT}/config/mosquitto.conf"
-# Native acl_file: merge the ORIGINAL device + service ACL files (cloud/mosquitto)
-# — they're already native mosquitto syntax, so no appliance-specific copy needed.
-# Global (not per-listener) but identity-scoped, so enforcement is equivalent.
+# Merge the device + service ACL files (already native mosquitto syntax); global but identity-scoped.
 cat /etc/helix/mosquitto/device.acl /etc/helix/mosquitto/service.acl \
   > "${ROOT}/config/acl"
 

@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
-# Stage 28 — install the full Helix appliance stack into the rootfs as NATIVE
-# systemd units, reusing cloud/appliance's configs + generators verbatim (no
-# duplication). This is the native-host delivery of the same stack the container
-# image delivers; the *only* AMI-specific choices are (a) Inngest + Redis are
-# excluded — this delivery runs DBOS — and (b) the app runs from host-built
-# bundles baked into the image (same as the container's last layer).
-#
-# The repo is bind-mounted at /repo in the builder (see tooling/ami/commands.py);
-# everything under /repo/cloud/appliance is the shared source of truth.
-#
+# Stage 28 — install the Helix appliance stack into the rootfs as native systemd
+# units, reusing cloud/appliance's configs + generators. AMI-specific: Inngest +
+# Redis excluded (runs DBOS); app runs from host-built bundles baked in.
 # Third-party binary versions MUST track cloud/appliance/Dockerfile's ARGs.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
@@ -29,10 +22,6 @@ OPENFGA_VERSION=1.18.0
 STEP_CA_VERSION=0.30.2
 STEP_CLI_VERSION=0.30.6
 
-# ---- apt packages (mirror the Dockerfile; minus redis/inngest) --------------
-# coturn is the WebRTC data plane's TURN fallback. Its unit is generated from the
-# shared manifest either way, so leaving the binary out (as this script used to)
-# produced a unit pointing at a file that does not exist.
 log "apt: postgres, mosquitto, node, caddy, coturn, helpers"
 in_chroot apt-get update
 in_chroot apt-get install -y --no-install-recommends \
@@ -40,8 +29,7 @@ in_chroot apt-get install -y --no-install-recommends \
   mosquitto mosquitto-clients \
   coturn \
   ca-certificates curl gnupg jq tar xz-utils unzip zip python3 procps tini
-# Renamed binary dodges the host path-based AppArmor mosquitto profile — the
-# unit's ExecStart is /usr/local/sbin/helix-mosquitto (matches the container).
+# Renamed binary dodges the host path-based AppArmor mosquitto profile.
 in_chroot cp /usr/sbin/mosquitto /usr/local/sbin/helix-mosquitto
 
 log "apt: Node 24 (nodesource)"
@@ -55,11 +43,8 @@ in_chroot bash -c "echo 'deb [signed-by=/usr/share/keyrings/caddy-stable-archive
 in_chroot apt-get update
 in_chroot apt-get install -y --no-install-recommends caddy
 
-# The apt package brings the caddy user/group + runtime dirs but no DNS provider
-# module. Swap the binary for an official build carrying caddy-dns/cloudflare:
-# the `*.port` wildcard cert needs DNS-01 (HTTP-01 cannot issue wildcards) and a
-# Cloudflare-proxied domain cannot be HTTP-01 validated at all. Mirrors
-# cloud/appliance/Dockerfile; see cloud/Caddyfile (CADDY_ACME_DNS).
+# Swap the apt caddy binary for an official build with caddy-dns/cloudflare (the
+# *.port wildcard cert needs DNS-01, and proxied domains can't use HTTP-01).
 log "caddy: rebuilding with dns.providers.cloudflare ($AMI_ARCH)"
 in_chroot bash -euo pipefail -c "
   curl -fsSL --retry 8 --retry-delay 3 --retry-all-errors --connect-timeout 30 \
@@ -69,7 +54,6 @@ in_chroot bash -euo pipefail -c "
   caddy list-modules | grep -qx dns.providers.cloudflare
 "
 
-# ---- single-binary services (openfga, step-ca, step) ------------------------
 log "single binaries: openfga $OPENFGA_VERSION, step-ca $STEP_CA_VERSION, step $STEP_CLI_VERSION"
 in_chroot bash -euo pipefail -c "
   dl() { curl -fsSL --retry 8 --retry-delay 3 --retry-all-errors --connect-timeout 30 \"\$1\" -o \"\$2\"; }
@@ -83,11 +67,8 @@ in_chroot bash -euo pipefail -c "
   rm -rf /tmp/openfga.tgz /tmp/stepca.tgz /tmp/step.tgz /tmp/openfga_* /tmp/step-ca_* /tmp/step_*
 "
 
-# ---- service accounts -------------------------------------------------------
-# `helix` is BOTH the appliance service user AND the cloud-init login user, so
-# create it as a normal login user (home + bash + sudo) rather than the
-# container's nologin system account — this reconciles with cloud-init's
-# default_user and lets it exist before the units start (avoids a boot race).
+# `helix` is both the service user AND the cloud-init login user, so create it as
+# a normal login user (home+bash+sudo) to reconcile with cloud-init's default_user.
 log "users: helix (login+service) + openfga/stepca/observ (system)"
 in_chroot bash -euo pipefail -c "
   id helix >/dev/null 2>&1 || useradd --create-home --shell /bin/bash helix
@@ -98,9 +79,8 @@ in_chroot bash -euo pipefail -c "
   done
 "
 
-# TEST ONLY: bake an SSH key for `helix` when AMI_TEST_SSH_PUBKEY is set. QEMU has
-# no IMDS, so cloud-init can't inject the launch key; this lets a local KVM boot
-# be SSH'd into for smoke testing. Never set for a shipped build.
+# TEST ONLY: bake an SSH key for `helix` when AMI_TEST_SSH_PUBKEY is set (QEMU has
+# no IMDS for cloud-init key injection). Never set for a shipped build.
 if [ -n "${AMI_TEST_SSH_PUBKEY:-}" ]; then
   log "installing TEST SSH pubkey for helix (AMI_TEST_SSH_PUBKEY set)"
   install -d -m 700 "$ROOTFS/home/helix/.ssh"
@@ -109,7 +89,6 @@ if [ -n "${AMI_TEST_SSH_PUBKEY:-}" ]; then
   in_chroot chown -R helix:helix /home/helix/.ssh
 fi
 
-# ---- configs + helper scripts + manifest (SHARED sources) -------------------
 log "configs + bin + manifest from cloud/appliance"
 install -d "$ROOTFS/etc/helix" "$ROOTFS/etc/helix/mosquitto" "$ROOTFS/etc/helix/coturn" \
           "$ROOTFS/opt/helix/bin" "$ROOTFS/opt/helix/bundles" "$ROOTFS/var/lib/helix"
@@ -125,7 +104,6 @@ cp "$REPO"/cloud/appliance/bundles/*.zip   "$ROOTFS/opt/helix/bundles/"
 in_chroot chmod +x /opt/helix/bin/gen-units.py
 in_chroot bash -c 'chmod +x /opt/helix/bin/*.sh'
 
-# ---- baked site.env: DBOS + roles incl. dispatch + a seed sysadmin ----------
 # seed-env.sh imports this into /var/lib/helix/env/site.env on first boot.
 log "baking DBOS site.env"
 cat > "$ROOTFS/etc/helix/site.env" <<'EOF'
@@ -185,10 +163,8 @@ TURN_REALM=
 EOF
 chmod 600 "$ROOTFS/etc/helix/site.env"
 
-# ---- generate units from the SHARED manifest (Inngest + Redis excluded) -----
-# Keep the console/session units UNmasked: the manifest masks getty/logind
-# because the container shares the host's /dev, but this is a real host that
-# needs its serial console + SSH login sessions.
+# Keep console/session units unmasked: the manifest masks getty/logind for the
+# container's shared /dev, but this is a real host needing serial console + SSH.
 log "gen-units.py (exclude inngest,redis; keep console/session units)"
 in_chroot systemctl set-default multi-user.target
 in_chroot python3 /opt/helix/bin/gen-units.py --exclude inngest redis \

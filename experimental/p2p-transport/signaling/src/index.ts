@@ -1,21 +1,6 @@
-// Helix P2P signaling server (experimental).
+// Helix P2P signaling server: introduces two room peers so they can establish a direct WebRTC connection; bulk data then flows peer-to-peer, never through here.
 //
-// The ONLY job of this box (which runs on EC2) is to introduce two peers so they
-// can establish a *direct* WebRTC connection. Once the DataChannel opens, all
-// bulk data (files, media, streams) flows peer-to-peer and NEVER touches this
-// server — that is the whole point: bypass EC2 bandwidth.
-//
-// It does three things:
-//   - serve the static web client                          (GET / ...)
-//   - relay opaque signaling JSON between the two room peers (/__p2p__ WS)
-//   - report how many *signaling* bytes it relayed          (/__p2pstats__)
-//
-// A "room" is a rendezvous id shared out-of-band by the two peers. Each room
-// holds at most one `device` and one `browser`. The device is the WebRTC
-// initiator (creates the offer + DataChannel); the browser answers.
-//
-// WARNING (experimental): NO auth. Anyone who knows a room id can join it. The
-// productization path (capability tokens, mTLS device identity) is doc 10.
+// WARNING (experimental): NO auth. Anyone who knows a room id can join it.
 
 import http from "node:http";
 import fs from "node:fs";
@@ -34,12 +19,10 @@ interface Peer {
   role: Role;
 }
 
-// A rendezvous point for exactly two peers.
+// Room is a rendezvous point for exactly two peers.
 class Room {
   device: Peer | null = null;
   browser: Peer | null = null;
-  // Signaling bytes relayed through this server for this room. This is the
-  // number we want to stay tiny while gigabytes flow P2P off to the side.
   bytesRelayed = 0;
   readonly createdAt = Date.now();
 
@@ -68,11 +51,6 @@ function getRoom(id: string): Room {
   }
   return r;
 }
-
-// ---------------------------------------------------------------------------
-// Static file serving for the web client (single-origin with the WS endpoint,
-// so the browser page and its signaling socket share scheme/host).
-// ---------------------------------------------------------------------------
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -117,8 +95,6 @@ const server = http.createServer((req, res) => {
         id,
         device: !!r.device,
         browser: !!r.browser,
-        // The killer metric: total signaling bytes relayed by EC2 for this
-        // room. The actual file/media payload does NOT appear here.
         signalingBytesRelayed: r.bytesRelayed,
         uptimeMs: now - r.createdAt,
       })),
@@ -130,10 +106,7 @@ const server = http.createServer((req, res) => {
   serveStatic(req, res);
 });
 
-// ---------------------------------------------------------------------------
 // Signaling WebSocket: /__p2p__?room=<id>&role=<device|browser>
-// ---------------------------------------------------------------------------
-
 const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
@@ -158,8 +131,7 @@ function send(ws: WebSocket, obj: unknown): void {
 function handlePeer(ws: WebSocket, roomId: string, role: Role): void {
   const room = getRoom(roomId);
 
-  // Evict a stale same-role peer (last writer wins — matches the other
-  // experiments' MVP semantics).
+  // Evict a stale same-role peer (last writer wins).
   const existing = room.peer(role);
   if (existing) existing.ws.close(4000, "replaced by new peer");
 
@@ -167,8 +139,7 @@ function handlePeer(ws: WebSocket, roomId: string, role: Role): void {
   room.set(role, self);
   console.log(`[join] room=${roomId} role=${role}`);
 
-  // If both peers are now present, tell each to begin negotiation. The device
-  // is the initiator: it creates the DataChannel and the SDP offer.
+  // When both peers are present, the device is told to initiate (DataChannel + offer).
   const announce = () => {
     if (room.device && room.browser) {
       send(room.device.ws, { type: "ready", initiator: true });
@@ -182,7 +153,6 @@ function handlePeer(ws: WebSocket, roomId: string, role: Role): void {
     if (isBinary) return; // signaling is JSON text only
     room.bytesRelayed += data.length;
     const other = room.other(role);
-    // Opaque relay: we forward the SDP/ICE JSON verbatim, never inspecting it.
     if (other && other.ws.readyState === WebSocket.OPEN) {
       other.ws.send(data.toString("utf8"));
     }

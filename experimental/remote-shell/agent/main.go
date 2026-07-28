@@ -1,14 +1,6 @@
-// Helix remote-shell device agent (experimental).
+// Package main is the Helix remote-shell device agent: a single outbound WebSocket to the gateway forks a PTY per opened terminal and streams bytes both ways, exposing zero inbound ports.
 //
-// Holds a single outbound WebSocket to the cloud gateway. For each terminal the
-// gateway opens, it forks a PTY running a login shell and streams the PTY bytes
-// both ways. The device exposes zero inbound ports.
-//
-//	agent --outbound WSS--> helix-kit.com/__shell_agent__
-//	OPEN  -> forkpty(/bin/bash) -> stream stdout/stdin, honor resize
-//
-// WARNING (experimental): there is NO authentication. Anyone who can reach the
-// gateway UI gets a shell on this device. Run only in a throwaway container.
+// WARNING (experimental): NO authentication. Anyone who can reach the gateway UI gets a shell on this device.
 package main
 
 import (
@@ -29,8 +21,7 @@ type openMsg struct {
 	Rows uint16 `json:"rows"`
 }
 
-// agentConn owns the single gateway WebSocket and serializes writes through one
-// goroutine so per-terminal readers can send concurrently.
+// agentConn owns the single gateway WebSocket and serializes writes through one goroutine.
 type agentConn struct {
 	ws    *websocket.Conn
 	shell string
@@ -161,7 +152,6 @@ func (ac *agentConn) openSession(id uint32, payload []byte) {
 	ac.mu.Unlock()
 	log.Printf("session %d opened (%dx%d)", id, m.Cols, m.Rows)
 
-	// Pump PTY output -> gateway until the shell exits.
 	go func() {
 		buf := make([]byte, 32*1024)
 		for {

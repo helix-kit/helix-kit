@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Echo service: register over IPC and answer "ping" commands with "pong".
-
-Mirrors the Go ``internal/echo`` service. All wire decoding/encoding and the
-command switch live in the generated ``generated.echo`` module; this file only
-implements the typed handler and the connect/dispatch bootstrap.
-"""
+"""Echo service: register over IPC and answer "ping" commands with "pong"."""
 
 from __future__ import annotations
 

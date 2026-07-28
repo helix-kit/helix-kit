@@ -267,12 +267,7 @@ def console_open(
     no_reconnect: bool,
     wait: bool,
 ) -> None:
-    """Open an interactive serial console.
-
-    Survives device resets by default: when the board reboots and the adapter
-    re-enumerates, the session reconnects instead of dying.
-    """
-
+    """Open an interactive serial console (reconnects across device resets)."""
     resolved = resolve_port(port)
     if wait and not os.path.exists(resolved):
         click.echo(f"waiting for {resolved} ...", err=True)

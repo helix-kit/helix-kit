@@ -18,9 +18,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/stream"
 )
 
-// relay stands in for the control plane: candidates are handed to it the moment
-// they are gathered, which — as on the wire — can be before the far peer exists.
-// It buffers until a destination is attached.
+// relay stands in for the control plane, buffering gathered candidates until a destination is attached.
 type relay struct {
 	mu      sync.Mutex
 	deliver func(string)
@@ -47,9 +45,7 @@ func (r *relay) to(deliver func(string)) {
 	r.pending = nil
 }
 
-// browser stands in for the browser half of a Helix peer: it answers the
-// device's offer and speaks HelixStream over the DataChannel it is offered.
-// Everything it does here, @helix/protocol-peer does in the browser.
+// browser stands in for the browser half of a Helix peer: it answers the device's offer and speaks HelixStream over the DataChannel.
 type browser struct {
 	pc      *webrtc.PeerConnection
 	session chan *stream.Session
@@ -75,8 +71,6 @@ func newBrowser(t *testing.T, sendCandidate func(string)) *browser {
 	})
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
 		dc.OnOpen(func() {
-			// The browser is the mux client (odd stream ids); the device is the
-			// server (even) — exactly the parity the relayed gateway uses.
 			b.session <- stream.NewSession(peer.WrapDataChannel(dc), stream.Config{Client: true})
 		})
 	})
@@ -111,8 +105,7 @@ func (b *browser) addCandidate(t *testing.T, encoded string) {
 	}
 }
 
-// connect negotiates a real device<->browser peer over loopback ICE, with the
-// two halves trickling candidates to each other the way the control plane does.
+// connect negotiates a real device<->browser peer over loopback ICE, trickling candidates like the control plane does.
 func connect(t *testing.T) (*stream.Session, *stream.Session) {
 	t.Helper()
 
@@ -154,12 +147,10 @@ func connect(t *testing.T) (*stream.Session, *stream.Session) {
 	}
 }
 
-// The whole premise of the design: the mux, its framing, its credit-based flow
-// control and its half-close all work over a DataChannel with no changes.
+// TestHelixStreamOverDataChannel proves the mux and its flow control work over a DataChannel unchanged.
 func TestHelixStreamOverDataChannel(t *testing.T) {
 	deviceSession, browserSession := connect(t)
 
-	// The device echoes whatever the browser opens, like a stream app would.
 	go func() {
 		st, err := deviceSession.Accept()
 		if err != nil {
@@ -174,9 +165,7 @@ func TestHelixStreamOverDataChannel(t *testing.T) {
 		t.Fatalf("open stream: %v", err)
 	}
 
-	// Big enough to exhaust the 256 KiB credit window several times over and to
-	// push the DataChannel past its send-buffer high-water mark, so this also
-	// exercises flow control and backpressure rather than just a round trip.
+	// Big enough to exhaust the credit window and push past the send-buffer high-water mark, exercising flow control and backpressure.
 	payload := make([]byte, 4<<20)
 	if _, err := rand.Read(payload); err != nil {
 		t.Fatalf("rand: %v", err)
@@ -201,7 +190,7 @@ func TestHelixStreamOverDataChannel(t *testing.T) {
 	}
 }
 
-// Media rides the same peer as the mux — the day-one requirement for live video.
+// TestMediaTrackOnTheSamePeer proves media rides the same peer as the mux.
 func TestMediaTrackOnTheSamePeer(t *testing.T) {
 	toBrowser := &relay{}
 	tracks := make(chan *webrtc.TrackRemote, 1)
@@ -240,8 +229,7 @@ func TestMediaTrackOnTheSamePeer(t *testing.T) {
 		t.Fatalf("accept answer: %v", answerErr)
 	}
 
-	// Keep writing samples until the receiver sees RTP (the track only flows once
-	// ICE/DTLS/SRTP finish, which is asynchronous).
+	// Keep writing samples until the receiver sees RTP; the track only flows once ICE/DTLS/SRTP finish.
 	done := make(chan struct{})
 	defer close(done)
 	go func() {

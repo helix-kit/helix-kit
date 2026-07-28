@@ -1,12 +1,4 @@
-// MODEL-COMPARISON NPU pipeline (headless / WebRTC-only) — YOLOv5n vs YOLO11s.
-//   4x [rtspsrc ! omxh264dec ! videoconvert ! BGR appsink]. Two complex scenes,
-//   each run through BOTH models so 5n vs 11s sit side-by-side on identical content:
-//     stream0 = videoA + 5n   stream1 = videoA + 11s
-//     stream2 = videoB + 5n   stream3 = videoB + 11s
-//   Each NPU worker owns one awnn context (no per-run reload); the single NPU core
-//   is serialized by mtx_npu. Reports PER-MODEL inference-ms + throughput + aggregate.
-//   Layout selectable by argv[2]: mixed(default) | all11 | all5 — so "all 4 on 11s"
-//   can be measured directly. Annotated 2x2 -> Cedar HW encode -> RTMP -> WebRTC.
+// Model-comparison NPU pipeline (headless/WebRTC): YOLOv5n vs YOLO11s, one awnn context per stream, single NPU core serialized by mtx_npu.
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -35,13 +27,13 @@
 extern "C" VeOpsS *GetVeOpsS(enum EVEOPSTYPE type);
 
 #define NCAM 4
-#define S 640 // model input side (both models are 640x640)
+#define S 640
 #define GW 1280
 #define GH 720
 #define CW 640
 #define CH 360
 
-// ---- YOLOv5 decode (reused verbatim from the vendor yolov5_post_process.cpp) ----
+// YOLOv5 decode (from vendor yolov5_post_process.cpp).
 struct Object
 {
     cv::Rect_<float> rect;
@@ -157,7 +149,7 @@ static void gen_proposals(int stride, const float *feat, float pth, std::vector<
 }
 static const char *CLS[] = {"person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"};
 
-// letterbox a BGR frame into a 640x640 CHW uint8 RGB buffer (matches vendor preprocess)
+// Letterbox a BGR frame into a 640x640 CHW uint8 RGB buffer.
 static void preprocess(const cv::Mat &bgr, unsigned char *out)
 {
     cv::Mat img;
@@ -168,7 +160,6 @@ static void preprocess(const cv::Mat &bgr, unsigned char *out)
     cv::Mat canvas(S, S, CV_8UC3, cv::Scalar(0, 0, 0));
     int top = (S - rr) / 2, left = (S - rc) / 2;
     img.copyTo(canvas(cv::Rect(left, top, rc, rr)));
-    // HWC -> CHW
     for (int h = 0; h < S; h++)
         for (int w = 0; w < S; w++)
         {
@@ -177,7 +168,7 @@ static void preprocess(const cv::Mat &bgr, unsigned char *out)
                 out[c * S * S + h * S + w] = p[c];
         }
 }
-// decode outputs, NMS, map boxes back to the original frame size, draw in place
+// Decode outputs, NMS, map boxes back to the original frame, draw in place.
 static int detect_draw(cv::Mat &bgr, float **output)
 {
     std::vector<Object> prop;
@@ -238,13 +229,12 @@ static gboolean bus_cb(GstBus *b, GstMessage *m, gpointer u)
     return TRUE;
 }
 
-#define NWORK NCAM // one NPU worker per stream (4) — maximizes NPU feeding
+#define NWORK NCAM // one NPU worker per stream
 static GstAppSink *sinks[NCAM];
 static GstElement *pipes[NCAM];
 static GstElement *disp;
 static GstAppSrc *encsrc;
 
-// ================= YOLOv8-pose decode + draw (2nd model) =================
 // COCO 17-keypoint skeleton limbs (pairs of keypoint indices).
 static const int SKELETON[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}, {6, 12}, {5, 6}, {5, 7}, {6, 8}, {7, 9}, {8, 10}, {1, 2}, {0, 1}, {0, 2}, {1, 3}, {2, 4}, {3, 5}, {4, 6}};
 struct Pose
@@ -253,17 +243,10 @@ struct Pose
     float prob;
     float kx[17], ky[17], kc[17];
 };
-// yolov8-pose ONNX output is a single [1,56,8400] tensor, channel-major:
-// 56 = 4 box(cx,cy,w,h) + 1 person-conf + 17*(x,y,conf); coords in 640-input space.
-// NOTE: assumes the NBG preserves this concatenated output. Verify against the actual
-// .nb output count/shape once converted; adjust indexing if the NBG emits raw heads.
+// Model cut at the 9 raw conv heads so logits quantize cleanly as uint8 (post-decode tensors mix 0-640 coords with 0-1 conf and get crushed); full float decode here.
+// out[0..2] box[1,64,G,G] (4 sides x16 DFL), out[3..5] cls[1,1,G,G], out[6..8] kpt[1,51,G,G]; G=80/40/20 at stride 8/16/32.
 static int pose_draw(cv::Mat &bgr, float **out)
 {
-    // The model is CUT at the 9 RAW conv heads (before any decode) so the logits quantize
-    // cleanly as uint8 (post-decode tensors mix 0-640 coords with 0-1 conf and get crushed).
-    // We do the full YOLOv8-pose decode here in float. Output order (== --outputs order):
-    //   out[0..2] box  [1,64,G,G]  (4 sides x 16 DFL bins), out[3..5] cls [1,1,G,G],
-    //   out[6..8] kpt  [1,51,G,G]  (17*(x,y,vis)),  G = 80/40/20 at stride 8/16/32.
     const int GR[3] = {80, 40, 20}, ST[3] = {8, 16, 32};
     std::vector<Pose> props;
     for (int s = 0; s < 3; s++)
@@ -299,7 +282,7 @@ static int pose_draw(cv::Mat &bgr, float **out)
                         d += b * (e[b] / sum);
                     dist[side] = d;
                 }
-                float ax = x + 0.5f, ay = y + 0.5f; // anchor point (grid+0.5)
+                float ax = x + 0.5f, ay = y + 0.5f;
                 float x1 = (ax - dist[0]) * st, y1 = (ay - dist[1]) * st, x2 = (ax + dist[2]) * st, y2 = (ay + dist[3]) * st;
                 Pose p;
                 p.rect = cv::Rect_<float>(x1, y1, x2 - x1, y2 - y1);
@@ -359,10 +342,7 @@ static int pose_draw(cv::Mat &bgr, float **out)
     return (int)keep.size();
 }
 
-// ================= YOLO11 (anchor-free DFL) detection decode — 2nd model =================
-// YOLO11s cut at the 6 RAW conv heads (same recipe as yolov8-pose): out[0..2] box[1,64,G,G]
-// (4 sides x 16 DFL bins), out[3..5] cls[1,80,G,G], G = 80/40/20 at stride 8/16/32. Full
-// decode in float here (post-decode tensors quantize badly). Reuses Object/qsort/nms.
+// YOLO11 anchor-free DFL decode, cut at the 6 raw conv heads (post-decode tensors quantize badly): out[0..2] box[1,64,G,G], out[3..5] cls[1,80,G,G], G=80/40/20 at stride 8/16/32.
 static int yolo11_draw(cv::Mat &bgr, float **out)
 {
     const int GR[3] = {80, 40, 20}, ST[3] = {8, 16, 32};
@@ -414,7 +394,7 @@ static int yolo11_draw(cv::Mat &bgr, float **out)
         float x0 = (o.rect.x - tw) * rx, y0 = (o.rect.y - th) * ry, x1 = (o.rect.x + o.rect.width - tw) * rx, y1 = (o.rect.y + o.rect.height - th) * ry;
         x0 = std::max(0.f, std::min(x0, bgr.cols - 1.f)); y0 = std::max(0.f, std::min(y0, bgr.rows - 1.f));
         x1 = std::max(0.f, std::min(x1, bgr.cols - 1.f)); y1 = std::max(0.f, std::min(y1, bgr.rows - 1.f));
-        cv::rectangle(bgr, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 165, 255), 2); // orange = 11s
+        cv::rectangle(bgr, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 165, 255), 2);
         char t[128];
         snprintf(t, sizeof(t), "%s %.0f%%", CLS[o.label], o.prob * 100);
         cv::putText(bgr, t, cv::Point(x0, std::max(12.f, y0 - 4)), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 165, 255), 1);
@@ -422,24 +402,20 @@ static int yolo11_draw(cv::Mat &bgr, float **out)
     return picked.size();
 }
 
-// ================= Model registry + per-stream / per-worker assignment =================
 struct Model
 {
     const char *name;
     const char *nb;
-    void (*pre)(const cv::Mat &, unsigned char *); // frame -> 640 CHW uint8 (both share the letterbox)
-    int (*post)(cv::Mat &, float **);              // decode + draw in place, returns object count
+    void (*pre)(const cv::Mat &, unsigned char *);
+    int (*post)(cv::Mat &, float **);
 };
-// Registry: the older/smaller YOLOv5n (anchor-based, vendor .nb) vs the newer/larger
-// YOLO11s (anchor-free DFL, converted via ACUITY). Both 640x640, share the letterbox.
 static Model MODELS[] = {
-    {"5n", "model/v3/yolov5.nb", preprocess, detect_draw},          // YOLOv5n detection (green boxes)
-    {"11s", "/home/radxa/lab/yolo11s.nb", preprocess, yolo11_draw}, // YOLO11s detection (orange boxes)
-    {"11m", "/home/radxa/lab/yolo11m.nb", preprocess, yolo11_draw}, // YOLO11m detection (same anchor-free decode)
+    {"5n", "model/v3/yolov5.nb", preprocess, detect_draw},
+    {"11s", "/home/radxa/lab/yolo11s.nb", preprocess, yolo11_draw},
+    {"11m", "/home/radxa/lab/yolo11m.nb", preprocess, yolo11_draw},
 };
 #define NMODEL ((int)(sizeof(MODELS) / sizeof(MODELS[0])))
-// Which model each stream runs. Default "mixed": videoA(0,1) + videoB(2,3), each ran on
-// 5n and 11s -> stream0=5n stream1=11s stream2=5n stream3=11s. Overridden by argv[2].
+// Which model each stream runs; overridden by argv[2].
 static int STREAM_MODEL[NCAM] = {0, 1, 0, 1};
 
 static volatile int running = 1, teardown_done = 0;
@@ -448,19 +424,17 @@ static void on_sig(int s)
     (void)s;
     running = 0;
 }
-// One worker per stream: worker w drives stream w with that stream's model
-// (STREAM_MODEL[w]) and owns one awnn context of it — never reloads networks. The single
-// NPU core is time-shared across all 4 workers; more ready workers = less NPU idle time.
+// Each worker owns one awnn context (never reloads networks); the single NPU core is time-shared across all workers.
 static Awnn_Context_t *ctxs[NWORK];
 static pthread_mutex_t mtx_npu = PTHREAD_MUTEX_INITIALIZER;    // serialize the single NPU core
 static pthread_mutex_t mtx_latest = PTHREAD_MUTEX_INITIALIZER; // guard the annotated cells
 static cv::Mat latest[NCAM];
 static int updated[NCAM] = {0};
-static volatile long g_inf_m[8] = {0}, g_det_m[8] = {0}; // per-model counters
-static long g_time_us[8] = {0};                          // per-model summed inference time (us): pure NPU HW + fp32 copy, excl. lock-wait
-static int nstream_m[8] = {0};                            // how many streams run each model (for per-stream rate)
+static volatile long g_inf_m[8] = {0}, g_det_m[8] = {0};
+static long g_time_us[8] = {0}; // per-model inference time (us): NPU HW + fp32 copy, excl. lock-wait
+static int nstream_m[8] = {0};
 
-// ---- Cedar libcedarc HW H.264 encoder (reused from hwgrid_hybrid) ----
+// Cedar libcedarc HW H.264 encoder.
 static struct ScMemOpsS *memops;
 static VeOpsS *veOps;
 static VideoEncoder *venc;
@@ -511,7 +485,7 @@ static int make_encoder()
     }
     return g_hdrlen > 0 ? 0 : -1;
 }
-// BGR grid -> tightly packed NV12 (Y plane + interleaved UV)
+// BGR grid -> tightly packed NV12 (Y plane + interleaved UV).
 static void bgr_to_nv12(const cv::Mat &bgr, unsigned char *nv12)
 {
     cv::Mat i420;
@@ -528,7 +502,7 @@ static void bgr_to_nv12(const cv::Mat &bgr, unsigned char *nv12)
         UV[2 * i + 1] = V[i];
     }
 }
-// encode one NV12 frame on the VE -> push annexb (SPS prepended on keyframes) to encsrc
+// Encode one NV12 frame on the VE -> push annexb (SPS prepended on keyframes) to encsrc.
 static void encode_push(unsigned char *nv12)
 {
     VencInputBuffer in;
@@ -580,13 +554,11 @@ static void *watchdog(void *a)
     _exit(3);
 }
 
-// NPU worker: pull a frame, preprocess, run inference (NPU serialized by mtx_npu,
-// each worker owns its awnn context so its output persists for post outside the lock),
-// decode+draw, publish the annotated cell. CPU pre/post overlaps other workers' NPU runs.
+// Pull a frame, preprocess, run inference (NPU serialized by mtx_npu), decode+draw, publish the annotated cell.
 static void *worker(void *arg)
 {
     int wid = (int)(intptr_t)arg;
-    int i = wid; // one worker per stream
+    int i = wid;
     int model = STREAM_MODEL[i];
     Model &M = MODELS[model];
     unsigned char *in = (unsigned char *)malloc(S * S * 3);
@@ -615,17 +587,14 @@ static void *worker(void *arg)
             awnn_run_hw(ctxs[wid]); // NPU HW run only — lock held just for this
             double hw = now_ms() - t_run;
             pthread_mutex_unlock(&mtx_npu);
-            // fp32 output copy OUTSIDE the NPU lock: with 4 workers contending, keeping it
-            // under the lock serializes the core badly (measured 28 vs 32 inf/s aggregate).
+            // fp32 copy outside the NPU lock: under the lock serializes the core badly (28 vs 32 inf/s).
             double t_fin = now_ms();
             awnn_finish(ctxs[wid]);
             double fin = now_ms() - t_fin;
-            // pure per-model inference cost (NPU HW run + fp32 output copy), lock-wait excluded
             __sync_add_and_fetch(&g_time_us[model], (long)((hw + fin) * 1000.0));
             float **out = awnn_get_output_buffers(ctxs[wid]);
             int n = M.post(frame, out);
-            // Decoder emits macroblock-padded frames (e.g. 1080p -> 1920x1088); trim a small
-            // bottom/right margin (>= max 15px MB padding) so cells composite seam-free.
+            // Decoder emits macroblock-padded frames (e.g. 1080p -> 1920x1088); trim the margin so cells composite seam-free.
             cv::Rect roi(0, 0, frame.cols - (frame.cols > 16 ? 16 : 0), frame.rows - (frame.rows > 16 ? 16 : 0));
             pthread_mutex_lock(&mtx_latest);
             cv::resize(frame(roi), latest[i], cv::Size(CW, CH));
@@ -639,8 +608,7 @@ static void *worker(void *arg)
     free(in);
     return NULL;
 }
-// Compositor + Cedar HW encoder thread (owns the encoder; runs at ~30fps regardless of
-// detection rate so the stream stays smooth, cells refresh as detections land).
+// Compositor + Cedar HW encoder thread, runs at ~30fps regardless of detection rate.
 static void *outputter(void *arg)
 {
     (void)arg;
@@ -659,20 +627,16 @@ static void *outputter(void *arg)
         pthread_mutex_unlock(&mtx_latest);
         bgr_to_nv12(grid, nv12);
         encode_push(nv12);
-        usleep(33000); // ~30 fps encode/output
+        usleep(33000); // ~30 fps
     }
     free(nv12);
     return NULL;
 }
 
-// ============ On-demand OVERLAID single-camera clip recorder (in-memory GOP ring) ============
-// A dedicated x264 encoder (software — cheap at 640x360, no Cedar VE contention) encodes
-// stream REC_CAM's annotated cell at REC_FPS into a rolling in-memory ring of H.264 access
-// units, GOP-aligned and bounded to REC_RING_SEC seconds. On SIGUSR1 the ring (from its
-// oldest keyframe) is muxed to an mp4 clip — i.e. "save the last X seconds of the overlay".
-#define REC_CAM 3       // which stream to record overlaid (0-3)
-#define REC_FPS 10      // recorder sample/encode rate
-#define REC_RING_SEC 30 // in-memory pre-roll depth (tune vs RAM: ~190KB/s @640x360)
+// On-demand overlaid single-camera clip recorder: x264 encodes REC_CAM's annotated cell into a bounded in-memory GOP ring; SIGUSR1 saves the last REC_RING_SEC seconds.
+#define REC_CAM 3
+#define REC_FPS 10
+#define REC_RING_SEC 30 // pre-roll depth (~190KB/s @640x360)
 struct RecAU
 {
     std::vector<unsigned char> data;
@@ -686,7 +650,7 @@ static GstElement *recpipe = NULL;
 static volatile int rec_trigger = 0;
 static int rec_seq = 0;
 
-// appsink callback: store each encoded H.264 AU in the ring, evict GOPs beyond the window.
+// Store each encoded H.264 AU in the ring, evict GOPs beyond the window.
 static GstFlowReturn rec_on_sample(GstAppSink *sk, gpointer)
 {
     GstSample *s = gst_app_sink_pull_sample(sk);
@@ -700,14 +664,14 @@ static GstFlowReturn rec_on_sample(GstAppSink *sk, gpointer)
         pthread_mutex_lock(&mtx_ring);
         rec_ring.push_back({std::vector<unsigned char>(m.data, m.data + m.size), key});
         rec_bytes += m.size;
-        size_t cap = (size_t)REC_FPS * REC_RING_SEC; // ~AU count for the window
+        size_t cap = (size_t)REC_FPS * REC_RING_SEC;
         while (rec_ring.size() > cap)
         {
             rec_bytes -= rec_ring.front().data.size();
             rec_ring.pop_front();
         }
         while (!rec_ring.empty() && !rec_ring.front().key)
-        { // keep the ring starting at a keyframe
+        { // ring must start at a keyframe
             rec_bytes -= rec_ring.front().data.size();
             rec_ring.pop_front();
         }
@@ -717,7 +681,6 @@ static GstFlowReturn rec_on_sample(GstAppSink *sk, gpointer)
     gst_sample_unref(s);
     return GST_FLOW_OK;
 }
-// sample REC_CAM's annotated cell at REC_FPS and feed the recorder encoder
 static void *recorder(void *arg)
 {
     (void)arg;
@@ -740,10 +703,7 @@ static void *recorder(void *arg)
     }
     return NULL;
 }
-// Save the current ring (oldest keyframe → now) as a clip. We write the raw AnnexB H.264
-// elementary stream (every keyframe carries SPS/PPS via config-interval=-1, so it's fully
-// playable) and then remux to mp4 with a one-shot gst-launch (-e finalizes the moov cleanly
-// — doing the mux inline via appsrc was leaving a 0-byte file).
+// Save the ring (oldest keyframe -> now) as a raw AnnexB H.264 elementary stream.
 static void rec_dump_clip()
 {
     pthread_mutex_lock(&mtx_ring);
@@ -758,10 +718,7 @@ static void rec_dump_clip()
     int seq = rec_seq++;
     char h264[160];
     snprintf(h264, sizeof(h264), "/home/radxa/clips/overlay_cam%d_%03d.h264", REC_CAM, seq);
-    // Write the ring as a raw AnnexB H.264 elementary stream. Every keyframe carries SPS/PPS
-    // (config-interval=-1), so it's directly playable and losslessly remuxable to mp4 client-
-    // side (`ffmpeg -i clip.h264 -c copy clip.mp4`). On-board gst mp4mux won't finalize from
-    // stored AUs on this board, so we keep the elementary stream as the durable format.
+    // Elementary stream (not mp4): on-board gst mp4mux won't finalize from stored AUs on this board. Remux client-side.
     FILE *f = fopen(h264, "wb");
     size_t bytes = 0;
     if (f)
@@ -780,7 +737,7 @@ static void on_usr1(int s)
 {
     (void)s;
     rec_trigger = 1;
-} // SIGUSR1 = save clip on demand
+}
 
 int main(int argc, char **argv)
 {
@@ -792,7 +749,7 @@ int main(int argc, char **argv)
         for (int i = 0; i < NCAM; i++) STREAM_MODEL[i] = 0;
     else if (!strcmp(layout, "all11m"))
         for (int i = 0; i < NCAM; i++) STREAM_MODEL[i] = 2;
-    else if (!strcmp(layout, "smix")) // 11s vs 11m side-by-side (each scene both models)
+    else if (!strcmp(layout, "smix")) // 11s vs 11m side-by-side
         { int mm[NCAM] = {1, 2, 1, 2}; for (int i = 0; i < NCAM; i++) STREAM_MODEL[i] = mm[i]; }
     else
         { int mm[NCAM] = {0, 1, 0, 1}; for (int i = 0; i < NCAM; i++) STREAM_MODEL[i] = mm[i]; }
@@ -803,7 +760,6 @@ int main(int argc, char **argv)
     signal(SIGTERM, on_sig);
     signal(SIGUSR1, on_usr1);
     awnn_init();
-    // one context per worker, of that worker's model (so no per-run network reload)
     for (int w = 0; w < NWORK; w++)
     {
         ctxs[w] = awnn_create(MODELS[STREAM_MODEL[w]].nb);
@@ -816,8 +772,7 @@ int main(int argc, char **argv)
     {
         char d[512];
         GError *e = NULL;
-        // videorate caps the CPU-side videoconvert to 8 fps/stream (was the source's ~25),
-        // so we stop color-converting frames the workers would only drop.
+        // videorate caps videoconvert to 8 fps/stream so we don't color-convert frames the workers would drop.
         snprintf(d, sizeof(d),
                  "rtspsrc location=rtsp://%s:8554/stream%d protocols=tcp latency=100 ! rtph264depay ! h264parse ! "
                  "omxh264dec ! videorate drop-only=true ! video/x-raw,framerate=8/1 ! "
@@ -836,7 +791,6 @@ int main(int argc, char **argv)
         gst_element_set_state(pipes[i], GST_STATE_PLAYING);
     }
 
-    // Cedar HW H.264 encoder (VE) — coexists with OMX decode (VE) + NPU (separate).
     memops = MemAdapterGetOpsS();
     CdcMemOpen(memops);
     veOps = GetVeOpsS(VE_OPS_TYPE_NORMAL);
@@ -868,8 +822,7 @@ int main(int argc, char **argv)
     g_object_set(encsrc, "block", FALSE, "max-bytes", (guint64)4000000, "leaky-type", 2, NULL);
     gst_element_set_state(disp, GST_STATE_PLAYING);
 
-    // On-demand overlaid clip recorder — OFF by default here (would add x264 CPU load and
-    // skew the model-throughput comparison). Set REC=1 to enable.
+    // Clip recorder off by default (x264 CPU load would skew the throughput comparison); set REC=1 to enable.
     if (getenv("REC") && system("mkdir -p /home/radxa/clips") != 0)
     {
     }
@@ -881,7 +834,7 @@ int main(int argc, char **argv)
                  "appsrc name=recsrc is-live=true format=time do-timestamp=false ! "
                  "video/x-raw,format=BGR,width=%d,height=%d,framerate=%d/1 ! videoconvert ! "
                  "x264enc tune=zerolatency speed-preset=ultrafast bitrate=1500 key-int-max=%d ! "
-                 // config-interval=-1 repeats SPS/PPS before EVERY keyframe so any ring start is muxable
+                 // config-interval=-1 repeats SPS/PPS before every keyframe so any ring start is muxable
                  "h264parse config-interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au ! "
                  "appsink name=recsink",
                  CW, CH, REC_FPS, REC_FPS * 2);
@@ -926,7 +879,7 @@ int main(int argc, char **argv)
         {
             rec_trigger = 0;
             rec_dump_clip();
-        } // SIGUSR1 -> save last REC_RING_SEC
+        }
         if (t - tlast >= 2000)
         {
             double el = (t - t0) / 1000.0;
@@ -934,10 +887,10 @@ int main(int argc, char **argv)
             fprintf(stderr, "[%.0fs]", el);
             for (int m = 0; m < NMODEL; m++)
             {
-                if (nstream_m[m] == 0) continue; // model not in use this layout
+                if (nstream_m[m] == 0) continue;
                 tot += g_inf_m[m];
                 double ms = g_inf_m[m] ? g_time_us[m] / 1000.0 / g_inf_m[m] : 0;
-                // g_inf_m[m] is the COMBINED rate of nstream_m[m] streams on this model
+                // g_inf_m[m] is the combined rate of nstream_m[m] streams on this model.
                 fprintf(stderr, " %s[%dstr]=%.1f inf/s (%.1f/str) @%.1fms %ld det",
                         MODELS[m].name, nstream_m[m], g_inf_m[m] / el, g_inf_m[m] / el / nstream_m[m], ms, g_det_m[m]);
             }

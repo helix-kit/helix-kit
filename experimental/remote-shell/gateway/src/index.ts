@@ -1,9 +1,4 @@
-// Helix remote-shell gateway (experimental).
-//
-// Served at helix-kit.com (behind Caddy). Responsibilities:
-//   - serve the React terminal UI (static files)
-//   - /__shell_agent__  : device agent control channel (one agent, MVP)
-//   - /__shell_ws__     : browser terminal sockets, relayed to the agent PTY
+// Helix remote-shell gateway: serves the React terminal UI, accepts one device agent on /__shell_agent__, and relays browser terminal sockets (/__shell_ws__) to the agent PTY.
 //
 // WARNING (experimental): NO auth. Anyone reaching the UI gets a device shell.
 
@@ -16,11 +11,7 @@ import { Frame, decodeFrame, encodeFrame, encodeJson } from "./protocol.js";
 const PORT = Number(process.env.PORT ?? 9100);
 const STATIC_DIR = process.env.STATIC_DIR ?? path.resolve("public");
 
-// ---------------------------------------------------------------------------
-// Single connected device agent (MVP). Browser terminals are multiplexed over
-// its one WebSocket by stream id.
-// ---------------------------------------------------------------------------
-
+// Browser terminals are multiplexed over the single agent WebSocket by stream id.
 interface Terminal {
   onData(payload: Buffer): void;
   onExit(code: number): void;
@@ -30,9 +21,6 @@ class DeviceAgent {
   private nextStreamId = 1;
   private readonly terminals = new Map<number, Terminal>();
 
-  // Application-payload byte counters (plaintext, pre-TLS):
-  //   out = PTY output bytes relayed device -> browser (the shell "download")
-  //   in  = keystroke bytes relayed browser -> device
   bytesOut = 0;
   bytesIn = 0;
   readonly connectedAt = Date.now();
@@ -57,7 +45,7 @@ class DeviceAgent {
   }
 
   send(type: Frame, streamId: number, payload?: Buffer): void {
-    if (payload && type === Frame.DATA) this.bytesIn += payload.length; // stdin
+    if (payload && type === Frame.DATA) this.bytesIn += payload.length;
     if (this.ws.readyState === WebSocket.OPEN)
       this.ws.send(encodeFrame(type, streamId, payload));
   }
@@ -71,7 +59,7 @@ class DeviceAgent {
     const t = this.terminals.get(streamId);
     if (!t) return;
     if (type === Frame.DATA) {
-      this.bytesOut += payload.length; // PTY output -> browser
+      this.bytesOut += payload.length;
       t.onData(payload);
     }
     else if (type === Frame.EXIT || type === Frame.CLOSE) {
@@ -92,10 +80,6 @@ class DeviceAgent {
 }
 
 let agent: DeviceAgent | null = null;
-
-// ---------------------------------------------------------------------------
-// Static file serving for the React build.
-// ---------------------------------------------------------------------------
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -143,8 +127,8 @@ const server = http.createServer((req, res) => {
           now,
           agent: agent.agentId,
           terminals: agent.terminalCount,
-          out: agent.bytesOut, // device -> browser (PTY output)
-          in: agent.bytesIn, // browser -> device (keystrokes)
+          out: agent.bytesOut,
+          in: agent.bytesIn,
           uptimeMs: now - agent.connectedAt,
         }
       : { role: "shell-gateway", now, agent: null };
@@ -154,10 +138,6 @@ const server = http.createServer((req, res) => {
   }
   serveStatic(req, res);
 });
-
-// ---------------------------------------------------------------------------
-// WebSocket endpoints.
-// ---------------------------------------------------------------------------
 
 const agentWss = new WebSocketServer({ noServer: true });
 const browserWss = new WebSocketServer({ noServer: true });
@@ -173,11 +153,7 @@ server.on("upgrade", (req, socket, head) => {
   }
 });
 
-// Detect half-open / silently-dropped sockets (laptop sleep, Wi-Fi/route drop,
-// backgrounded tab, browser that never sent a close frame) via ping/pong. If a
-// peer misses a full interval it is terminated, which fires 'close' and runs
-// the normal teardown path. Browsers auto-reply to protocol pings, so no client
-// change is needed. Returns a stopper to clear the timer on normal close.
+// startHeartbeat terminates half-open sockets (missed ping/pong) so teardown runs; returns a stopper.
 function startHeartbeat(ws: WebSocket, intervalMs: number): () => void {
   let alive = true;
   ws.on("pong", () => {
@@ -263,9 +239,8 @@ function handleBrowser(ws: WebSocket) {
 
   ws.on("message", (data: Buffer, isBinary: boolean) => {
     if (isBinary) {
-      a.send(Frame.DATA, streamId, data as Buffer); // stdin keystrokes
+      a.send(Frame.DATA, streamId, data as Buffer);
     } else {
-      // Text control message from the browser (resize).
       try {
         const msg = JSON.parse(data.toString());
         if (msg.type === "resize") {

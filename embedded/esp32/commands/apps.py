@@ -27,11 +27,7 @@ def app_names() -> list[str]:
 
 
 def app_features(selected_apps: list[str]) -> list[str]:
-    """Feature fragments the selected apps declare they need (manifest `features`).
-
-    An app that needs an optional stack -- `ui_demo` needs LVGL -- says so once, in
-    the manifest, instead of every caller having to remember `--feature ui`.
-    """
+    """Feature fragments the selected apps declare they need (manifest `features`)."""
     known = app_by_name()
     features: list[str] = []
     for name in selected_apps:

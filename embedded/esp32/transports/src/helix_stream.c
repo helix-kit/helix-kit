@@ -51,8 +51,6 @@ struct helix_stream_session {
     volatile bool closed;
 };
 
-// --- frame egress -----------------------------------------------------------
-
 static esp_err_t send_frame(
     helix_stream_session_t *s, uint8_t type, uint32_t id, const uint8_t *payload, size_t len)
 {
@@ -65,8 +63,7 @@ static esp_err_t send_frame(
     header[2] = (uint8_t)(id >> 16);
     header[3] = (uint8_t)(id >> 8);
     header[4] = (uint8_t)(id);
-    // esp_websocket_client_send_bin sends one binary message; to keep header and
-    // payload in a single frame we assemble into one buffer.
+    // Assemble header + payload into one buffer so they go out as a single binary WS message.
     size_t total = FRAME_HEADER + len;
     uint8_t *buf = malloc(total);
     if (buf == NULL) {
@@ -80,8 +77,6 @@ static esp_err_t send_frame(
     free(buf);
     return sent < 0 ? ESP_FAIL : ESP_OK;
 }
-
-// --- stream table -----------------------------------------------------------
 
 static helix_stream_t *find_stream(helix_stream_session_t *s, uint32_t id)
 {
@@ -121,8 +116,6 @@ static void free_stream(helix_stream_t *st)
         xSemaphoreGive(st->window_sem);  // unblock any writer
     }
 }
-
-// --- frame dispatch ---------------------------------------------------------
 
 static void dispatch_frame(helix_stream_session_t *s, const uint8_t *frame, size_t len)
 {
@@ -212,8 +205,6 @@ static void dispatch_frame(helix_stream_session_t *s, const uint8_t *frame, size
     }
 }
 
-// --- websocket event handler ------------------------------------------------
-
 static void teardown_all_streams(helix_stream_session_t *s)
 {
     xSemaphoreTake(s->lock, portMAX_DELAY);
@@ -275,8 +266,6 @@ static void ws_event_handler(void *arg, esp_event_base_t base, int32_t event_id,
             break;
     }
 }
-
-// --- public API -------------------------------------------------------------
 
 esp_err_t helix_stream_session_start(const helix_stream_config_t *cfg, helix_stream_session_t **out)
 {
@@ -352,7 +341,6 @@ int helix_stream_write(helix_stream_t *st, const uint8_t *data, size_t len)
     helix_stream_session_t *s = st->session;
     size_t sent = 0;
     while (sent < len) {
-        // Wait for the credit window to open.
         while (st->window <= 0) {
             if (s->closed || !st->active) {
                 return (int)sent;

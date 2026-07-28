@@ -30,11 +30,7 @@ BOARD_OPTION = click.option(
 
 @click.group()
 def arduino() -> None:
-    """Arduino / AVR firmware: build, simulate (QEMU), flash, and test.
-
-    Serial-only devices (no WiFi/BLE), developed against a qemu-system-avr
-    simulator so no physical board is needed. See embedded/arduino/README.md.
-    """
+    """Arduino / AVR firmware: build, simulate (QEMU), flash, and test."""
 
 
 @arduino.command()
@@ -59,10 +55,7 @@ def build(sketch: str, board: str) -> None:
     help="Expose serial as a TCP server instead of this terminal.",
 )
 def run_sim(sketch: str, board: str, tcp: int | None) -> None:
-    """Build SKETCH and run it under QEMU, bridging its serial port.
-
-    Without --tcp the serial port is this terminal (Ctrl-A X quits qemu).
-    """
+    """Build SKETCH and run it under QEMU, bridging its serial port (this terminal unless --tcp)."""
     try:
         elf = compile_sketch(sketch, board)
         machine = BOARDS[board]["machine"]
@@ -103,11 +96,7 @@ def flash(sketch: str, port: str, board: str) -> None:
 @arduino.command()
 @BOARD_OPTION
 def smoke(board: str) -> None:
-    """Quick serial + Helix-protocol round-trip check in QEMU (no pytest).
-
-    Exercises the real helix_node firmware: FreeRTOS + the ESP32-shared Helix
-    dispatcher/endpoint/cJSON core over the serial transport.
-    """
+    """Quick serial + Helix-protocol round-trip check in QEMU against the real helix_node firmware (no pytest)."""
     try:
         echo_elf = compile_sketch("qemu_smoke", board)
         node_elf = compile_sketch("helix_node", board)

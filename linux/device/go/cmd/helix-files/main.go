@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-files is the device file-browser app: control over IPC (open a
-// session, list a directory), and file bytes over the HelixStream data plane —
-// one stream per transfer, relayed or peer-to-peer.
+// Command helix-files is the device file-browser app.
 package main
 
 import (

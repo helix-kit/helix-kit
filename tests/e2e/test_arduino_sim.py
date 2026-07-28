@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """End-to-end tests for the Arduino/AVR firmware under the QEMU simulator.
 
-These boot a real compiled sketch inside qemu-system-avr and drive its emulated
-USART over a socket -- the same serial path a physical board would expose --
-asserting the Helix serial protocol round-trips. They are self-contained (no
-appliance/server) and skip cleanly where the AVR toolchain is not installed.
+Boot a compiled sketch in qemu-system-avr and drive its emulated USART over a socket,
+asserting the Helix serial protocol round-trips. Skips without the AVR toolchain.
 """
 
 from __future__ import annotations
@@ -61,11 +59,7 @@ def _gpio_request(request_id: str, pin: int, high: bool) -> str:
 
 
 def test_helix_node_gpio_control(helix_node_elf: Path) -> None:
-    """The real firmware runs the shared Helix dispatcher on FreeRTOS over serial.
-
-    Drives gpio-control the same way a cloud command would and asserts the
-    HELIX_RESPONSE produced by the ESP32-shared endpoint/dispatcher/cJSON core.
-    """
+    """The real firmware runs the shared Helix dispatcher on FreeRTOS over serial."""
     with SerialSimulator(helix_node_elf, BOARDS["mega2560"]["machine"]) as sim:
         sim.read_until("HELIX_NODE ready")
         sim.send_line(_gpio_request("gpio-e2e-1", pin=13, high=True))

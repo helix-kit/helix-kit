@@ -9,9 +9,7 @@ import (
 	"strings"
 )
 
-// Systemd is the subset of systemctl/systemd-run runtime-manager drives. It is
-// an interface so reconcile and the control API can be unit-tested with a fake
-// (fake_systemd_test.go) without a running systemd.
+// Systemd is the subset of systemctl/systemd-run runtime-manager drives; an interface so it can be faked in tests.
 type Systemd interface {
 	DaemonReload() error
 	Enable(unit string) error
@@ -20,8 +18,7 @@ type Systemd interface {
 	Stop(unit string) error
 	Restart(unit string) error
 	Show(unit string) (UnitStatus, error)
-	// RunTransient runs argv synchronously as a oneshot transient unit and
-	// returns its exit error (used to isolate package installs).
+	// RunTransient runs argv synchronously as a oneshot transient unit (isolates package installs).
 	RunTransient(unit string, argv []string) error
 }
 

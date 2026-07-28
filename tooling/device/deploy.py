@@ -1,17 +1,4 @@
-"""`helix device deploy` — install the systemd device runtime on a real device.
-
-This is the real-hardware counterpart to `helix device test-host` (which is the
-systemd-in-container test host). It provisions a device identity against the
-cloud, cross-compiles the base runtime + the requested app packages for the
-target architecture, and bootstraps everything onto a remote Linux device over
-SSH: it creates the helix service user + the FHS layout, installs the binaries,
-static units, seed package DB, config, and PKI, brings up helixd +
-runtime-manager under systemd, then installs the app packages through
-runtime-manager (which auto-starts them).
-
-The whole on-device step is a single root bootstrap script, so it is atomic and
-easy to inspect.
-"""
+"""`helix device deploy` — install the systemd device runtime on a real device over SSH."""
 
 from __future__ import annotations
 
@@ -46,7 +33,6 @@ def _sh(cmd: list[str], **kw: object) -> str:
 
 
 def _cross_build_base(arch: str, out_dir: Path) -> None:
-    """Cross-compile the base runtime binaries for the target arch."""
     out_dir.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "GOOS": "linux", "GOARCH": arch, "CGO_ENABLED": "0"}
     for b in BASE_BINARIES:
@@ -149,8 +135,6 @@ def deploy(  # noqa: PLR0913
         (stage / "db").mkdir()
         (stage / "packages").mkdir()
 
-        # 1. Provision an identity against the cloud (seed row + step-ca cert),
-        #    unless reusing the device's existing identity.
         if reuse_identity:
             click.echo("Reusing the device's existing identity (no provisioning).")
         else:
@@ -164,20 +148,17 @@ def deploy(  # noqa: PLR0913
             (pki / "device.csr").unlink(missing_ok=True)
             _write_config(stage / "etc", host, device_id, local=False)
 
-        # 2. Cross-build base runtime + app packages.
         click.echo(f"Cross-building base runtime ({arch}) ...")
         _cross_build_base(arch, stage / "bin")
         for name in [f"helix-{a.strip()}" for a in apps.split(",") if a.strip()]:
             click.echo(f"Building package {name} ({arch}) ...")
             _build_pkg(name, stage / "packages" / f"{name}.helixpkg", arch)
 
-        # 3. Static units + seed DB + bootstrap script.
         for u in UNITS:
             shutil.copy(SYSTEMD_DIR / u, stage / "systemd" / u)
         shutil.copy(SEED_DB, stage / "db" / "status")
         (stage / "bootstrap.sh").write_text(BOOTSTRAP)
 
-        # 4. Ship + run the bootstrap on the device.
         tarball = Path(td) / "helix-deploy.tar.gz"
         _sh(["tar", "-czf", str(tarball), "-C", str(stage.parent), stage.name])
 

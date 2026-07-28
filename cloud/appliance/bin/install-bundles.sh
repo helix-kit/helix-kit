@@ -1,23 +1,7 @@
 #!/usr/bin/env bash
-# =============================================================================
-# install-bundles.sh — unpack app zip bundles into the live app tree.
-#
-# Used in two situations with IDENTICAL semantics:
-#   1. First boot: unpack the bundles baked into the image (/opt/helix/bundles).
-#   2. Remote update: the update-agent drops a freshly-downloaded zip into the
-#      same staging dir and calls this to install just that one.
-#
-# Layout:
-#   /opt/helix/apps/<name>/<version>/   unpacked bundle
-#   /opt/helix/apps/<name>/current ->   symlink the systemd unit runs from
-#
-# Atomic swap = repoint the symlink, then the caller restarts the unit. Old
-# versions are kept (cap to the last 3) so rollback is a symlink flip.
-#
-# Usage:
-#   install-bundles.sh                       # install every staged bundle
-#   install-bundles.sh /path/to/<name>-<ver>.zip   # install one
-# =============================================================================
+# Unpack app zip bundles into the live app tree; atomic swap = repoint the `current`
+# symlink (last 3 versions kept for rollback).
+# Usage: install-bundles.sh [/path/to/<name>-<ver>.zip]  (no arg = every staged bundle)
 set -euo pipefail
 
 APPS_DIR=/opt/helix/apps
@@ -27,8 +11,7 @@ STATE_FILE="${STATE_DIR}/release.json"
 BASE_VERSION_FILE=/opt/helix/BASE_IMAGE_VERSION
 KEEP=3
 
-# Record per-app installed versions as "name<TAB>version" lines, flushed to
-# release.json at the end so the cloud app can read what is actually running.
+# Per-app installed versions as "name<TAB>version" lines, flushed to release.json at the end.
 INSTALLED=()
 
 install_one() {
@@ -70,16 +53,12 @@ else
   done
 fi
 
-# ---- record runtime release state -------------------------------------------
 # release.json is the source of truth the cloud app reads for "what is running".
-# A single install pass (all 5 bundles share the release version) sets the
-# top-level installedVersion; a one-off single-bundle install merges its entry.
 write_state() {
   [[ ${#INSTALLED[@]} -gt 0 ]] || return 0
   mkdir -p "${STATE_DIR}"
   local base_version; base_version="$(cat "${BASE_VERSION_FILE}" 2>/dev/null || echo 0)"
-  # The release version = the version of the cloud-app bundle (the suite ships
-  # together), falling back to any installed bundle's version.
+  # Release version = the cloud-app bundle's version, else any installed bundle's.
   local release_version=""
   for line in "${INSTALLED[@]}"; do
     local n="${line%%	*}" v="${line##*	}"

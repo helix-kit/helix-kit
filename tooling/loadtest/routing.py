@@ -103,9 +103,6 @@ class _DeviceEcho:
 
 
 class _RoutingClient:
-    """A cloud-side WS client bound to one device: sends commands and correlates
-    responses back to their send time by requestId."""
-
     def __init__(self, ws: websocket.WebSocket, device_id: str) -> None:
         self.ws = ws
         self.device_id = device_id

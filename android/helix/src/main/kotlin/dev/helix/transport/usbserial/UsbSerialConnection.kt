@@ -16,12 +16,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
-/**
- * Opens a raw [UsbSerialPort] to an attached ESP32/USB-UART bridge, handling
- * device discovery and the Android USB permission prompt. Shared by consumers
- * that need direct port access (the ESP32 flasher); the Helix command transport
- * keeps its own [SerialInputOutputManager]-based read loop.
- */
+/** Opens a raw [UsbSerialPort] to an attached ESP32/USB-UART bridge, handling discovery + permission. */
 object UsbSerialConnection {
 
     /** Result of opening a port, exposing device metadata alongside the port. */
@@ -30,10 +25,7 @@ object UsbSerialConnection {
         val device: UsbDevice,
     )
 
-    /**
-     * Finds the first USB serial device, requests permission if needed, opens it
-     * at [baudRate]-8N1, and returns the open port. Throws on failure.
-     */
+    /** Finds the first USB serial device, requests permission if needed, and opens it at [baudRate]-8N1. */
     suspend fun open(context: Context, baudRate: Int = 115_200): Opened {
         val appContext = context.applicationContext
         val usbManager = appContext.getSystemService(Context.USB_SERVICE) as UsbManager

@@ -1,9 +1,5 @@
 #!/usr/bin/env node
-// measure.mjs — build a matrix of profiles through gate.mjs and tabulate the
-// static-export output: total size, client-JS size, and whether each heavy dep's
-// signature survives in the emitted chunks. This is the proof that gating a
-// feature out actually removes its dependency weight from out/.
-//
+// Build a matrix of profiles through gate.mjs and tabulate output size + whether each heavy dep's signature survives.
 // Usage:
 //   node measure.mjs                       # all profiles, filesystem approach
 //   node measure.mjs --approach stubbing
@@ -19,8 +15,7 @@ const APP = path.join(ROOT, 'app');
 const OUT = path.join(APP, 'out');
 const RESULTS = path.join(ROOT, 'results');
 
-// Signature strings each heavy dep leaves in client JS (CSS class prefixes and
-// runtime tokens survive minification, unlike renamed identifiers).
+// Signature strings each heavy dep leaves in client JS; CSS prefixes/runtime tokens survive minification, unlike renamed identifiers.
 const DEP_SIGNATURES = {
   '@xyflow/react': ['react-flow__', 'xyflow'],
   recharts: ['recharts-', 'recharts'],

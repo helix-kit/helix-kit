@@ -15,18 +15,10 @@ OUT_DIR = REPO_ROOT / "cloud" / "appliance" / "bundles"
 STAGE_DIR = REPO_ROOT / "cloud" / "appliance" / ".stage"
 EMIT_RUNTIME = WEB_ROOT / "scripts" / "emit-runtime-package.cjs"
 
-# The web apps shipped as appliance bundles. `install-bundles.sh` derives each
-# bundle's install name from "<name>-<version>.zip", so the name is everything
-# before the last '-'; the version therefore MUST NOT contain a '-' (we use
-# "0.0.0+<sha>"). The unit files run helix-cloud-app as `node apps/helix/
-# server.js` and helix-server as `node dist/index.js`.
+# install-bundles.sh derives the install name from "<name>-<version>.zip", so version MUST NOT contain '-'.
 BUNDLE_NAMES = ("helix-cloud-app", "helix-server")
 
-# The two app builds we drive DIRECTLY (not `turbo run build`): the apps consume
-# workspace packages from source (Next transpilePackages / tsdown bundles src),
-# so the packages need no prior `^build` — and skipping it dodges the repo-wide
-# tsdown config-loader break. cloud-init is intentionally absent — migrations
-# run from the host via `helix appliance` against the mapped DB.
+# The two app builds we drive directly (not `turbo run build`); they consume workspace packages from source.
 BUILD_FILTERS = ("--filter", "helix", "--filter", "@helix/server-app")
 
 
@@ -43,13 +35,7 @@ def _default_version() -> str:
 
 
 def _strip_sourcemaps(src: Path) -> None:
-    """Drop only the *.map FILES from the shipped copy (the shared turbo build
-    keeps maps on so the cloud images stay debuggable). We deliberately do NOT
-    edit .js content to remove the `//# sourceMappingURL=` pointers: a line-based
-    removal corrupts any bundle that embeds JS-as-string containing such a line
-    (it did — it broke a string literal in the helix-server bundle). A dangling
-    pointer just makes Node log a harmless warning under --enable-source-maps,
-    which the appliance doesn't set."""
+    # Drop only *.map files; do NOT edit the //# sourceMappingURL= pointers (corrupts JS-as-string bundles).
     for path in src.rglob("*.map"):
         if path.is_file():
             path.unlink()
@@ -60,9 +46,7 @@ def _zip_bundle(name: str, src: Path, version: str) -> Path:
     if zip_path.exists():
         zip_path.unlink()
     _strip_sourcemaps(src)
-    # -y keeps symlinks AS symlinks: the Next standalone is a pnpm tree with many
-    # relative symlinks Node resolves deps through; dereferencing them breaks
-    # module resolution at runtime (mirrors the cloud image's Docker COPY).
+    # -y keeps symlinks as symlinks: dereferencing the pnpm tree's links breaks runtime resolution.
     run(["zip", "-qry", str(zip_path), "."], cwd=src)
     return zip_path
 
@@ -83,24 +67,17 @@ def _stage_cloud_app(version: str, arch: str = "amd64") -> Path:
 
     pnpm_dir = app / "node_modules" / ".pnpm"
     if arch == "arm64":
-        # The arm64 build runs with HELIX_IMAGES_UNOPTIMIZED=true, so Next never
-        # traces sharp into the standalone output. Sweep any stragglers: sharp is
-        # the only native binary in the tree, and dropping it leaves a bundle with
-        # no .node files at all — i.e. one zip that runs on x86_64 and arm64 alike.
-        # (We build on an x86 laptop; pnpm only ever stages the host's sharp.)
+        # Sweep the native sharp binary out so the zip is arch-independent (arm64 builds skip it).
         for path in pnpm_dir.glob("@img+sharp*"):
             shutil.rmtree(path, ignore_errors=True)
         for path in pnpm_dir.glob("sharp@*"):
             shutil.rmtree(path, ignore_errors=True)
-        # pnpm's virtual store links every package into .pnpm/node_modules/; those
-        # links now dangle at the dirs above, so drop them too rather than ship a
-        # bundle full of broken symlinks.
+        # Drop the now-dangling pnpm virtual-store links to the removed dirs.
         for link in app.rglob("*"):
             if link.is_symlink() and "sharp" in link.name and not link.exists():
                 link.unlink(missing_ok=True)
     else:
-        # Keep glibc sharp (the appliance base is Debian/glibc); drop the musl
-        # variant the host pnpm also fetched so the wrong libc binary never loads.
+        # Keep glibc sharp (Debian appliance base); drop the musl variant host pnpm also fetched.
         for pattern in ("@img+sharp-linuxmusl-x64*", "@img+sharp-libvips-linuxmusl-x64*"):
             for path in pnpm_dir.glob(pattern):
                 shutil.rmtree(path, ignore_errors=True)
@@ -108,8 +85,7 @@ def _stage_cloud_app(version: str, arch: str = "amd64") -> Path:
 
 
 def _stage_node_service(bundle: str, app_dir: str, version: str) -> Path:
-    """Emit a minimal runtime package.json from the built bundle, `npm install
-    --omit=dev` only the runtime deps (host glibc == appliance glibc), + the dist."""
+    """Emit a runtime package.json, `npm install --omit=dev` the runtime deps, + the dist."""
     svc = STAGE_DIR / bundle
     svc.mkdir(parents=True)
     entry = WEB_ROOT / "apps" / app_dir / "dist" / "index.js"
@@ -127,8 +103,7 @@ def build_bundles(
     skip_build: bool = False,
     arch: str = "amd64",
 ) -> list[Path]:
-    """Build the appliance web bundles (host-built glibc zips) into
-    cloud/appliance/bundles/. Mirrors the cloud.Dockerfile staging."""
+    """Build the appliance web bundles (host-built glibc zips) into cloud/appliance/bundles/."""
     for tool in ("node", "pnpm", "npm", "zip"):
         if shutil.which(tool) is None:
             raise click.ClickException(f"missing required command: {tool}")
@@ -139,8 +114,7 @@ def build_bundles(
 
     version = version or _default_version()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    # Clear stale zips (version is in the filename) so a bump doesn't leave two
-    # sets that both get mounted/baked. Scope the wipe when --only is given.
+    # Clear stale zips (version is in the filename) so a bump doesn't leave two sets baked.
     for stale in OUT_DIR.glob(f"{only}-*.zip" if only else "*.zip"):
         stale.unlink()
     if STAGE_DIR.exists():
@@ -152,15 +126,12 @@ def build_bundles(
         node_options = f"{os.environ.get('NODE_OPTIONS', '')} --max-old-space-size=4096".strip()
         build_env = {
             **os.environ,
-            # SKIP_ENV_VALIDATION: packaging doesn't have the app's full runtime
-            # env; the heap cap keeps the Next build from OOMing under Turbopack.
+            # Packaging lacks the app's full runtime env; the heap cap avoids a Turbopack OOM.
             "SKIP_ENV_VALIDATION": "true",
             "NODE_OPTIONS": node_options,
         }
         if arch == "arm64":
-            # Build the Next app without the image optimiser so `sharp` (the only
-            # native, per-arch binary in the tree) is never traced into the
-            # standalone output — see next.config.ts and _stage_cloud_app.
+            # Build without the image optimiser so native per-arch `sharp` is never traced in.
             build_env["HELIX_IMAGES_UNOPTIMIZED"] = "true"
         run(["pnpm", *BUILD_FILTERS, "run", "build"], cwd=WEB_ROOT, env=build_env)
 

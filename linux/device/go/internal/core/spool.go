@@ -14,18 +14,13 @@ import (
 	"github.com/helix-kit/helix-device/internal/ipc"
 )
 
-// spool is helixd's durable store-and-forward buffer for outbound telemetry
-// events. Events are persisted before publish, so they survive a restart or a
-// disconnected broker and are delivered (at-least-once, in order) once the link
-// is back. Control-plane responses are NOT spooled — they are request/reply and
-// go out directly.
+// spool is helixd's durable at-least-once store-and-forward buffer for outbound events.
 type spool struct {
 	db       *sql.DB
 	log      *slog.Logger
 	maxBytes int64
 }
 
-// openSpool opens (creating if needed) the SQLite event spool.
 func openSpool(path string, maxBytes int64, log *slog.Logger) (*spool, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return nil, err
@@ -47,7 +42,6 @@ func openSpool(path string, maxBytes int64, log *slog.Logger) (*spool, error) {
 	return &spool{db: db, log: log, maxBytes: maxBytes}, nil
 }
 
-// enqueue persists an outbound event.
 func (s *spool) enqueue(service string, env ipc.DeviceEventEnvelope) error {
 	body, err := json.Marshal(env)
 	if err != nil {
@@ -61,7 +55,6 @@ func (s *spool) enqueue(service string, env ipc.DeviceEventEnvelope) error {
 	return s.enforceBound()
 }
 
-// enforceBound drops the oldest events when the spool exceeds maxBytes.
 func (s *spool) enforceBound() error {
 	if s.maxBytes <= 0 {
 		return nil
@@ -86,18 +79,15 @@ func (s *spool) enforceBound() error {
 	return nil
 }
 
-// pending returns the number of spooled events.
 func (s *spool) pending() (int, error) {
 	var n int
 	err := s.db.QueryRow(`SELECT COUNT(*) FROM events`).Scan(&n)
 	return n, err
 }
 
-// publishFunc delivers one event to the cloud.
 type publishFunc func(service string, env ipc.DeviceEventEnvelope) error
 
-// drain publishes spooled events in order, deleting each on success. It stops at
-// the first publish error (the link is down again) and returns how many it sent.
+// drain publishes spooled events in order, stopping at the first publish error.
 func (s *spool) drain(pub publishFunc) (int, error) {
 	rows, err := s.db.Query(`SELECT id, service, payload FROM events ORDER BY id ASC`)
 	if err != nil {

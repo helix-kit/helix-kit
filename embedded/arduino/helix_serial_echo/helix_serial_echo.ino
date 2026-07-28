@@ -1,14 +1,5 @@
-// Helix serial-protocol node for Arduino Leonardo (ATmega32u4, native USB CDC).
-//
-// Speaks the same newline-framed protocol as the ESP32 serial transport:
-//   in:  "SERVICE {json packet}\n"
-//   out: "HELIX_RESPONSE {json packet}\n"   ("HELIX_ERROR ..." on parse failure)
-//
-// It implements the gpio-control service on real digital pins, so the same web
-// harness that drives the ESP32 works unchanged against this board.
-//
-// Native USB CDC note: baud is nominal, and opening the port does NOT reset the
-// sketch (only a 1200 bps touch enters the bootloader), so there is no boot race.
+// Helix serial-protocol node for Arduino Leonardo (ATmega32u4, native USB CDC): same newline-framed protocol as the ESP32 serial transport, gpio-control on real pins.
+// Native USB CDC: opening the port does NOT reset the sketch (only a 1200 bps touch), so there's no boot race.
 
 #include <ArduinoJson.h>
 
@@ -80,7 +71,7 @@ void loop() {
       if (lineLen < LINE_MAX - 1) {
         lineBuf[lineLen++] = c;
       } else {
-        lineLen = 0;  // overflow guard: drop the oversized line
+        lineLen = 0;  // overflow guard
       }
     }
   }

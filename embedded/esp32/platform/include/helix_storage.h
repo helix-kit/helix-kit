@@ -8,12 +8,7 @@
 extern "C" {
 #endif
 
-// Mount the FAT filesystem on the `storage` data partition (wear-levelled, on
-// SPI flash) at CONFIG_HELIX_STORAGE_MOUNT_POINT. Idempotent. When
-// CONFIG_HELIX_STORAGE_FAT is disabled this is a no-op returning ESP_OK.
-//
-// On a partition table without a matching `storage, data, fat` entry this logs
-// a warning and returns ESP_ERR_NOT_FOUND rather than aborting boot.
+// Mount the FAT filesystem on the `storage` partition at CONFIG_HELIX_STORAGE_MOUNT_POINT (idempotent); ESP_ERR_NOT_FOUND with a warning (no abort) if the partition is missing.
 esp_err_t helix_storage_mount(void);
 
 // Absolute mount point (e.g. "/storage"), or NULL if storage is not mounted.

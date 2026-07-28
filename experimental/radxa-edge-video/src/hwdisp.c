@@ -1,5 +1,4 @@
 // Cedar HW-decode H.264 -> scan out each NV12 frame on a DRM overlay plane.
-// Zero-copy: the decoder's DMABUF fd is imported straight into the display.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +28,7 @@ static uint32_t crtc_id = 100, conn_id = 153, plane_id;
 static int scr_w = 2560, scr_h = 1440;
 static struct ScMemOpsS* g_memops;
 
-// Hardcoded DP-1 2560x1440@60 timing (from modetest); used to force the link up
-// even when the connector momentarily reports disconnected.
+// Hardcoded DP-1 2560x1440@60 timing; forces the link up even when the connector momentarily reports disconnected.
 static drmModeModeInfo MODE_1440 = {
     .clock = 248870,
     .hdisplay = 2560, .hsync_start = 2608, .hsync_end = 2640, .htotal = 2720,
@@ -45,12 +43,10 @@ static int drm_setup(void) {
     drmSetClientCap(drmfd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
     drmSetMaster(drmfd);
 
-    // find crtc index for the possible_crtcs bitmask
     drmModeRes* res = drmModeGetResources(drmfd);
     int crtc_idx = 0;
     for (int i = 0; i < res->count_crtcs; i++) if (res->crtcs[i] == crtc_id) crtc_idx = i;
 
-    // create a dumb XRGB framebuffer (black) for the primary plane, force modeset
     struct drm_mode_create_dumb cd; memset(&cd, 0, sizeof(cd));
     cd.width = scr_w; cd.height = scr_h; cd.bpp = 32;
     if (ioctl(drmfd, DRM_IOCTL_MODE_CREATE_DUMB, &cd)) { perror("create_dumb"); return -1; }
@@ -65,7 +61,6 @@ static int drm_setup(void) {
     }
     printf("modeset ok: crtc=%d conn=%d %dx%d\n", crtc_id, conn_id, scr_w, scr_h);
 
-    // find an NV12-capable overlay plane bound to this crtc
     drmModePlaneRes* pr = drmModeGetPlaneResources(drmfd);
     for (uint32_t i = 0; i < pr->count_planes; i++) {
         drmModePlane* pl = drmModeGetPlane(drmfd, pr->planes[i]);
@@ -81,8 +76,7 @@ static int drm_setup(void) {
     return plane_id ? 0 : -1;
 }
 
-// Display-owned NV12 dumb buffer we copy each decoded frame into (rules out any
-// decoder-DMABUF format/coherency quirk).
+// Display-owned NV12 dumb buffer we copy each decoded frame into (rules out decoder-DMABUF format/coherency quirks).
 static uint8_t* dumb_map; static uint32_t dumb_fb, dumb_pitch; static int dumb_w, dumb_h;
 static void dumb_init(int w, int h) {
     struct drm_mode_create_dumb cd; memset(&cd, 0, sizeof(cd));
@@ -100,7 +94,6 @@ static void dumb_init(int w, int h) {
 }
 static uint32_t show_frame(VideoPicture* pic) {
     if (!dumb_map) dumb_init(pic->nWidth, pic->nHeight);
-    // copy Y then UV (source stride = nLineStride) into the dumb buffer
     for (int y = 0; y < pic->nHeight; y++)
         memcpy(dumb_map + y * dumb_pitch, pic->pData0 + y * pic->nLineStride, pic->nWidth);
     uint8_t* uvdst = dumb_map + dumb_pitch * pic->nHeight;

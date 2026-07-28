@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Shared decode helpers for the YOLO postprocess plugins (sigmoid, sort, NMS, and the
-// letterbox-inverse mapping from SxS model space back to original-frame pixels). Header-only
-// so each postprocess .so pulls in exactly what it needs. Extracted verbatim from the decode
-// halves of npu_compare.cpp (qsort_desc/nms :58-109, letterbox inverse :190-192).
+// Shared, header-only decode helpers for the YOLO postprocess plugins (sigmoid, sort, NMS,
+// and the letterbox-inverse mapping from SxS model space back to original-frame pixels).
 #ifndef HX_DETECT_COMMON_H
 #define HX_DETECT_COMMON_H
 

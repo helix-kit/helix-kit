@@ -11,10 +11,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// loadDesired computes the desired managed-service set: the reconciled catalog
-// the installer maintains (managed-services.json, sourced from installed
-// packages) plus any package-shipped seeds under /usr/lib/helix/catalog that are
-// not already present. The installed catalog wins on name collisions.
+// loadDesired computes the desired service set: the installed catalog plus package-shipped seeds not already present (installed wins on name collision).
 func loadDesired() ([]pkg.ServiceDescriptor, error) {
 	ms, err := pkg.LoadManagedServices()
 	if err != nil {

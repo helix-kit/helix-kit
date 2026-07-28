@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # ESP32 Firmware Size Optimization Report
 
 Date: 2026-06-28

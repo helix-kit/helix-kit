@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-pkg is the Helix device package tool. On a build host it packs a
-// spec directory into a .helixpkg (`build`); on a device it installs, removes,
-// lists, and inspects packages. runtime-manager invokes `helix-pkg install` from
-// a transient systemd unit; the CLI invokes `build` on the host.
+// Command helix-pkg packs, installs, removes, lists, and inspects Helix device packages.
 package main
 
 import (
@@ -52,10 +49,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "usage: helix-pkg <build|install|remove|list|info|ctl> [args]")
 }
 
-// cmdCtl is a thin client for runtime-manager's local control socket. The CLI
-// drives install/remove/status/put-config through this (via `docker exec` on the
-// test host), so operations flow through runtime-manager (reconcile + auto-start)
-// rather than mutating the device behind its back.
+// cmdCtl is a thin client for runtime-manager's local control socket.
 func cmdCtl(args []string) error {
 	fs := flag.NewFlagSet("ctl", flag.ExitOnError)
 	method := fs.String("method", "", "control method")

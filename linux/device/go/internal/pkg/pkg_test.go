@@ -45,7 +45,6 @@ func TestDependencySatisfaction(t *testing.T) {
 	}
 }
 
-// buildSpec writes a minimal go-binary-style package spec and packs it.
 func buildSpec(t *testing.T, name, version string, control map[string]any, payload map[string]string) string {
 	t.Helper()
 	spec := t.TempDir()
@@ -96,16 +95,13 @@ func TestInstallRemoveRoundTrip(t *testing.T) {
 		t.Fatalf("name=%s", m.Name)
 	}
 
-	// The payload landed under the root.
 	if _, err := os.Stat(filepath.Join(root, "usr/lib/helix/bin/helixd")); err != nil {
 		t.Errorf("payload not installed: %v", err)
 	}
-	// DB records it as installed.
 	db, _ := LoadDB()
 	if e := db.Get("helixd"); e == nil || e.Status != StatusInstalled {
 		t.Errorf("db entry = %+v", e)
 	}
-	// The service descriptor is in the reconciled catalog.
 	ms, _ := LoadManagedServices()
 	if ms.Get("helixd") == nil {
 		t.Error("service not published to catalog")
@@ -145,14 +141,12 @@ func TestSHAMismatchRejected(t *testing.T) {
 	if _, err := Install(pkgFile, "deadbeef"); err == nil {
 		t.Fatal("expected sha mismatch to abort install")
 	}
-	// Nothing should have been written.
 	if _, err := os.Stat(filepath.Join(os.Getenv("HELIX_ROOT"), "opt/x")); !os.IsNotExist(err) {
 		t.Error("payload written despite sha mismatch")
 	}
 }
 
-// TestConffilePreservesLocalEdits proves dpkg 3-way handling: an admin-modified
-// conffile is kept and the new default is dropped alongside as .helix-new.
+// TestConffilePreservesLocalEdits proves an admin-modified conffile is kept and the default dropped as .helix-new.
 func TestConffilePreservesLocalEdits(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("HELIX_ROOT", root)
@@ -213,8 +207,7 @@ func TestConffileReplacesWhenUnmodified(t *testing.T) {
 	}
 }
 
-// TestDeterministicPack proves identical specs pack to byte-identical archives
-// (content-addressed dedupe relies on this).
+// TestDeterministicPack proves identical specs pack to byte-identical archives.
 func TestDeterministicPack(t *testing.T) {
 	mk := func() string {
 		return buildSpec(t, "det", "1.0.0", map[string]any{"kind": "asset"},

@@ -1,17 +1,5 @@
-// Helix node firmware for AVR (serial-only).
-//
-// Runs the *same* Helix protocol core as the ESP32 (helix_protocol +
-// helix_service_dispatcher + helix_service_endpoint, symlinked into the
-// HelixProtocol library) on FreeRTOS, over a serial transport using the
-// identical framing: "SERVICE {json}" in, "HELIX_RESPONSE {json}" out,
-// "HELIX_ERROR ..." on failure. Services register with the dispatcher exactly
-// as they do on the ESP32; here we ship gpio-control.
-//
-// AVR has no WiFi/BLE, so serial is the only transport. Developed against the
-// qemu-system-avr simulator (`helix embedded arduino run helix_node`); the RTOS
-// tick comes from Timer1, not the watchdog (see the FreeRTOS library patch).
-//
-// The Helix headers are plain C (no extern "C" guards), so wrap them here.
+// Helix node firmware for AVR (serial-only): same Helix protocol core as the ESP32 over serial framing.
+// AVR has no WiFi/BLE; developed against qemu-system-avr, RTOS tick from Timer1 (not the WDT).
 
 #include <Arduino_FreeRTOS.h>
 
@@ -23,8 +11,6 @@ extern "C" {
 #include "helix_transport.h"
 #include "service_dispatcher.h"
 }
-
-// ---- serial transport -----------------------------------------------------
 
 static const char INPUT_PREFIX[] = "SERVICE ";
 static const char OUTPUT_PREFIX[] = "HELIX_RESPONSE ";
@@ -44,7 +30,7 @@ static helix_transport_t s_transport = {"Serial", serial_send_json, nullptr};
 static void process_line(char *line) {
   const size_t prefix_len = strlen(INPUT_PREFIX);
   if (strncmp(line, INPUT_PREFIX, prefix_len) != 0) {
-    return;  // not a service command; ignore
+    return;
   }
   const char *json = line + prefix_len;
   while (*json == ' ') {
@@ -71,9 +57,7 @@ static void serial_transport_task(void *arg) {
   for (;;) {
     const int c = Serial.read();
     if (c < 0) {
-      // No byte ready: nap briefly and yield. While a packet is streaming in,
-      // Serial.read() keeps returning bytes so we drain continuously and the
-      // core's RX ring buffer never overflows.
+      // No byte ready: nap briefly; while a packet streams in we drain continuously so the RX ring never overflows.
       vTaskDelay(pdMS_TO_TICKS(2));
       continue;
     }
@@ -85,15 +69,13 @@ static void serial_transport_task(void *arg) {
       if (len < LINE_MAX - 1) {
         line[len++] = (char)c;
       } else {
-        len = 0;  // overflow guard: drop the oversized line
+        len = 0;  // overflow guard
       }
     }
   }
 }
 
-// ---- gpio-control service -------------------------------------------------
 // Same service/method/response contract as the ESP32 app, driving real AVR pins.
-
 static esp_err_t respond_pin_state(const helix_service_invocation_t *invocation,
                                    int pin, int level) {
   cJSON *payload = cJSON_CreateObject();
@@ -125,8 +107,7 @@ static esp_err_t gpio_control_handle(const helix_service_invocation_t *invocatio
     const bool high = cJSON_IsTrue(high_json);
     pinMode(pin, OUTPUT);
     digitalWrite(pin, high ? HIGH : LOW);
-    // Report the commanded level: on real AVR a digitalRead of an output pin
-    // reads it back, but QEMU does not model output-pin readback.
+    // Report the commanded level: QEMU does not model output-pin readback.
     return respond_pin_state(invocation, pin, high ? 1 : 0);
   }
   if (strcmp(method, "read-gpio") == 0) {
@@ -135,8 +116,6 @@ static esp_err_t gpio_control_handle(const helix_service_invocation_t *invocatio
   }
   return service_dispatcher_fail(invocation, "unsupported gpio-control command");
 }
-
-// ---- wiring ---------------------------------------------------------------
 
 void setup() {
   Serial.begin(115200);
@@ -147,8 +126,7 @@ void setup() {
 
   Serial.println(F("HELIX_NODE ready"));
 
-  // cJSON parse + print are deeply recursive; give the transport task enough
-  // stack for the full parse -> dispatch -> build -> send chain.
+  // cJSON parse + print are deeply recursive; the transport task needs stack for the whole chain.
   xTaskCreate(serial_transport_task, "serial", 1024, nullptr, 2, nullptr);
   vTaskStartScheduler();
 

@@ -1,8 +1,4 @@
-// 4-stream NPU object detection throughput test.
-//   4x [rtspsrc ! omxh264dec ! videoconvert ! BGR appsink]  ->  round-robin:
-//   letterbox->640x640 CHW uint8 -> awnn (YOLOv5 on the VIP9000 NPU) -> decode+NMS
-//   -> draw boxes. Reports per-stream and aggregate detection FPS.
-// Single shared NPU network (core_count=1), single detection thread for now.
+// 4-stream NPU object detection throughput test (single shared network, single thread).
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <opencv2/opencv.hpp>
@@ -21,7 +17,7 @@
 #define NCAM 4
 #define S 640            // model input side
 
-// ---- YOLOv5 decode (reused verbatim from the vendor yolov5_post_process.cpp) ----
+// YOLOv5 decode (reused verbatim from vendor yolov5_post_process.cpp).
 struct Object { cv::Rect_<float> rect; int label; float prob; };
 static inline float sigmoid(float x){ return 1.f/(1.f+expf(-x)); }
 static inline float desigmoid(float x){ return -logf(1.f/x-1.f); }

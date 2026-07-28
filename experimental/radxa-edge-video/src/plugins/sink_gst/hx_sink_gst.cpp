@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// sink plugin (x86 / portable): BGR grid frame -> GStreamer encoder -> RTMP.
-// The portable counterpart to hx_sink_cedar_rtmp — no Cedar VE. The encoder element is a param,
-// so it adapts: x264enc (CPU, always), nvh264enc (NVIDIA NVENC), vaapih264enc (AMD/Intel VAAPI).
-// in = [ grid_frame ] ; terminal.
-// params: { "url": "rtmp://host:1935/detgrid", "width":1280, "height":720, "fps":25,
-//           "bitrate":4000, "encoder":"x264enc tune=zerolatency speed-preset=veryfast" }
+// Sink plugin (x86 / portable): BGR grid frame -> GStreamer encoder -> RTMP. The portable
+// counterpart to hx_sink_cedar_rtmp (no Cedar VE); the encoder element is a param, so it adapts
+// to x264enc (CPU), nvh264enc (NVENC), or vaapih264enc (VAAPI). in = [ grid_frame ] ; terminal.
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <cstdio>

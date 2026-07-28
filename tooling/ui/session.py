@@ -1,12 +1,4 @@
-"""Drive the LVGL `ui_demo` firmware running under QEMU, from the host.
-
-Espressif's QEMU only exists inside the ESP-IDF image, but the viewer needs a
-window on the host, so the emulator runs in the container with its UART published
-on a TCP port and everything else -- frame decoding, pointer input, screenshots --
-happens here over that socket.
-
-Click-free, so the `helix ui` commands and the pytest e2e suite share one harness.
-"""
+"""Drive the LVGL `ui_demo` firmware running under QEMU, from the host."""
 
 from __future__ import annotations
 
@@ -49,7 +41,6 @@ class UiSession:
         self._request_id = 0
         self.frame: Framebuffer | None = None
 
-    # -- lifecycle -----------------------------------------------------------
     def __enter__(self) -> Self:
         self.start()
         return self
@@ -63,9 +54,7 @@ class UiSession:
         self.close()
 
     def start(self) -> None:
-        # `idf.py qemu` reconfigures before booting, and the app selection is a
-        # generated component shared by every build directory -- so an unrelated
-        # `esp32 link` would otherwise decide which app this emulator runs.
+        # App selection is a generated shared component; pin it before idf.py qemu reconfigures.
         write_app_selection([UI_APP])
 
         serial = f"-serial tcp:0.0.0.0:{self._port},server=on,wait=on"
@@ -79,8 +68,7 @@ class UiSession:
             f"{os.getuid()}:{os.getgid()}",
             "-e",
             "HOME=/tmp",
-            # `idf.py qemu` reconfigures the build dir before booting it, so the
-            # feature set has to be here too or the UI component drops back out.
+            # idf.py qemu reconfigures the build dir before boot, so the feature set must be here too.
             "-e",
             f"HELIX_FEATURES={';'.join(app_features([UI_APP]))}",
             "-p",
@@ -105,8 +93,7 @@ class UiSession:
             stderr=subprocess.DEVNULL,
         )
 
-        # A failure in here escapes before `with` has a session to close, so the
-        # emulator would keep running -- a container (and a busy CPU) per attempt.
+        # A failure here escapes before `with` can close the session, so clean up the container.
         try:
             self._attach()
             info = self.info()
@@ -117,14 +104,7 @@ class UiSession:
             raise
 
     def _attach(self, timeout: float = 240.0, boot_timeout: float = 15.0) -> None:
-        """Connect to the emulated UART, and keep trying until it is really there.
-
-        Docker publishes the host port the moment the container starts, so a connect
-        succeeds long before QEMU is listening behind it -- and that dead socket then
-        breaks on first write. QEMU only powers the machine on once something
-        connects (`wait=on`), so a live UART always answers with a boot log: getting
-        bytes is the only proof worth having.
-        """
+        # Docker publishes the port before QEMU listens, so retry until boot bytes arrive.
         deadline = time.time() + timeout
         while time.time() < deadline:
             if self._proc is not None and self._proc.poll() is not None:
@@ -165,7 +145,6 @@ class UiSession:
             except subprocess.TimeoutExpired:
                 self._proc.kill()
 
-    # -- the ui service ------------------------------------------------------
     def _call(self, method: str, payload: dict[str, Any], timeout: float = 30.0) -> dict[str, Any]:
         self._request_id += 1
         return self._link.call("ui", method, payload, f"ui-{self._request_id}", timeout=timeout)
@@ -175,9 +154,7 @@ class UiSession:
         deadline = time.time() + timeout
         last: Exception | None = None
         while time.time() < deadline:
-            # Separate handlers, not a tuple: this module is imported by the CLI
-            # inside the ESP-IDF image, whose CPython 3.12 rejects the repo's py314
-            # formatting of `except (A, B):` as `except A, B:` (PEP 758).
+            # Separate handlers, not a tuple: the ESP-IDF image's py3.12 rejects py314's `except (A, B):` (PEP 758).
             try:
                 info = self._call("info", {}, timeout=5.0)
             except TimeoutError as exc:  # still booting
@@ -205,7 +182,6 @@ class UiSession:
         time.sleep(hold)
         self.pointer(x, y, pressed=False)
 
-    # -- frames --------------------------------------------------------------
     def pump(self) -> int:
         """Apply everything the device has streamed; returns rectangles applied."""
         assert self.frame is not None

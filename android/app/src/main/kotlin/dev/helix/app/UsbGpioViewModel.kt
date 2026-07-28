@@ -36,11 +36,7 @@ data class UsbGpioUiState(
     val connected: Boolean get() = connectionState == UsbConnectionState.Connected
 }
 
-/**
- * Drives the ESP32 `gpio-control` service over the USB-serial transport. Mirrors
- * [BleGpioViewModel]; only the transport type differs, which is the whole point
- * of the transport-neutral Helix service layer.
- */
+/** Drives the ESP32 `gpio-control` service over the USB-serial transport (mirrors [BleGpioViewModel]). */
 class UsbGpioViewModel(application: Application) : AndroidViewModel(application) {
 
     private val transport = UsbSerialTransportClient(application)

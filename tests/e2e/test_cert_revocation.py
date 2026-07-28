@@ -15,8 +15,7 @@ SERVICE = "telemetry"
 
 @pytest.fixture(scope="module")
 def revocable_device(stack: Stack) -> ProvisionedDevice:
-    """A device dedicated to the revocation test — its cert is revoked, so it
-    must not be shared with any other test."""
+    """A device dedicated to the revocation test (its cert is revoked; do not share)."""
     return _provision_device(stack, "e2e-revoke-device")
 
 
@@ -27,15 +26,12 @@ def _leaf_serial_hex(device: ProvisionedDevice) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
-    # openssl prints "serial=<UPPERCASE HEX>" — exactly what Node's
-    # X509Certificate.serialNumber (stored in device_certificate) reports.
+    # openssl prints "serial=<UPPERCASE HEX>" — matches Node's X509Certificate.serialNumber.
     return out.split("=", 1)[1].strip()
 
 
 def _mqtt_publish_succeeds(stack: Stack, device: ProvisionedDevice) -> bool:
-    """True iff the device can complete the mTLS handshake with mosquitto and get
-    a QoS-1 PUBACK. A revoked cert fails the handshake (crlfile), so this is
-    False."""
+    """True iff the device completes the mTLS handshake with mosquitto and gets a QoS-1 PUBACK."""
     client = mqtt.Client(
         CallbackAPIVersion.VERSION2,
         client_id=f"{device.device_id}-revtest",
@@ -66,8 +62,7 @@ def _mqtt_publish_succeeds(stack: Stack, device: ProvisionedDevice) -> bool:
 
 
 def test_issued_certificate_is_recorded(stack: Stack, revocable_device: ProvisionedDevice) -> None:
-    """Every issuance writes a device_certificate row with the leaf's serial and
-    an 'active' status (the metadata the admin UI lists)."""
+    """Every issuance writes a device_certificate row with the leaf's serial and 'active' status."""
     serial = _leaf_serial_hex(revocable_device)
     rows = stack.appliance.psql(
         "SELECT status, serial_number FROM device_certificate "
@@ -80,9 +75,7 @@ def test_issued_certificate_is_recorded(stack: Stack, revocable_device: Provisio
 def test_revocation_blocks_broker_and_gateway(
     stack: Stack, revocable_device: ProvisionedDevice
 ) -> None:
-    """Revoking a cert lands its serial on step-ca's CRL, which both mosquitto
-    and the mTLS gateway enforce — the same cert that worked before is refused by
-    both after the CRL propagates."""
+    """Revoking a cert lands its serial on the CRL, which both mosquitto and the mTLS gateway enforce."""
     # Baseline: the cert is accepted by both enforcers before revocation.
     assert _mqtt_publish_succeeds(stack, revocable_device) is True
     accepted = post_device_events(stack, revocable_device, [{"type": "heartbeat"}])
@@ -93,8 +86,7 @@ def test_revocation_blocks_broker_and_gateway(
     stack.appliance.revoke_certificate(serial_decimal)
     # Wait for step-ca to regenerate the CRL with this serial, then stage + reload.
     assert stack.appliance.wait_for_crl_serial(serial_hex) is True
-    # Re-export the refreshed CRL to the host path the (host-mode) gateway watches
-    # so its TLS context reloads; a no-op in container mode.
+    # Re-export the refreshed CRL to the host path the gateway watches (no-op in container mode).
     crl_path = stack.server.crl_path
     if crl_path is not None:
         stack.appliance.export_crl(crl_path)
@@ -102,9 +94,7 @@ def test_revocation_blocks_broker_and_gateway(
     # Give mosquitto's SIGHUP reload + the gateway's file-watch a moment to apply.
     time.sleep(3)
 
-    # mosquitto now rejects the handshake.
     assert _mqtt_publish_succeeds(stack, revocable_device) is False
 
-    # The mTLS gateway now rejects the handshake too.
     with pytest.raises((ssl.SSLError, OSError)):
         post_device_events(stack, revocable_device, [{"type": "heartbeat"}])

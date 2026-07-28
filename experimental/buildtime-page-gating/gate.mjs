@@ -1,15 +1,7 @@
 #!/usr/bin/env node
-// gate.mjs — prepare the Next.js app for a given enabled-feature set, then
-// (optionally) build it as a static export.
-//
-// Two strategies:
-//   --approach filesystem  (default)  materialize ONLY enabled routes under
-//       src/app/(gen)/. Disabled features never enter the module graph, so the
-//       bundler drops their routes AND their deps. Bundler-agnostic.
-//   --approach stubbing               materialize ALL routes under src/app/(all)/
-//       and pass HELIX_GATED_OUT to the build so webpack swaps disabled features'
-//       ./impl for an empty stub, tree-shaking their deps out. Routes still emit.
-//
+// Prepare the Next.js app for a given enabled-feature set, then optionally build it as a static export.
+//   --approach filesystem  materialize ONLY enabled routes (bundler drops disabled routes + deps; bundler-agnostic).
+//   --approach stubbing     materialize ALL routes, pass HELIX_GATED_OUT so webpack stubs disabled features' ./impl.
 // Usage:
 //   node gate.mjs --profile minimal [--approach filesystem|stubbing] [--build]
 //   node gate.mjs --features overview,workflow --build
@@ -99,7 +91,6 @@ function main() {
 
   writeNav(profileLabel, enabled, features);
 
-  // Start from a clean generated-route slate for both approaches.
   rmrf(GEN_ROUTES);
   rmrf(ALL_ROUTES);
 

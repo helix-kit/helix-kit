@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// gate.mjs — floor-min lab. Same manifest-driven build-time gating as the Next
-// lab, but for a Vite SPA: generate src/generated/routes.ts that STATICALLY
-// imports only the enabled features. Rollup then drops every non-imported
-// feature and its deps. Reuses the parent app's feature manifests + profiles.
-//
+// Vite-SPA variant of the gating lab: generate src/generated/routes.ts that statically imports only enabled
+// features, so Rollup drops the rest. Reuses the parent app's feature manifests + profiles.
 // Usage:
 //   node gate.mjs --profile minimal [--runtime react|preact] [--build]
 //   node gate.mjs --features overview,workflow --runtime preact --build

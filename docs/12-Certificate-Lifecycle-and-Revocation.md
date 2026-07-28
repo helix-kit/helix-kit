@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # 12 — Device Certificate Lifecycle and Revocation
 
 ## Why

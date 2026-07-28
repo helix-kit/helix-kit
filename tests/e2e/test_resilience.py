@@ -6,8 +6,7 @@ RECOVERY_TIMEOUT_SECONDS = 60
 
 
 def test_gateway_restart_redelivers_offline_events(stack, provisioned_device) -> None:
-    """helix-server restart: events published while it is down are queued by the
-    persistent MQTT session and redelivered + ingested on restart."""
+    """helix-server restart: events published while down are queued and redelivered on restart."""
     device = provisioned_device
     publish_event(stack, device, "res-gw-online", {"n": 1})
     assert wait_for_message(stack.appliance, device.device_id, "res-gw-online")
@@ -22,8 +21,7 @@ def test_gateway_restart_redelivers_offline_events(stack, provisioned_device) ->
 
 
 def test_broker_restart_resumes_ingestion(stack, provisioned_device) -> None:
-    """mosquitto restart: the ingestion client reconnects and new events still
-    flow to the database."""
+    """mosquitto restart: the ingestion client reconnects and new events still reach the DB."""
     device = provisioned_device
     stack.appliance.restart_service("mosquitto")
 
@@ -34,8 +32,7 @@ def test_broker_restart_resumes_ingestion(stack, provisioned_device) -> None:
 
 
 def test_kafka_restart_resumes_ingestion(stack, provisioned_device) -> None:
-    """redpanda restart: the producer reconnects and the writer's consumer
-    recovers, so new events are ingested again."""
+    """redpanda restart: producer + writer's consumer recover, so new events are ingested again."""
     device = provisioned_device
     stack.appliance.restart_service("redpanda")
 

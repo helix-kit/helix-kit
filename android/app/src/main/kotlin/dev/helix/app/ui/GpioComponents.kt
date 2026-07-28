@@ -54,11 +54,7 @@ val GPIO_TEST_PINS = listOf(2, 16, 17, 23)
 private const val MIN_PIN = 0
 private const val MAX_PIN = 39
 
-/**
- * The transport-agnostic GPIO controls: state bar, test-pin toggles, a custom
- * pin, error surface, and packet log. Each transport screen supplies its own
- * connection header above this board.
- */
+/** The transport-agnostic GPIO controls: state bar, pin toggles, error surface, and packet log. */
 @Composable
 fun GpioBoard(
     state: GpioBoardState,

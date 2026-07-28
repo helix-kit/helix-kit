@@ -21,9 +21,7 @@ float **awnn_get_output_buffers(Awnn_Context_t *context);
 void *awnn_get_output_buffer(Awnn_Context_t *info, int i);
 // 运行Awnn_Context_t指定网络
 void awnn_run(Awnn_Context_t *context);
-// Split run for pipelining: awnn_run_hw() is the HW run only — hold the caller's NPU
-// lock just around it, then call awnn_finish() OUTSIDE that lock to do the output copy
-// (frees the core during the copy). Read results via awnn_get_output_buffers().
+// Split run for pipelining: hold the NPU lock around awnn_run_hw() only, then awnn_finish() (output copy) outside it.
 void awnn_run_hw(Awnn_Context_t *context);
 void awnn_finish(Awnn_Context_t *context);
 // dump出网络的tensor

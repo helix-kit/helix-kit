@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# Render the turnserver config: the static policy from /etc/helix/coturn plus the
-# deployment-specific bits coturn cannot read from the environment itself — the
-# listening/relay/external IPs, the auth secret + realm, and the TLS certificate.
-# Native (appliance/AMI) counterpart of cloud/coturn/entrypoint.sh.
+# Render the turnserver config: static policy plus deployment-specific IPs, auth
+# secret/realm, and TLS cert. Native counterpart of cloud/coturn/entrypoint.sh.
 set -eu
 
 BASE=/etc/helix/coturn/turnserver.conf
 OUT=/run/helix-turnserver.conf
 PUBLIC_IP="${TURN_PUBLIC_IP:-}"
-# The private IPv4 specifically. `hostname -i` lists IPv6 first on a dual-stack box,
-# and pairing a public IPv4 with a private IPv6 in external-ip is meaningless — the
-# relay then hands out an address the peer cannot use.
+# The private IPv4 specifically; pairing a public IPv4 with a private IPv6 is meaningless.
 PRIVATE_IP="${TURN_PRIVATE_IP:-$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)}"
 REALM="${TURN_REALM:-${APP_DOMAIN:-helix.local}}"
 
@@ -30,8 +26,7 @@ chmod 0600 "${OUT}"
   printf 'realm=%s\n' "${REALM}"
 } >> "${OUT}"
 
-# Behind NAT (EC2), coturn must advertise the public address while binding the
-# private one, or it hands out relay candidates nobody can reach.
+# Behind NAT, coturn must advertise the public address while binding the private one.
 case "${PUBLIC_IP}" in
   ""|127.0.0.1|0.0.0.0|::1|localhost)
     echo "coturn-prepare: TURN_PUBLIC_IP unset; no external-ip mapping (TURN will not work from the internet)" >&2 ;;
@@ -42,12 +37,8 @@ case "${PUBLIC_IP}" in
     } >> "${OUT}" ;;
 esac
 
-# turns:5349 (TURN over TLS) is the path that survives networks which block UDP
-# and inspect traffic — it looks like HTTPS, and it is the only thing that worked
-# from a corporate VPN in testing. Reuse the certificate Caddy already manages for
-# this domain rather than provisioning a second one.
-# Caddy appends its own "caddy/" under XDG_DATA_HOME (which the unit sets to
-# /var/lib/helix/caddy), hence the doubled path — not a typo.
+# turns:5349 reuses the certificate Caddy already manages for this domain.
+# Caddy appends its own "caddy/" under XDG_DATA_HOME, hence the doubled path — not a typo.
 CADDY_CERTS=/var/lib/helix/caddy/caddy/certificates
 if [ -n "${APP_DOMAIN:-}" ] && [ -d "${CADDY_CERTS}" ]; then
   CERT=$(find "${CADDY_CERTS}" -name "${APP_DOMAIN}.crt" -print -quit 2>/dev/null || true)

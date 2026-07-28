@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-mqtt-ping is a dev utility: it publishes one Helix request to a
-// device and prints the response, smoke-testing helixd's MQTT<->IPC bridge
-// without the cloud gateway.
+// Command helix-mqtt-ping publishes one Helix request to a device and prints the response.
 package main
 
 import (

@@ -22,7 +22,6 @@ DRAIN_TIMEOUT_SECONDS = 45
 
 
 def _percentiles(values: list[float], points: tuple[int, ...]) -> list[float]:
-    """Linear-interpolated percentiles over a sample (numpy-free)."""
     if not values:
         return [0.0 for _ in points]
     ordered = sorted(values)
@@ -59,7 +58,7 @@ class _Sampler(threading.Thread):
             self.result.peak_cpu = max(self.result.peak_cpu, stats["cpu_percent"])
             self.result.peak_mem = max(self.result.peak_mem, stats["mem_mib"])
             self.result.peak_lag = max(self.result.peak_lag, self.appliance.consumer_lag())
-            # This call blocks for `interval` seconds and paces the loop.
+            # Blocks for `interval` seconds, pacing the loop.
             cpu = self.appliance.per_service_cpu(self.interval)
             total = sum(cpu.values())
             if total > self._peak_total:
@@ -102,10 +101,7 @@ class WorkflowSample:
 
 
 class _WorkflowSampler(threading.Thread):
-    """Samples container CPU/mem, the dispatch consumer's Kafka lag, and Inngest's
-    started-minus-finished backlog while a workflow load run is in flight. When
-    Inngest runs in its own container, its CPU/mem is sampled separately so the
-    bottleneck (app vs engine) is visible."""
+    # Inngest in its own container is sampled separately so the app-vs-engine bottleneck is visible.
 
     def __init__(self, appliance: Appliance, interval: float = 2.0) -> None:
         super().__init__(daemon=True)
@@ -152,8 +148,6 @@ class _WorkflowSampler(threading.Thread):
 
 
 def _drain_workflow(appliance: Appliance, run_id: str, target: int) -> int:
-    """After load stops, let runs finish until the completed+skipped total reaches
-    the emitted count or plateaus (bounded, so a saturated step still returns)."""
     deadline = time.monotonic() + WORKFLOW_DRAIN_TIMEOUT_SECONDS
     previous = -1
     while time.monotonic() < deadline:
@@ -166,8 +160,7 @@ def _drain_workflow(appliance: Appliance, run_id: str, target: int) -> int:
 
 
 def _settle_workflow(appliance: Appliance) -> None:
-    """Between ramp steps, wait for Inngest's backlog and the dispatch lag to
-    clear so one step's carryover does not contaminate the next."""
+    # Wait for backlog/lag to clear between ramp steps so carryover doesn't contaminate the next.
     deadline = time.monotonic() + WORKFLOW_SETTLE_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
         if (
@@ -333,8 +326,6 @@ def _measure_mixed(
     workers: int,
     think_ms: int,
 ) -> dict[str, Any]:
-    """Run ingestion and message routing concurrently over the same device pool
-    so both broker data planes contend for the capped subset at once."""
     run_id = secrets.token_hex(4)
     baseline = appliance.count_events_prefix(DEVICE_PREFIX)
     sampler = _Sampler(appliance)
@@ -429,8 +420,7 @@ def _stack(
         devices = provision_pool(
             appliance, server.public_base_url, device_count, work_dir / "certs"
         )
-        # step-ca was only needed for provisioning; now cap the container down to
-        # exactly the ingestion subset (postgres + redpanda + mosquitto + server).
+        # step-ca was only for provisioning; cap down to the ingestion subset now.
         appliance.isolate_ingestion_subset()
         yield appliance, devices
     finally:
@@ -451,14 +441,7 @@ def _workflow_stack(
     inngest_memory: str = "4g",
     fast_pg: bool = False,
 ) -> Iterator[tuple[Appliance, list[DeviceCert]]]:
-    """Like _stack, but keeps Inngest + Redis running under the cap and (in
-    Inngest mode) syncs the workflow serve endpoint with the Inngest server.
-
-    external_pg runs the app database in a separate uncapped Postgres container.
-    external_inngest additionally runs the Inngest server (and its Redis + state
-    DB) in their own containers — Inngest gets its own CPU cap, the app keeps the
-    appliance's cap, and Postgres is uncapped — to isolate what caps the Inngest
-    path. It implies external_pg and Inngest mode."""
+    """Like _stack, but keeps Inngest + Redis under the cap; external_pg/inngest isolate infra."""
     dbos = config.workflow_mode == "dbos"
     if external_inngest:
         external_pg = True
@@ -495,8 +478,7 @@ def _workflow_stack(
                 fast=fast_pg,
             )
         if dbos and config.workflow_dbos_shard:
-            # One Postgres *process* per dispatch shard, so each DBOS instance's
-            # commits go to a different Postgres (past the single-PG WAL ceiling).
+            # One Postgres process per shard so DBOS commits spread past the single-PG WAL ceiling.
             click.echo(f"starting {n_dispatch} sharded DBOS postgres instances ...")
             appliance.start_dbos_shard_pgs(
                 name_prefix=dbos_pg_prefix,
@@ -523,10 +505,8 @@ def _workflow_stack(
             )
         appliance.prepare_host_access()
         appliance.run_migrations()
-        # workflow_run_result is a load-test measurement table, not part of the
-        # product schema (no drizzle migration) — the notification node writes one
-        # row per completed run so the harness can count/time throughput. Provision
-        # it here in whichever app DB (external or in-appliance) the server writes.
+        # workflow_run_result is a load-test-only table (no drizzle migration); provision it
+        # in whichever app DB the server writes to.
         appliance.psql(
             "CREATE TABLE IF NOT EXISTS workflow_run_result ("
             "id text PRIMARY KEY, run_id text NOT NULL, device_id text NOT NULL, "
@@ -541,8 +521,7 @@ def _workflow_stack(
         devices = provision_pool(
             appliance, server.public_base_url, device_count, work_dir / "certs"
         )
-        # Drop the in-appliance Postgres only when the app DB is external; with
-        # in-appliance Postgres (dbos without --external-postgres) keep it running.
+        # Drop the in-appliance Postgres only when the app DB is external.
         appliance.isolate_workflow_subset(external_infra=external_inngest or (dbos and external_pg))
         if config.workflow_mode == "inngest":
             if not external_inngest:
@@ -748,12 +727,7 @@ _VALID_ROLES = ("gateway", "ingest", "writer")
 
 
 def _parse_roles(spec: str | None) -> tuple[tuple[str, ...], ...] | None:
-    """Parse a role topology like 'gateway+ingest,writer' into process groups.
-
-    Commas separate processes; '+' joins roles within one process. None/empty
-    means a single combined process (the historical default). Every role must
-    appear exactly once across all groups so the data planes stay fully served.
-    """
+    # 'gateway+ingest,writer' -> process groups; every role must appear exactly once.
     if spec is None or spec.strip() == "":
         return None
     groups: list[tuple[str, ...]] = []
@@ -779,9 +753,7 @@ _INSTANCE_PORT_STRIDE = 100
 
 
 def _instance_overrides(instance: int) -> dict[str, Any]:
-    """Port/container/volume overrides so N capped stacks run in parallel without
-    colliding. Instance 0 keeps the defaults; each higher instance shifts every
-    published port by a fixed stride and suffixes the container and volume."""
+    # Port/container/volume overrides so N capped stacks run in parallel without colliding.
     if instance == 0:
         return {}
     shift = instance * _INSTANCE_PORT_STRIDE
@@ -825,10 +797,7 @@ _WORKFLOW_ROLES = ("gateway", "ingest", "writer", "dispatch", "workflow")
 
 
 def _workflow_process_groups(split: str | None, mode: str) -> tuple[tuple[str, ...], ...]:
-    """Parse a `--split` topology like 'gateway+ingest,writer,dispatch' into one
-    HELIX_SERVER_ROLES process group per comma-separated entry. None => a single
-    process running everything. The union must cover the roles the mode needs
-    (workflow — the Inngest serve endpoint — is only required in inngest mode)."""
+    # '--split' -> one process group per comma entry; 'workflow' role only needed in inngest mode.
     required = ["gateway", "ingest", "writer", "dispatch"]
     if mode == "inngest":
         required.append("workflow")
@@ -866,11 +835,7 @@ def _workflow_config(
     dispatch_processes: int = 1,
     dbos_shard: bool = False,
 ) -> ApplianceConfig:
-    """Prebaked workflow topology. By default one process runs everything;
-    `--split` spreads roles across processes. `--dispatch-processes N` runs N
-    dispatch processes (each its own event loop / DBOS instance) plus one
-    gateway+ingest+writer process, and sets the topic to N partitions so the
-    dispatch consumers parallelize — the lever for scaling across cores."""
+    # --dispatch-processes N runs N dispatch processes + N partitions to scale across cores.
     partitions: int | None = None
     server_roles: tuple[tuple[str, ...], ...]
     if dispatch_processes > 1:

@@ -6,23 +6,11 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Correlates outstanding requests to their responses by [requestId], with a
- * per-request timeout. Concurrent requests route independently by id.
- *
- * [T] is the message type carried by a resolved response (the service layer
- * uses `HelixMessage`).
- */
+/** Correlates outstanding requests to their responses by [requestId], with a per-request timeout. */
 class HelixRequestRegistry<T> {
     private val pending = ConcurrentHashMap<String, CompletableDeferred<T>>()
 
-    /**
-     * Registers [requestId], runs [onRegistered] (typically the transport send),
-     * then suspends until a response arrives or [timeoutMs] elapses. Running the
-     * send after registration closes the race where a fast response would arrive
-     * before the request was pending. Throws [HelixRequestTimeoutError] on
-     * timeout and [HelixProtocolError] on a duplicate id.
-     */
+    /** Registers [requestId], runs [onRegistered] then awaits the response (send-after-register closes the fast-response race). */
     suspend fun await(
         requestId: String,
         timeoutMs: Long,

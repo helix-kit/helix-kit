@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# =============================================================================
-# pg-roles.sh — create the helix + inngest roles/databases. Runs as a oneshot
-# AFTER postgres is up and BEFORE openfga / inngest / bootstrap, because those
-# all connect to (or migrate into) these databases. Idempotent.
-# =============================================================================
+# Create the helix + inngest roles/databases (oneshot after postgres, before
+# openfga/inngest/bootstrap). Idempotent.
 set -euo pipefail
 
 PSQL="psql -v ON_ERROR_STOP=1 -h /var/run/postgresql -U postgres -d postgres"

@@ -33,7 +33,7 @@ while IFS= read -r path; do
     exit 1
   fi
 done < <(
-  find embedded/esp32/protocol embedded/esp32/platform protocol web/packages/core -type f -name LICENSE \
+  find embedded/protocol embedded/esp32/transports embedded/esp32/platform web/packages/core -type f -name LICENSE \
     -not -path '*/node_modules/*' \
     -not -path '*/.next/*'
 )
@@ -43,6 +43,7 @@ mapfile -d '' package_files < <(
     -not -path '*/node_modules/*' \
     -not -path '*/.next/*' \
     -not -path '*/dist/*' \
+    -not -path '*/.stage/*' \
     -print0
 )
 
@@ -73,7 +74,7 @@ for path in "${python_projects[@]}"; do
   fi
 done
 
-for path in embedded/esp32/protocol/idf_component.yml embedded/esp32/platform/idf_component.yml; do
+for path in embedded/protocol/idf_component.yml embedded/esp32/transports/idf_component.yml embedded/esp32/platform/idf_component.yml; do
   if ! grep -Eq '^license: "AGPL-3\.0-only"$' "${path}"; then
     printf '%s: ESP-IDF component license must be AGPL-3.0-only\n' "${path}" >&2
     exit 1
@@ -81,7 +82,8 @@ for path in embedded/esp32/protocol/idf_component.yml embedded/esp32/platform/id
 done
 
 if rg -n '"license"[[:space:]]*:[[:space:]]*"(PROPRIETARY|Apache-2\.0)"|^license[[:space:]]*=[[:space:]]*"(PROPRIETARY|Apache-2\.0)"|^license:[[:space:]]*"(PROPRIETARY|Apache-2\.0)"' \
-  --glob '!**/node_modules/**' --glob '!**/.next/**' --glob '!**/.build/**' --glob '!**/out/**'; then
+  --glob '!**/node_modules/**' --glob '!**/.next/**' --glob '!**/.build/**' --glob '!**/out/**' \
+  --glob '!**/package-lock.json' --glob '!**/pnpm-lock.yaml' --glob '!**/*.lock'; then
   printf 'conflicting first-party license declaration found\n' >&2
   exit 1
 fi

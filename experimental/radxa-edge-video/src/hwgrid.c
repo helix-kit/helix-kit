@@ -1,5 +1,4 @@
-// 4x Cedar HW decode -> 4 appsrc -> GStreamer compositor (2x2) -> tee ->
-//   [kmssink display] + [x264enc -> mpegtsmux -> udpsink (stream)].
+// 4x Cedar HW decode -> compositor 2x2 -> tee -> [kmssink] + [x264enc -> RTMP].
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>

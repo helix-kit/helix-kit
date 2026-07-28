@@ -24,11 +24,7 @@ import (
 // renewWindow is how close to expiry a leaf may be before rotation re-enrolls.
 const renewWindow = 6 * time.Hour
 
-// enroller performs CSR-based certificate enrollment and renewal against the
-// cloud PKI. It mirrors what the provisioning CLI does, but lets a device
-// enroll itself on first boot and rotate its own cert before expiry. It is
-// active only when config.Enrollment.APIURL is set; otherwise the device relies
-// on a cert provisioned out-of-band (the CLI path) and this is a no-op.
+// enroller does CSR-based cert enrollment/renewal; active only when Enrollment.APIURL is set.
 type enroller struct {
 	cfg *config.Config
 	log *slog.Logger
@@ -41,8 +37,6 @@ func newEnroller(cfg *config.Config, log *slog.Logger) *enroller {
 
 func (e *enroller) enabled() bool { return e.cfg.Enrollment.APIURL != "" }
 
-// keyPath / certPath / caPath resolve the on-device PKI file locations, honoring
-// any explicit paths in the MQTT config and falling back to the standard layout.
 func (e *enroller) keyPath() string {
 	return orPath(e.cfg.MQTT.ClientKey, filepath.Join(config.PKIDir(), "device.key"))
 }
@@ -54,8 +48,6 @@ func (e *enroller) caPath() string {
 }
 
 // ensure enrolls if there is no valid leaf yet, returning whether it (re)enrolled.
-// A valid leaf is time-valid, matches the device id (CN), and is not within the
-// renewal window.
 func (e *enroller) ensure() (rotated bool, err error) {
 	if !e.enabled() {
 		return false, nil
@@ -66,7 +58,6 @@ func (e *enroller) ensure() (rotated bool, err error) {
 	return true, e.enroll()
 }
 
-// leafHealthy reports whether a leaf is current (correct CN, not near expiry).
 func (e *enroller) leafHealthy(leaf *x509.Certificate) bool {
 	now := time.Now()
 	if now.Before(leaf.NotBefore) || now.After(leaf.NotAfter) {
@@ -78,7 +69,6 @@ func (e *enroller) leafHealthy(leaf *x509.Certificate) bool {
 	return leaf.NotAfter.Sub(now) > renewWindow
 }
 
-// enroll generates a key + CSR and exchanges it for a signed cert.
 func (e *enroller) enroll() error {
 	key, err := e.ensureKey()
 	if err != nil {
@@ -108,7 +98,6 @@ func (e *enroller) enroll() error {
 	return nil
 }
 
-// ensureKey loads the existing device key or generates a new P-256 key.
 func (e *enroller) ensureKey() (*ecdsa.PrivateKey, error) {
 	if data, err := os.ReadFile(e.keyPath()); err == nil {
 		block, _ := pem.Decode(data)
@@ -137,8 +126,6 @@ func (e *enroller) ensureKey() (*ecdsa.PrivateKey, error) {
 	return key, nil
 }
 
-// exchange POSTs the CSR to the enrollment API and returns the signed chain and
-// CA PEM. The bearer token comes from the access-token secret file.
 func (e *enroller) exchange(csrPEM []byte) (chain, ca []byte, err error) {
 	token, err := e.accessToken()
 	if err != nil {
@@ -178,7 +165,6 @@ func (e *enroller) exchange(csrPEM []byte) (chain, ca []byte, err error) {
 	return []byte(out.Certificate), ca, nil
 }
 
-// accessToken reads the bearer token from the configured access-token file.
 func (e *enroller) accessToken() (string, error) {
 	path := e.cfg.Enrollment.AccessTokenFile
 	if path == "" {
@@ -191,7 +177,6 @@ func (e *enroller) accessToken() (string, error) {
 	return string(bytes.TrimSpace(data)), nil
 }
 
-// loadLeaf parses the first certificate in a PEM chain file.
 func loadLeaf(path string) (*x509.Certificate, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

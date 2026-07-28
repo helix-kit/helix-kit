@@ -49,9 +49,7 @@ static esp_err_t start_serial_transport(void)
         .uart_num = UART_NUM_0,
         .on_packet = helix_service_endpoint_receive,
 #if CONFIG_HELIX_FILE_TRANSFER
-        // Binary chunks are written to the FAT sink on this task; FATFS needs
-        // more stack than the default JSON-only path, and a deeper UART RX FIFO
-        // absorbs bursts of binary data frames before the task drains them.
+        // FATFS writes on this task need more stack than the JSON-only path; a deeper RX FIFO absorbs bursts of binary frames.
         .task_stack_bytes = 16384,
         .uart_buffer_bytes = 8192,
 #endif
@@ -86,10 +84,7 @@ void app_main(void)
     ESP_ERROR_CHECK(helix_platform_init());
     ESP_ERROR_CHECK(helix_service_endpoint_init());
 
-    // Mount on-device storage and start the transport-agnostic file-transfer
-    // service before transports come up so early transfers have a sink. Both
-    // are graceful no-ops when their Kconfig features are disabled, and a
-    // missing storage partition only logs a warning.
+    // Mount storage and start the file-transfer service before transports come up so early transfers have a sink.
     (void)helix_storage_mount();
     ESP_ERROR_CHECK(helix_file_service_start());
     if (helix_db_init() != ESP_OK) {

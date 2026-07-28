@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # Releases, OTA, Custom Firmware Builds & Flashing UI
 
 Date: 2026-07-04

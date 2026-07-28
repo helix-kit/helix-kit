@@ -1,17 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""End-to-end proof of the durable store-and-forward event queue in QEMU, driven
-over serial via the `events` service.
+"""End-to-end proof of the durable store-and-forward event queue in QEMU (over serial).
 
-QEMU has no MQTT broker, so the device is always offline: events persist as
-`pending` and delivery is driven with the test-only `simulate-delivery` hook
-(same code path a real broker PUBACK takes). Covers: persist-first, query
-(stats/list/get), delivery marking, TTL expiry, and retention cleanup.
-
-Note: FlashDB operations are slow under QEMU's flash model (~seconds each; real
-hardware is far faster), so calls use a generous timeout and assertions key off
-sweep return values (authoritative for a pass) plus deterministic pending counts
-rather than racing transient states. Requires the ESP-IDF QEMU image; run with
-`helix embedded esp32 qemu-test`.
+QEMU has no broker, so events persist as `pending` and delivery is driven with the
+test-only `simulate-delivery` hook. Covers persist-first, query, delivery, TTL expiry,
+and retention cleanup. FlashDB is slow under QEMU, so calls use generous timeouts.
 """
 
 from __future__ import annotations

@@ -7,16 +7,8 @@
 #include "cJSON.h"
 #include "esp_err.h"
 
-// Durable store-and-forward queue for outbound device events. Every event is
-// persisted locally (FlashDB via helix_db) before delivery, tracked for cloud
-// delivery (MQTT QoS-1 PUBACK), retried until delivered or expired, and cleaned
-// up after a retention window once sent. No-op stubs when CONFIG_HELIX_EVENT_QUEUE
-// is disabled.
-//
-// Timing note: expiry and retention are measured with the monotonic clock
-// (esp_timer), so they work without SNTP and never expire early when the wall
-// clock jumps. A reboot resets an event's age (safe: it just gets retried a bit
-// longer). The wall-clock createdTs is best-effort display only.
+// Durable store-and-forward queue for outbound device events: persisted (FlashDB) before delivery, retried until delivered or expired, cleaned up after a retention window.
+// Expiry/retention use the monotonic clock (esp_timer) so they work without SNTP and survive wall-clock jumps.
 
 typedef enum {
     HELIX_EVENT_PENDING = 0,
@@ -30,9 +22,7 @@ typedef struct {
     char msg_id[96];
     char service[48];
     char event_type[48];
-    char envelope[256];       // full {type,msgId,timestamp,payload} JSON, published verbatim.
-                              // Kept modest: large FlashDB values trigger GC churn that is very slow
-                              // under QEMU's flash model. Events with bigger payloads are rejected.
+    char envelope[256];       // full {type,msgId,timestamp,payload} JSON; kept modest since large FlashDB values trigger slow GC churn under QEMU.
     int64_t created_ms;       // monotonic ms at enqueue
     int64_t expiry_ms;        // monotonic ms deadline (0 = never expire)
     int64_t status;           // helix_event_status_t
@@ -49,15 +39,11 @@ typedef struct {
     int pending;
 } helix_event_sweep_stats_t;
 
-// Start the queue engine: define the events table, register the MQTT PUBACK hook,
-// and start the periodic retry/cleanup task. Requires helix_db to be ready.
+// Start the queue engine (events table, MQTT PUBACK hook, periodic retry/cleanup task). Requires helix_db ready.
 esp_err_t helix_event_queue_init(void);
 bool helix_event_queue_ready(void);
 
-// Persist an event as pending. Builds the {type,msgId,timestamp,payload} envelope
-// and a stable msgId (reused across retries so the server dedupes). ttl_sec == 0
-// uses the configured default. Takes ownership of `payload`. Optionally returns
-// the new row id and msgId.
+// Persist an event as pending with a stable msgId (reused across retries for dedupe); takes ownership of `payload`.
 esp_err_t helix_event_queue_enqueue(const char *service, const char *type, cJSON *payload,
                                     uint32_t ttl_sec, int64_t *out_id, char *out_msg_id, size_t msg_id_len);
 
@@ -70,8 +56,7 @@ esp_err_t helix_event_queue_get(int64_t id, helix_event_record_t *out);
 // Run one retry+expiry+cleanup pass immediately (also driven periodically).
 esp_err_t helix_event_queue_sweep(helix_event_sweep_stats_t *out);
 
-// Test hook (CONFIG_HELIX_EVENTS_TEST_HOOKS): mark an event delivered by id, as
-// if the broker had acked it. Processed on the next sweep, like a real PUBACK.
+// Test hook (CONFIG_HELIX_EVENTS_TEST_HOOKS): mark an event delivered by id, as if the broker acked it.
 esp_err_t helix_event_queue_simulate_delivery(int64_t id);
 
 // Delete all stored events. Returns the number removed (negative on error).

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package servicemain is the shared bootstrap every device binary (helixd and
-// each app) uses: flag parsing, logging, signal-driven shutdown, and running a
-// Runner to completion. An app's main() is a few lines that hand this a config
-// loader and a setup function.
+// Package servicemain is the shared bootstrap every device binary uses to run a Runner.
 package servicemain
 
 import (
@@ -25,11 +22,9 @@ type Runner interface {
 type Options[T any] struct {
 	ServiceName string
 	Version     string
-	// LoadConfig resolves the effective config for the given service name
-	// (config.Load), layering package defaults, /etc/helix overrides, and secrets.
+	// LoadConfig resolves the effective config for the given service name.
 	LoadConfig func(service string) (T, error)
-	// Setup builds the Runner from loaded config. If the returned Runner also
-	// implements io.Closer-like Close(), it is closed on shutdown.
+	// Setup builds the Runner; a Runner with Close() is closed on shutdown.
 	Setup func(cfg T, log *slog.Logger) (Runner, error)
 }
 
@@ -44,8 +39,7 @@ func Run[T any](opts Options[T]) {
 		return
 	}
 
-	// Log to stdout so systemd's StandardOutput=journal captures it uniformly
-	// (a service's stderr is not reliably journaled across init setups).
+	// Log to stdout so systemd's StandardOutput=journal captures it uniformly.
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})).
 		With("service", opts.ServiceName)
 

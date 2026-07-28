@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-# Deploy (or redeploy) the Helix cloud stack on the EC2 host using the
-# GHCR images published by CI. Idempotent: safe to run repeatedly.
-#
-# Expects cloud/.env to define the GHCR image references
-# (HELIX_CLOUD_APP_IMAGE, HELIX_CLOUD_INIT_IMAGE, HELIX_SERVER_IMAGE) plus
-# the runtime configuration. The host's Docker must be logged in to ghcr.io.
-
+# Deploy (or redeploy) the Helix cloud stack on the EC2 host using CI's GHCR images
+# (idempotent). Expects cloud/.env with the image references + runtime config.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -52,14 +47,11 @@ echo "==> Running database migrations (helix-init)"
 "${COMPOSE[@]}" run --rm --no-deps helix-init
 
 echo "==> Deploying cloud services"
-# --no-deps keeps this scoped to the app containers so the backing services
-# (already ensured up above) are left untouched. `up -d` still only recreates
-# the cloud containers whose image changed in the pull above.
+# --no-deps scopes this to the app containers, leaving backing services untouched.
 "${COMPOSE[@]}" up -d --no-deps "${CLOUD_SERVICES[@]}"
 
-# Register the workflow app's functions with the self-hosted Inngest server.
-# The PUT is issued from inside the app container so the serve URL Inngest
-# records is the docker-internal host it can actually call back.
+# Register the workflow app with Inngest from inside the app container, so the serve
+# URL Inngest records is the docker-internal host it can call back.
 echo "==> Syncing the workflow app with Inngest"
 synced=0
 for attempt in 1 2 3 4 5 6 7 8; do
@@ -90,8 +82,7 @@ fi
 echo "==> Cloud stack status"
 "${COMPOSE[@]}" ps "${INFRA_SERVICES[@]}" "${CLOUD_SERVICES[@]}"
 
-# Reclaim disk by removing images no container references anymore (old image
-# tags replaced by the pull above, plus any previously locally-built services).
+# Reclaim disk by removing images no container references anymore.
 echo "==> Pruning stale images"
 docker image prune -af >/dev/null 2>&1 || true
 

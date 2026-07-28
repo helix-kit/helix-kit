@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// postprocess plugin: YOLOv5 (anchor-based) decode -> detections in frame pixels.
-// Ported from the DECODE half of npu_compare.cpp detect_draw + gen_proposals (:110-207);
-// the drawing now lives in the overlay plugin. heads: out[0]=stride8, out[1]=16, out[2]=32,
-// each [anchor*(h*w*85)] with 85 = 4 box + 1 obj + 80 cls.
-// in = [ tensors(3 heads), frame ] ; out = detections.  params: { "conf": 0.4, "nms": 0.45 }
+// Postprocess plugin: YOLOv5 (anchor-based) decode -> detections in frame pixels.
+// heads: out[0]=stride8, out[1]=16, out[2]=32, each [anchor*(h*w*85)] with 85 = 4 box + 1 obj
+// + 80 cls. in = [ tensors(3 heads), frame ] ; out = detections.
 #include <vector>
 #include "../helix_pipeline.h"
 #include "../hx_json.h"

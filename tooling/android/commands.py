@@ -32,15 +32,7 @@ def android() -> None:
     help="Per-request Maven metadata fetch timeout, in seconds.",
 )
 def deps_cmd(apply_: bool, include_prerelease: bool, timeout: float) -> None:
-    """Check the Android version catalog for newer library/plugin releases.
-
-    Mirrors ``pnpm update:check`` in web/: reads
-    ``android/gradle/libs.versions.toml``, resolves the newest version of every
-    referenced library and plugin from Google Maven / Maven Central / the Gradle
-    Plugin Portal, and prints a current-vs-latest table. Pass ``--apply`` to
-    write the newer versions back to the catalog (the Android analogue of
-    ``pnpm update:apply``).
-    """
+    """Check the Android version catalog for newer library/plugin releases."""
     click.echo(f"Checking {deps_mod.VERSION_CATALOG.relative_to(REPO_ROOT)} ...")
     updates = deps_mod.check_updates(include_prerelease=include_prerelease, timeout=timeout)
 

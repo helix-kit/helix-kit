@@ -16,18 +16,11 @@
 #define HELIX_SERIAL_DEFAULT_OUTPUT_PREFIX "HELIX_RESPONSE "
 #define HELIX_SERIAL_DEFAULT_ERROR_PREFIX "HELIX_ERROR "
 
-// Binary data side-channel framing, multiplexed on the same UART as the
-// newline-delimited JSON control lines and identical in both directions:
-// host -> device carries file-transfer payloads, device -> host carries bulk
-// output (UI display frames). Inbound, a frame is recognised only at the start
-// of a line (JSON lines start with the printable input prefix, so the 0x02
-// marker is unambiguous); outbound, the host resynchronises on the marker and
-// validates the CRC, so an interleaved log line costs at most one frame. Layout:
-//   marker(0x02) ver(1) session(2 LE) offset(4 LE) len(2 LE) payload[len] crc32(4 LE)
-// crc32 (IEEE, esp_rom_crc32_le) covers ver..payload inclusive.
+// Binary data side-channel framing, multiplexed on the same UART as the newline-delimited JSON lines. Inbound a frame is recognised only at line start; outbound the host resyncs on the marker and validates CRC.
+// Layout: marker(0x02) ver(1) session(2 LE) offset(4 LE) len(2 LE) payload[len] crc32(4 LE); crc32 covers ver..payload.
 #define HELIX_SERIAL_BINARY_MARKER 0x02
 #define HELIX_SERIAL_BINARY_VERSION 0x01
-#define HELIX_SERIAL_BINARY_HEADER_BYTES 9  /* ver + session + offset + len */
+#define HELIX_SERIAL_BINARY_HEADER_BYTES 9
 #define HELIX_SERIAL_BINARY_MAX_PAYLOAD 1024
 
 typedef struct {

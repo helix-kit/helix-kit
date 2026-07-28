@@ -212,7 +212,7 @@ class Esp32Link:
 
             frame = _parse_binary_frame(raw, index)
             if isinstance(frame, _Incomplete):
-                break  # wait for the rest of the bytes before deciding
+                break
             if frame is None:
                 text.append(byte)
                 index += 1
@@ -251,8 +251,7 @@ class Esp32Link:
         raise TimeoutError(f"did not see {needle!r} within {timeout}s; got:\n{self._buf}")
 
     def read_line_with_prefix(self, prefix: str, timeout: float = 15.0) -> str:
-        """Wait for a complete line starting with `prefix`; consume the buffer up
-        to and including it so successive reads don't re-match the same line."""
+        """Wait for a complete line starting with `prefix` and consume the buffer up to and including it."""
         end = time.time() + timeout
         while time.time() < end:
             start = self._buf.find(prefix)
@@ -265,7 +264,6 @@ class Esp32Link:
             self._pump()
         raise TimeoutError(f"no line with prefix {prefix!r} within {timeout}s; got:\n{self._buf}")
 
-    # -- helix message layer -------------------------------------------------
     def call(
         self,
         service: str,
@@ -274,12 +272,7 @@ class Esp32Link:
         request_id: str,
         timeout: float = 15.0,
     ) -> dict[str, Any]:
-        """Send a JSON service command and return the response message payload.
-
-        Responses are matched on requestId, not on arrival order: a call that timed
-        out (the device was still booting, say) still gets answered eventually, and
-        that late reply must not be handed to whoever asks next.
-        """
+        """Send a JSON service command and return the response payload, matched on requestId (not arrival order)."""
         packet = {
             "requestId": request_id,
             "message": {"service": service, "method": method, "payload": payload},
@@ -294,7 +287,7 @@ class Esp32Link:
             raw = self.read_line_with_prefix(_RESPONSE_PREFIX, timeout=remaining)
             reply: dict[str, Any] = json.loads(raw)
             if reply.get("requestId") != request_id:
-                continue  # a straggler from an earlier, abandoned call
+                continue
             message: dict[str, Any] = reply.get("message", {})
             if message.get("method", "").endswith("-error"):
                 raise RuntimeError(f"{service}.{method} failed: {message.get('payload')}")
@@ -312,10 +305,7 @@ def free_port() -> int:
 
 
 class Esp32QemuSimulator(Esp32Link):
-    """Boot the firmware in QEMU with UART0 on a TCP socket; a context manager.
-
-    `wait=on` makes qemu block until we connect so the boot log is never missed.
-    """
+    """Boot the firmware in QEMU with UART0 on a TCP socket (wait=on so the boot log is never missed); a context manager."""
 
     def __init__(self, port: int | None = None, build_dir: Path | None = None) -> None:
         super().__init__()
@@ -370,12 +360,7 @@ class Esp32QemuSimulator(Esp32Link):
 
 
 class Esp32SerialDevice(Esp32Link):
-    """Drive a real ESP32 over a USB serial port; a context manager.
-
-    Pulses DTR/RTS on open to reset the chip (auto-reset circuit: RTS->EN,
-    DTR->GPIO0) so each session starts from a fresh boot and the harness can
-    catch the "... started" banner. Baud matches the IDF console default.
-    """
+    """Drive a real ESP32 over USB serial; pulses DTR/RTS on open to reset (RTS->EN, DTR->GPIO0) for a fresh boot. A context manager."""
 
     def __init__(self, port: str | None = None, baud: int = 115200) -> None:
         super().__init__()
@@ -384,21 +369,19 @@ class Esp32SerialDevice(Esp32Link):
         self._ser: serial.Serial | None = None
 
     def _start(self) -> None:
-        import serial  # pyserial (lazy: not needed for the QEMU backend)
+        import serial  # lazy: not needed for the QEMU backend
 
         self._ser = serial.Serial()
         self._ser.port = self._port
         self._ser.baudrate = self._baud
         self._ser.timeout = 0.2
-        # Avoid asserting reset lines on open until we choose to.
+        # Don't assert reset lines until we choose to.
         self._ser.dtr = False
         self._ser.rts = False
         self._ser.open()
         self.reset()
-        # The command channel only accepts input once the serial transport binds
-        # UART0 (printed just before app_main's wait/connect). Services register
-        # a bit earlier, so waiting on a service banner alone races the driver
-        # install and drops the first command. Block until the transport is up.
+        # Command input is only accepted once the serial transport binds UART0;
+        # waiting on a service banner alone races the driver install.
         self.read_until("serial command transport started", timeout=20)
 
     def close(self) -> None:
@@ -430,13 +413,7 @@ class Esp32SerialDevice(Esp32Link):
 
 
 class Esp32TcpLink(Esp32Link):
-    """Attach to a QEMU UART already listening on a TCP socket.
-
-    Espressif's QEMU only exists inside the ESP-IDF image, so a host-side tool
-    (the LVGL viewer, `helix ui sim`) cannot run the emulator in-process the way
-    Esp32QemuSimulator does. It launches QEMU in the container with the UART
-    published on a port and attaches here instead.
-    """
+    """Attach to a QEMU UART already listening on a TCP socket (for host-side tools that run QEMU in the container)."""
 
     def __init__(self, port: int, host: str = "127.0.0.1", connect_timeout: float = 180.0) -> None:
         super().__init__()

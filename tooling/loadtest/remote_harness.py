@@ -1,25 +1,5 @@
 #!/usr/bin/env python3
-"""Remote load-test harness for a Helix appliance running on another host.
-
-Unlike `helix loadtest` (which boots a local, CPU/memory-capped appliance and
-drives 127.0.0.1), this harness targets an *already-running* appliance over the
-network — e.g. the single-container appliance on an EC2 box — so the appliance's
-real resource usage and TLS-termination cost can be measured under load from a
-separate machine.
-
-It is deliberately dependency-light (paho-mqtt + stdlib + the `openssl` CLI) so
-it runs on a bare load-generator box with `pip install paho-mqtt`.
-
-Three load surfaces, matching the appliance's real ingress:
-  * mqtt   — device telemetry over MQTT (mTLS, mosquitto :8883)
-  * https  — device telemetry over HTTPS (mTLS, POST /api/device/events :4001)
-  * api    — authenticated sysadmin tRPC read/write (Caddy :443 -> Next app)
-Both mqtt and https feed the same Kafka topic -> dispatch -> DBOS workflow.
-
-`combined` runs all three at once. Client-side throughput/latency is printed;
-backend effects (device_event rows, workflow_run_result, consumer lag) and the
-appliance's memory/CPU are sampled separately over SSH (see sample_remote.py).
-"""
+"""Remote load-test harness for an already-running Helix appliance over the network."""
 
 from __future__ import annotations
 
@@ -44,9 +24,6 @@ from paho.mqtt.enums import CallbackAPIVersion
 SERVICE = "telemetry"
 
 
-# --------------------------------------------------------------------------- #
-# Shared helpers
-# --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class DeviceCert:
     device_id: str
@@ -89,10 +66,7 @@ def percentiles(values: list[float]) -> dict[str, float]:
 
 
 def _mtls_context(device: DeviceCert) -> ssl.SSLContext:
-    """Client mTLS context: present the device cert, skip server-name checks
-    (we connect by IP, and the server cert CN is the appliance's internal name).
-    The full TLS handshake + record decryption still happens on the server, so
-    the decrypt cost we want to measure is unaffected."""
+    # Skip server-name checks: we connect by IP, but the server still does the full handshake.
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -100,9 +74,6 @@ def _mtls_context(device: DeviceCert) -> ssl.SSLContext:
     return ctx
 
 
-# --------------------------------------------------------------------------- #
-# MQTT ingest driver (mosquitto :8883, mTLS)
-# --------------------------------------------------------------------------- #
 def _mqtt_connect(device: DeviceCert, host: str, port: int, suffix: str) -> mqtt.Client:
     client = mqtt.Client(
         CallbackAPIVersion.VERSION2,
@@ -208,9 +179,6 @@ def run_mqtt(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-# --------------------------------------------------------------------------- #
-# HTTPS ingest driver (POST /api/device/events, mTLS :4001)
-# --------------------------------------------------------------------------- #
 @dataclass
 class HttpStats:
     ok: int = 0
@@ -321,9 +289,6 @@ def run_https(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-# --------------------------------------------------------------------------- #
-# Admin tRPC read/write driver (Caddy :443 -> Next app)
-# --------------------------------------------------------------------------- #
 def _api_context() -> ssl.SSLContext:
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -332,10 +297,7 @@ def _api_context() -> ssl.SSLContext:
 
 
 def _api_signin(sni: str, email: str, password: str) -> str:
-    """Sign in via better-auth, return the Cookie header value for the session.
-
-    Connects by the SNI hostname (mapped to the appliance's IP via /etc/hosts on
-    the load-gen box) so SNI + Host + better-auth origin all match the site."""
+    # Connect by SNI hostname (mapped to the appliance IP via /etc/hosts) so SNI+Host+origin match.
     ctx = _api_context()
     conn = http.client.HTTPSConnection(sni, 443, context=ctx, timeout=30)
     body = json.dumps({"email": email, "password": password})
@@ -475,9 +437,6 @@ def run_api(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-# --------------------------------------------------------------------------- #
-# Combined — run every surface concurrently
-# --------------------------------------------------------------------------- #
 def run_combined(args: argparse.Namespace) -> dict[str, Any]:
     results: dict[str, dict[str, Any]] = {}
     rlock = threading.Lock()
@@ -546,9 +505,6 @@ def run_combined(args: argparse.Namespace) -> dict[str, Any]:
     return {"surface": "combined", "results": results}
 
 
-# --------------------------------------------------------------------------- #
-# CLI
-# --------------------------------------------------------------------------- #
 def main() -> None:
     p = argparse.ArgumentParser(description="Remote Helix appliance load-test harness")
     p.add_argument("--run-id", default=f"rh{int(time.time())}")

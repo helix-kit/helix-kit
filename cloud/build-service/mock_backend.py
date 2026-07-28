@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""Mock release backend for the ESP32 build service harness.
+"""Mock release backend for the ESP32 build service harness (stdlib only).
 
-Stands in for helix-server so the build worker can be exercised end-to-end without
-the full cloud stack. It speaks the *same* build-callback protocol the real
-backend does (`tooling.release.sim.ReleaseClient`), so a build that works here
-works against helix-server unchanged:
-
-  - `POST /builds` creates a build and dispatches it to the worker,
-  - `POST /api/build/artifact-url` hands out content-addressed presigned PUT URLs
-    (pointing back at its own `/storage`),
-  - `PUT /storage/<key>` stores uploaded blobs on local disk,
-  - `POST /api/build/complete` records the worker's completion callback.
-
-Deliberately dependency-free (stdlib only) so it runs anywhere.
+Stands in for helix-server, speaking the same build-callback protocol
+(`tooling.release.sim.ReleaseClient`) so a build that works here works unchanged.
 """
 
 from __future__ import annotations
@@ -63,7 +53,7 @@ def _dispatch_to_worker(build_id: str, job: dict[str, Any]) -> None:
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
-    def log_message(self, fmt: str, *args: Any) -> None:  # quieter logs
+    def log_message(self, fmt: str, *args: Any) -> None:
         print(f"[mock] {self.command} {self.path}")
 
     def _send_json(self, status: int, payload: dict[str, Any]) -> None:
@@ -88,8 +78,6 @@ class Handler(BaseHTTPRequestHandler):
         with _lock:
             build = _builds.get(build_id)
         return build is not None and secrets.compare_digest(token, build.get("token", ""))
-
-    # ---- routing -----------------------------------------------------------
 
     def do_POST(self) -> None:  # noqa: N802
         path = self.path.split("?", 1)[0]
@@ -117,8 +105,6 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_storage_get(path[len("/storage/") :])
         else:
             self._send_json(404, {"error": "not found"})
-
-    # ---- handlers ----------------------------------------------------------
 
     def _handle_create_build(self) -> None:
         payload = self._read_json()

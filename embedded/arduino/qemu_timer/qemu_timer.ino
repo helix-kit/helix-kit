@@ -1,8 +1,4 @@
-// Probe: does a 16-bit Timer1 CTC compare-match interrupt fire under QEMU?
-//
-// If QEMU emulates Timer1, we see "TICK n" printed ~ every 100ms. If it does
-// not, we only ever see "timer probe start" and silence. This decides whether
-// we can retarget the FreeRTOS tick off the (unemulated) watchdog onto Timer1.
+// Probe: does a 16-bit Timer1 CTC compare-match interrupt fire under QEMU? Decides whether the FreeRTOS tick can move off the unemulated watchdog onto Timer1.
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

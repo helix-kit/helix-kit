@@ -1,9 +1,4 @@
-// 4x Cedar HW decode -> 2x2 compositor -> tee -> [kmssink] + [x264 -> RTMP].
-// SAFE lifecycle: SIGINT/SIGTERM triggers graceful teardown — stop the RTSP
-// sources (unblocks the decode threads' pull_sample), join them, then release
-// every Cedar context (DestroyVideoDecoder + CdcVeRelease per decoder) and
-// CdcMemClose. So a normal stop frees all dma_buf and leaves NO D-state; a
-// watchdog force-exits if teardown ever wedges. Reports dma_buf count at stop.
+// 4x Cedar HW decode -> 2x2 compositor -> tee -> [kmssink] + [x264 -> RTMP]; SIGINT/SIGTERM = graceful teardown that frees every Cedar context/dma_buf (watchdog force-exits if the VE wedges).
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -102,8 +97,7 @@ static void* decode_thread(void* arg) {
     return NULL;
 }
 
-// Force the process to die if graceful teardown wedges the VE, so it can't sit
-// as an unkillable D-state holding leaked dma_buf (which would need a power cycle).
+// Force _exit if teardown wedges the VE, so it can't sit as an unkillable D-state holding leaked dma_buf.
 static void* watchdog(void* arg) {
     int secs = (int)(intptr_t)arg;
     for (int i = 0; i < secs * 10; i++) { if (teardown_done) return NULL; usleep(100000); }
@@ -163,7 +157,7 @@ int main(int argc, char** argv) {
         " appsrc name=a2 is-live=true format=time do-timestamp=true ! queue ! mix.sink_2 "
         " appsrc name=a3 is-live=true format=time do-timestamp=true ! queue ! mix.sink_3 ", &err);
     if (!disp) { g_printerr("disp parse: %s\n", err ? err->message : "?"); return 1; }
-    { // set the RTMP target host at runtime
+    {
         GstElement* rtmp = gst_bin_get_by_name(GST_BIN(disp), "rtmpout");
         char loc[256]; snprintf(loc, sizeof(loc), "rtmp://%s:1935/grid", host);
         if (rtmp) g_object_set(rtmp, "location", loc, NULL);

@@ -173,9 +173,7 @@ output_path.chmod(0o600)
 PY
 
 # Stamp a CRL distribution point on device leaf certs matching step-ca's CRL
-# IssuingDistributionPoint (CA first DNS = localhost), so OpenSSL's CRL scope
-# check (mosquitto crlfile + mTLS gateway) accepts valid certs and rejects
-# revoked ones. Without it OpenSSL errors "different CRL scope" for every cert.
+# IssuingDistributionPoint, or OpenSSL rejects every cert with "different CRL scope".
 mkdir -p "${STEP_HOME}/templates"
 cat > "${STEP_HOME}/templates/device-leaf.tpl" <<'TPL'
 {
@@ -284,12 +282,8 @@ issue_leaf_certificate "helix-server" \
   "${HELIX_SERVER_DIR}/server.key" \
   "${broker_sans[@]}"
 
-# The mTLS trust store must be intermediate + root, not root alone. Device leaves
-# are issued by the intermediate, and the enforced CRL is signed by the
-# intermediate too — so OpenSSL (mosquitto :8883, the :4001 gateway) needs the
-# intermediate in the CA store both to build the client chain and to validate the
-# CRL's signature. With root only it fails every client with "unable to get CRL
-# issuer certificate" -> "unknown ca", regardless of what chain the client sends.
+# The mTLS trust store must be intermediate + root, not root alone: OpenSSL needs
+# the intermediate to build the chain AND validate the CRL signature, else "unknown ca".
 cat "${STEP_HOME}/certs/intermediate_ca.crt" "${STEP_HOME}/certs/root_ca.crt" > "${BROKER_DIR}/root_ca.crt"
 cat "${STEP_HOME}/certs/intermediate_ca.crt" "${STEP_HOME}/certs/root_ca.crt" > "${HELIX_SERVER_DIR}/root_ca.crt"
 chmod 0644 "${BROKER_DIR}/root_ca.crt" "${HELIX_SERVER_DIR}/root_ca.crt"

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package ipcutil is the thin app-side glue over an ipc.Client: it decodes
-// inbound command notifications and provides reply/error/emit helpers so an app
-// never touches raw frames or the Helix wire format.
+// Package ipcutil is the thin app-side glue over an ipc.Client.
 package ipcutil
 
 import (
@@ -16,8 +14,7 @@ import (
 // CommandHandler handles one inbound cloud command for a service.
 type CommandHandler func(ctx context.Context, cmd ipc.CommandParams)
 
-// DispatchCommands pumps a client's notification stream into a handler until
-// ctx is done or the stream closes.
+// DispatchCommands pumps a client's notification stream into a handler until ctx is done.
 func DispatchCommands(ctx context.Context, notifications <-chan ipc.Notification, handler CommandHandler) {
 	for {
 		select {

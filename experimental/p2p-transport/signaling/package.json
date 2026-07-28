@@ -1,6 +1,7 @@
 {
   "name": "helix-p2p-signaling",
   "version": "0.1.0",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Experimental Helix P2P signaling server (WebRTC SDP/ICE relay + web client host)",

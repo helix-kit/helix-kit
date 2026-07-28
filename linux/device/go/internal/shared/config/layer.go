@@ -8,18 +8,8 @@ import (
 	"os"
 )
 
-// Load resolves the effective configuration for one service by layering, from
-// lowest to highest precedence:
-//
-//  1. the shared device document /etc/helix/config.json (device, mqtt, ipc,
-//     gateway, spool, enrollment) — common to every service;
-//  2. the package-shipped default section /usr/lib/helix/defaults/<service>.json;
-//  3. the admin/remote drop-in /etc/helix/conf.d/<service>.json;
-//  4. the 0600 secret overlay /etc/helix/secrets/<service>.env.
-//
-// Layers 2–3 form the per-service "app section" (deep-merged), decoded on demand
-// via AppSection. The shared document is required; the per-service layers are
-// optional. Computed defaults are applied and the result is validated.
+// Load resolves the effective config for one service by layering the shared
+// document, package defaults, admin drop-in, and secret overlay.
 func Load(service string) (*Config, error) {
 	shared, err := os.ReadFile(MainConfigPath())
 	if err != nil {
@@ -50,9 +40,6 @@ func Load(service string) (*Config, error) {
 	return &c, nil
 }
 
-// mergeJSONFiles deep-merges the given JSON object files in order (later wins),
-// skipping any that are absent, and returns the merged document. Returns a nil
-// slice when no file is present.
 func mergeJSONFiles(paths ...string) (json.RawMessage, error) {
 	var acc map[string]any
 	for _, p := range paths {
@@ -83,8 +70,7 @@ func mergeJSONFiles(paths ...string) (json.RawMessage, error) {
 	return out, nil
 }
 
-// deepMerge recursively merges src onto dst: nested objects merge key-by-key,
-// while scalars, arrays, and mismatched types replace wholesale (src wins).
+// deepMerge merges src onto dst; nested objects merge key-by-key, everything else replaces.
 func deepMerge(dst, src map[string]any) map[string]any {
 	for k, sv := range src {
 		if dv, ok := dst[k]; ok {

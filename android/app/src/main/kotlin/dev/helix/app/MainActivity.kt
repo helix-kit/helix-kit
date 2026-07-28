@@ -40,8 +40,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // A `flashManifestUrl` extra deep-links straight into the flash screen
-        // with the URL prefilled (used by the hardware test harness).
+        // A `flashManifestUrl` extra deep-links into the flash screen (hardware test harness).
         val flashUrl = intent?.getStringExtra("flashManifestUrl")
         setContent {
             HelixTheme {

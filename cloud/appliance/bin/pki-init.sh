@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
-# =============================================================================
-# pki-init.sh — generate the local MQTT PKI using the baked-in `step` binary.
-#
-# Faithful port of cloud/bootstrap-step-ca.sh, but it calls the locally
-# installed `step` / `step-ca` binaries instead of `docker run smallstep/...`
-# (there is no Docker inside the appliance). Idempotent: skips anything already
-# present. Runs as a oneshot BEFORE step-ca.service and mosquitto.service.
-# =============================================================================
+# Generate the local MQTT PKI using the baked-in `step` binary (idempotent oneshot,
+# runs before step-ca.service and mosquitto.service). Port of bootstrap-step-ca.sh.
 set -euo pipefail
 
 STEP_HOME=/var/lib/helix/step-ca
@@ -47,9 +41,8 @@ if [[ ! -f "${STEP_HOME}/config/ca.json" ]]; then
     --remote-management=false
 fi
 
-# Tighten cert durations (same as the original bootstrap) and enable the CRL so
-# revoked device certs are enforced by mosquitto + the mTLS gateway. CRL needs a
-# persistent DB (step ca init writes a badgerv2 block by default; ensure it).
+# Tighten cert durations and enable the CRL (needs a persistent badgerv2 DB) so
+# revoked device certs are enforced by mosquitto + the mTLS gateway.
 python3 - "${STEP_HOME}/config/ca.json" "${STEP_HOME}/db" <<'PY'
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
@@ -103,11 +96,8 @@ out.write_bytes(res.stdout); out.chmod(0o600)
 PY
 fi
 
-# Stamp a CRL distribution point on device leaf certs that matches step-ca's CRL
-# IssuingDistributionPoint (derived from the CA's first DNS name = localhost), so
-# OpenSSL's CRL scope check (mosquitto crlfile + the mTLS gateway) accepts valid
-# certs and rejects revoked ones. Without a matching DP OpenSSL errors with
-# "different CRL scope" and refuses every device cert.
+# Stamp a CRL distribution point on device leaf certs matching step-ca's CRL
+# IssuingDistributionPoint, or OpenSSL rejects every cert with "different CRL scope".
 TEMPLATE_DIR="${STEP_HOME}/templates"
 mkdir -p "${TEMPLATE_DIR}"
 cat > "${TEMPLATE_DIR}/device-leaf.tpl" <<'TPL'
@@ -166,11 +156,8 @@ issue_leaf "helix-server" "${HELIX_SERVER_DIR}/client.crt" "${HELIX_SERVER_DIR}/
 # Server cert for the Helix Server mTLS listener (:4001); shares the broker SANs.
 issue_leaf "helix-server" "${HELIX_SERVER_DIR}/server.crt" "${HELIX_SERVER_DIR}/server.key" "${broker_sans[@]}"
 
-# Generate a root-signed CRL covering the intermediate CA. step-ca only serves
-# the intermediate's CRL (revoked leaves); the mTLS gateway runs OpenSSL with
-# CRL_CHECK_ALL, which also demands a CRL for the intermediate, so crl-sync
-# appends this to the served CRL. It is empty + long-lived (the intermediate is
-# never revoked); regenerating it every init is harmless.
+# Root-signed CRL covering the intermediate CA: OpenSSL's CRL_CHECK_ALL demands one
+# for the intermediate too, so crl-sync appends this empty, long-lived CRL.
 ROOT_CRL_DIR=$(mktemp -d)
 : > "${ROOT_CRL_DIR}/index.txt"
 echo 1000 > "${ROOT_CRL_DIR}/crlnumber"
@@ -190,12 +177,9 @@ openssl ca -gencrl -config "${ROOT_CRL_DIR}/openssl.cnf" \
   -out "${STEP_HOME}/certs/root_crl.pem"
 rm -rf "${ROOT_CRL_DIR}"
 
-# The mTLS trust store must be intermediate + root, not root alone. Device leaves
-# are issued by the intermediate, and the enforced CRL is signed by the
-# intermediate too — so OpenSSL (mosquitto :8883, the :4001 gateway) needs the
-# intermediate in the CA store both to build the client chain and to validate the
-# CRL's signature. With root only it fails every client with "unable to get CRL
-# issuer certificate" -> "unknown ca", regardless of what chain the client sends.
+# The mTLS trust store must be intermediate + root, not root alone: OpenSSL needs
+# the intermediate to build the chain AND validate the CRL signature, else every
+# client fails with "unknown ca".
 cat "${STEP_HOME}/certs/intermediate_ca.crt" "${STEP_HOME}/certs/root_ca.crt" > "${BROKER_DIR}/root_ca.crt"
 cat "${STEP_HOME}/certs/intermediate_ca.crt" "${STEP_HOME}/certs/root_ca.crt" > "${HELIX_SERVER_DIR}/root_ca.crt"
 chmod 0644 "${BROKER_DIR}/root_ca.crt" "${HELIX_SERVER_DIR}/root_ca.crt"
@@ -207,8 +191,7 @@ chown -R mosquitto:mosquitto "${MQTT_ROOT}/broker" 2>/dev/null || true
 # Helix Server + cloud app run as helix and read the client cert + JWK.
 chown -R helix:helix "${HELIX_SERVER_DIR}" 2>/dev/null || true
 chmod 0644 "${DEVICE_JWK_DIR}/device-provisioner.jwk.json" 2>/dev/null || true
-# The cloud app reads this public CA file directly from MQTT_STEP_CA_ROOT_CERT_PATH
-# while issuing device certificates.
+# The cloud app reads this public CA file while issuing device certificates.
 chmod 0755 "${STEP_HOME}/certs" 2>/dev/null || true
 chmod 0644 "${STEP_HOME}/certs/root_ca.crt" 2>/dev/null || true
 

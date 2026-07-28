@@ -1,14 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Thin IPC client to the helixd core over its Unix socket.
-
-Wire protocol (must match linux/device/go/internal/ipc): newline-delimited JSON.
-  request:      {"id","method","params"}\\n     app -> core
-  response:     {"id","result"|"error"}\\n       core -> app
-  notification: {"method","params"}\\n           core -> app (no id)
-
-The client runs one background reader thread; responses are correlated by id and
-server-pushed notifications are buffered on a queue.
-"""
+"""Thin NDJSON IPC client to the helixd core over its Unix socket."""
 
 from __future__ import annotations
 
@@ -21,7 +12,6 @@ import threading
 import time
 from typing import IO, Any
 
-# Every IPC frame (request, response, notification) is a JSON object.
 Frame = dict[str, Any]
 
 _REGISTER = "register-service"
@@ -76,8 +66,6 @@ class IPCClient:
             with contextlib.suppress(OSError):
                 self._sock.close()
 
-    # --- outbound ---
-
     def respond(self, request_id: str, method: str, payload: dict[str, Any] | None) -> None:
         """Publish a control response on `.../out`, echoing request_id."""
         self._request(
@@ -94,8 +82,6 @@ class IPCClient:
             return self._notifications.get(timeout=timeout_sec)
         except queue.Empty:
             return None
-
-    # --- internals ---
 
     def _next_id(self) -> str:
         self._id += 1

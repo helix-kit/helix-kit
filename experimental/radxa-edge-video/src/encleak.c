@@ -1,7 +1,5 @@
-// encleak.c — prove the Cedar H.264 ENCODER start/stop lifecycle leaks NO dma_buf.
-// Creates the encoder, encodes a few synthetic NV12 frames, tears down cleanly
-// (ReleaseAllocInputBuffer + VideoEncUnInit + VideoEncDestroy + CdcVeRelease),
-// repeats ITERS times, printing the dma_buf object count each cycle.
+// encleak.c — prove the Cedar H.264 encoder start/stop lifecycle leaks no dma_buf
+// (repeats ITERS create/encode/teardown cycles, printing the dma_buf object count each).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +73,6 @@ int main(int argc, char** argv) {
             if (GetOneBitstreamFrame(venc, &ob) == 0) FreeOneBitStreamFrame(venc, &ob);
         }
         int active = dma_objects();
-        // clean teardown
         ReleaseAllocInputBuffer(venc);
         VideoEncUnInit(venc);
         VideoEncDestroy(venc);

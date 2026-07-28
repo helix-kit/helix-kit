@@ -1,8 +1,5 @@
-// Minimal direct-DRM test: scan out an RGB (XRGB8888) framebuffer on the PRIMARY
-// plane via drmModeSetCrtc (bypasses the broken kmssink). If this shows a clean
-// 4-quadrant color pattern on the panel, the direct-DRM RGB path works and we
-// integrate it into the detection pipeline. RGB primary avoids the NV12-overlay
-// green-lines quirk entirely.
+// Minimal direct-DRM test: scan out an XRGB8888 framebuffer on the primary plane via
+// drmModeSetCrtc (bypasses the broken kmssink and the NV12-overlay green-lines quirk).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,9 +13,8 @@
 #include <drm.h>
 #include <drm_mode.h>
 
-// The USB-C DP-alt-mode port trains at only 2 DP lanes (USB3 shares the connector),
-// so 2560x1440@60 (248MHz) never link-trains. Use the panel's EDID *preferred* mode
-// 1920x1080@60 (148MHz), which fits the 2-lane budget.
+// USB-C DP-alt-mode trains only 2 DP lanes, so 2560x1440@60 never link-trains; use the
+// EDID-preferred 1920x1080@60 which fits the 2-lane budget.
 static uint32_t crtc_id = 100, conn_id = 153;
 static int W = 1920, H = 1080;
 static drmModeModeInfo MODE = {

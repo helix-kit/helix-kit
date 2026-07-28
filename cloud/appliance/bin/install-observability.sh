@@ -1,22 +1,8 @@
 #!/usr/bin/env bash
-# =============================================================================
-# install-observability.sh — download the observability stack ON DEMAND.
-#
-# The observability binaries (Grafana, Prometheus, Loki, Tempo, Alloy, the OTel
-# collector, exporters) are NOT baked into the appliance image — they are the
-# bulk of its size and most sites never enable them. Instead the sysadmin runs
-# this once to fetch them onto the PERSISTENT data volume
-# (/var/lib/helix/observability/), so they survive container recreation and
-# only need installing once per site.
-#
-# Usage (inside the container, as root):
-#   /opt/helix/bin/install-observability.sh            # install if missing
-#   /opt/helix/bin/install-observability.sh --force    # re-download all
-# Then:
-#   systemctl start helix-observability.target
-#
-# The systemd units point at /var/lib/helix/observability/bin and .../grafana.
-# =============================================================================
+# On-demand download of the observability stack onto the persistent data volume
+# (not baked into the image — it is the bulk of its size and most sites skip it).
+# Usage (in the container, as root): install-observability.sh [--force], then
+# `systemctl start helix-observability.target`.
 set -euo pipefail
 
 # Pinned to confirmed-available release assets (validated 2026-06-26).
@@ -46,7 +32,6 @@ mkdir -p "${BIN}" "${GRAFANA_DIR}"
 dl() { curl -fsSL --retry 8 --retry-delay 3 --retry-all-errors --connect-timeout 30 "$1" -o "$2"; }
 have() { [[ -x "${BIN}/$1" && "${FORCE}" -eq 0 ]]; }
 
-# ---- single binaries --------------------------------------------------------
 if ! have prometheus; then
   echo "==> prometheus ${PROMETHEUS_VERSION}"
   dl "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" "${TMP}/p.tgz"
@@ -87,21 +72,18 @@ if ! have redis_exporter; then
   dl "https://github.com/oliver006/redis_exporter/releases/download/v${REDIS_EXPORTER_VERSION}/redis_exporter-v${REDIS_EXPORTER_VERSION}.linux-amd64.tar.gz" "${TMP}/re.tgz"
   tar -xzf "${TMP}/re.tgz" -C "${TMP}"; cp "${TMP}"/redis_exporter-*/redis_exporter "${BIN}/"
 fi
-# mosquitto_exporter has no upstream binary release — it is vendored into the
-# image (see Dockerfile) and staged from there rather than downloaded.
+# mosquitto_exporter has no upstream binary release — it is vendored into the image.
 if ! have mosquitto_exporter && [[ -f /opt/helix/vendor/mosquitto_exporter ]]; then
   echo "==> mosquitto_exporter (vendored)"
   cp /opt/helix/vendor/mosquitto_exporter "${BIN}/mosquitto_exporter"
 fi
-# cadvisor ships a single raw binary (not a tarball). In the single-container
-# appliance it runs in raw cgroup mode (no docker) so each systemd service shows
-# up as a container_* series — same metrics as the cloud, labelled by cgroup id.
+# cadvisor is a raw binary; it runs in raw cgroup mode so each systemd service shows as a container_* series.
 if ! have cadvisor; then
   echo "==> cadvisor ${CADVISOR_VERSION}"
   dl "https://github.com/google/cadvisor/releases/download/v${CADVISOR_VERSION}/cadvisor-v${CADVISOR_VERSION}-linux-amd64" "${BIN}/cadvisor"
 fi
 
-# ---- grafana (tarball -> persistent, `current` symlink the unit runs) -------
+# grafana tarball -> persistent dir with a `current` symlink the unit runs.
 if [[ ! -x "${GRAFANA_DIR}/current/bin/grafana" || "${FORCE}" -eq 1 ]]; then
   echo "==> grafana ${GRAFANA_VERSION}"
   dl "https://dl.grafana.com/oss/release/grafana-${GRAFANA_VERSION}.linux-amd64.tar.gz" "${TMP}/grafana.tgz"

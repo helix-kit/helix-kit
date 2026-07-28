@@ -4,10 +4,12 @@ import { passkeyClient } from '@better-auth/passkey/client';
 import { adminClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 
-import { env } from '@/lib/env';
+import { getBaseUrl } from '@/lib/getBaseUrl';
 
+// Self-hosted: in the browser talk to the current origin (never a build-time
+// baked-in NEXT_PUBLIC_BASE_URL), mirroring the tRPC client — see getBaseUrl.
 export const authClient = createAuthClient({
-  baseURL: env.NEXT_PUBLIC_BASE_URL,
+  baseURL: getBaseUrl(),
   plugins: [adminClient(), passkeyClient()],
 });
 

@@ -1,16 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 // Package files is the device-side file-browser app.
-//
-// Control (open/close a session, list a directory) arrives over IPC as Helix
-// commands. The bytes ride the data plane: each stream the far end opens is ONE
-// transfer, described by the stream's meta blob — so many files move in parallel
-// over a single session, each with its own credit-based flow control, for free
-// from the mux.
-//
-// It is transport-agnostic like every other stream app: the same code serves a
-// relayed session and a peer-to-peer one. P2P is the interesting case here —
-// bulk file bytes are exactly what you do not want to pay cloud bandwidth for.
 package files
 
 import (
@@ -36,16 +26,12 @@ import (
 // ServiceName is the Helix `message.service` for this app.
 const ServiceName = generated.FilesService
 
-// Transfer operations, carried in a stream's meta blob.
 const (
 	opGet = "get"
 	opPut = "put"
 )
 
-// appConfig is this app's section of the device config (apps.files).
 type appConfig struct {
-	// Roots the browser may see. Everything outside them is invisible; there is no
-	// default, so an unconfigured app serves nothing rather than the whole disk.
 	Roots []string `json:"roots"`
 }
 
@@ -97,8 +83,7 @@ func (r *runner) handle(ctx context.Context, cmd ipc.CommandParams) {
 	generated.DispatchFiles(ctx, r.client, r.log, cmd, r)
 }
 
-// HandleOpen opens the session's data plane (relayed or peer-to-peer) and starts
-// its accept loop. On the p2p path it returns as soon as the SDP offer exists.
+// HandleOpen opens the session's data plane and starts its accept loop.
 func (r *runner) HandleOpen(
 	_ context.Context,
 	req generated.FilesOpenInput,
@@ -114,7 +99,6 @@ func (r *runner) HandleOpen(
 	return generated.FilesSessionOutput{SessionId: req.SessionId, Offer: offer}, nil
 }
 
-// openParams maps this service's generated contract types onto the transport's.
 func openParams(req generated.FilesOpenInput) dataplane.OpenParams {
 	servers := make([]peer.ICEServer, 0, len(req.IceServers))
 	for _, s := range req.IceServers {
@@ -134,8 +118,6 @@ func openParams(req generated.FilesOpenInput) dataplane.OpenParams {
 	}
 }
 
-// candidateSender trickles a locally-gathered ICE candidate back to the browser as
-// an unsolicited response; the gateway routes it to the session's owner.
 func (r *runner) candidateSender(sessionID string) func(string) {
 	return func(candidate string) {
 		ipcutil.Respond(
@@ -165,8 +147,7 @@ func (r *runner) HandleClose(
 	return generated.FilesSessionOutput{SessionId: req.SessionId}, nil
 }
 
-// HandleRoots reports the directories this device is willing to expose, so the
-// browser knows where it may start rather than guessing.
+// HandleRoots reports the directories this device is willing to expose.
 func (r *runner) HandleRoots(
 	_ context.Context,
 	_ generated.FilesRootsInput,
@@ -174,8 +155,7 @@ func (r *runner) HandleRoots(
 	return generated.FilesRootsOutput{Roots: append([]string(nil), r.roots...)}, nil
 }
 
-// HandleList reads one directory. Listings are small and structured, so they ride
-// the control plane; only file BYTES go on the data plane.
+// HandleList reads one directory.
 func (r *runner) HandleList(
 	_ context.Context,
 	req generated.FilesListInput,
@@ -203,8 +183,6 @@ func (r *runner) HandleList(
 			ModifiedAt: int(info.ModTime().UnixMilli()),
 		})
 	}
-	// Directories first, then by name — the ordering a file browser wants, done
-	// here so every client does not have to reimplement it.
 	sort.Slice(entries, func(a, b int) bool {
 		if entries[a].IsDir != entries[b].IsDir {
 			return entries[a].IsDir
@@ -213,8 +191,7 @@ func (r *runner) HandleList(
 	})
 
 	out := generated.FilesListOutput{Path: dir, Entries: entries}
-	// Offer a parent only while it stays inside a root, so the browser cannot walk
-	// out of the allow-list by following it.
+	// Offer a parent only while it stays inside a root, blocking allow-list escape.
 	if parent := filepath.Dir(dir); parent != dir {
 		if _, err := r.resolve(parent); err == nil {
 			out.Parent = parent
@@ -223,9 +200,6 @@ func (r *runner) HandleList(
 	return out, nil
 }
 
-// handleTransfer serves one stream: one file, in one direction. The stream's meta
-// says which file and which way; after that it is raw bytes, so a transfer moves at
-// the transport's speed with no per-chunk framing of our own.
 func (r *runner) handleTransfer(st *stream.Stream) {
 	var meta generated.FilesTransferMeta
 	if err := json.Unmarshal(st.Meta(), &meta); err != nil {
@@ -258,21 +232,17 @@ func (r *runner) sendFile(st *stream.Stream, path string) {
 	}
 	defer func() { _ = file.Close() }()
 
-	// io.Copy streams straight from disk into the mux — the credit window supplies
-	// the backpressure, so a big file never buffers in memory on either side.
 	if _, err := io.Copy(st, file); err != nil && !errors.Is(err, io.EOF) {
 		r.log.Warn("files send failed", "path", path, "err", err)
 		st.Reset("send failed")
 		return
 	}
-	// Half-close: EOF for the reader, while the stream stays open for its ack.
 	_ = st.CloseWrite()
 	r.log.Info("files sent", "path", path)
 }
 
 func (r *runner) receiveFile(st *stream.Stream, path string) {
-	// Write to a temp file in the destination directory and rename on success, so a
-	// failed or aborted upload never leaves a half-written file at the real path.
+	// Temp-then-rename so a failed upload never leaves a half-written file.
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".helix-upload-*")
 	if err != nil {
 		r.log.Warn("files temp create failed", "path", path, "err", err)

@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package runtimemanager is the Helix device runtime-manager: the root daemon
-// that turns installed packages into supervised systemd services. It reconciles
-// the managed-service catalog onto systemd on boot (auto-start), and exposes a
-// control API — a local socket for the CLI and the cloud-facing `runtime` IPC
-// service — for install/remove, start/stop/restart, and remote config writes.
+// Package runtimemanager is the Helix device root daemon that reconciles installed packages into supervised systemd services and exposes a local + cloud control API.
 package runtimemanager
 
 import (
@@ -41,8 +37,7 @@ func (m *Manager) Run(ctx context.Context) error {
 		return err
 	}
 	if err := Reconcile(m.sd, m.log); err != nil {
-		// A reconcile failure at boot is logged, not fatal: the control API stays
-		// up so an operator can repair the device.
+		// Not fatal: keep the control API up so an operator can repair the device.
 		m.log.Warn("initial reconcile failed", "err", err)
 	} else {
 		m.log.Info("reconciled managed services")
@@ -53,8 +48,6 @@ func (m *Manager) Run(ctx context.Context) error {
 	return m.ctrl.ServeControlSocket(ctx)
 }
 
-// ensureLayout creates the mutable runtime directories runtime-manager and the
-// installer rely on.
 func ensureLayout() error {
 	for _, dir := range []string{
 		config.DBDir(), config.ConfDir(), config.SecretsDir(),

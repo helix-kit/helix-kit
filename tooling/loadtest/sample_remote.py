@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""Sample a remote Helix appliance's resource usage + backend progress.
-
-Opens a single SSH session and, for `--duration` seconds, records host memory,
-the appliance container's memory/CPU, and load average once per `--interval`.
-Around the window it also snapshots backend counters (device_event rows,
-workflow_run_result rows, Kafka consumer lag) so the caller can attribute a
-load run's throughput and the appliance's peak footprint under it.
-
-Run this concurrently with remote_harness.py against the same appliance.
-"""
+"""Sample a remote Helix appliance's resource usage + backend progress under load."""
 
 from __future__ import annotations
 

@@ -2,16 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """hxc — Helix cross-platform pipeline compiler (prototype).
 
-ONE portable graph.json -> each platform's NATIVE, zero-copy pipeline. The graph is defined once
-(the React editor emits it); a backend per platform maps each semantic node to that platform's best
-component + model artifact. Same pipeline, optimal everywhere.
+One portable graph.json -> each platform's native pipeline; a backend per platform maps each
+semantic node to that platform's best component + model artifact.
 
   hxc.py compile graph.json --target deepstream|hailo|radxa   # show the native pipeline
   hxc.py run     graph.json --target deepstream [--host IP]    # actually run it (DeepStream here)
 """
 import argparse, json, os, subprocess, sys, tempfile
 
-# --- node role -> native component, per platform (the "compiler" mapping table) ------------------
+# node role -> native component, per platform (the "compiler" mapping table)
 ROLE_MAP = {
     "deepstream": {
         "decode": "nvurisrcbin(RTSP+NVDEC->NVMM)", "batch": "nvstreammux", "detect": "nvinfer(TensorRT)",
@@ -42,7 +41,7 @@ def show_mapping(g, target):
         print(f"    {n['role']:8s} ({n['id']:5s}) -> {m[n['role']]}")
 
 
-# --- DeepStream backend: emit a runnable deepstream-app config from the graph -------------------
+# DeepStream backend: emit a runnable deepstream-app config from the graph
 def deepstream_config(g, work):
     det = next(n for n in g["nodes"] if n["role"] == "detect")["params"]
     tile = next(n for n in g["nodes"] if n["role"] == "tile")["params"]
@@ -85,7 +84,7 @@ def deepstream_gstlaunch(g):
     return "gst-launch-1.0 \\\n    " + " \\\n    ".join(p)
 
 
-# --- Hailo backend (illustrative; runs on RPi+Hailo, not this box) ------------------------------
+# Hailo backend (illustrative; runs on RPi+Hailo, not this box)
 def hailo_gstlaunch(g):
     n = len(g["streams"])
     p = [f"hailoroundrobin name=rr", "! hailonet hef-path=yolo11s.hef batch-size=%d" % n,
@@ -96,7 +95,7 @@ def hailo_gstlaunch(g):
     return "gst-launch-1.0 \\\n    " + " \\\n    ".join(p)
 
 
-# --- Radxa backend: compile to OUR plugin host's JSON config (awnn NPU + Cedar) -----------------
+# Radxa backend: compile to our plugin host's JSON config (awnn NPU + Cedar)
 def radxa_config(g):
     det = next(x for x in g["nodes"] if x["role"] == "detect")["params"]
     tile = next(x for x in g["nodes"] if x["role"] == "tile")["params"]

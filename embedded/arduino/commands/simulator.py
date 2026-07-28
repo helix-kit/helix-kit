@@ -1,16 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Build Arduino sketches and run them under qemu-system-avr, talking serial.
-
-The ESP32 firmware is developed against a QEMU target; this gives the Arduino
-firmware the same loop. qemu-system-avr emulates the ATmega USART and exposes it
-as a host chardev, so a sketch's `Serial` becomes a TCP socket we can drive from
-the CLI or the e2e suite -- no physical board required.
-
-This module is intentionally click-free so both the `helix embedded arduino`
-commands and the pytest e2e tests can share it. The AVR RTOS tick must come from
-a 16-bit timer, not the watchdog: qemu-system-avr does not emulate the WDT
-interrupt (see embedded/arduino/README.md).
-"""
+"""Build Arduino sketches and run them under qemu-system-avr over serial (click-free)."""
 
 from __future__ import annotations
 
@@ -25,17 +14,12 @@ from tooling.common.paths import EMBEDDED_ROOT
 
 ARDUINO_ROOT = EMBEDDED_ROOT / "arduino"
 
-# Repo-vendored Arduino libraries (patched FreeRTOS + the HelixEspCompat shim)
-# -- added to the build so firmware is reproducible without relying on whatever
-# is in the user's global Arduino libraries dir.
+# Repo-vendored Arduino libs (patched FreeRTOS + HelixEspCompat shim) for reproducible builds.
 VENDORED_LIBRARIES = ARDUINO_ROOT / "libraries"
 
-# The Helix protocol core is shared with the ESP32 build and lives above the
-# platform trees; the Arduino build consumes it in place (no symlinks).
 SHARED_PROTOCOL_LIBRARY = EMBEDDED_ROOT / "protocol"
 
-# QEMU can only emulate these AVRs; the Leonardo's ATmega32u4 + native-USB CDC
-# is not emulable, so it is absent here (it stays a real-hardware target).
+# QEMU-emulable AVRs only; the Leonardo's ATmega32u4 + native-USB CDC is not emulable.
 BOARDS: dict[str, dict[str, str]] = {
     "mega2560": {"fqbn": "arduino:avr:mega", "machine": "mega2560"},
     "uno": {"fqbn": "arduino:avr:uno", "machine": "uno"},
@@ -111,11 +95,7 @@ def _free_port() -> int:
 
 
 class SerialSimulator:
-    """Boot an ELF in qemu with its USART on a TCP socket; send/read lines.
-
-    Used as a context manager. `wait=on` makes qemu block until we connect, so
-    the boot banner is never missed.
-    """
+    """Boot an ELF in qemu with its USART on a TCP socket (wait=on so the boot banner is never missed); a context manager."""
 
     def __init__(self, elf: Path, machine: str, port: int | None = None) -> None:
         self._elf = elf
@@ -124,7 +104,7 @@ class SerialSimulator:
         self._proc: subprocess.Popen[bytes] | None = None
         self._sock: socket.socket | None = None
         self._buf = ""
-        self._offset = 0  # consumed up to here; reads advance it, `text` keeps all
+        self._offset = 0
 
     def __enter__(self) -> SerialSimulator:
         serial = [
@@ -178,11 +158,7 @@ class SerialSimulator:
                 self._buf += data.decode(errors="replace")
 
     def read_until(self, needle: str, timeout: float = 6.0) -> str:
-        """Wait until `needle` appears in newly-received output, else TimeoutError.
-
-        Consumes up to and including the match so a later read does not re-match
-        the same occurrence; `text` still exposes the full accumulated output.
-        """
+        """Wait until `needle` appears in newly-received output (consuming past it), else TimeoutError."""
         end = time.time() + timeout
         while time.time() < end:
             found = self._buf.find(needle, self._offset)
@@ -193,13 +169,7 @@ class SerialSimulator:
         raise TimeoutError(f"did not see {needle!r} within {timeout}s; got:\n{self._buf}")
 
     def read_line_with_prefix(self, prefix: str, timeout: float = 6.0) -> str:
-        """Wait for the next complete line starting with `prefix`; return the rest.
-
-        Searches only unconsumed output and advances past the returned line, so
-        repeated calls read successive responses. Requires the line's newline
-        before returning, so a partial read (prefix but not yet payload) keeps
-        waiting instead of returning a truncated value.
-        """
+        """Wait for the next complete line starting with `prefix` and return the rest, advancing past it."""
         end = time.time() + timeout
         while time.time() < end:
             start = self._buf.find(prefix, self._offset)

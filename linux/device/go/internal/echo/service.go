@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package echo is a smoke-test app: it registers over IPC and answers "ping"
-// commands with "pong". It demonstrates the entire app authoring surface —
-// connect, auto-register, dispatch commands, respond — in ~40 lines.
+// Package echo is a smoke-test app that answers "ping" commands with "pong".
 package echo
 
 import (

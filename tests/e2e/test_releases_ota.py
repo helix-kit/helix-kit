@@ -78,7 +78,6 @@ def _subscribe_in(stack, device) -> tuple[mqtt.Client, list[bytes]]:
 
 def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
     device = provisioned_device
-    # --- seed the type registry + a scoped CI token ---
     stack.appliance.psql(ESP32_TYPE_SEED_SQL)
     ci_secret, token_sql = make_ci_token_sql()
     stack.appliance.psql(token_sql)
@@ -87,7 +86,6 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
     app = next(a for a in synth_esp32_artifacts(CONFIG_V1) if a.role == "app")
     app_key = f"cas/{app.sha256}"
 
-    # --- CI-sim: register release v1 (4 artifacts + offsets) ---
     result = client.sim_ci_esp32(
         name=RELEASE_NAME, version="0.1.0", channel=CHANNEL, selector=SELECTOR, config=CONFIG_V1
     )
@@ -106,7 +104,7 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
         == 1
     )
 
-    # --- re-register identical -> idempotent (no duplicate rows) ---
+    # Re-register identical -> idempotent (no duplicate rows).
     client.sim_ci_esp32(
         name=RELEASE_NAME, version="0.1.0", channel=CHANNEL, selector=SELECTOR, config=CONFIG_V1
     )
@@ -114,18 +112,17 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
     assert _count(stack, "SELECT count(*) FROM release") == 1
     assert _count(stack, "SELECT count(*) FROM variant") == 1
 
-    # --- assign a profile/track to the device ---
     for statement in seed_profile_for_device_sql(
         device.device_id, TYPE_KEY, RELEASE_NAME, CHANNEL, SELECTOR
     ):
         stack.appliance.psql(statement)
 
-    # --- OTA fetch works: device downloads its firmware, sha256 matches ---
+    # OTA fetch: device downloads its firmware, sha256 matches.
     signed_url = _download_via_session(stack, device, app_key)
     downloaded = client.get(signed_url)
     assert hashlib.sha256(downloaded).hexdigest() == app.sha256
 
-    # --- a non-allowed key is refused (403) ---
+    # A non-allowed key is refused (403).
     rejected = False
     try:
         _download_via_session(stack, device, f"cas/{'0' * 64}")
@@ -133,7 +130,7 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
         rejected = exc.code == 403
     assert rejected, "unauthorized artifact key was not rejected with 403"
 
-    # --- OTA producer: ota-update packet reaches the device /in ---
+    # OTA producer: ota-update packet reaches the device /in.
     sub, received = _subscribe_in(stack, device)
     try:
         triggered = client.trigger_ota(device.device_id)
@@ -151,7 +148,7 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
         sub.loop_stop()
         sub.disconnect()
 
-    # --- custom user build: request -> worker callbacks -> release (owner set) ---
+    # Custom user build: request -> worker callbacks -> release (owner set).
     built = client.sim_custom_build(
         name="custom-fw",
         version="1.0.0-custom",
@@ -170,7 +167,7 @@ def test_release_ota_and_custom_build(stack, provisioned_device) -> None:
         == 1
     )
 
-    # --- repeat same config -> Tier-0 cache hit (no new build/release) ---
+    # Repeat same config -> Tier-0 cache hit (no new build/release).
     hit = client.sim_custom_build(
         name="custom-fw",
         version="1.0.0-custom",

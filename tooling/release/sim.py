@@ -1,10 +1,4 @@
-"""Synthetic ESP32 release simulators + a thin HTTP client for the release API.
-
-The synthetic artifacts stand in for a real ESP-IDF build so the backend control
-plane (CI register, custom build, OTA resolution) can be exercised end-to-end
-quickly. Invariant roles (bootloader/partition-table/ota-data) are
-config-independent so they dedupe across builds; the `app` bytes depend on the
-build config so different configs produce different firmware."""
+"""Synthetic ESP32 release simulators + a thin HTTP client for the release API."""
 
 from __future__ import annotations
 
@@ -18,7 +12,6 @@ from urllib.parse import urlsplit
 
 JsonDict = dict[str, Any]
 
-# Standard ESP32 flash offsets (bootloader/partition-table/ota-data/app).
 ESP32_ROLES: tuple[tuple[str, str], ...] = (
     ("bootloader", "0x1000"),
     ("partition-table", "0x8000"),
@@ -40,8 +33,6 @@ ESP32_TYPE_SEED_SQL = (
     "'esp32-firmware', 'active') ON CONFLICT (key) DO NOTHING"
 )
 
-# Helix Linux device packages (.helixpkg) flow through the same release/OTA plane
-# as firmware — a content-addressed blob (role "pkg") selected by machine arch.
 LINUX_PACKAGE_TYPE_SEED_SQL = (
     "INSERT INTO artifact_type (key, display_name, distribution_mode, selector_keys, roles, "
     "adapter_key, status) VALUES ('helix-linux-package', 'Helix Linux Package', 'blob', "
@@ -130,8 +121,6 @@ class ReleaseClient:
         self.ci_token = ci_token
 
     def _abs(self, url: str) -> str:
-        # The FS storage route always lives on the helix-server public plane, so
-        # rebase any signed URL (relative or absolute-to-some-domain) onto base_url.
         parts = urlsplit(url)
         path = parts.path + (f"?{parts.query}" if parts.query else "")
         return f"{self.base_url}{path}"
@@ -161,7 +150,6 @@ class ReleaseClient:
             data: bytes = response.read()
         return data
 
-    # --- Custom-build primitives (shared by the sim + the real ESP-IDF worker) ---
     def request_build(
         self, config: JsonDict, owner_user_id: str, selector: JsonDict | None = None
     ) -> JsonDict:
@@ -214,11 +202,8 @@ class ReleaseClient:
             token=token,
         )
 
-    # --- CI publish (real artifacts) ---
     def ci_upload_artifacts(self, artifacts: list[JsonDict]) -> None:
-        """Presign + PUT each unique (by sha256) artifact via the CI upload
-        endpoint. Shared roles across variants (bootloader/partition-table/
-        ota-data) dedupe by content address."""
+        """Presign + PUT each unique (by sha256) artifact via the CI upload endpoint."""
         seen: set[str] = set()
         for artifact in artifacts:
             if artifact["sha256"] in seen:
@@ -245,9 +230,7 @@ class ReleaseClient:
         config: JsonDict,
         variants: list[JsonDict],
     ) -> JsonDict:
-        """Upload all variants' real artifact bytes, then register + publish a
-        multi-variant release via the CI API. Each variant is
-        {selector, artifacts:[{role, offset, sha256, sizeBytes, data}]}."""
+        """Upload all variants' real artifact bytes, then register + publish a multi-variant release."""
         self.ci_upload_artifacts([a for variant in variants for a in variant["artifacts"]])
         return self._post(
             "/api/ci/releases",
@@ -276,7 +259,6 @@ class ReleaseClient:
             },
         )
 
-    # --- CI simulation ---
     def sim_ci_esp32(
         self,
         *,
@@ -326,7 +308,6 @@ class ReleaseClient:
             },
         )
 
-    # --- Custom build simulation (request -> worker callbacks) ---
     def sim_custom_build(
         self,
         *,

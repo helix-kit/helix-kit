@@ -39,11 +39,7 @@ _CI_TOKEN = click.option("--ci-token", envvar="HELIX_CI_TOKEN", help="Scoped CI 
 
 @release.command("catalog")
 def catalog() -> None:
-    """Print the custom-firmware build-options catalog (apps/features/chips/...).
-
-    This is the same catalog the build container serves over `GET /catalog` and the
-    admin build UI renders; use it to inspect or diff the selectable options.
-    """
+    """Print the custom-firmware build-options catalog (apps/features/chips/...)."""
     click.echo(json.dumps(build_catalog(), indent=2))
 
 
@@ -56,10 +52,7 @@ def catalog() -> None:
 def emit_seed_sql(
     device_id: str | None, name: str, channel: str, chip: str, flash_size: str
 ) -> None:
-    """Print SQL to seed the esp32 artifact_type (+ optional CI token & device profile).
-
-    Pipe into psql, e.g. `helix release emit-seed-sql | psql "$DATABASE_URL"`.
-    """
+    """Print SQL to seed the esp32 artifact_type (+ optional CI token & device profile)."""
     click.echo(f"{ESP32_TYPE_SEED_SQL};")
     click.echo(f"{LINUX_PACKAGE_TYPE_SEED_SQL};")
     if device_id is not None:
@@ -176,8 +169,7 @@ def build_firmware(
     features: tuple[str, ...],
     overrides: tuple[str, ...],
 ) -> None:
-    """Build a REAL customized ESP32 firmware (via the ESP-IDF image) and register
-    it as an owned, OTA-ready release. Repeat same-config builds hit the Tier-0 cache."""
+    """Build a REAL customized ESP32 firmware and register it as an owned, OTA-ready release."""
     client = ReleaseClient(base_url, ci_token)
     config = {
         "apps": list(apps),
@@ -227,9 +219,7 @@ def publish_esp32(
     flash_size: str,
     variants: tuple[str, ...],
 ) -> None:
-    """Publish REAL pre-built ESP32 firmware(s) as one multi-variant release via the
-    CI API (presign -> PUT bytes -> register + publish). Each --variant maps a
-    `featureSet` selector value to a built firmware output dir."""
+    """Publish REAL pre-built ESP32 firmware(s) as one multi-variant release via the CI API."""
     client = ReleaseClient(base_url, ci_token)
     variant_specs: list[JsonDict] = []
     for spec in variants:
@@ -278,10 +268,7 @@ def trigger_ota(base_url: str, ci_token: str, device_id: str) -> None:
 @click.option("--port", default=8000, show_default=True, type=int)
 @click.option("--baud-rate", default=115200, show_default=True, type=int)
 def serve_firmware_cmd(firmware_dir: str, host: str | None, port: int, baud_rate: int) -> None:
-    """Serve a built firmware dir over HTTP as a flashable manifest (dummy release
-    server) for the Android app or a browser. Bind to the LAN so a phone on the
-    same Wi-Fi can download and flash. Point the client at
-    `http://<host>:<port>/manifest.json`."""
+    """Serve a built firmware dir over HTTP as a flashable manifest for the Android app or a browser."""
     directory = Path(firmware_dir)
     if not directory.is_absolute():
         from tooling.common.paths import REPO_ROOT

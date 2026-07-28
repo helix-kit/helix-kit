@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// postprocess plugin: YOLOv8-pose decode -> person detections + 17 keypoints, in frame pixels.
-// Ported from the DECODE half of npu_compare.cpp pose_draw (:260-360); skeleton drawing lives
-// in the overlay plugin. heads: out[0..2] box[1,64,G,G], out[3..5] cls[1,1,G,G],
-// out[6..8] kpt[1,51,G,G] (17*(x,y,vis)), G=80/40/20 at stride 8/16/32.
-// in = [ tensors(9 heads), frame ] ; out = detections (each with nkpt=17, kpts=17*(x,y,conf)).
-// params: { "conf": 0.35, "nms": 0.45 }
+// Postprocess plugin: YOLOv8-pose decode -> person detections + 17 keypoints, in frame pixels.
+// heads: out[0..2] box[1,64,G,G], out[3..5] cls[1,1,G,G], out[6..8] kpt[1,51,G,G]
+// (17*(x,y,vis)), G=80/40/20 at stride 8/16/32. in = [ tensors(9 heads), frame ] ; out = dets.
 #include <vector>
 #include <algorithm>
 #include "../helix_pipeline.h"

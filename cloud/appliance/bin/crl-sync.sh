@@ -1,29 +1,12 @@
 #!/usr/bin/env bash
-# =============================================================================
-# crl-sync.sh — fetch step-ca's CRL and stage it where the enforcers read it.
-#
-# step-ca is authoritative for the CRL (it signs it with the intermediate CA).
-# Both mosquitto (crlfile) and the Helix Server mTLS gateway (Node `crl` option)
-# reject client certs whose serial is on that list, so a revoked device cert is
-# refused at the next handshake. This script pulls /crl over the CA-pinned HTTPS
-# endpoint, normalises it to PEM, and writes it atomically into:
-#   - /var/lib/helix/mosquitto/certs/crl.pem   (broker reads it via crlfile)
-#   - /var/lib/helix/mqtt/helix-server/crl.pem (gateway watches + hot-reloads it)
-#
-# Modes:
-#   once    fetch a single time (best-effort), used by mosquitto-prepare so the
-#           file exists before the broker starts.
-#   daemon  fetch on a loop, reloading mosquitto when the CRL changes. The Helix
-#           Server watches its own copy and refreshes its TLS context itself.
-# =============================================================================
+# Fetch step-ca's CRL and stage it (as PEM) where mosquitto and the mTLS gateway read it.
+# Modes: `once` (fetch a single time before the broker starts) | `daemon` (loop, reload mosquitto on change).
 set -euo pipefail
 
 MODE="${1:-once}"
 CA_URL="${MQTT_STEP_CA_URL:-https://127.0.0.1:9000}"
 ROOT_CA="/var/lib/helix/step-ca/certs/root_ca.crt"
-# Root-signed CRL covering the intermediate (empty, static). The mTLS gateway
-# (Node) runs OpenSSL with CRL_CHECK_ALL, which demands a CRL for every cert in
-# the chain — so the staged file must carry the intermediate's CRL AND this one.
+# Root-signed CRL covering the intermediate (empty, static); the gateway's CRL_CHECK_ALL demands it.
 ROOT_CRL="/var/lib/helix/step-ca/certs/root_crl.pem"
 BROKER_CRL="/var/lib/helix/mosquitto/certs/crl.pem"
 SERVER_CRL="/var/lib/helix/mqtt/helix-server/crl.pem"
@@ -31,8 +14,7 @@ INTERVAL="${CRL_SYNC_INTERVAL_SECONDS:-15}"
 
 log() { echo "crl-sync: $*"; }
 
-# step-ca serves the CRL at /crl (DER by default). Fetch to a temp file, then
-# normalise to PEM regardless of the wire format so OpenSSL/mosquitto accept it.
+# Fetch step-ca's /crl (DER by default) and normalise to PEM regardless of wire format.
 fetch_to() {
   local dest="$1" tmp der pem
   tmp="$(mktemp)"
@@ -50,8 +32,7 @@ fetch_to() {
     rm -f "${tmp}" "${der}" "${pem}"
     return 1
   fi
-  # Append the static root CRL so CRL_CHECK_ALL (Node gateway) covers the
-  # intermediate; harmless for mosquitto's leaf-only check.
+  # Append the static root CRL so CRL_CHECK_ALL covers the intermediate.
   if [[ -f "${ROOT_CRL}" ]]; then
     cat "${ROOT_CRL}" >> "${pem}"
   fi
@@ -110,8 +91,7 @@ case "${MODE}" in
     else
       log "initial CRL fetch failed"
     fi
-    # Fail closed: without a CRL the broker cannot enforce revocation, so refuse
-    # to let it start rather than silently accepting revoked certs.
+    # Fail closed: without a CRL the broker cannot enforce revocation.
     if [[ ! -f "${BROKER_CRL}" ]]; then
       log "no CRL available; refusing to continue (broker would skip revocation)"
       exit 1

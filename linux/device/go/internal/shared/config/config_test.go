@@ -8,8 +8,7 @@ import (
 	"testing"
 )
 
-// withRoot points every config path at a temp dir and seeds a minimal valid
-// shared document, returning the root.
+// withRoot points config paths at a temp dir and seeds a minimal shared document.
 func withRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -64,8 +63,7 @@ func TestValidateRequiresIdentity(t *testing.T) {
 	}
 }
 
-// TestAppSectionLayering proves the drop-in wins over the package default and
-// that nested objects merge key-by-key rather than replacing wholesale.
+// TestAppSectionLayering proves the drop-in wins and nested objects merge key-by-key.
 func TestAppSectionLayering(t *testing.T) {
 	withRoot(t)
 	mustWrite(t, DefaultConfigPath("shell"), `{"shell":"/bin/bash","limits":{"maxSessions":4,"idleSec":60}}`)

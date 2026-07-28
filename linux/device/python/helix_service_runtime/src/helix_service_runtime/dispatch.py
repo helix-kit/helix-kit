@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Inbound command dispatch + response helpers over an IPCClient.
-
-An app implements a ``handler(command)`` where command is a dict
-``{service, method, payload, requestId}`` and runs ``run_command_loop``; it
-never touches raw frames or the Helix wire format.
-"""
+"""Inbound command dispatch + response helpers over an IPCClient."""
 
 from __future__ import annotations
 
@@ -15,7 +10,6 @@ from typing import Any
 
 from .ipc import IPCClient
 
-# handler(command: {"service","method","payload","requestId"}) -> None
 CommandHandler = Callable[[dict[str, Any]], None]
 
 _NOTIFY_COMMAND = "command"

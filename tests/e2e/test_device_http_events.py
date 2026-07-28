@@ -19,9 +19,7 @@ def _wait_for_count(stack, device_id: str, expected: int) -> int:
 
 
 def test_http_events_are_ingested(stack, http_device) -> None:
-    """Events POSTed over mTLS to /api/device/events land in device_event via
-    the same Kafka writer as the MQTT bridge. The cert CN is the device identity;
-    an omitted msgId is server-generated."""
+    """Events POSTed over mTLS to /api/device/events land in device_event (cert CN is the identity)."""
     device_id = http_device.device_id
     assert stack.appliance.count_events(device_id) == 0
 
@@ -44,8 +42,7 @@ def test_http_events_are_ingested(stack, http_device) -> None:
 
 
 def test_http_duplicate_message_ids_are_deduped(stack, http_device) -> None:
-    """Re-POSTing an msgId already stored (from either transport) is dropped by
-    the (device_id, message_id) constraint; the original payload is kept."""
+    """Re-POSTing a stored msgId is deduped by the (device_id, message_id) constraint; original kept."""
     device_id = http_device.device_id
     assert stack.appliance.has_event(device_id, "http-1")
 
@@ -63,8 +60,7 @@ def test_http_duplicate_message_ids_are_deduped(stack, http_device) -> None:
 
 
 def test_http_event_rejects_mismatched_device_id(stack, http_device) -> None:
-    """A body deviceId that does not match the client certificate CN is rejected
-    (403) and nothing is queued."""
+    """A body deviceId not matching the client certificate CN is rejected (403); nothing queued."""
     before = stack.appliance.count_events(http_device.device_id)
     with pytest.raises(urllib.error.HTTPError) as exc:
         post_device_events(stack, http_device, [{"type": "reading"}], body_device_id="someone-else")
@@ -74,8 +70,7 @@ def test_http_event_rejects_mismatched_device_id(stack, http_device) -> None:
 
 
 def test_http_event_rejects_invalid_input(stack, http_device) -> None:
-    """An event missing the required `type` fails input validation (400) and
-    nothing is queued."""
+    """An event missing the required `type` fails input validation (400); nothing queued."""
     before = stack.appliance.count_events(http_device.device_id)
     with pytest.raises(urllib.error.HTTPError) as exc:
         post_device_events(stack, http_device, [{"payload": {"x": 1}}])

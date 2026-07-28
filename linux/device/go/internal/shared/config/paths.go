@@ -7,25 +7,12 @@ import (
 	"path/filepath"
 )
 
-// The on-device filesystem layout follows the FHS: read-only package payloads
-// under /usr/lib/helix, admin/remote-managed config under /etc/helix, mutable
-// state under /var/lib/helix, and runtime sockets/units under /run. These
-// helpers are the single source of truth for those paths, imported by helixd,
-// the apps, runtime-manager, the installer, and the CLI so nothing hardcodes a
-// path string.
-//
-// Every path is rooted at Root(), which is empty ("/") on a real device but can
-// be pointed at a temp dir (tests) or a container prefix via HELIX_ROOT.
-
-// Root is the filesystem prefix for all Helix paths. Empty means the real root.
-// Overridable via HELIX_ROOT for tests and sandboxed runs.
+// Root is the filesystem prefix for all Helix paths, overridable via HELIX_ROOT.
 func Root() string { return os.Getenv("HELIX_ROOT") }
 
 func rooted(parts ...string) string {
 	return filepath.Join(append([]string{Root(), string(filepath.Separator)}, parts...)...)
 }
-
-// --- /usr/lib/helix: read-only, package-shipped ---
 
 // LibDir is the read-only root for package-shipped payloads.
 func LibDir() string { return rooted("usr", "lib", "helix") }
@@ -47,16 +34,11 @@ func DefaultConfigPath(service string) string {
 	return filepath.Join(DefaultsDir(), service+".json")
 }
 
-// CatalogDir holds package-shipped managed-service descriptors (catalog seeds),
-// each named <service>.service.json.
+// CatalogDir holds package-shipped managed-service descriptors (catalog seeds).
 func CatalogDir() string { return filepath.Join(LibDir(), "catalog") }
 
-// MetricsPluginDir holds hardware host-metrics provider executables, discovered
-// and run by runtime-manager. Providers are delivered as packages, so a new
-// board type drops a plugin here without a runtime-manager rebuild.
+// MetricsPluginDir holds hardware host-metrics provider executables.
 func MetricsPluginDir() string { return filepath.Join(LibDir(), "metrics") }
-
-// --- /etc/helix: admin/remote-managed config (conffiles + secrets) ---
 
 // EtcDir is the admin/remote-managed config root.
 func EtcDir() string { return rooted("etc", "helix") }
@@ -79,8 +61,6 @@ func SecretFilePath(service string) string { return filepath.Join(SecretsDir(), 
 // PKIDir holds the device key and cert chain.
 func PKIDir() string { return filepath.Join(EtcDir(), "pki") }
 
-// --- /var/lib/helix: mutable state ---
-
 // StateDir is the mutable state root (package DB, spools, staging).
 func StateDir() string { return rooted("var", "lib", "helix") }
 
@@ -101,8 +81,6 @@ func SpoolPath() string { return filepath.Join(SpoolDir(), "events.db") }
 
 // TmpDir is install staging (extract then atomic rename).
 func TmpDir() string { return filepath.Join(StateDir(), "tmp") }
-
-// --- /run: runtime sockets and rendered units ---
 
 // RunDir holds runtime sockets.
 func RunDir() string { return rooted("run", "helix") }

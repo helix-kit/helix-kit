@@ -30,8 +30,7 @@ def test_duplicate_message_ids_are_deduped(stack, provisioned_device) -> None:
     device_id = provisioned_device.device_id
     assert wait_for_message(stack.appliance, device_id, "evt-a")
 
-    # Re-publish evt-a with a different payload; the (device_id, message_id)
-    # constraint must drop it and keep the original.
+    # Re-publish evt-a with a different payload; the dedupe constraint keeps the original.
     publish_event(stack, provisioned_device, "evt-a", {"temp": 99})
     time.sleep(3)
     assert stack.appliance.count_events(device_id) == 2

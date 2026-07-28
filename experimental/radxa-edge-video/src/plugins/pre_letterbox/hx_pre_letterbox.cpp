@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// preprocess plugin: BGR frame -> letterboxed SxS CHW uint8 RGB tensor.
-// Ported verbatim from npu_compare.cpp:161 preprocess().  params: { "size": 640 }
+// Preprocess plugin: BGR frame -> letterboxed SxS CHW uint8 RGB tensor. params: { "size": 640 }
 #include <opencv2/opencv.hpp>
 #include <cstdlib>
 #include "../helix_pipeline.h"

@@ -16,16 +16,14 @@
 
 static const char *TAG = "sd_smoke";
 
-// --- SPI wiring (matches the breadboard) -----------------------------------
+// SPI wiring (matches the breadboard).
 #define SD_SPI_HOST SPI2_HOST
 #define PIN_MOSI 23
 #define PIN_MISO 19
 #define PIN_SCK 18
 #define PIN_CS 5
 
-// --- The Helix partition (sda4) on the shared GPT card ---------------------
-// Created on the laptop: sgdisk -n 4:116348928:124735454, mkfs.vfat -F 32.
-// These are ABSOLUTE 512-byte LBAs on the physical card.
+// Helix partition (sda4) on the shared GPT card; ABSOLUTE 512-byte LBAs (sgdisk -n 4:116348928:124735454, mkfs.vfat -F 32).
 #define PART4_START_LBA 116348928ULL
 #define PART4_LAST_LBA 124735454ULL
 #define PART4_SECTOR_COUNT (PART4_LAST_LBA - PART4_START_LBA + 1ULL) // 8386527
@@ -37,10 +35,7 @@ static const char *TAG = "sd_smoke";
 
 static sdmmc_card_t *s_card;
 
-// --- Windowed FatFs disk-IO: sector 0 here maps to PART4_START_LBA, and any
-// access at/after PART4_SECTOR_COUNT is rejected. This is the safety seam that
-// makes it impossible for FatFs to read or write outside our partition. -----
-
+// Windowed FatFs disk-IO: sector 0 maps to PART4_START_LBA; access at/after PART4_SECTOR_COUNT is rejected so FatFs can never touch outside our partition.
 static DSTATUS sd_win_init(unsigned char pdrv)
 {
     (void)pdrv;
@@ -103,8 +98,6 @@ static const ff_diskio_impl_t s_win_diskio = {
     .ioctl = sd_win_ioctl,
 };
 
-// --- Card init over SPI -----------------------------------------------------
-
 static esp_err_t sd_card_bringup(void)
 {
     spi_bus_config_t bus_cfg = {
@@ -140,10 +133,7 @@ static esp_err_t sd_card_bringup(void)
         return ESP_ERR_NO_MEM;
     }
 
-    // Retry the FULL device init each attempt: add the sdspi device, try to
-    // init the card, and on failure remove the device so the next attempt gets
-    // a genuinely fresh device/CS (a card can wedge after a botched init, so a
-    // bare sdmmc_card_init retry just times out). A settle delay precedes each.
+    // Retry the FULL device init each attempt (re-add the sdspi device): a card can wedge after a botched init, so a bare sdmmc_card_init retry just times out.
     vTaskDelay(pdMS_TO_TICKS(200));
     err = ESP_FAIL;
     for (int attempt = 1; attempt <= 6; attempt++) {
@@ -177,8 +167,7 @@ static esp_err_t sd_card_bringup(void)
     return ESP_OK;
 }
 
-// --- Read-only sanity: confirm we see the GPT card and OUR partition --------
-
+// Read-only sanity: confirm we see the GPT card and OUR partition.
 static bool sd_sanity_check(uint8_t *buf)
 {
     // Sector 0: GPT protective MBR (type 0xEE at 0x1C2, boot signature 0x55AA).
@@ -208,8 +197,6 @@ static bool sd_sanity_check(uint8_t *buf)
     ESP_LOGI(TAG, "interlock passed: confirmed on partition '%s'", PART4_LABEL);
     return true;
 }
-
-// --- Windowed FAT write + read-back -----------------------------------------
 
 static void sd_write_test(void)
 {
@@ -250,7 +237,6 @@ static void sd_write_test(void)
     }
     ESP_LOGI(TAG, "wrote /SMOKE.TXT (%d bytes), run_token=%08lX", n, (unsigned long)token);
 
-    // Read it straight back to prove the write landed.
     char rb[256] = {0};
     fr = f_open(&fil, FAT_DRIVE "/SMOKE.TXT", FA_READ);
     if (fr == FR_OK) {
@@ -261,7 +247,6 @@ static void sd_write_test(void)
                  (rd == (UINT)n && memcmp(rb, text, n) == 0) ? "YES" : "NO");
     }
 
-    // Free space + directory listing.
     DWORD free_clusters = 0;
     FATFS *fatfs_ptr = NULL;
     if (f_getfree(FAT_DRIVE, &free_clusters, &fatfs_ptr) == FR_OK) {
@@ -278,12 +263,11 @@ static void sd_write_test(void)
         f_closedir(&dir);
     }
 
-    f_mount(NULL, FAT_DRIVE, 0); // unmount / flush
+    f_mount(NULL, FAT_DRIVE, 0);
     ESP_LOGI(TAG, "==== SD SMOKE TEST PASSED -- safe to remove the card ====");
 }
 
-// Runs synchronously from app_main (before Wi-Fi comes up), so the card's
-// init never competes with the Wi-Fi radio's current draw.
+// Runs synchronously from app_main before Wi-Fi comes up, so card init never competes with the radio's current draw.
 esp_err_t sd_smoke_start(void)
 {
     ESP_LOGI(TAG, "SD smoke test starting (MOSI=%d MISO=%d SCK=%d CS=%d)", PIN_MOSI, PIN_MISO, PIN_SCK, PIN_CS);

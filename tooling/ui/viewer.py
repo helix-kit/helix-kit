@@ -1,10 +1,4 @@
-"""A native window showing the device's screen, with clicks fed back to it.
-
-Tk is in the standard library, so the viewer adds no dependency, and Tk 8.6 reads
-PNG directly -- which the framebuffer can already produce. Every refresh re-encodes
-the mirror and swaps the image; at a few frames a second that is far cheaper than
-being clever.
-"""
+"""A native window showing the device's screen, with clicks fed back to it."""
 
 from __future__ import annotations
 

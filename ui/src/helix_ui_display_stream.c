@@ -39,8 +39,7 @@ static esp_err_t stream_flush(
 
     const uint16_t session = s_frame_id++;
 
-    // The first chunk carries the header plus as many pixels as still fit, so a
-    // small rectangle leaves on a single frame.
+    // First chunk carries the header plus as many pixels as fit, so a small rectangle leaves on one frame.
     uint8_t first[HELIX_UI_STREAM_RECT_HEADER_BYTES + HELIX_UI_STREAM_DEFAULT_CHUNK];
     const size_t first_capacity = max_chunk > sizeof(first)
         ? sizeof(first) - HELIX_UI_STREAM_RECT_HEADER_BYTES

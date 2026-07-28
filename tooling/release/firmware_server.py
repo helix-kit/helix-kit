@@ -1,11 +1,4 @@
-"""A dummy ESP32 firmware release server for local flashing.
-
-Serves a built firmware output dir over HTTP as the same `Esp32FirmwareManifest`
-the web `@helix/esp32-flasher` package consumes (`GET /manifest.json`) plus the
-raw `.bin` files, so the Android app (or a browser) can download and flash a
-device without the full appliance/release control plane. Bind it to a LAN
-address and point the phone at `http://<laptop-ip>:<port>/manifest.json`.
-"""
+"""A dummy ESP32 firmware release server for local flashing."""
 
 from __future__ import annotations
 
@@ -19,8 +12,7 @@ from tooling.release.sim import JsonDict
 
 
 def detect_lan_ip() -> str:
-    """Best-effort primary LAN IPv4 (the address a phone on the same Wi-Fi
-    reaches this laptop on). Falls back to 127.0.0.1."""
+    """Best-effort primary LAN IPv4; falls back to 127.0.0.1."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         # No packets are sent; this just selects the outbound interface.
@@ -33,8 +25,6 @@ def detect_lan_ip() -> str:
 
 
 def _flash_settings(firmware_dir: Path) -> dict[str, str]:
-    """Read flash mode/freq/size from the build's flasher_args.json, with the
-    standard ESP32 defaults as a fallback."""
     defaults = {"flash_mode": "dio", "flash_freq": "40m", "flash_size": "4MB"}
     args_path = firmware_dir / "flasher_args.json"
     if not args_path.exists():
@@ -47,8 +37,7 @@ def _flash_settings(firmware_dir: Path) -> dict[str, str]:
 def build_manifest(
     firmware_dir: Path, base_url: str, baud_rate: int
 ) -> tuple[JsonDict, dict[str, bytes]]:
-    """Return the web-compatible firmware manifest plus a role -> bytes map. The
-    artifact URLs point at `<base_url>/<role>.bin`."""
+    """Return the web-compatible firmware manifest plus a role -> bytes map."""
     artifacts, build_manifest_json = read_firmware_dir(firmware_dir)
     settings = _flash_settings(firmware_dir)
 
@@ -124,8 +113,7 @@ def serve_firmware(firmware_dir: Path, host: str, port: int, baud_rate: int) -> 
         name, offset, size = artifact["name"], artifact["offset"], artifact["size"]
         print(f"[firmware-server]   {name} @ 0x{offset:x} ({size} B)")
 
-    # Bind on all interfaces so a phone on the LAN can reach it, regardless of
-    # the advertised host in the manifest URLs.
+    # Bind all interfaces so a phone on the LAN can reach it, regardless of the advertised host.
     server = ThreadingHTTPServer(("0.0.0.0", port), handler)
     try:
         server.serve_forever()

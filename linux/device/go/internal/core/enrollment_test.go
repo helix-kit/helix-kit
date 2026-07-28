@@ -21,8 +21,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// signCSRForCN issues a short self-signed leaf with the requested CN, standing
-// in for step-ca in tests.
+// signCSRForCN issues a short self-signed leaf with the requested CN, standing in for step-ca.
 func signCSRForCN(t *testing.T, cn string, notAfter time.Time) string {
 	t.Helper()
 	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

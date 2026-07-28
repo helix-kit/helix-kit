@@ -18,12 +18,10 @@ import (
 
 var serviceNameRE = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
-// serviceGroup is the group all Helix services run as; config drop-ins are
-// chowned to it so a service can read its own config.
+// serviceGroup is the group all Helix services run as; config drop-ins are chowned to it.
 const serviceGroup = "helix"
 
-// chownServiceGroup best-effort chowns a path to root:helix. It is a no-op when
-// the group is absent or the caller is unprivileged (tests).
+// chownServiceGroup best-effort chowns a path to root:helix (no-op when unprivileged or group absent).
 func chownServiceGroup(path string) {
 	g, err := user.LookupGroup(serviceGroup)
 	if err != nil {
@@ -36,13 +34,10 @@ func chownServiceGroup(path string) {
 	_ = os.Chown(path, 0, gid)
 }
 
-// coreServices are static (base-image) units runtime-manager may restart for
-// config changes but does not itself reconcile.
+// coreServices are static base-image units runtime-manager may restart but does not reconcile.
 var coreServices = map[string]string{"helixd": "helixd.service"}
 
-// InstallPackage installs (or upgrades) a package from a local .helixpkg. It
-// stops a running predecessor, runs the installer in an isolated transient unit,
-// then reconciles the new service onto systemd.
+// InstallPackage installs or upgrades a .helixpkg: stops any predecessor, runs the installer in an isolated transient unit, then reconciles.
 func InstallPackage(sd Systemd, localPath, sha string, log *slog.Logger) (*pkg.Manifest, error) {
 	m, err := pkg.ReadManifest(localPath)
 	if err != nil {
@@ -94,10 +89,8 @@ func RemovePackage(sd Systemd, name string, purge bool, log *slog.Logger) error 
 	return Reconcile(sd, log)
 }
 
-// PutConfig writes a service's admin/remote config drop-in and restarts the
-// affected unit. The service name is validated against the catalog (or the core
-// service allowlist) so a cloud request can only ever write
-// /etc/helix/conf.d/<known-service>.json — never an arbitrary path.
+// PutConfig writes a service's config drop-in and restarts it. The service name is validated
+// against the catalog so a cloud request can only write conf.d/<known-service>.json, never an arbitrary path.
 func PutConfig(sd Systemd, service string, section json.RawMessage, log *slog.Logger) error {
 	if !serviceNameRE.MatchString(service) {
 		return fmt.Errorf("invalid service name %q", service)
@@ -128,15 +121,13 @@ func PutConfig(sd Systemd, service string, section json.RawMessage, log *slog.Lo
 	if err := os.Rename(tmp, path); err != nil {
 		return err
 	}
-	// The drop-in is 0640 root:helix so the service (which runs as the helix
-	// group) can read its own config; without the group it would be root-only.
+	// 0640 root:helix so the service (running as the helix group) can read its own config.
 	chownServiceGroup(path)
 	log.Info("wrote config drop-in", "service", service)
 	return sd.Restart(unit)
 }
 
-// GetConfig returns the current effective drop-in for a service (empty object
-// if none).
+// GetConfig returns the current config drop-in for a service (empty object if none).
 func GetConfig(service string) (json.RawMessage, error) {
 	if !serviceNameRE.MatchString(service) {
 		return nil, fmt.Errorf("invalid service name %q", service)
@@ -151,8 +142,7 @@ func GetConfig(service string) (json.RawMessage, error) {
 	return json.RawMessage(data), nil
 }
 
-// resolveUnit maps a service name to its systemd unit, accepting core services
-// and any service currently in the catalog.
+// resolveUnit maps a service name to its systemd unit (core services or any catalog service).
 func resolveUnit(service string) (string, bool) {
 	if u, ok := coreServices[service]; ok {
 		return u, true

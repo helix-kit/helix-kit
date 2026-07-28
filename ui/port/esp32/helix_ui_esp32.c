@@ -18,10 +18,8 @@ static uint32_t now_ms(void)
     return (uint32_t)(esp_timer_get_time() / 1000);
 }
 
-// Display frames leave on the same binary side-channel that file transfers use,
-// over whichever transport the endpoint says can carry it. Before a transport is
-// attached there is nowhere to send pixels; LVGL's own invalidation redraws them
-// once the host connects and calls `ui.refresh`.
+// Display frames leave on the binary side-channel; before a transport attaches there's
+// nowhere to send pixels, and LVGL invalidation redraws them once the host calls `ui.refresh`.
 static esp_err_t stream_write(
     uint16_t session,
     uint32_t offset,

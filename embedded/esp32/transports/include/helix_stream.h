@@ -6,26 +6,13 @@
 
 #include "esp_err.h"
 
-// HelixStream: the transport-agnostic byte-stream multiplexer (the Helix
-// data-plane), implemented over an outbound mTLS WebSocket to the gateway's
-// /stream/device endpoint. Byte-compatible with the Go/TS reference
-// (linux/device/go/internal/stream, web/packages/protocol/protocol-stream):
-//
-//   byte 0      frame type
-//   bytes 1..4  stream id (uint32 big-endian; 0 = connection control)
-//   bytes 5..N  payload
-//
-// The device is the mux SERVER (it Accepts peer-opened streams); the gateway is
-// the client. Credit-windowed flow control keeps one stream from starving the
-// connection. This carries opaque bytes — a UART console, a shell, a forwarded
-// socket — it knows nothing about any of them.
+// Transport-agnostic byte-stream multiplexer (Helix data-plane) over an outbound mTLS WebSocket to the gateway; device is the mux server. Byte-compatible with the Go/TS reference.
 
 typedef struct helix_stream_session helix_stream_session_t;
 typedef struct helix_stream helix_stream_t;
 
 typedef struct {
-    // The peer opened a new stream (OPEN frame). meta is the app-defined open
-    // payload (JSON, may be empty). Bind the stream to your app here.
+    // The peer opened a new stream (OPEN frame); meta is the app-defined open payload.
     void (*on_open)(helix_stream_t *stream, const uint8_t *meta, size_t meta_len, void *user);
     // Inbound stream bytes (DATA frame).
     void (*on_data)(helix_stream_t *stream, const uint8_t *data, size_t len, void *user);
@@ -46,21 +33,16 @@ typedef struct {
     helix_stream_callbacks_t cb;
 } helix_stream_config_t;
 
-// Dials the gateway data-plane WebSocket and starts serving frames. The session
-// runs asynchronously; callbacks fire on the websocket task. Returns once the
-// dial is initiated (connection completes in the background).
+// Dials the gateway data-plane WebSocket and starts serving frames asynchronously (callbacks fire on the websocket task).
 esp_err_t helix_stream_session_start(const helix_stream_config_t *cfg, helix_stream_session_t **out);
 
 // Tears down the session and all its streams.
 void helix_stream_session_close(helix_stream_session_t *session);
 
-// Writes bytes to a stream, blocking on the credit window and chunking to the
-// max frame size. Returns bytes written, or -1 if the stream/session is closed.
+// Writes bytes to a stream, blocking on the credit window and chunking; returns bytes written, or -1 if closed.
 int helix_stream_write(helix_stream_t *stream, const uint8_t *data, size_t len);
 
-// Like helix_stream_write but never blocks: sends only what the current credit
-// window allows in one call (dropping the rest under extreme backpressure).
-// Safe to call while holding a caller lock. Returns bytes sent, or -1 if closed.
+// Like helix_stream_write but never blocks: sends only what the credit window allows; returns bytes sent, or -1 if closed.
 int helix_stream_write_nonblock(helix_stream_t *stream, const uint8_t *data, size_t len);
 
 // Half-closes the send direction (sends END).

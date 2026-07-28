@@ -14,8 +14,7 @@
 #include "helix_stream.h"
 #include "service_dispatcher.h"
 
-// Compile-time defaults for the bridged UART (UART0 is the ESP32 console, so we
-// default to UART1 on flash-safe pins). Overridable at runtime via `configure`.
+// Bridged-UART defaults (UART0 is the ESP32 console, so default to UART1); overridable at runtime via `configure`.
 #define CONSOLE_DEFAULT_UART UART_NUM_1
 #define CONSOLE_DEFAULT_BAUD 115200
 #define CONSOLE_DEFAULT_TX_PIN 17
@@ -28,7 +27,6 @@
 
 static const char *TAG = "console";
 
-// UART bridge state.
 static int s_uart = CONSOLE_DEFAULT_UART;
 static int s_baud = CONSOLE_DEFAULT_BAUD;
 static int s_tx_pin = CONSOLE_DEFAULT_TX_PIN;
@@ -39,13 +37,11 @@ static TaskHandle_t s_task;
 // Data-plane session state (single active session; a new `open` replaces it).
 static SemaphoreHandle_t s_dp_lock;
 static helix_stream_session_t *s_session;
-static helix_stream_t *s_stream;  // the accepted console stream, if any
+static helix_stream_t *s_stream;
 static mqtt_cert_bundle_t s_bundle;
 static char s_session_id[80];
 static char s_data_url[320];
 static long s_session_created_at;  // epoch seconds (SNTP), for `list`
-
-// --- payload builders -------------------------------------------------------
 
 static cJSON *build_config_payload(bool ok)
 {
@@ -69,8 +65,6 @@ static cJSON *build_session_payload(const char *session_id)
     }
     return p;
 }
-
-// --- UART bridge ------------------------------------------------------------
 
 // Reads target-UART bytes and pushes them to the active data-plane stream.
 static void console_read_task(void *arg)
@@ -136,8 +130,6 @@ static void stop_bridge(void)
     uart_driver_delete((uart_port_t)s_uart);
 }
 
-// --- data-plane session -----------------------------------------------------
-
 // Callbacks run on the websocket task. s_dp_lock guards s_stream/s_session.
 static void on_open(helix_stream_t *stream, const uint8_t *meta, size_t meta_len, void *user)
 {
@@ -178,10 +170,7 @@ static void on_session_close(helix_stream_session_t *session, void *user)
     ESP_LOGI(TAG, "data-plane session closed");
 }
 
-// Detaches the current session/stream/bundle under s_dp_lock and hands them back
-// so the caller can close them OUTSIDE the lock. Closing a session stops the
-// websocket task, which may itself be blocked on s_dp_lock inside a callback —
-// so freeing under the lock would deadlock.
+// Detaches session/stream/bundle under s_dp_lock and returns them so the caller can close OUTSIDE the lock (closing blocks on the websocket task, which may hold s_dp_lock -> deadlock).
 static helix_stream_session_t *detach_session_locked(mqtt_cert_bundle_t *out_bundle)
 {
     helix_stream_session_t *old = s_session;
@@ -356,8 +345,7 @@ esp_err_t console_bridge_start(void)
     if (err != ESP_OK) {
         return err;
     }
-    // Bring the UART bridge up with defaults so the target console is captured
-    // from boot; bytes flow once an `open` session attaches a data-plane stream.
+    // Bring the UART bridge up with defaults so the target console is captured from boot; bytes flow once an `open` attaches a stream.
     err = start_bridge();
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "console bridge auto-start failed: %s", esp_err_to_name(err));

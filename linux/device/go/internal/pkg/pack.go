@@ -15,16 +15,8 @@ import (
 	"strings"
 )
 
-// Pack builds a .helixpkg at outPath from a spec directory laid out as:
-//
-//	<spec>/helix-control.json   the control manifest
-//	<spec>/payload/…            the filesystem overlay (extracted under the device root)
-//	<spec>/maintainer/…         optional maintainer scripts referenced by the manifest
-//
-// The manifest is validated, and every maintainer script and conffile it
-// references must exist in the spec. The output is a deterministic gzip tar
-// (entries sorted, timestamps zeroed) so identical inputs hash identically —
-// which lets the content-addressed release store dedupe.
+// Pack builds a .helixpkg at outPath from a spec dir (helix-control.json + payload/ +
+// optional maintainer/). The output is deterministic so the content-addressed store can dedupe.
 func Pack(specDir, outPath string) (*Manifest, error) {
 	ctrlPath := filepath.Join(specDir, ControlFileName)
 	ctrl, err := os.ReadFile(ctrlPath)
@@ -44,7 +36,6 @@ func Pack(specDir, outPath string) (*Manifest, error) {
 		}
 	}
 
-	// Collect entries: control file, then payload/ and maintainer/ trees.
 	type entry struct {
 		name string // path within the archive
 		src  string // absolute source path ("" for the in-memory control file)

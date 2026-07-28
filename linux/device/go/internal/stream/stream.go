@@ -11,10 +11,7 @@ import (
 // ErrStreamClosed is returned when operating on a reset/closed stream.
 var ErrStreamClosed = errors.New("stream closed")
 
-// Stream is one bidirectional byte stream within a Session. It is an
-// io.ReadWriteCloser with credit-based flow control so a slow stream cannot
-// starve others sharing the connection, plus an out-of-band SIGNAL channel for
-// app control (e.g. terminal resize).
+// Stream is one bidirectional byte stream within a Session: an io.ReadWriteCloser with credit-based flow control and an out-of-band SIGNAL channel.
 type Stream struct {
 	id      uint32
 	session *Session
@@ -142,8 +139,7 @@ func (st *Stream) Signal(payload []byte) error {
 	return st.session.writeFrame(fSignal, st.id, payload)
 }
 
-// Close gracefully closes the stream: half-close the send side and remove it
-// from the session.
+// Close gracefully closes the stream: half-close the send side and remove it from the session.
 func (st *Stream) Close() error {
 	_ = st.CloseWrite()
 	st.teardown(ErrStreamClosed)
@@ -157,8 +153,6 @@ func (st *Stream) Reset(reason string) {
 	st.teardown(errors.New("stream reset: " + reason))
 	st.session.removeStream(st.id)
 }
-
-// --- called by the session read loop ---
 
 func (st *Stream) onData(data []byte) {
 	st.rmu.Lock()

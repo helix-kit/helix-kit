@@ -68,7 +68,6 @@ class BleGpioViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
-        // Log every inbound service packet and fold async state into pin levels.
         client.subscribe { event ->
             appendLog(event.message)
             if (event.message.method == GpioControlContract.state.name) {

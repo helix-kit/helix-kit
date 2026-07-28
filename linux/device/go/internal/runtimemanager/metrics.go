@@ -15,13 +15,10 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// providerTimeout bounds how long a single provider may run before it is killed,
-// so a hung or slow plugin never stalls a metrics sample.
+// providerTimeout caps a provider's runtime so a hung plugin never stalls a sample.
 const providerTimeout = 3 * time.Second
 
-// HostMetrics is the merged host/hardware view: one entry per provider plus any
-// per-provider errors. Providers are hardware-specific and open-ended, so the
-// metric trees are unstructured.
+// HostMetrics is the merged host/hardware view: one entry per provider plus per-provider errors.
 type HostMetrics struct {
 	Providers map[string]ProviderReport `json:"providers"`
 	Errors    map[string]string         `json:"errors,omitempty"`
@@ -33,10 +30,8 @@ type ProviderReport struct {
 	Metrics         map[string]any `json:"metrics"`
 }
 
-// runProviders discovers and runs every host-metrics provider executable in the
-// plugin dir, merging their outputs. Discovery happens every sample, so a
-// newly installed provider package is picked up with no runtime-manager restart.
-// An optional allow-list (by executable basename) narrows what runs.
+// runProviders runs every provider executable in the plugin dir and merges their outputs.
+// Discovery happens every sample, so a newly installed provider needs no restart; an optional allow-list narrows what runs.
 func runProviders(ctx context.Context, cfg config.Metrics) HostMetrics {
 	dir := cfg.PluginDir
 	if dir == "" {

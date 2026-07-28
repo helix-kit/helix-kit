@@ -1,18 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package dev.helix.transport.usbserial
 
-/**
- * Framing constants for the Helix ESP32 serial command transport. These match
- * `embedded/esp32/transports/include/helix_transport_serial.h` and the Python
- * host driver (`tooling/device/serial.py`), so an ESP32 running the Helix
- * firmware is reachable over USB from the phone exactly as it is from the CLI.
- *
- * The wire framing is newline-delimited text on UART0: the host sends
- * `SERVICE <compact-json-packet>\n`; the device replies with
- * `HELIX_RESPONSE <json>\n` (both responses and async service messages) and
- * signals dispatch failures with `HELIX_ERROR <name>\n`. UART0 also carries
- * ESP-IDF log lines, which are ignored.
- */
+/** Framing constants for the Helix ESP32 serial command transport (newline-delimited UART0). */
 object HelixSerial {
     const val INPUT_PREFIX: String = "SERVICE "
     const val OUTPUT_PREFIX: String = "HELIX_RESPONSE "
@@ -38,10 +27,7 @@ data class UsbSerialTransportOptions(
     val baudRate: Int = HelixSerial.DEFAULT_BAUD_RATE,
     /** Serial write timeout in milliseconds. */
     val writeTimeoutMs: Int = 2_000,
-    /**
-     * Milliseconds to drain and discard boot/log noise after the port opens
-     * before the transport is considered ready. Mirrors the CLI `--boot-wait`.
-     */
+    /** Milliseconds to drain boot/log noise after the port opens before ready. */
     val settleMs: Long = 300,
 )
 

@@ -18,10 +18,7 @@
 
 static const char *TAG = "helix_serial_transport";
 
-// Reflected CRC-32 (poly 0xEDB88820) over a binary frame's header+payload. This
-// is an internal frame checksum, not required to match any external standard --
-// the host driver (embedded/esp32/commands/simulator.py) runs the identical
-// loop, so the only contract is that both ends agree bit-for-bit.
+// Reflected CRC-32 (poly 0xEDB88820) over a frame's header+payload; internal checksum, must match the host driver (simulator.py) bit-for-bit.
 static uint32_t frame_crc_step(uint32_t crc, const uint8_t *data, size_t len)
 {
     for (size_t i = 0; i < len; i++) {
@@ -67,9 +64,7 @@ static const char *configured_string(const char *value, const char *fallback)
     return value != NULL ? value : fallback;
 }
 
-// Serialises writers of the single UART: the JSON control plane (stdio) and the
-// binary side-channel (raw UART bytes). The lock exists only once the transport
-// has started; before that a JSON send can still come through unserialised.
+// Serialises the two writers of the single UART: JSON control plane (stdio) and binary side-channel (raw bytes). Only exists once started.
 static void tx_lock(void)
 {
     if (s_tx_lock != NULL) {
@@ -119,9 +114,7 @@ static void process_serial_line(const char *line)
     }
 }
 
-// Read exactly `n` bytes from the UART, tolerating short reads but bailing out
-// if the stream stalls for several seconds mid-frame (avoids a wedged transfer
-// blocking the JSON control plane forever).
+// Read exactly `n` UART bytes, bailing if the stream stalls mid-frame (~5s) so a wedged transfer can't block the control plane forever.
 static bool serial_read_exact(uint8_t *buf, size_t n)
 {
     size_t got = 0;
@@ -138,9 +131,7 @@ static bool serial_read_exact(uint8_t *buf, size_t n)
     return true;
 }
 
-// Consume a binary data frame after the 0x02 marker byte has been read. See
-// helix_transport_serial.h for the wire layout. Decoded chunks are forwarded to
-// the binary channel consumer (the file-transfer service).
+// Consume a binary data frame after the 0x02 marker; forwards decoded chunks to the binary channel consumer.
 static void receive_binary_frame(uint8_t *payload_buf)
 {
     uint8_t header[HELIX_SERIAL_BINARY_HEADER_BYTES];
@@ -344,8 +335,7 @@ esp_err_t helix_serial_transport_send_binary(
         (uint8_t)((crc >> 24) & 0xFF),
     };
 
-    // The JSON control plane goes out through stdio on this same UART; take the
-    // TX lock and drain stdout so a frame is never interleaved into a log line.
+    // JSON control plane shares this UART via stdio; take the TX lock and drain stdout so a frame never interleaves into a log line.
     tx_lock();
     fflush(stdout);
     uart_write_bytes(s_config.uart_num, header, sizeof(header));

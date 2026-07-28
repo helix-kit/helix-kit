@@ -2,8 +2,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
-    // Kotlin compilation is provided by AGP 9's built-in Kotlin support; the
-    // standalone org.jetbrains.kotlin.android plugin is no longer applied.
+    // Kotlin compilation comes from AGP 9's built-in Kotlin support.
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
 }

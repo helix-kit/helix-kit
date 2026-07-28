@@ -1,8 +1,6 @@
-// FaceNet embedding on the A733 NPU (VIPLite/awnn). Reads aligned 160x160 face crops,
-// runs the int16-quantized FaceNet NBG, prints the L2-normalized 512-d embedding per file
-// as CSV ("path,e0,e1,...,e511"). Compare against the float (pytorch) reference off-board.
-// Preprocess must match the NBG's inputmeta: RGB, CHW uint8; the NBG bakes in mean 127.5 /
-// scale 1/128 (FaceNet standardization to [-1,1]).
+// Face embedding on the A733 NPU (VIPLite/awnn): reads aligned face crops, runs the quantized
+// NBG, prints the L2-normalized 512-d embedding per file as CSV.
+// Preprocess must match the NBG's inputmeta (RGB, CHW uint8); the NBG bakes in mean 127.5 / scale 1/128.
 #include <opencv2/opencv.hpp>
 #include <awnn_lib.h>
 #include <stdio.h>

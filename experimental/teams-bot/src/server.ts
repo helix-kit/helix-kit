@@ -1,20 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 //
-// The HTTP surface. Two distinct roles live here:
-//
-//   1. POST /api/messages  — Teams' side. The Azure Bot's "messaging endpoint"
-//      points here (through the Cloudflare tunnel). Every inbound Teams activity
-//      (mention, DM, button click) arrives as a POST; we hand the raw Fetch
-//      Request straight to the Chat SDK, which parses + dispatches to the
-//      handlers in bot.ts.
-//
-//   2. POST /emit, /emit/card — Helix's side. This models "your server emitting a
-//      notification". Any Helix process (an alert pipeline, an OTA job) would call
-//      these — or, in-process, call bot.thread(id).post(...) directly — to push a
-//      message into Teams without a user having said anything first.
-//
-// Splitting these makes the round trip obvious: /emit pushes out, /api/messages
-// takes replies back in.
+// The HTTP surface: platform webhooks (inbound activities) plus /emit + /emit/card (server-initiated notifications).
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
@@ -25,29 +11,22 @@ import { latestConversation, listConversations } from "./store.js";
 
 const app = new Hono();
 
-// --- Platform webhook endpoints ----------------------------------------------
-// Each active adapter gets its inbound route. Point the platform's request URL
-// (Azure "messaging endpoint" / Slack "Request URL") at the matching path.
+// Each active adapter gets its inbound route; point the platform's request URL at the matching path.
 const teamsWebhook = bot.webhooks.teams;
 if (teamsWebhook) {
   app.post("/api/messages", (c) => teamsWebhook(c.req.raw));
 }
 const slackWebhook = bot.webhooks.slack;
 if (slackWebhook) {
-  // One endpoint handles Events API, interactivity, and slash commands, plus
-  // Slack's url_verification challenge.
   app.post("/slack/events", (c) => slackWebhook(c.req.raw));
 }
 
-// --- Ops ---------------------------------------------------------------------
 app.get("/health", (c) => c.json({ ok: true }));
 
 // Inspect which conversations the bot has seen (so you know where /emit will go).
 app.get("/conversations", (c) => c.json({ conversations: listConversations() }));
 
-// --- Proactive: plain text notification --------------------------------------
-// POST /emit  { "text": "...", "threadId"?: "..." }
-// Sends to the given thread, or the most-recently-seen conversation if omitted.
+// POST /emit  { "text": "...", "threadId"?: "..." } — sends to the thread, or the latest conversation if omitted.
 app.post("/emit", async (c) => {
   const body = await c.req
     .json<{ text?: string; threadId?: string }>()
@@ -67,9 +46,7 @@ app.post("/emit", async (c) => {
   return c.json({ ok: true, threadId, messageId: sent.id });
 });
 
-// --- Proactive: interactive Adaptive Card ------------------------------------
-// POST /emit/card  { "device"?, "title"?, "detail"?, "threadId"? }
-// Posts a card with Acknowledge / Reboot buttons; clicks return to bot.onAction.
+// POST /emit/card — posts a card with Acknowledge / Reboot buttons; clicks return to bot.onAction.
 app.post("/emit/card", async (c) => {
   type CardBody = { device?: string; title?: string; detail?: string; threadId?: string };
   const body = await c.req.json<CardBody>().catch(() => ({}) as CardBody);
@@ -92,10 +69,7 @@ app.post("/emit/card", async (c) => {
   return c.json({ ok: true, threadId, messageId: sent.id });
 });
 
-// Eagerly initialize so socket-mode adapters (Slack) open their WebSocket now.
-// Idempotent — webhook adapters would otherwise init lazily on first request.
-// Kept non-fatal so a bad credential surfaces a clear message instead of a raw
-// unhandled rejection, and /health stays up.
+// Eagerly initialize so socket-mode adapters open their WebSocket now; non-fatal so a bad credential stays diagnosable.
 try {
   await bot.initialize();
 } catch (err) {

@@ -25,10 +25,7 @@ data class GpioStatePayload(val pins: List<GpioPinState>)
 @Serializable
 data class GpioErrorPayload(val error: String)
 
-/**
- * The gpio-control service contract, mirroring
- * `web/apps/helix/src/generated/contracts/gpio_control.ts`.
- */
+/** The gpio-control service contract. */
 object GpioControlContract : ServiceContract("gpio-control") {
     val setGpio = method(
         name = "set-gpio",

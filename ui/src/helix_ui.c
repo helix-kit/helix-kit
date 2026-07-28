@@ -34,9 +34,7 @@ static void flush_cb(lv_display_t *display, const lv_area_t *area, uint8_t *pixe
     lv_display_flush_ready(display);
 }
 
-// LVGL polls this; we hand it one queued event per call and ask to be polled
-// again while more are pending, so a press and its release are never coalesced
-// into a single frame (which would swallow the click).
+// One queued event per poll, re-polling while pending, so a press and its release aren't coalesced.
 static void indev_read_cb(lv_indev_t *indev, lv_indev_data_t *data)
 {
     (void)indev;

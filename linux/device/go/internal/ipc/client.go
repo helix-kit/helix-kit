@@ -21,9 +21,7 @@ const (
 	reconnectMax   = 15 * time.Second
 )
 
-// Client is an app's connection to helixd's IPC socket. It auto-registers the
-// service name on every (re)connect and exposes request/response plus an
-// inbound notification stream.
+// Client is an app's auto-reconnecting connection to helixd's IPC socket.
 type Client struct {
 	socketPath string
 	service    string
@@ -56,8 +54,7 @@ func NewClient(socketPath, service string, log *slog.Logger) *Client {
 	}
 }
 
-// Notifications is the inbound stream of core -> app pushes (mqtt-message /
-// service-message).
+// Notifications is the inbound stream of core -> app pushes.
 func (c *Client) Notifications() <-chan Notification { return c.notifications }
 
 // Start launches the reconnect loop in the background.
@@ -118,7 +115,6 @@ func (c *Client) runLoop() {
 	}
 }
 
-// connectOnce dials, registers, and reads until the connection drops.
 func (c *Client) connectOnce() error {
 	nc, err := net.Dial("unix", c.socketPath)
 	if err != nil {
@@ -130,7 +126,7 @@ func (c *Client) connectOnce() error {
 	}
 	c.mu.Lock()
 	c.conn = nc
-	close(c.connected) // signal any WaitUntilConnected waiters
+	close(c.connected)
 	c.mu.Unlock()
 	c.log.Info("ipc connected", "service", c.service)
 
@@ -138,8 +134,7 @@ func (c *Client) connectOnce() error {
 
 	c.mu.Lock()
 	c.conn = nil
-	c.connected = make(chan struct{}) // fresh gate for the next connect
-	// fail all pending requests
+	c.connected = make(chan struct{})
 	for id, ch := range c.pending {
 		select {
 		case ch <- Response{ID: id, Error: &Error{Code: -100, Message: "ipc disconnected"}}:
@@ -152,8 +147,6 @@ func (c *Client) connectOnce() error {
 	return err
 }
 
-// register performs the synchronous register-service handshake (one line each
-// way) before the async read loop starts.
 func (c *Client) register(nc net.Conn) error {
 	params, _ := json.Marshal(RegisterServiceParams{Service: c.service})
 	req := Request{ID: nextID(), Method: MethodRegisterService, Params: params}
@@ -184,7 +177,7 @@ func (c *Client) readLoop(nc net.Conn) error {
 	scanner.Buffer(make([]byte, 64*1024), MaxMessageBytes)
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		// Distinguish response (has id) from notification (has method, no id).
+		// Distinguish response (has id) from notification (method, no id).
 		var probe struct {
 			ID     string `json:"id"`
 			Method string `json:"method"`
@@ -270,8 +263,7 @@ func (c *Client) request(method string, params any) error {
 	}
 }
 
-// Respond publishes a control response on `.../out`, echoing requestId. helixd
-// fills in the service from this client's registered name.
+// Respond publishes a control response on `.../out`, echoing requestId.
 func (c *Client) Respond(requestID, method string, payload json.RawMessage) error {
 	return c.request(MethodRespond, RespondParams{Method: method, Payload: payload, RequestID: requestID})
 }

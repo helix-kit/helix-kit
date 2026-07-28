@@ -17,19 +17,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import androidx.test.ext.junit.runners.AndroidJUnit4
 
-/**
- * Runs the MQTT-gateway transport on a real Android runtime (emulator/device),
- * driving gpio-control end to end through the gateway to the dummy device. The
- * rig runs on the host; `10.0.2.2` is the host loopback as seen from the
- * emulator. Skips when the gateway is unreachable.
- */
+// Runs the MQTT-gateway transport on a real Android runtime, driving gpio-control
+// end to end; skips when the gateway is unreachable.
 @RunWith(AndroidJUnit4::class)
 class MqttGpioInstrumentedTest {
 
-    // Overridable via `-e gatewayUrl …`/`-e deviceId …`. Default targets the
-    // appliance gateway (HOST-mode public HTTP port 24000) on the host loopback
-    // as seen from the emulator; with `adb reverse tcp:24000 tcp:24000`, pass
-    // `ws://127.0.0.1:24000/ws`.
+    // Overridable via `-e gatewayUrl …`/`-e deviceId …`; 10.0.2.2 is the host loopback from the emulator.
     private val args = InstrumentationRegistry.getArguments()
     private val gatewayUrl = args.getString("gatewayUrl") ?: "ws://10.0.2.2:24000/ws"
     private val deviceId = args.getString("deviceId") ?: "e2e-device-1"

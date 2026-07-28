@@ -14,8 +14,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 
 
 def gateway_base_url(stack) -> str:
-    """The gateway WS endpoint without a query — external transport clients
-    (e.g. the Android :helix MQTT transport) append their own deviceId."""
+    """The gateway WS endpoint without a query; clients append their own deviceId."""
     return f"ws://127.0.0.1:{stack.appliance.config.public_http_port}/ws"
 
 
@@ -45,8 +44,7 @@ def ws_recv(ws: websocket.WebSocket) -> dict[str, Any]:
 
 
 class DeviceSession:
-    """A simulated device on the MQTT side of the gateway: subscribed to its
-    command topic (/in) and able to publish responses/events (/out)."""
+    """A simulated device on the MQTT side of the gateway (subscribes /in, publishes /out)."""
 
     def __init__(self, client: mqtt.Client, device_id: str) -> None:
         self._client = client
@@ -113,8 +111,7 @@ def _gpio_state(pin_levels: list[tuple[int, int]]) -> dict[str, Any]:
 
 
 class GpioDevice:
-    """Records the set-gpio commands a client drove, so a test can assert the
-    round-trip actually happened rather than trusting an exit code."""
+    """Records the set-gpio commands a client drove, so a test can assert the round-trip."""
 
     def __init__(self) -> None:
         self.set_commands: list[tuple[int, int]] = []
@@ -122,10 +119,7 @@ class GpioDevice:
 
 @contextmanager
 def gpio_device_session(stack, device):
-    """A simulated Helix gpio-control device on the broker: it auto-responds to
-    set-gpio/read-gpio on /in with a gpio-control-state on /out, correlated by
-    requestId — the cloud-side stand-in for the ESP32 gpio-control service. Any
-    WS-gateway client (Python or the Android :helix transport) can drive it."""
+    """A simulated gpio-control device: auto-responds to set-gpio/read-gpio with gpio-control-state, correlated by requestId."""
     with device_session(stack, device) as session:
         gpio = GpioDevice()
         levels: dict[int, int] = {}

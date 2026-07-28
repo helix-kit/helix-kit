@@ -1,9 +1,4 @@
-"""Tests for `helix device console`.
-
-The console is exercised against a pty pair rather than real hardware, so the
-reconnect path (which is the whole point of the command — this board resets
-constantly during bring-up) is reproducible in CI.
-"""
+"""Tests for `helix device console`, exercised against a pty pair so the reconnect path is reproducible in CI."""
 
 from __future__ import annotations
 
@@ -75,10 +70,7 @@ def test_console_streams_and_logs_device_output(tmp_path: Path) -> None:
 
 
 def test_console_reconnects_across_device_reset(tmp_path: Path) -> None:
-    """A board reset makes the port vanish; the session must survive it.
-
-    This is the behaviour that distinguishes the command from `cat /dev/ttyUSB0`.
-    """
+    """A board reset makes the port vanish; the session must survive it (unlike `cat /dev/ttyUSB0`)."""
 
     link = tmp_path / "uart"
 

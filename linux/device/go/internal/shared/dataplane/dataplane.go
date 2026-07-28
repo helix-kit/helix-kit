@@ -1,20 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package dataplane opens a HelixStream data-plane session over whichever
-// transport the control plane asked for, and is the one place that knows there
-// is more than one.
-//
-// A stream app (shell, port-forward, file transfer) says "give me a mux for this
-// session" and gets back a *stream.Session. Whether the bytes travel:
-//
-//	relay — the device dials the gateway over mTLS WebSocket and every byte
-//	        crosses the cloud; or
-//	p2p   — the device and the browser negotiate a direct WebRTC peer and the
-//	        cloud carries only SDP/ICE,
-//
-// is a transport detail the app never sees. That is the whole point of modelling
-// WebRTC as a transport under the mux rather than as a parallel stack: the apps'
-// accept loops are identical either way.
+// Package dataplane opens a HelixStream data-plane session over whichever transport (relay or p2p) the control plane asked for.
 package dataplane
 
 import (
@@ -37,19 +23,12 @@ const (
 	TransportP2P   = "p2p"
 )
 
-// CandidateMethod is the method name a device app uses to trickle one of its ICE
-// candidates to the browser. It rides an unsolicited response (empty requestId)
-// on the app's own service, so it is a transport-level constant shared by every
-// P2P-capable service rather than a per-service contract method.
+// CandidateMethod is the method name a device app uses to trickle one of its ICE candidates to the browser.
 const CandidateMethod = "candidate"
 
-// dialTimeout bounds the relay WebSocket dial; the p2p path does not dial at all
-// at open time (it returns an offer and finishes ICE in the background).
 const dialTimeout = 15 * time.Second
 
-// OpenParams is an `open` command reduced to what the data plane needs. Each app
-// builds one from its own generated contract type, so the transport layer is not
-// coupled to any single service's schema.
+// OpenParams is an `open` command reduced to what the data plane needs.
 type OpenParams struct {
 	SessionID string
 	// Transport is "relay" (default) or "p2p".
@@ -57,8 +36,7 @@ type OpenParams struct {
 	// Relay only: the gateway data-plane URL and the session token.
 	DataURL string
 	Token   string
-	// P2P only: ICE servers minted for the caller by /api/ice-config, and an
-	// optional "relay" policy that forces the connection through TURN.
+	// P2P only: ICE servers minted by /api/ice-config, and an optional "relay" policy that forces the connection through TURN.
 	ICEServers         []peer.ICEServer
 	ICETransportPolicy string
 }
@@ -66,12 +44,9 @@ type OpenParams struct {
 // ErrNoDataURL is returned when a relay open arrives without a data-plane URL.
 var ErrNoDataURL = errors.New("relay transport requires a dataUrl")
 
-// Session is a data-plane session. For the relay transport the mux is live as
-// soon as Open returns; for p2p it becomes live once the browser answers and ICE
-// completes, so consumers take it from Wait rather than from a field.
+// Session is a data-plane session. Relay is live once Open returns; p2p becomes live once the browser answers, so consumers take the mux from Wait.
 type Session struct {
-	// Offer is the device's SDP offer — p2p only, empty for relay. The app hands
-	// it straight back in its `open` response.
+	// Offer is the device's SDP offer — p2p only, empty for relay.
 	Offer string
 
 	peer *peer.Peer
@@ -83,11 +58,7 @@ type Session struct {
 	settled chan struct{}
 }
 
-// Open starts a data-plane session. It never blocks on the peer connection:
-// on the p2p path it returns as soon as the SDP offer exists, so the app can
-// answer the control-plane request immediately and let ICE finish in the
-// background. sendCandidate ships one locally-gathered ICE candidate back to the
-// browser (over the control plane); it is nil for relay.
+// Open starts a data-plane session, never blocking on the peer connection; on p2p it returns once the SDP offer exists and ICE finishes in the background. sendCandidate is nil for relay.
 func Open(
 	ctx context.Context,
 	cfg *config.Config,
@@ -137,8 +108,6 @@ func Open(
 	return s, nil
 }
 
-// awaitPeer publishes the mux once the DataChannel opens (or the failure if it
-// never does).
 func (s *Session) awaitPeer(ctx context.Context, p *peer.Peer) {
 	transport, err := p.Transport(ctx)
 	if err != nil {
@@ -160,8 +129,7 @@ func (s *Session) settle(mux *stream.Session, err error) {
 	close(s.settled)
 }
 
-// Wait blocks until the mux is live. Relay returns immediately; p2p returns once
-// the browser has answered and the DataChannel is open.
+// Wait blocks until the mux is live (immediately for relay; after the browser answers for p2p).
 func (s *Session) Wait(ctx context.Context) (*stream.Session, error) {
 	select {
 	case <-s.settled:
@@ -173,15 +141,12 @@ func (s *Session) Wait(ctx context.Context) (*stream.Session, error) {
 	}
 }
 
-// ErrUnknownSession is what an app returns when a signal names a session it never
-// opened.
+// ErrUnknownSession is returned when a signal names a session that was never opened.
 var ErrUnknownSession = errors.New("unknown session")
 
 var errNotAPeer = errors.New("session is not a peer session")
 
-// Signal applies the browser's half of the WebRTC handshake — its SDP answer, its
-// trickled ICE candidates, or both. Every P2P-capable app's `signal` handler is
-// exactly this, so it lives here rather than being copied per service.
+// Signal applies the browser's half of the WebRTC handshake — its SDP answer, its trickled ICE candidates, or both.
 func (s *Session) Signal(answer string, candidate string) error {
 	if answer != "" {
 		if err := s.acceptAnswer(answer); err != nil {
@@ -210,8 +175,7 @@ func (s *Session) addCandidate(candidate string) error {
 	return s.peer.AddCandidate(candidate)
 }
 
-// StreamCount reports the live streams on the mux — 0 while a peer is still
-// connecting. Apps surface it in `list`.
+// StreamCount reports the live streams on the mux — 0 while a peer is still connecting.
 func (s *Session) StreamCount() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()

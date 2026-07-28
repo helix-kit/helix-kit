@@ -44,10 +44,8 @@ if [ -f /mosquitto/pki/helix-server/client.key ]; then
   chmod 0600 /mosquitto/pki/helix-server/client.key
 fi
 
-# --- CRL: step-ca is authoritative; pull it to /mosquitto/certs/crl.pem (the
-# crlfile the config references) so revoked device certs are rejected. Fetch
-# once before the broker binds (fail closed) then refresh in the background,
-# SIGHUP-ing the broker (PID 1 after exec) when the list changes.
+# Pull step-ca's CRL to /mosquitto/certs/crl.pem: once before the broker binds (fail
+# closed), then refresh in the background, SIGHUP-ing the broker (PID 1) on change.
 STEP_CA_URL="${MQTT_STEP_CA_URL:-https://step-ca:9000}"
 CRL_DEST="/mosquitto/certs/crl.pem"
 CRL_INTERVAL="${CRL_SYNC_INTERVAL_SECONDS:-15}"

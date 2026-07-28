@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Round-trip tests for the generated echo contract + the EchoService handler.
-
-These prove the code-generated typed dispatch end to end: a raw command dict in,
-a wire-mapped response out, without touching a real IPC socket.
-"""
+"""Round-trip tests for the generated echo contract + the EchoService handler."""
 
 from __future__ import annotations
 
@@ -25,8 +21,6 @@ _LOG = logging.getLogger("test-echo")
 
 
 class _RecordingIPC:
-    """Captures respond() calls the generated dispatch makes."""
-
     def __init__(self) -> None:
         self.replies: list[tuple[str, str, dict[str, Any]]] = []
 

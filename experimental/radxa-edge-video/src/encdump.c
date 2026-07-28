@@ -1,8 +1,4 @@
-// encdump.c — inspect the RAW Cedar H.264 encoder output format (no conversion).
-// Encodes synthetic NV12 frames and dumps, for the first few frames, the byte
-// sizes and the first 16 bytes of the bitstream, plus the SPS/PPS header before
-// and after the first encode. Answers: is the output annexb (00000001 start
-// codes) or length-prefixed AVC? Writes the raw concatenated stream to a file.
+// encdump.c — inspect the raw Cedar H.264 encoder output format (annexb vs length-prefixed AVC).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +71,7 @@ int main(int argc, char** argv) {
         FlushCacheAllocInputBuffer(venc, &in);
         AddOneInputBuffer(venc, &in);
         int erc = VideoEncodeOneFrame(venc);
-        AlreadyUsedInputBuffer(venc, &in);   // <-- canonical recycle step (was missing)
+        AlreadyUsedInputBuffer(venc, &in);   // canonical recycle step
         ReturnOneAllocInputBuffer(venc, &in);
         // drain ALL bitstream units produced by this encode
         int unit = 0;

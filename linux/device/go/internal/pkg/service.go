@@ -12,10 +12,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/shared/config"
 )
 
-// ServiceDescriptor is the managed-service block a package declares in its
-// control manifest. It is the device-side generalization of a systemd unit: it
-// tells runtime-manager how to render and supervise the service. It carries no
-// package payload details — only supervision intent.
+// ServiceDescriptor is a package's managed-service block: how runtime-manager renders and supervises the service.
 type ServiceDescriptor struct {
 	// Name is the service name (defaults to the package name when omitted).
 	Name string `json:"name,omitempty"`
@@ -46,15 +43,12 @@ type ServiceDescriptor struct {
 // UnitName is the systemd unit name for this service.
 func (d *ServiceDescriptor) UnitName() string { return "helix-" + d.Name + ".service" }
 
-// ManagedServices is the reconciled catalog runtime-manager consumes: the set of
-// service descriptors from all installed packages, plus any shipped catalog
-// seeds. It is persisted at config.ManagedServicesPath().
+// ManagedServices is the reconciled catalog runtime-manager consumes, persisted at config.ManagedServicesPath().
 type ManagedServices struct {
 	Services []ServiceDescriptor `json:"services"`
 }
 
-// LoadManagedServices reads the reconciled catalog, returning an empty catalog
-// if the file does not exist yet.
+// LoadManagedServices reads the reconciled catalog, empty if the file does not exist yet.
 func LoadManagedServices() (*ManagedServices, error) {
 	data, err := os.ReadFile(config.ManagedServicesPath())
 	if err != nil {
@@ -111,8 +105,7 @@ func (m *ManagedServices) Save() error {
 	return writeFileAtomic(config.ManagedServicesPath(), m, 0o640)
 }
 
-// writeFileAtomic marshals v as indented JSON and writes it via a temp file +
-// rename so readers never see a partial document.
+// writeFileAtomic writes v as indented JSON via a temp file + rename so readers never see a partial write.
 func writeFileAtomic(path string, v any, mode os.FileMode) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

@@ -1,9 +1,5 @@
 #!/usr/bin/env node
-// measure.mjs — floor-min matrix. Builds runtime × profile and tabulates the
-// static SPA output: raw + gzip JS, plus whether each heavy dep survives. Shows
-// (a) how gating removes marginal feature weight and (b) how the React→Preact
-// runtime swap collapses the framework floor.
-//
+// Builds runtime × profile and tabulates SPA output (raw + gzip JS, heavy-dep survival).
 // Usage:
 //   node measure.mjs                                  # both runtimes, all profiles
 //   node measure.mjs --runtimes preact --profiles minimal,full

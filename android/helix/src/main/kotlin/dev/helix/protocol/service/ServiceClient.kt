@@ -19,12 +19,7 @@ data class ServiceMatcher(
     val method: String? = null,
 )
 
-/**
- * Sits over a transport `send` function and a service contract. Correlates
- * [request] calls by request id, exposes fire-and-forget [send], and fans out
- * inbound packets to [subscribe] handlers. Mirrors the TypeScript
- * `HelixServiceClient`.
- */
+/** Correlates [request] calls by id over a transport, exposes [send], fans out to [subscribe]. */
 class HelixServiceClient(
     private val service: String,
     private val sender: suspend (HelixPacket) -> Unit,
@@ -52,8 +47,6 @@ class HelixServiceClient(
             message = messageToElement(createServiceMessage(service, method.name, payload)),
             requestId = requestId,
         )
-        // The registry registers the request id before running the send, so a
-        // fast response can never arrive before the request is pending.
         val response = registry.await(requestId, timeoutMs) { sender(packet) }
         return method.output.parse(response.payload)
     }
@@ -64,10 +57,7 @@ class HelixServiceClient(
         sender(packet)
     }
 
-    /**
-     * Subscribes to inbound service events. Defaults to matching this client's
-     * service. Returns a function that removes the subscription.
-     */
+    /** Subscribes to inbound service events; returns a function that removes the subscription. */
     fun subscribe(
         matcher: ServiceMatcher = ServiceMatcher(service = service),
         handler: (ServiceEvent) -> Unit,

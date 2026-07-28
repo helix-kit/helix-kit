@@ -1,14 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
-"""End-to-end proof that the generic file-transfer service works over serial in
-QEMU: JSON control plane (begin/commit/stat) + the binary data side-channel,
-writing to the FAT `storage` partition on the emulated SPI flash.
-
-Requires Espressif's QEMU + idf.py, which only exist inside the ESP-IDF Docker
-image, so this is skipped on the host. Run it with:
-
-    helix embedded esp32 qemu-test
-
-which re-execs pytest inside helix/esp-idf:release-v5.4-lean.
+"""End-to-end proof that the generic file-transfer service works over serial in QEMU:
+JSON control plane (begin/commit/stat) + binary data side-channel, writing to the FAT
+`storage` partition. Requires Espressif's QEMU; run with `helix embedded esp32 qemu-test`.
 """
 
 from __future__ import annotations

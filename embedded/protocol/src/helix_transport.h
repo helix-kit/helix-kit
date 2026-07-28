@@ -13,9 +13,7 @@ typedef esp_err_t (*helix_transport_send_packet_json_t)(
     void *context
 );
 
-// Emit one binary chunk on the transport's data side-channel (see
-// helix_binary_channel.h). Left NULL by transports that carry no binary framing;
-// those are JSON-only and bulk payloads must find another route.
+// Emit one binary chunk on the transport's data side-channel; NULL for JSON-only transports.
 typedef esp_err_t (*helix_transport_send_binary_t)(
     uint16_t session,
     uint32_t offset,

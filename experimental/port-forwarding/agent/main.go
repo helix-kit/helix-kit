@@ -1,11 +1,4 @@
-// Helix port-forwarding device agent (experimental).
-//
-// Holds a single outbound WebSocket to the cloud gateway and, for every stream
-// the gateway opens, relays to a local TCP service (default 127.0.0.1:<port>).
-// The device exposes zero inbound ports.
-//
-//	agent --outbound WSS--> connect.port.helix-kit.com/__tunnel__
-//	stream --> 127.0.0.1:<local-port>
+// Package main is the Helix port-forwarding device agent: a single outbound WebSocket to the cloud gateway relays each opened stream to a local TCP service, exposing zero inbound ports.
 package main
 
 import (
@@ -49,8 +42,7 @@ type resHead struct {
 	Headers map[string]string `json:"headers"`
 }
 
-// agentConn owns the single gateway WebSocket and serializes all writes through
-// one goroutine so stream handlers can send concurrently.
+// agentConn owns the single gateway WebSocket and serializes all writes through one goroutine.
 type agentConn struct {
 	ws     *websocket.Conn
 	target string // host:port of the local service
@@ -116,7 +108,6 @@ func run(gateway, session, target string) error {
 		}
 	}()
 
-	// Register.
 	reg, _ := json.Marshal(registerMsg{SessionID: session, Target: target})
 	ac.send(encodeFrame(fRegister, 0, reg))
 
@@ -215,8 +206,7 @@ func (s *stream) close() {
 	})
 }
 
-// startHTTP handles a proxied HTTP request: build the request with a streamed
-// body, round-trip it to the local service, and stream the response back.
+// startHTTP round-trips a proxied HTTP request to the local service with a streamed body and response.
 func (ac *agentConn) startHTTP(id uint32, payload []byte) {
 	var head reqHead
 	if err := json.Unmarshal(payload, &head); err != nil {
@@ -284,8 +274,7 @@ func (ac *agentConn) startHTTP(id uint32, payload []byte) {
 	}()
 }
 
-// startWS handles a proxied WebSocket upgrade: dial the local service, replay
-// the raw upgrade request, hand back the raw response head, then pipe bytes.
+// startWS proxies a WebSocket upgrade: dial the local service, replay the raw upgrade, then pipe bytes.
 func (ac *agentConn) startWS(id uint32, rawReqHead []byte) {
 	conn, err := net.DialTimeout("tcp", ac.target, 5*time.Second)
 	if err != nil {
@@ -300,8 +289,7 @@ func (ac *agentConn) startWS(id uint32, rawReqHead []byte) {
 		return
 	}
 
-	// Read the response head (up to and including the blank line) and forward
-	// it verbatim as WS_ACK, then stream the rest of the connection as WS_DATA.
+	// Forward the response head verbatim as WS_ACK, then stream the rest as WS_DATA.
 	br := bufio.NewReader(conn)
 	headBytes, rest, err := readHTTPHead(br)
 	if err != nil {
@@ -329,8 +317,7 @@ func (ac *agentConn) startWS(id uint32, rawReqHead []byte) {
 	}()
 }
 
-// readHTTPHead reads bytes until the CRLFCRLF header terminator, returning the
-// head (inclusive) and any already-buffered body bytes after it.
+// readHTTPHead reads up to the CRLFCRLF terminator, returning the head (inclusive) and any already-buffered trailing bytes.
 func readHTTPHead(br *bufio.Reader) (head []byte, rest []byte, err error) {
 	var buf bytes.Buffer
 	for {

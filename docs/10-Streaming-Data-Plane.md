@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # 10 — Streaming Data Plane: Remote Shell & Port Forwarding on Helix
 
 Plan for folding the two experimental features under `experimental/` — browser

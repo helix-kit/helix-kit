@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package pkg is the Helix device package system: an apt/dpkg-inspired format
-// and package manager for delivering and supervising device services.
-//
-// A package is a gzip-compressed tar (".helixpkg") with three parts:
-//
-//	helix-control.json   the control manifest (this file's Manifest type)
-//	payload/…            a filesystem overlay extracted relative to the device root
-//	maintainer/…         optional maintainer scripts (preinst/postinst/…)
-//
-// The installer (install.go) verifies, extracts the payload as a rootfs overlay,
-// runs maintainer scripts and any per-kind setup, applies dpkg-style conffile
-// handling, records the result in the package DB (db.go), and publishes the
-// package's service descriptor into the managed-services catalog (service.go)
-// for runtime-manager to reconcile onto systemd.
+// Package pkg is the Helix device package system: an apt/dpkg-inspired .helixpkg format and package manager for delivering and supervising device services.
 package pkg
 
 import (
@@ -43,8 +30,7 @@ const (
 	KindAsset Kind = "asset"
 )
 
-// Conffile is a payload file whose local modifications must survive upgrades
-// (dpkg-style 3-way handling). Mode/owner override the tar entry's metadata.
+// Conffile is a payload file whose local modifications survive upgrades (dpkg 3-way).
 type Conffile struct {
 	Path  string `json:"path"`
 	Mode  string `json:"mode,omitempty"`  // octal, e.g. "0640"
@@ -62,14 +48,12 @@ type Manifest struct {
 	Provides  []string `json:"provides,omitempty"`
 	Conflicts []string `json:"conflicts,omitempty"`
 
-	// MaintainerScripts maps a hook name (preconfigure, preinst, postinst,
-	// prerm, postrm, postconfigure) to its path within the package.
+	// MaintainerScripts maps a hook name (preconfigure/preinst/postinst/prerm/postrm/postconfigure) to its path in the package.
 	MaintainerScripts map[string]string `json:"maintainerScripts,omitempty"`
 
 	Conffiles []Conffile `json:"conffiles,omitempty"`
 
-	// SetupCommand runs after payload extraction (e.g. python venv creation),
-	// with the working directory set to the package payload dir.
+	// SetupCommand runs after payload extraction, with cwd set to the package payload dir.
 	SetupCommand []string `json:"setupCommand,omitempty"`
 
 	// Service is the managed-service descriptor, if this package runs one.
@@ -105,8 +89,7 @@ func (m *Manifest) Validate() error {
 	return nil
 }
 
-// ReadManifest reads and validates the control manifest from a .helixpkg without
-// extracting the payload.
+// ReadManifest reads and validates the control manifest from a .helixpkg.
 func ReadManifest(pkgPath string) (*Manifest, error) {
 	f, err := os.Open(pkgPath)
 	if err != nil {

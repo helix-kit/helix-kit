@@ -10,24 +10,18 @@
 extern "C" {
 #endif
 
-// On-device single-table store on FlashDB (KVDB) — SQLite-like CRUD for one
-// table at a time: no joins, but insert/get/update/delete plus WHERE on any
-// column, ORDER BY, LIMIT/OFFSET, COUNT. No-op returning ESP_OK when
-// CONFIG_HELIX_DB is disabled.
-//
-// Initialise the KVDB backend once during boot (FAL over the `flashdb`
-// partition). Safe to call repeatedly.
+// On-device single-table store on FlashDB (KVDB): SQLite-like CRUD (WHERE/ORDER BY/LIMIT/OFFSET/COUNT) for one table at a time, no joins.
+
+// Initialise the KVDB backend once during boot (FAL over the `flashdb` partition). Safe to call repeatedly.
 esp_err_t helix_db_init(void);
 
 // True once the KVDB backend is mounted.
 bool helix_db_ready(void);
 
-// ---- schema ----------------------------------------------------------------
-
 typedef enum {
-    HDB_I64,   // int64_t column
-    HDB_F64,   // double column
-    HDB_TEXT,  // fixed-capacity char[] column (NUL-terminated)
+    HDB_I64,
+    HDB_F64,
+    HDB_TEXT,
 } hdb_type_t;
 
 typedef struct {
@@ -43,8 +37,6 @@ typedef struct {
     size_t column_count;
     size_t row_size;              // sizeof the app's row struct
 } hdb_table_t;
-
-// ---- query -----------------------------------------------------------------
 
 typedef enum { HDB_EQ, HDB_NE, HDB_LT, HDB_LE, HDB_GT, HDB_GE, HDB_LIKE } hdb_op_t;
 
@@ -65,8 +57,6 @@ typedef struct {
     size_t offset;             // rows to skip (after ordering)
 } hdb_query_t;
 
-// ---- CRUD ------------------------------------------------------------------
-
 // Insert a row; assigns and returns a new auto-increment id in *out_id.
 esp_err_t hdb_insert(const hdb_table_t *table, const void *row, uint32_t *out_id);
 // Fetch row by id into row_out (table->row_size bytes). ESP_ERR_NOT_FOUND if absent.
@@ -76,9 +66,7 @@ esp_err_t hdb_update(const hdb_table_t *table, uint32_t id, const void *row);
 // Delete a row by id. ESP_ERR_NOT_FOUND if absent.
 esp_err_t hdb_delete(const hdb_table_t *table, uint32_t id);
 
-// Query rows: filter (WHERE), order (ORDER BY), page (LIMIT/OFFSET). Matching
-// rows are written into rows_out (an array of table->row_size structs, capacity
-// max_rows). Returns the number written, or a negative esp_err_t on failure.
+// Query rows (WHERE/ORDER BY/LIMIT/OFFSET) into rows_out (capacity max_rows); returns rows written, negative esp_err_t on failure.
 int hdb_select(const hdb_table_t *table, const hdb_query_t *query, void *rows_out, size_t max_rows);
 
 // Count rows matching a filter (order/limit/offset ignored). Negative on error.

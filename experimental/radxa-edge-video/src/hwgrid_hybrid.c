@@ -1,12 +1,5 @@
-// HYBRID 2x2 HW grid: portable GStreamer decode + Cedar libcedarc HW encode.
-//   4x [rtspsrc ! omxh264dec (vendor OMX, clean, DMABuf)] -> compositor 2x2 ->
-//   tee -> { kmssink display, appsink -> Cedar libcedarc H.264 encode -> RTMP }.
-// Decode/composite/display are 100% stock GStreamer (swap omxh264dec for
-// nvv4l2decoder/v4l2h264dec on Jetson/RPi). Only the ENCODE is Cedar-specific,
-// because the vendor omxh264videoenc is broken (emits no SPS). The libcedarc
-// encoder produces a valid annexb stream (bEncH264Nalu=0) with SPS/PPS.
-// SIGINT/SIGTERM -> graceful teardown (stop pipeline, join encode thread,
-// release the encoder VE context, CdcMemClose); watchdog force-exits if wedged.
+// HYBRID 2x2 grid: stock GStreamer decode/composite/display + Cedar libcedarc HW encode -> RTMP.
+// Cedar encode because the vendor omxh264videoenc is broken (emits no SPS); bEncH264Nalu=0 yields valid annexb SPS/PPS.
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -31,8 +24,8 @@ extern VeOpsS* GetVeOpsS(enum EVEOPSTYPE type);
 #define ENC_H 720
 static struct ScMemOpsS* memops;
 static VeOpsS* veOps;
-static GstElement* disp;      // decode + composite + display + encsink (all GStreamer)
-static GstElement* encpipe;   // appsrc -> h264parse -> flvmux -> rtmpsink
+static GstElement* disp;
+static GstElement* encpipe;
 static GstAppSink* encsink;
 static GstAppSrc*  encsrc;
 static VideoEncoder* venc;
@@ -151,7 +144,7 @@ static void teardown(void) {
     fprintf(stderr, "[teardown] begin; dma_buf objects = %d\n", dma_objects());
     running = 0;
     pthread_t wd; pthread_create(&wd, NULL, watchdog, (void*)(intptr_t)15); pthread_detach(wd);
-    if (disp) gst_element_set_state(disp, GST_STATE_NULL);  // stops OMX decode + flushes encsink
+    if (disp) gst_element_set_state(disp, GST_STATE_NULL);  // flushes encsink -> encode thread exits
     pthread_join(et, NULL);
     if (venc) { ReleaseAllocInputBuffer(venc); VideoEncUnInit(venc); VideoEncDestroy(venc); venc = NULL; }
     if (encVe) { CdcVeRelease(veOps, encVe); encVe = NULL; }
@@ -175,7 +168,6 @@ int main(int argc, char** argv) {
     fprintf(stderr, "[start] dma_buf objects = %d\n", dma_objects());
     if (make_encoder() != 0) return 1;
 
-    // Decode + composite + display + encsink: all stock GStreamer (omxh264dec).
     GError* err = NULL;
     char desc[2560];
     snprintf(desc, sizeof(desc),
@@ -198,7 +190,6 @@ int main(int argc, char** argv) {
     if (!disp) { g_printerr("disp parse: %s\n", err ? err->message : "?"); return 1; }
     encsink = GST_APP_SINK(gst_bin_get_by_name(GST_BIN(disp), "encsink"));
 
-    // Encoded annexb -> RTMP publish (MediaMTX -> WebRTC).
     char encdesc[512];
     snprintf(encdesc, sizeof(encdesc),
         "appsrc name=encsrc is-live=true format=time do-timestamp=true ! "

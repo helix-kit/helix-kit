@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Command helix-runtime-manager is the root daemon that supervises Helix device
-// services via systemd: it reconciles the installed-package catalog onto systemd
-// units on boot and serves the runtime control API.
+// Command helix-runtime-manager supervises Helix device services via systemd.
 package main
 
 import (

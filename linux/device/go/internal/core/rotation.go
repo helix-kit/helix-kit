@@ -7,12 +7,9 @@ import (
 	"time"
 )
 
-// rotationInterval is how often helixd checks whether its leaf needs renewal.
 const rotationInterval = 15 * time.Minute
 
-// rotateLoop periodically renews the device certificate before it expires. When
-// a new cert is issued it forces an MQTT reconnect so the new credential is
-// presented. It runs only when enrollment is configured.
+// rotateLoop renews the device cert before expiry, forcing an MQTT reconnect on rotation.
 func (s *service) rotateLoop(ctx context.Context) {
 	ticker := time.NewTicker(rotationInterval)
 	defer ticker.Stop()

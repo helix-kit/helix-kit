@@ -1,16 +1,6 @@
-// Build-time page-gating experiment — Next.js config.
-//
-// Always a static export (`output: 'export'` → `out/`), matching the device console's
-// static export edge-UI bundle. Two gating strategies share this app:
-//
-//   Approach A (filesystem): the `gate.mjs` script materializes only enabled routes
-//     under src/app/(gen)/ before build. next.config needs to do *nothing* — the
-//     bundler simply never sees disabled routes. Bundler-agnostic.
-//
-//   Approach B (module stubbing): all routes stay on disk under src/app/(all)/. The
-//     HELIX_GATED_OUT env lists disabled feature ids; webpack's NormalModuleReplacement
-//     swaps each disabled feature's ./impl module for an empty stub, so its heavy deps
-//     tree-shake out. Bundler-coupled (webpack only).
+// Static-export Next.js config for the page-gating experiment.
+// Approach B (module stubbing): HELIX_GATED_OUT lists disabled feature ids; webpack's
+// NormalModuleReplacement swaps each disabled feature's ./impl for an empty stub so its heavy deps tree-shake out.
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -108,9 +108,7 @@ def run_load(
     run_id: str,
     workers: int,
 ) -> LoadResult:
-    """Emit `rate` events/second (aggregate) for `duration` seconds across the
-    device pool, split over `workers` processes so the generator scales past the
-    subject-under-test."""
+    """Emit `rate` events/second across the device pool, split over `workers` processes."""
     workers = max(1, min(workers, len(devices)))
     device_shards: list[list[DeviceCert]] = [[] for _ in range(workers)]
     for index, device in enumerate(devices):

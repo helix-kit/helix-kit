@@ -1,16 +1,4 @@
-"""`helix device provision` — mint a device identity + config bundle.
-
-Produces a provisioning bundle (``config.json`` + ``pki/``) that the systemd
-runtime mounts at ``/etc/helix``. Two modes:
-
-* **cloud** (``--host``): the real path — seed the device row over SSH, then have
-  step-ca issue a certificate for a locally-generated CSR. Reused verbatim from
-  the retired ``helix device docker`` provisioning.
-* **local** (``--local``): an infra-free path for the systemd-in-container test
-  host — generate a throwaway self-signed CA + device cert so helixd has a valid
-  identity without a live cloud. The device still boots and supervises services;
-  it simply cannot reach a broker (the MQTT link retries harmlessly).
-"""
+"""`helix device provision` — mint a device identity + config bundle (cloud or local)."""
 
 from __future__ import annotations
 
@@ -55,8 +43,7 @@ def _ssh(pem: Path, ssh_host: str, remote_cmd: str, stdin: str | None = None) ->
 
 
 def _seed_device(pem: Path, ssh_host: str, device_id: str, token: str) -> None:
-    """Insert (or refresh) the device row + access token in the appliance's
-    loopback Postgres so step-ca will issue a cert for it."""
+    # Insert/refresh the device row + token so step-ca will issue a cert for it.
     sql = (
         "INSERT INTO device (id, name, access_token, is_active) "
         f"VALUES ('{device_id}', 'helix device', '{token}', true) "
@@ -72,7 +59,6 @@ def _seed_device(pem: Path, ssh_host: str, device_id: str, token: str) -> None:
 
 
 def _issue_cert(host: str, device_id: str, token: str, csr_pem: str) -> dict[str, str]:
-    """POST the CSR to the public cert-issuance API."""
     body = json.dumps({"deviceId": device_id, "csr": csr_pem}).encode()
     request = urllib.request.Request(
         f"https://{host}/api/certificates/device",

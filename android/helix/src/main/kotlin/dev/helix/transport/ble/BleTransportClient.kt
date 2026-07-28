@@ -33,15 +33,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * Android BLE (GATT) implementation of [HelixTransport]. It scans for a Helix
- * ESP32, connects, enables response notifications, and moves [HelixPacket]
- * values over the command/response characteristics. Behaviour mirrors the web
- * `@helix/transport-ble` client.
- *
- * Callers must hold the runtime BLE permissions (BLUETOOTH_SCAN /
- * BLUETOOTH_CONNECT on API 31+, location on older) before calling [connect].
- */
+/** Android BLE (GATT) [HelixTransport]; callers must hold runtime BLE permissions before [connect]. */
 class BleTransportClient(
     context: Context,
     private val options: BleTransportOptions = BleTransportOptions(),
@@ -147,8 +139,6 @@ class BleTransportClient(
         _status.value = BleTransportStatus(connectionState = BleConnectionState.Disconnected)
     }
 
-    // --- scanning ---------------------------------------------------------
-
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             if (!scanning) return
@@ -175,8 +165,6 @@ class BleTransportClient(
         scanning = false
         runCatching { scanner?.stopScan(scanCallback) }
     }
-
-    // --- GATT callback ----------------------------------------------------
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {

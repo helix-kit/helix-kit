@@ -50,8 +50,7 @@ func TestSpoolDrainInOrderAndDeletes(t *testing.T) {
 	}
 }
 
-// TestSpoolStopsOnPublishError proves an event is retained (not lost) when the
-// link is down mid-drain.
+// TestSpoolStopsOnPublishError proves an event is retained when the link is down mid-drain.
 func TestSpoolStopsOnPublishError(t *testing.T) {
 	sp, err := openSpool(filepath.Join(t.TempDir(), "e.db"), 0, quietLog())
 	if err != nil {
@@ -101,8 +100,7 @@ func TestSpoolSurvivesRestart(t *testing.T) {
 
 // TestSpoolEnforcesBound proves oldest events are dropped over budget.
 func TestSpoolEnforcesBound(t *testing.T) {
-	// Size the cap to hold roughly five events, so 20 inserts force eviction
-	// but leave a non-empty spool.
+	// Cap holds ~five events, so 20 inserts force eviction but leave a non-empty spool.
 	one, _ := json.Marshal(ev(0))
 	cap := int64(len(one) * 5)
 	sp, _ := openSpool(filepath.Join(t.TempDir(), "e.db"), cap, quietLog())

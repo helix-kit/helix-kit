@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 //
-// Tiny in-memory "conversation registry".
-//
-// In real Helix this is where the Helix-user <-> Teams-user identity mapping and
-// the set of conversations the bot may proactively post into would live (a DB
-// table populated at install / OAuth time). For the prototype we just remember
-// the conversations we have already seen inbound, so the /emit endpoint has
-// somewhere to send a notification.
+// Tiny in-memory conversation registry: remembers inbound threads so /emit has somewhere to send.
 
 export interface KnownConversation {
   /** Full Chat SDK thread id, e.g. "teams:<serviceUrl>:<conversationId>:..." */

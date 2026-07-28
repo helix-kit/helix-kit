@@ -6,10 +6,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
 
-/**
- * Validates and (de)serializes a typed value to and from a [JsonElement].
- * Mirrors the TypeScript `Schema` (zod) contract surface.
- */
+/** Validates and (de)serializes a typed value to and from a [JsonElement]. */
 class Schema<T>(private val serializer: KSerializer<T>) {
     fun parse(value: JsonElement?): T {
         requireNotNull(value) { "Missing payload for Helix schema" }
@@ -23,10 +20,7 @@ class Schema<T>(private val serializer: KSerializer<T>) {
 /** Builds a [Schema] for [T] from its generated serializer. */
 inline fun <reified T> schema(): Schema<T> = Schema(serializer())
 
-/**
- * A request/response method on a service. [input] is validated before send and
- * [output] after receive; [error] is the optional device error shape.
- */
+/** A request/response method on a service; [input]/[output] are validated, [error] is optional. */
 class ServiceMethod<I, O>(
     val name: String,
     val input: Schema<I>,
@@ -48,8 +42,5 @@ fun <I, O> method(name: String, input: Schema<I>, output: Schema<O>, error: Sche
 fun <P> message(name: String, payload: Schema<P>): ServiceAsyncMessage<P> =
     ServiceAsyncMessage(name, payload)
 
-/**
- * Base class for a service contract. Subclasses declare their methods and
- * messages as members, mirroring `defineServiceContract({ service, methods })`.
- */
+/** Base class for a service contract; subclasses declare methods and messages as members. */
 abstract class ServiceContract(val service: String)

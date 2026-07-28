@@ -37,8 +37,6 @@ def build(docker_image: str, jobs: int) -> None:
         return
 
     write_app_selection([UI_APP])
-    # The app declares the features it needs (LVGL, and no storage stack to make
-    # room for it); the build just honours them, exactly as `esp32 link` does.
     features = app_features([UI_APP])
     idf_build(
         esp32_root() / UI_BUILD_DIR,
@@ -57,11 +55,7 @@ def build(docker_image: str, jobs: int) -> None:
 @click.option("--docker-image", default="")
 @click.option("--scale", type=click.IntRange(1, 4), default=2, show_default=True)
 def sim(docker_image: str, scale: int) -> None:
-    """Boot the UI firmware in QEMU and open its screen in a window.
-
-    The device renders with LVGL and streams the pixels out; clicks in the window
-    go back as pointer events on the `ui` service. Build first: `helix ui build`.
-    """
+    """Boot the UI firmware in QEMU and open its screen in a window."""
     from .viewer import run_window
 
     with UiSession(image=resolve_docker_image(docker_image)) as session:

@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-// chownByName chowns path to "user:group" (either side may be empty or numeric).
-// It is used for conffiles that declare an explicit owner; callers treat failure
-// as non-fatal (unprivileged test runs cannot chown).
 func chownByName(path, owner string) error {
 	uname, gname, _ := strings.Cut(owner, ":")
 	uid, gid := -1, -1

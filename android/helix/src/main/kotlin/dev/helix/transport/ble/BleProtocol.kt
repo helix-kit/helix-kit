@@ -3,11 +3,7 @@ package dev.helix.transport.ble
 
 import java.util.UUID
 
-/**
- * Helix ESP32 BLE GATT identifiers. These match the web `@helix/transport-ble`
- * constants so an ESP32 running the Helix firmware is reachable from either
- * client.
- */
+/** Helix ESP32 BLE GATT identifiers (match the web `@helix/transport-ble` constants). */
 object HelixBle {
     val SERVICE_UUID: UUID = UUID.fromString("8f64b6a0-0f42-4eaa-9f3b-4a8f7c3d0001")
     val COMMAND_UUID: UUID = UUID.fromString("8f64b6a0-0f42-4eaa-9f3b-4a8f7c3d0002")

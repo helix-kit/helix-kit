@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// source plugin: rtspsrc -> <decoder> -> BGR appsink -> helix_frame_t.
-// Cross-platform: the H.264 decoder element is a param, so the SAME plugin serves the Radxa
-// Cedar path (omxh264dec) and x86 (decodebin / avdec_h264 / nvh264dec / vaapih264dec).
-// Ported from npu_compare.cpp:821-826 (pipeline string) + :595 (appsink pull).
-// params: { "url": "rtsp://host:8554/streamN", "latency": 100, "fps": 8, "decoder": "omxh264dec" }
+// Source plugin: rtspsrc -> <decoder> -> BGR appsink -> helix_frame_t. Cross-platform: the
+// H.264 decoder element is a param, so the same plugin serves the Radxa Cedar path (omxh264dec)
+// and x86 (decodebin / avdec_h264 / nvh264dec / vaapih264dec).
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <cstdio>

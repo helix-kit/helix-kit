@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// infer plugin: the awnn/VIPLite NPU runner. One instance == one awnn context (one .nb),
-// so swapping the detection MODEL is just changing the "nb" param (no host recompile).
-// Ported from npu_compare.cpp worker awnn calls (:614-625). Uses the run_hw/finish split:
-//   infer_submit = set_input + awnn_run_hw   (host holds the single-NPU mutex here)
-//   infer_collect = awnn_finish + awnn_get_output_buffers   (fp32 read-back, outside lock)
-// params: { "nb": "/path/model.nb" }
+// Infer plugin: the awnn/VIPLite NPU runner. One instance == one awnn context (one .nb), so
+// swapping the model is just changing the "nb" param. Uses the run_hw/finish split so the host
+// holds the single-NPU mutex around infer_submit only, and reads back fp32 in infer_collect.
 #include <awnn_lib.h>
 #include <pthread.h>
 #include <cstdio>

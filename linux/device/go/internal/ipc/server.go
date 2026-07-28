@@ -170,8 +170,7 @@ func (s *Server) handleRequest(cn *conn, req Request) {
 	}
 }
 
-// NotifyService pushes an inbound cloud command to a registered service.
-// Returns false if no such service is connected.
+// NotifyService pushes an inbound cloud command to a registered service, false if none.
 func (s *Server) NotifyService(service string, params CommandParams) bool {
 	s.mu.RLock()
 	cn := s.services[service]

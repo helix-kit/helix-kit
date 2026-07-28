@@ -17,8 +17,7 @@ import (
 	"github.com/helix-kit/helix-device/internal/stream"
 )
 
-// pipeTransport is one half of an in-memory transport pair — the same shape the
-// mux's own tests use, so a transfer can be exercised with no network at all.
+// pipeTransport is one half of an in-memory transport pair.
 type pipeTransport struct {
 	in   <-chan []byte
 	out  chan<- []byte
@@ -57,8 +56,7 @@ func (p *pipeTransport) Close() error {
 	return nil
 }
 
-// linkedSessions wires a device-side mux to a client-side one, as the gateway or a
-// peer would.
+// linkedSessions wires a device-side mux to a client-side one.
 func linkedSessions(t *testing.T) (device *stream.Session, client *stream.Session) {
 	t.Helper()
 	a := make(chan []byte, 64)
@@ -95,8 +93,7 @@ func openTransfer(t *testing.T, client *stream.Session, meta generated.FilesTran
 	return st
 }
 
-// A download must survive being larger than the credit window several times over —
-// that is the whole reason transfers ride the mux rather than a control message.
+// A download must survive being many times larger than the credit window.
 func TestDownloadLargeFile(t *testing.T) {
 	root := t.TempDir()
 	payload := make([]byte, 3<<20) // 3 MiB — many credit windows
@@ -171,8 +168,7 @@ func TestUploadFile(t *testing.T) {
 	}
 }
 
-// The security boundary. Each of these must be refused, and the symlink cases are
-// the ones a lexical path check would wave through.
+// TestPathContainment checks the security boundary; each case must be refused.
 func TestPathContainment(t *testing.T) {
 	root := t.TempDir()
 	outside := t.TempDir()

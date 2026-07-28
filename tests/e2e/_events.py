@@ -14,8 +14,7 @@ SERVICE = "telemetry"
 
 
 def publish_event(stack, device, msg_id: str, payload: dict[str, Any]) -> None:
-    """Publish a device event over mTLS using the provisioned certificate,
-    exactly as a real device would."""
+    """Publish a device event over mTLS using the provisioned certificate."""
     client = mqtt.Client(
         CallbackAPIVersion.VERSION2,
         client_id=f"{device.device_id}-{msg_id}",
@@ -52,13 +51,10 @@ def post_device_events(
     *,
     body_device_id: str | None = None,
 ) -> dict[str, Any]:
-    """POST device telemetry to the mTLS HTTP ingestion endpoint using the
-    provisioned client certificate, exactly as a real device would. Returns the
-    parsed JSON response; raises urllib.error.HTTPError on non-2xx."""
+    """POST device telemetry to the mTLS HTTP ingestion endpoint; returns the parsed JSON response."""
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.load_verify_locations(cafile=str(device.root_path))
-    # The server cert carries the broker SANs (localhost/127.0.0.1) but we reach
-    # it by loopback IP; verify the chain, skip hostname pinning (as MQTT does).
+    # Verify the chain but skip hostname pinning: we reach the server by loopback IP.
     ctx.check_hostname = False
     ctx.load_cert_chain(certfile=str(device.chain_path), keyfile=str(device.key_path))
 

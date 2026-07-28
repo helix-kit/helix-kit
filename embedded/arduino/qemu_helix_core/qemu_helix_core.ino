@@ -1,9 +1,4 @@
-// Phase-B probe: does the *actual* ESP32 Helix protocol core compile, link, and
-// run on AVR? Drives the real parse -> dispatch -> respond path in-memory (no
-// serial-read task yet) using the shared helix_protocol/dispatcher/endpoint C
-// core, vendored cJSON, and the esp-compat shim. Prints one HELIX_RESPONSE.
-//
-// The Helix headers are C (no extern "C" guards), so wrap them for the C++ .ino.
+// Phase-B probe: does the real ESP32 Helix protocol core compile, link, and run on AVR? Drives parse -> dispatch -> respond in-memory and prints one HELIX_RESPONSE.
 
 #include <Arduino_FreeRTOS.h>
 

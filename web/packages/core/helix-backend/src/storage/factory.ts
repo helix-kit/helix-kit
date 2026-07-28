@@ -66,11 +66,7 @@ export const createStorageProviderFromEnv = (env: StorageProviderEnv): StoragePr
     }
 
     case 'FS': {
-      // The FS provider serves blobs over an HTTP route (helix-server's public
-      // plane). Its signed URLs must point at whichever host serves that route,
-      // which is not necessarily the app's own base URL — so FS_STORAGE_PUBLIC_URL
-      // takes precedence, letting a consumer (e.g. the Next app on :3000) sign
-      // download URLs that resolve against the file server (helix-server :4000).
+      // FS_STORAGE_PUBLIC_URL takes precedence since signed URLs must point at whichever host serves the FS route, not necessarily the app's own base URL.
       const publicBaseUrl =
         normalizeOptional(env.FS_STORAGE_PUBLIC_URL) ??
         normalizeOptional(env.NEXT_PUBLIC_BASE_URL) ??

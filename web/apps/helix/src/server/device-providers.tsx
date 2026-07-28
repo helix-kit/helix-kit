@@ -10,12 +10,7 @@ import { AppTRPCProvider, getQueryClient } from '@/server/react';
 import type { AppRouter } from '@/server/trpc';
 import { links } from '@/server/utils';
 
-// Device pages need two tRPC contexts under one shared QueryClient: the app's
-// typed context (used by the admin panels) and the device-apps untyped context
-// (used by device-app surfaces, which are typed per-router via useDeviceAppApi).
-// Both clients point at the same /api/trpc endpoint — the routers device apps
-// reach for are mounted in the app's root router under their own keys
-// (`espFlasher`, and `ice` for the WebRTC data plane's ICE servers).
+// Device pages need two tRPC contexts under one shared QueryClient: the app's typed context and the device-apps untyped context; both hit the same /api/trpc endpoint.
 export const DeviceTRPCProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = getQueryClient();
   const [appClient] = useState(() => createTRPCClient<AppRouter>({ links }));

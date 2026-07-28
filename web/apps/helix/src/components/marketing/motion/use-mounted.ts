@@ -4,10 +4,7 @@ import { useSyncExternalStore } from 'react';
 
 const subscribe = () => () => {};
 
-/** False on the server and the first client render (via getServerSnapshot),
- * true afterwards — a hydration-safe "have we mounted yet?" flag. Use it to gate
- * decorative, animation-only elements so the server and client render the same
- * markup at hydration time regardless of the user's reduced-motion preference. */
+/** Hydration-safe "have we mounted yet?" flag: false on the server and first client render, true afterwards. */
 export const useMounted = (): boolean =>
   useSyncExternalStore(
     subscribe,

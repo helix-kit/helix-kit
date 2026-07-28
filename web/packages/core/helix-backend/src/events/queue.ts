@@ -21,8 +21,7 @@ const PRODUCER_RETRIES = 10;
 const CONSUMER_RETRIES = 10;
 const REPLICATION_FACTOR = 1;
 const ACKS_ALL = -1;
-// Dedupe is enforced by the (device_id, message_id) constraint at insert time,
-// so the producer does not need idempotency; dropping it lets sends pipeline.
+// Dedupe is enforced by the (device_id, message_id) constraint at insert time, so the producer skips idempotency.
 const DEFAULT_MAX_IN_FLIGHT = 5;
 
 export class DeviceEventQueue {
@@ -41,8 +40,7 @@ export class DeviceEventQueue {
     return this.options.topic;
   }
 
-  // A consumer-only (writer) process still needs the topic to exist but never
-  // produces, so `connectProducer: false` lets it skip an idle producer socket.
+  // `connectProducer: false` lets a consumer-only process skip an idle producer socket.
   async start(options?: { connectProducer?: boolean }): Promise<void> {
     if (this.options.brokers.length === 0) {
       throw new Error('DeviceEventQueue requires at least one broker.');

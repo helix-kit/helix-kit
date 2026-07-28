@@ -9,10 +9,7 @@ import { user } from '../db/auth-schema';
 import { post } from '../db/blog-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Context for the blog control-plane API. Public procedures read published
-// posts; admin procedures require a session whose role is in `adminRoles`
-// (sysadmin manages posts). The consuming app resolves the session (better-auth)
-// and injects the user + role here.
+/** Context for the blog control-plane API: public procedures read published posts, admin procedures require `adminRoles`. */
 export type BlogSessionUser = Readonly<{
   id: string;
   name: string;
@@ -59,9 +56,7 @@ const slugify = (value: string): string =>
     .replace(/^-+|-+$/g, '')
     .slice(0, SLUG_MAX_LENGTH);
 
-// Rough reading time in minutes from MDX content (~200 wpm). Fenced code blocks
-// are dropped rather than counted as prose — a code-heavy tutorial otherwise
-// reports a wildly inflated estimate — as are the remaining markdown/JSX markers.
+// Rough reading time in minutes from MDX content (~200 wpm); code blocks and markdown/JSX markers are stripped so a code-heavy post isn't wildly inflated.
 const readingTimeFor = (mdx: string): number => {
   const words = mdx
     .replace(/```[\s\S]*?```/g, ' ')
@@ -91,8 +86,7 @@ const postInput = z.object({
   published: z.boolean().default(false),
 });
 
-// Public, read-only surface. Mount via createRootRouter (or instantiate
-// standalone) — user/adminRoles are unused here, only published posts are read.
+/** Public, read-only surface — only published posts are read; user/adminRoles unused. */
 export const blogPublicRouter = createRouterFactory<BlogContext>()((t) =>
   t.router({
     listPublished: t.procedure
@@ -193,8 +187,7 @@ export const blogPublicRouter = createRouterFactory<BlogContext>()((t) =>
 
 export type BlogPublicRouter = typeof blogPublicRouter;
 
-// Admin (sysadmin) surface: post authoring/management. Mount with a context
-// that resolves the request session into `user` + `adminRoles`.
+/** Admin (sysadmin) surface: post authoring/management. */
 export const blogAdminRouter = createRouterFactory<BlogContext>()((t) => {
   const adminProcedure = t.procedure.use(({ ctx, next }) => {
     if (ctx.user === null || !ctx.adminRoles.includes(ctx.user.role ?? '')) {
@@ -211,8 +204,7 @@ export const blogAdminRouter = createRouterFactory<BlogContext>()((t) => {
   } as const;
 
   return t.router({
-    // Server-side paginated / filtered / sorted list backing the admin DataTable.
-    // Filter + sort state arrives from the URL (nuqs) via the consuming page.
+    // Paginated/filtered/sorted list backing the admin DataTable; filter/sort state arrives from the URL (nuqs).
     list: adminProcedure
       .input(
         z.object({

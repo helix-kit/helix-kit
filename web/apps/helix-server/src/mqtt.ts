@@ -19,8 +19,7 @@ const readMqttTls = async (): Promise<Pick<mqtt.IClientOptions, 'ca' | 'cert' | 
   return { ca, cert, key };
 };
 
-// The gateway control plane uses a clean (non-durable) session: unrouted
-// command/response traffic has no value once the process is gone.
+// Clean (non-durable) session: unrouted command/response traffic has no value once the process is gone.
 export const buildMqttClient = async (): Promise<mqtt.MqttClient> => {
   const tls = await readMqttTls();
   return mqtt.connect(env.MQTT_BROKER_URL, {
@@ -31,9 +30,7 @@ export const buildMqttClient = async (): Promise<mqtt.MqttClient> => {
   });
 };
 
-// Durable ingestion uses a persistent MQTT 5 session so the broker queues events
-// published while helix-server is briefly offline and redelivers them on
-// reconnect. Redelivered events dedupe on (device_id, message_id) downstream.
+// Durable ingestion: a persistent MQTT 5 session so the broker queues events during downtime and redelivers on reconnect (deduped on (device_id, message_id) downstream).
 export const buildEventIngestionMqttClient = async (): Promise<mqtt.MqttClient> => {
   const tls = await readMqttTls();
   return mqtt.connect(env.MQTT_BROKER_URL, {

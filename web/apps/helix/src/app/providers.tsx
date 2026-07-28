@@ -12,12 +12,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import ThemeSetter from '@/components/theme-setter';
 import { THEME_COOKIE } from '@/types';
 
-// Sets the `.light`/`.dark` class on <html> before the first paint so there is no
-// theme flash. Injected via useServerInsertedHTML (below) so it ships in the
-// streamed HTML only and is never part of the client React tree — the reason
-// next-themes' own inline <script> tripped React 19's "script tag while rendering
-// React component" warning, which this avoids.
-const THEME_BOOTSTRAP = `(function(){try{var d=document.documentElement,k='${THEME_COOKIE}',s=localStorage.getItem(k)||'system',t=s==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):s;d.classList.remove('light','dark');d.classList.add(t);d.style.colorScheme=t;}catch(e){}})();`;
+// Sets the theme class on <html> before first paint (no flash); via useServerInsertedHTML to stay out of the client tree (avoids React 19's inline-script warning).
+const THEME_BOOTSTRAP =`(function(){try{var d=document.documentElement,k='${THEME_COOKIE}',s=localStorage.getItem(k)||'system',t=s==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):s;d.classList.remove('light','dark');d.classList.add(t);d.style.colorScheme=t;}catch(e){}})();`;
 
 const AppProviders = ({
   children,
@@ -36,8 +32,7 @@ const AppProviders = ({
       }),
   );
 
-  // useServerInsertedHTML fires on every stream flush; the ref keeps the bootstrap
-  // to a single emission near the top of the document.
+  // useServerInsertedHTML fires on every stream flush; the ref keeps this to a single emission.
   const bootstrapInserted = useRef(false);
   useServerInsertedHTML(() => {
     if (bootstrapInserted.current) {

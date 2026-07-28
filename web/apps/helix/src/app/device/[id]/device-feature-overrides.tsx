@@ -23,10 +23,7 @@ const SOURCE_LABEL: Record<string, string> = {
   default: 'Default',
 };
 
-// Admin-only section on the public device page: the device's effective cloud
-// features and the per-device override exceptions. Toggling a feature sets an
-// override (force on/off); clearing it falls back to the profile/default.
-// Renders nothing for non-admin viewers.
+// Admin-only section on the device page: effective cloud features + per-device override exceptions. Renders nothing for non-admins.
 export const DeviceFeatureOverrides = ({ deviceId }: { deviceId: string }) => {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string | null } | undefined)?.role ?? null;

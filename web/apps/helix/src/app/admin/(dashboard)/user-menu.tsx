@@ -19,7 +19,6 @@ import { ChevronsUpDown, LogOut } from 'lucide-react';
 
 import { signOut } from '@/lib/auth-client';
 
-// Initials from a display name, used as the avatar fallback in the footer button.
 const initialsOf = (name: string): string => {
   const initials = name
     .split(/\s+/)

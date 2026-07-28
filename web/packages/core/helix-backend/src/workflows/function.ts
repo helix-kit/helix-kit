@@ -5,26 +5,21 @@ import { runWorkflowWithSteps, type StepTools } from './executor';
 import { DEVICE_EVENT_WORKFLOW } from './graph';
 import { type WorkflowDeps, type WorkflowTriggerData } from './types';
 
-// The Inngest handler context, narrowed to what the executor uses. `Inngest.Any`
-// erases the per-event typing, so we annotate the pieces we read ourselves.
+// Narrowed Inngest handler context; `Inngest.Any` erases per-event typing so we annotate what we read.
 type WorkflowHandlerContext = Readonly<{
   event: Readonly<{ data: WorkflowTriggerData }>;
   step: StepTools;
 }>;
 
 export type WorkflowFunctionOptions = Readonly<{
-  // Max concurrently-executing runs. With a ~5s summarize step, this is the knob
-  // that sets the throughput ceiling (≈ concurrency / summarizeSeconds runs/s).
+  // Max concurrently-executing runs; sets the throughput ceiling (≈ concurrency / summarizeSeconds).
   concurrency: number;
 }>;
 
 // No retries: the load test measures steady-state work, not retry amplification.
 const WORKFLOW_RETRIES = 0;
 
-// The single Inngest function that runs the hardcoded device-event graph. One
-// function walks the whole graph via durable steps — the same "one generic
-// function interprets a JSON graph" shape as the full engine, minus the
-// user-defined-graph machinery.
+// The single Inngest function that walks the hardcoded device-event graph via durable steps.
 export const createWorkflowFunction = (
   inngest: WorkflowInngestClient,
   deps: WorkflowDeps,

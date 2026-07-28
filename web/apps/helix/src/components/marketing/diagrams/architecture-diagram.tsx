@@ -77,7 +77,6 @@ export const ArchitectureDiagram = () => {
     >
       <div className="overflow-x-auto pb-2">
         <div className="flex min-w-[880px] items-center gap-3">
-          {/* Devices */}
           <div className="flex flex-col gap-2">
             <GroupLabel className="text-brand">Devices</GroupLabel>
             {architecture.devices.map((d) => (
@@ -87,7 +86,6 @@ export const ArchitectureDiagram = () => {
 
           <FlowArrow delay={0} label={'MQTT / MQTTs\nTLS mTLS'} />
 
-          {/* Edge */}
           <div className="flex flex-col gap-2">
             <GroupLabel className="text-brand">Edge / Gateways</GroupLabel>
             {architecture.edge.map((e) => (
@@ -97,7 +95,6 @@ export const ArchitectureDiagram = () => {
 
           <FlowArrow delay={0.3} />
 
-          {/* Broker */}
           <div className="flex flex-col gap-2">
             <GroupLabel className="text-transparent">Broker</GroupLabel>
             <Node accent label={architecture.broker.label} sub={architecture.broker.sub} />
@@ -105,7 +102,6 @@ export const ArchitectureDiagram = () => {
 
           <FlowArrow delay={0.6} />
 
-          {/* Cloud control plane */}
           <div className="flex flex-col gap-2">
             <GroupLabel className="text-fuchsia-400">Cloud Control Plane</GroupLabel>
             <div className="flex gap-2">
@@ -124,7 +120,6 @@ export const ArchitectureDiagram = () => {
         </div>
       </div>
 
-      {/* Baseline */}
       <div className="border-border/60 mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t pt-4">
         <Eye className="text-muted-foreground/60 size-3.5" />
         {architecture.baseline.map((b) => (

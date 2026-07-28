@@ -51,7 +51,6 @@ const formatBytes = (bytes: number | null): string => {
 const shortHash = (value: string | null): string =>
   value === null ? '—' : value.slice(0, SHORT_HASH_LENGTH);
 
-// Compact key/value grid used for the metadata card.
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="grid gap-0.5">
     <dt className="text-muted-foreground text-xs">{label}</dt>
@@ -132,8 +131,7 @@ const ReleaseDetailPage = async ({ params }: { params: Promise<{ id: string }> }
   const { release, variants } = detail;
 
   return (
-    // Plain scroll box + a natural-height inner grid. A `grid h-full` scroll
-    // container sizes its rows to the fixed height and clips each card's content.
+    // Plain scroll box + natural-height inner grid; a `grid h-full` container would clip each card's content.
     <div className="h-full overflow-y-auto">
       <div className="grid gap-6 p-4 sm:p-6">
         <div className="grid gap-2">

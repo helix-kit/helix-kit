@@ -21,9 +21,7 @@ const run = (label: string, command: string, args: string[]): boolean => {
   return (result.status ?? 1) === 0;
 };
 
-// Run every step and report pass/fail WITHOUT exiting early — so one failing
-// check (e.g. the tRPC procedure usage check) never short-circuits the ones
-// after it (knip). All steps run; we aggregate and fail at the end.
+// Run every step without exiting early so one failing check never short-circuits the rest; aggregate and fail at the end.
 const steps: Array<[label: string, command: string, args: string[]]> = [
   ['exports:sync', 'pnpm', ['run', 'exports:sync']],
   ['trpc procedure usage', 'pnpm', ['exec', 'tsx', './scripts/check-trpc-procedure-usage.ts']],

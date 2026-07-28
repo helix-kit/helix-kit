@@ -42,7 +42,6 @@ const Brand = ({ className }: { className?: string }) => (
   </div>
 );
 
-// Faint grid texture for the brand panel.
 const GRID_BACKGROUND = {
   backgroundImage:
     'linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px)',
@@ -60,7 +59,6 @@ export default async function Page(props: Readonly<PageProps<'/auth/[...path]'>>
   }
   return (
     <div className="bg-background flex min-h-svh">
-      {/* ── Left brand panel (hidden on mobile) ── */}
       <aside className="border-border relative hidden w-1/2 flex-col justify-between overflow-hidden border-r p-12 lg:flex">
         <div aria-hidden className="pointer-events-none absolute inset-0" style={GRID_BACKGROUND} />
         <Brand className="relative" />
@@ -83,7 +81,6 @@ export default async function Page(props: Readonly<PageProps<'/auth/[...path]'>>
         </p>
       </aside>
 
-      {/* ── Right form panel ── */}
       <main className="flex flex-1 items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-sm space-y-8">
           <Brand className="justify-center lg:hidden" />

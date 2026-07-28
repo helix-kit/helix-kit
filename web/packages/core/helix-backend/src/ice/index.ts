@@ -18,8 +18,7 @@ export type TurnSettings = Readonly<{
 export type IceContext = Readonly<{
   user: IceSessionUser | null;
   stunUrls: readonly string[];
-  // Null when TURN is not deployed — STUN-only is a valid configuration, and
-  // direct peers still connect.
+  // Null when TURN is not deployed — STUN-only is a valid configuration.
   turn: TurnSettings | null;
 }>;
 
@@ -29,8 +28,7 @@ export type IceServer = Readonly<{
   credential?: string;
 }>;
 
-// coturn REST credentials: username carries its own expiry, password is the HMAC
-// over it. See https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest
+// coturn REST credentials: username carries its own expiry, password is the HMAC over it.
 export const mintTurnCredential = (
   userId: string,
   turn: TurnSettings,

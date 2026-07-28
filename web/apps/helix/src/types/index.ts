@@ -1,3 +1,2 @@
-// Cookie mirroring the next-themes resolved theme, so the theme is readable
-// server-side (RSC / pre-mount) without a flash. Written by ThemeSetter.
+// Cookie mirroring the resolved theme so it's readable server-side without a flash.
 export const THEME_COOKIE = 'theme';

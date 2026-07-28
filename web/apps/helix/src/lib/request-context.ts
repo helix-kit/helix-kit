@@ -10,9 +10,7 @@ interface RequestContext {
 
 export const requestContextStorage = new AsyncLocalStorage<RequestContext>();
 
-// Wrap a request handler so its logs carry request metadata. Reads the
-// x-request-* headers (set by upstream middleware when present; defaults to
-// 'unknown' otherwise) and exposes them via requestContextStorage.
+// Wrap a request handler so its logs carry request metadata from the x-request-* headers via requestContextStorage.
 export const withRequestContext = <TArgs extends Array<unknown>, TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>,
 ): ((...args: TArgs) => Promise<TReturn>) => {

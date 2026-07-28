@@ -18,7 +18,6 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect('/auth/login?redirect=/admin');
   }
 
-  // Restore the collapsed/expanded state persisted by the sidebar cookie.
   const defaultOpen = (await cookies()).get('sidebar_state')?.value !== 'false';
 
   return (
@@ -31,8 +30,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
             <ThemeToggleButton />
           </div>
         </header>
-        {/* Fixed-height content region: the whole page never scrolls; each page
-            either fills and scrolls internally (tables) or scrolls this region. */}
+        {/* Fixed-height region: the page never scrolls; each page scrolls internally. */}
         <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </SidebarInset>
     </SidebarProvider>

@@ -152,8 +152,7 @@ export const PostsTable = ({ rows, pageCount }: { rows: PostRow[]; pageCount: nu
     [],
   );
 
-  // shallow:false => page/sort/filter changes re-run the Server Component so the
-  // rows + pageCount come back from a fresh server query.
+  // shallow:false re-runs the Server Component so rows + pageCount come from a fresh query.
   const { table } = useDataTable({
     data: rows,
     columns,

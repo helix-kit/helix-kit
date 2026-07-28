@@ -8,8 +8,6 @@ import { protocolTransports } from '@/lib/landing';
 import { iconMap } from '../icon-map';
 import { useAnimate } from '../motion/use-animate';
 
-/* A vertical connector with a CSS-animated packet flowing down it. CSS means it
- * animates immediately (no hydration/JS dependency) and stops under reduced motion. */
 const FlowLine = ({ className }: { className?: string }) => (
   <div
     className={`via-brand/60 relative h-10 w-px bg-gradient-to-b from-transparent to-transparent ${className ?? ''}`}
@@ -35,7 +33,6 @@ export const ProtocolDiagram = () => {
 
       <FlowLine />
 
-      {/* protocol pill with a pulsing halo ring */}
       <div className="relative">
         <span
           aria-hidden
@@ -48,7 +45,6 @@ export const ProtocolDiagram = () => {
 
       <FlowLine className="h-8" />
 
-      {/* branch bus */}
       <div className="via-brand/50 h-px w-full max-w-md bg-gradient-to-r from-transparent to-transparent" />
 
       <div className="mt-0 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">

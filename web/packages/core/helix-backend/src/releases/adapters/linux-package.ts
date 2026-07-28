@@ -27,8 +27,7 @@ type PackageEntry = {
   url?: string;
 };
 
-// Every blob artifact on the variant is a package payload; a Helix Linux package
-// release is typically a single .helixpkg (role "pkg") but the shape allows more.
+// Every blob artifact on the variant is a package payload (typically a single .helixpkg, but the shape allows more).
 const packageEntries = (
   artifacts: readonly AdapterArtifact[],
   urlFor?: Map<string, string>,
@@ -53,9 +52,7 @@ const buildManifest = (args: ManifestBuildArgs, urlFor?: Map<string, string>) =>
   packages: packageEntries(args.artifacts, urlFor),
 });
 
-// helix-linux-package: content-addressed .helixpkg blobs selected by machine arch
-// (and optional distro). The device pulls the blob via the download-session path
-// and installs it with helix-pkg; the resolved manifest simply names the payloads.
+// helix-linux-package: content-addressed .helixpkg blobs selected by machine arch (and optional distro).
 export const linuxPackageAdapter: ArtifactTypeAdapter = {
   key: 'helix-linux-package',
 

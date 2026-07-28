@@ -6,8 +6,7 @@ const DEFAULT_USB_PRODUCT_ID = 0xea60;
 
 const E2E_ROOT = path.resolve(__dirname, '..');
 
-// Persistent Chromium profile lives in the repo so the one-time serial grant
-// survives across runs (and can be committed to share it).
+// Persistent Chromium profile in the repo so the one-time serial grant survives across runs.
 export const BROWSER_PROFILE_DIR =
   process.env.HELIX_E2E_PROFILE ?? path.join(E2E_ROOT, 'browser-profile');
 
@@ -30,8 +29,7 @@ const formatUsbId = (value: number): string =>
 
 export const EXPECTED_USB_LABEL = `${formatUsbId(USB_VENDOR_ID)}:${formatUsbId(USB_PRODUCT_ID)}`;
 
-// Defaults ON: a USB re-enumeration recreates /dev/ttyUSB0 and wipes both the
-// ACL and the `-hupcl` line setting, so re-apply every run. Set to 0 to skip.
+// Defaults ON: a USB re-enumeration recreates /dev/ttyUSB0 and wipes the ACL + `-hupcl` line setting, so re-apply every run.
 export const RUN_SERIAL_PREP = process.env.HELIX_E2E_RUN_PREP !== '0';
 
 // Headed by default; the grant flow needs a real window (or Xvfb).

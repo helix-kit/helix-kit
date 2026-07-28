@@ -6,8 +6,7 @@ const sortingState = z.array(z.object({ id: z.string(), desc: z.boolean() }));
 
 const DEFAULT_PAGE_SIZE = 10;
 
-// Keys mirror the release table's column ids so the URL round-trips, and each
-// filter key matches the `releases.list` tRPC input (name/typeKey/channel/status).
+// Keys mirror the table column ids and the `releases.list` tRPC input so the URL round-trips.
 export const releasesSearchParsers = {
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),

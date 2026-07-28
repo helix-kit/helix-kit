@@ -10,9 +10,7 @@ import { artifactType, build } from '../db/release-schema';
 
 const CALLBACK_TTL_MS = 3_600_000;
 
-// --- Build-options catalog (served by the build container's GET /catalog) ------
-// Mirrors tooling/release/catalog.py; the container is the source of truth so the
-// option lists never drift from what `helix embedded esp32 link` understands.
+// Build-options catalog, served by the build container's GET /catalog (source of truth, mirrors tooling/release/catalog.py).
 export type CatalogOption = Readonly<{ value: string; label: string }>;
 export type CatalogApp = Readonly<{
   name: string;
@@ -39,8 +37,7 @@ export type BuildCatalog = Readonly<{
   defaults: Readonly<{ chip: string; flashSize: string; channel: string }>;
 }>;
 
-// The user-chosen firmware configuration. Its canonical hash (computed by the
-// artifact-type adapter) is the Tier-0 dedupe key.
+// The user-chosen firmware configuration; its canonical hash is the Tier-0 dedupe key.
 export type BuildConfig = Readonly<{
   apps: string[];
   features: string[];
@@ -64,9 +61,7 @@ export type BuildRequestResult = Readonly<{
   callbackToken: string | null;
 }>;
 
-// The job dispatched to the build container's POST /build. `publicUrl` is the
-// release backend base the worker calls back to ({publicUrl}/api/build/*) — it
-// must be reachable *from the container*.
+// The job dispatched to the build container's POST /build; `publicUrl` must be reachable *from the container*.
 export type BuildDispatchJob = Readonly<{
   buildId: string;
   callbackToken: string;
@@ -77,9 +72,7 @@ export type BuildDispatchJob = Readonly<{
   fake?: boolean;
 }>;
 
-// Shared Tier-0 request core: dedupe by config hash, else create a queued build
-// with a per-build callback token. Used by both the CI/public api-router and the
-// admin build UI so there is one definition of "request a build".
+// Shared Tier-0 request core: dedupe by config hash, else create a queued build with a per-build callback token.
 export const requestBuild = async (
   db: DatabaseClient,
   input: BuildRequestInput,
@@ -143,8 +136,7 @@ export const fetchCatalog = async (workerUrl: string): Promise<BuildCatalog> => 
   return (await response.json()) as BuildCatalog;
 };
 
-// Dispatch a queued build to the container. Fire-and-return: the worker builds
-// asynchronously and drives the /api/build/* callbacks on completion.
+// Fire-and-return: the worker builds asynchronously and drives the /api/build/* callbacks on completion.
 export const dispatchBuild = async (workerUrl: string, job: BuildDispatchJob): Promise<void> => {
   const response = await fetch(`${trimBase(workerUrl)}/build`, {
     method: 'POST',

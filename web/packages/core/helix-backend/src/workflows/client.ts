@@ -2,8 +2,7 @@ import { Inngest } from 'inngest';
 
 import { type WorkflowTriggerData } from './types';
 
-// App / function / event identifiers. The self-hosted Inngest server keys runs by
-// these, and the dispatch role sends WORKFLOW_EVENT_NAME to trigger the function.
+// The self-hosted Inngest server keys runs by these identifiers.
 export const WORKFLOW_APP_ID = 'helix-workflow';
 export const WORKFLOW_FUNCTION_ID = 'device-event-workflow';
 export const WORKFLOW_EVENT_NAME = 'helix/device-event.workflow';
@@ -17,9 +16,7 @@ export type CreateInngestClientOptions = Readonly<{
   isDev?: boolean;
 }>;
 
-// The SDK also reads INNGEST_BASE_URL / INNGEST_EVENT_KEY / INNGEST_SIGNING_KEY
-// from the environment; passing them explicitly keeps wiring visible and lets a
-// caller point at a different server per role.
+// Passed explicitly (rather than relying on the SDK's env fallback) so a caller can point at a different server per role.
 export const createInngestClient = (options: CreateInngestClientOptions): WorkflowInngestClient =>
   new Inngest({
     id: WORKFLOW_APP_ID,
@@ -29,8 +26,7 @@ export const createInngestClient = (options: CreateInngestClientOptions): Workfl
     isDev: options.isDev,
   });
 
-// Lifts the fields the workflow needs off an ingested device event. `payload` is
-// the envelope's inner payload (the load generator emits publishedAtNs/seq/runId).
+// Lifts the fields the workflow needs off an ingested device event's payload.
 export const buildWorkflowTrigger = (params: {
   deviceId: string;
   messageId: string;

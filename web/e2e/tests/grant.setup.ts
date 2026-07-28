@@ -1,7 +1,4 @@
-// ONE-TIME grant bootstrap (`npm run grant`, headed). Playwright can't click the
-// native port chooser, so you pick the ESP32 by hand once; Chrome persists the
-// grant into the repo profile and every later run auto-connects. If a grant
-// already exists this passes immediately with no dialog.
+// One-time grant bootstrap (`npm run grant`, headed): Playwright can't click the native chooser, so pick the ESP32 by hand once; Chrome persists the grant into the repo profile.
 import { expect, test } from '../fixtures';
 import { SERIAL_GPIO_ROUTE } from '../serial/config';
 
@@ -23,7 +20,6 @@ test('grant serial port to the harness profile', async ({ page }) => {
   );
   await connectButton.click();
 
-  // Wait for YOU to approve in the native dialog and the transport to connect.
   await expect(page.getByTestId('connection-state')).toHaveText('connected', {
     timeout: GRANT_TIMEOUT_MS,
   });

@@ -8,11 +8,7 @@ import {
   type WorkflowTriggerData,
 } from './types';
 
-// Minimal subset of Inngest's step API the executor needs. `run` memoizes its
-// result and re-executes only until the next new step on each replay, so each
-// call is one durable checkpoint (a write to Inngest's Postgres state store).
-// `ai.infer` offloads a provider request to the Inngest server and parks the run
-// during it (the recommended AI primitive), so the wait holds no execution slot.
+// Minimal subset of Inngest's step API the executor needs; each `run` call is one durable checkpoint.
 export type StepTools = Readonly<{
   run: <T>(id: string, handler: () => Promise<T> | T) => Promise<T>;
 }>;
@@ -26,8 +22,6 @@ type AiStep = Readonly<{
 
 const SUMMARIZE_NODE_TYPE = 'llm-summarize';
 
-// Run the summarize node via step.ai.infer against the (fake) OpenAI-compatible
-// endpoint. Inngest makes the call and parks the run during it.
 const runInferSummarize = async (
   step: StepTools,
   node: WorkflowNode,
@@ -48,8 +42,7 @@ const runInferSummarize = async (
 
 type Unit = Readonly<{ async: boolean; nodes: readonly WorkflowNode[] }>;
 
-// Kahn topological sort over the edge list; throws on a cycle so a malformed
-// graph fails loudly rather than hanging.
+// Kahn's algorithm; throws on a cycle so a malformed graph fails loudly.
 const topologicalOrder = (graph: WorkflowGraph): WorkflowNode[] => {
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
   const indegree = new Map(graph.nodes.map((node) => [node.id, 0]));
@@ -81,9 +74,7 @@ const topologicalOrder = (graph: WorkflowGraph): WorkflowNode[] => {
   return order;
 };
 
-// Group consecutive sync nodes into one chain unit (a single durable step) and
-// give each async node its own unit (its own durable step) — the sync/async
-// scheduling split that mirrors the real engine.
+// Groups consecutive sync nodes into one chain unit (one durable step); each async node gets its own unit.
 const planUnits = (graph: WorkflowGraph): Unit[] => {
   const units: Unit[] = [];
   let chain: WorkflowNode[] = [];
@@ -132,9 +123,7 @@ const executeNode = async (
   return handler({ data, inputs: collectInputs(graph, node.id, results), deps });
 };
 
-// Runs a sync chain in one shot against a local copy of the results (so
-// intra-chain dependencies resolve), returning the produced outputs and whether
-// the if/else gate halted the run.
+// Runs a sync chain against a local copy of the results so intra-chain dependencies resolve.
 const executeChain = async (
   graph: WorkflowGraph,
   nodes: readonly WorkflowNode[],
@@ -155,9 +144,7 @@ const executeChain = async (
   return { outputs, halted: false };
 };
 
-// Executes the graph through Inngest's durable steps: one step per sync chain,
-// one step per async node. This is the path whose per-step checkpoint overhead
-// the load test measures against the direct baseline below.
+// Executes the graph through Inngest's durable steps: one step per sync chain, one step per async node.
 export const runWorkflowWithSteps = async (params: {
   step: StepTools;
   graph: WorkflowGraph;
@@ -194,9 +181,7 @@ export const runWorkflowWithSteps = async (params: {
   return { status: 'completed' };
 };
 
-// Executes the same graph inline, with no durable steps — the no-Inngest
-// baseline. Same node functions, same terminal record, so the only difference
-// from the stepped path is the durable-engine overhead.
+// Executes the same graph inline with no durable steps — the no-Inngest baseline.
 export const runWorkflowDirect = async (params: {
   graph: WorkflowGraph;
   data: WorkflowTriggerData;

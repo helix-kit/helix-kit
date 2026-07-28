@@ -17,10 +17,7 @@ export const closeServer = (server: Server): Promise<void> =>
   });
 
 export const toHeaders = (incoming: IncomingHttpHeaders | Headers): Headers => {
-  // trpc-to-openapi's standalone adapter runs incomingMessageToRequest, so the
-  // `req` handed to createContext is a web Request whose headers are already a
-  // Headers instance. Object.entries() over a Headers yields nothing, which would
-  // silently drop every header (e.g. Authorization) — so pass it through as-is.
+  // Object.entries() over a Headers yields nothing (silently dropping every header), so pass an existing Headers through as-is.
   if (incoming instanceof Headers) {
     return incoming;
   }

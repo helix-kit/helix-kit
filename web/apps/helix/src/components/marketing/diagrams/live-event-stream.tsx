@@ -66,8 +66,7 @@ export const LiveEventStream = () => {
         </span>
       </div>
 
-      {/* Fixed-height, clipped window: rows stream in without changing the card's
-          height, so nothing below on the page shifts. */}
+      {/* Fixed-height clipped window so streaming rows never shift the page below. */}
       <div className="grid h-[84px] grid-cols-[auto_1fr_auto] content-start gap-x-4 gap-y-1 overflow-hidden font-mono text-[11px]">
         <AnimatePresence initial={false}>
           {rows.map((row) => (

@@ -8,14 +8,7 @@ export type FeatureSource = 'override' | 'profile' | 'default';
 
 export type FeatureResolution = Readonly<{ enabled: boolean; source: FeatureSource }>;
 
-// The single read chokepoint for a device's effective cloud features — the
-// features analogue of resolveDeviceArtifacts in releases/resolve.ts. UI, and
-// (later) the gateway, resolve here rather than reimplementing precedence.
-//
-// Universe = the `feature` catalog, all disabled by default → OR-in every
-// feature any assigned profile enables → hard-apply per-device overrides, which
-// win in both directions. Enablement for keys not in the catalog of this build
-// is ignored.
+// The single read chokepoint for a device's effective cloud features: catalog defaults, OR'd with profile grants, then per-device overrides win in both directions.
 export const resolveDeviceFeatures = async (
   db: DatabaseClient,
   deviceId: string,
@@ -63,8 +56,7 @@ export const resolveDeviceFeatures = async (
   return result;
 };
 
-// Whether a single feature is effectively enabled for a device — the thin helper
-// future gateway/UI gates call.
+// Whether a single feature is effectively enabled for a device.
 export const deviceHasFeature = async (
   db: DatabaseClient,
   deviceId: string,

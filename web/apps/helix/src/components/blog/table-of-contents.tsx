@@ -2,8 +2,7 @@ import { cn } from '@helix/design-system/lib/utils';
 
 import type { TOCItemType } from 'fumadocs-core/toc';
 
-// `toc` comes straight from the MDX compiler (fumadocs' remarkHeading), the same
-// source the docs TOC uses — depth 2 is a top-level section, 3 a subsection.
+// `toc` comes from the MDX compiler; depth 2 is a section, 3 a subsection.
 export const TableOfContents = ({ toc }: { toc: TOCItemType[] }) => {
   if (toc.length === 0) return null;
   return (

@@ -15,8 +15,7 @@ const sleep = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
-// Terminal record for one run — the load test's throughput/latency hook. Written
-// by the notify node on completion and by the executor when the gate skips a run.
+// Terminal record for one run — the load test's throughput/latency hook.
 export const writeWorkflowResult = async (
   deps: WorkflowDeps,
   data: WorkflowTriggerData,
@@ -33,10 +32,7 @@ export const writeWorkflowResult = async (
   });
 };
 
-// ---- node handlers -------------------------------------------------------
-// Each returns a plain object merged into downstream nodes' inputs. Async nodes
-// block for their configured fake latency to model real I/O without real infra.
-
+// Each handler returns a plain object merged into downstream nodes' inputs; async ones sleep for a fake latency to model I/O.
 const triggerNode = ({ data }: NodeContext): NodeOutput => ({
   deviceId: data.deviceId,
   metric: data.metric,
@@ -48,8 +44,7 @@ const normalizeNode = ({ inputs }: NodeContext): NodeOutput => {
   return { normalizedMetric: metric, bucket: metric % 2 === 0 ? 'even' : 'odd' };
 };
 
-// The if/else gate. Passes when the metric clears the threshold; otherwise halts
-// the run before any of the expensive async work.
+// The if/else gate; halts the run before any expensive async work when the metric misses the threshold.
 const thresholdGateNode = ({ inputs, deps }: NodeContext): NodeOutput => {
   const metric = typeof inputs.normalizedMetric === 'number' ? inputs.normalizedMetric : 0;
   const passed = metric >= deps.gateThreshold;
@@ -82,8 +77,7 @@ const sendNotificationNode = async ({ data, deps }: NodeContext): Promise<NodeOu
 
 export type NodeHandler = (ctx: NodeContext) => NodeOutput | Promise<NodeOutput>;
 
-// Maps a node's `type` to its implementation. Keeping the registry data-driven
-// lets the executor walk any graph shape, not just this one hardcoded path.
+// Maps a node's `type` to its implementation; keeps the executor data-driven over any graph shape.
 export const NODE_HANDLERS: Readonly<Record<string, NodeHandler>> = {
   trigger: triggerNode,
   normalize: normalizeNode,

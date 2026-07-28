@@ -16,9 +16,7 @@ import { closeServer, listen } from '../http';
 
 const SERVE_PATH = '/api/inngest';
 
-// Hosts the Inngest serve endpoint that the self-hosted server syncs to and
-// invokes for each durable step. serveHost is the loopback URL Inngest calls
-// back on (both processes share the appliance container).
+// Hosts the Inngest serve endpoint the self-hosted server syncs to and invokes per durable step.
 export const startWorkflow = async (deps: { db: DatabaseClient }): Promise<RoleCloser> => {
   const inngest = buildInngestClient();
   const workflowDeps = buildWorkflowDeps(deps.db);

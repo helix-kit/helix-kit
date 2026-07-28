@@ -2,8 +2,7 @@ import { LinuxFilesSurface } from './surface';
 
 import type { DeviceApp } from '../types';
 
-// The Linux file-browser app — browse, download and upload files on a Linux device.
-// Gated on the `linux-files` device feature.
+// Linux file-browser app; gated on the `linux-files` device feature.
 export const linuxFilesApp: DeviceApp = {
   slug: 'linux-files',
   title: 'Files',

@@ -50,12 +50,7 @@ const SCAN_EXTENSIONS = new Set([
   '.ts',
   '.tsx',
 ]);
-// Helix packages are standalone-installable SDKs (see CLAUDE.md §2.1) — a
-// subpath can be part of the deliberate public surface without any in-repo
-// consumer importing that exact specifier yet (e.g. it's only reached via a
-// package's own root barrel internally, or no in-tree app has adopted it
-// yet). Specifier-scanning alone would silently drop those on `--write`, so
-// list them here the same way a prior production app pins its own out-of-band exports.
+// Public SDK subpaths with no in-repo importer; specifier-scanning alone would drop these on `--write`.
 const ALWAYS_INCLUDE_EXPORTS: Record<string, string[]> = {
   '@helix/backend': [
     './events',

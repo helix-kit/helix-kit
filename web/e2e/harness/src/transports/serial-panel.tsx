@@ -45,10 +45,7 @@ const SerialControls = () => {
   );
 };
 
-// SerialTransportProvider renders HelixTransportProvider internally, so the
-// RawMessagePanel inside talks over this transport with no extra wiring.
-// openSignals lets a native-USB board (Arduino) assert DTR; ESP32 leaves the
-// default (deasserted) so it is not held in reset.
+// openSignals lets a native-USB board (Arduino) assert DTR; ESP32 leaves it deasserted so it is not held in reset.
 export const SerialPanel = ({
   filters,
   openSignals,

@@ -32,11 +32,7 @@ const stateVariant = (state: string): 'default' | 'destructive' | 'outline' => {
   return state === 'active' ? 'default' : 'outline';
 };
 
-// Admin-only section on the public device page: every certificate step-ca has
-// issued to this device, with issuance / expiry timestamps and current state,
-// plus a revoke action. Revocation adds the serial to the CRL (enforced by
-// mosquitto and the mTLS gateway) and records it here. Renders nothing for
-// non-admin viewers.
+// Admin-only device-page section listing issued certificates with a revoke action (revocation adds the serial to the CRL); renders nothing for non-admins.
 export const DeviceCertificates = ({ deviceId }: { deviceId: string }) => {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string | null } | undefined)?.role ?? null;

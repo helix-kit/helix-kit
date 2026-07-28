@@ -21,9 +21,7 @@ export type DeviceEventWriterOptions = Readonly<{
   groupId: string;
   batchSize: number;
   restartDelayMs: number;
-  // How many partitions this single consumer processes concurrently. With >1
-  // partition, concurrent eachBatch runs overlap each other's DB-insert and
-  // offset-commit waits, so a single writer stops stalling on serial I/O.
+  // Partitions processed concurrently; >1 overlaps DB-insert/offset-commit waits instead of stalling on serial I/O.
   concurrency?: number;
   logger: Logger;
 }>;
@@ -78,11 +76,7 @@ const toRow = (message: KafkaMessage): typeof deviceEvent.$inferInsert | null =>
   };
 };
 
-// Consumes queued device events from Kafka and writes them to the durable
-// device_event table. Offsets are committed only after the batch is persisted,
-// so an interrupted write is redelivered; the (device_id, message_id) unique
-// constraint dedupes redeliveries via onConflictDoNothing. A non-retriable
-// consumer crash triggers a bounded-delay restart loop.
+// Consumes queued device events into device_event. Offsets commit only after persisting, so an interrupted write is redelivered and deduped via the (device_id, message_id) unique constraint.
 export class DeviceEventWriter {
   private readonly db: DatabaseClient;
   private readonly queue: DeviceEventQueue;

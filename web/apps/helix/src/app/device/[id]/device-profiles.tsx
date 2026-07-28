@@ -116,8 +116,7 @@ const AssignProfilePopover = ({ deviceId, onDone }: { deviceId: string; onDone: 
   );
 };
 
-// Admin-only section on the public device page: the device's profile assignments
-// and what it currently resolves to. Renders nothing for non-admin viewers.
+// Admin-only section showing the device's profile assignments and resolution.
 export const DeviceProfiles = ({ deviceId }: { deviceId: string }) => {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string | null } | undefined)?.role ?? null;

@@ -2,16 +2,9 @@ import { HelixStreamSession } from '@helix/protocol-stream';
 
 import { dataChannelTransport } from './transport';
 
-// The browser half of the Helix WebRTC data plane.
-//
-// The DEVICE is the offerer and creates the DataChannel (it also has no inbound
-// reachability to rely on), so the browser's job is: take the offer that came back
-// in the `open` response, answer it, trickle ICE, and wait for the channel. Once
-// the channel opens, the browser speaks HelixStream over it directly — there is no
-// gateway in the middle to mux for it, as there is on the relayed path.
-//
-// Signaling rides the ordinary typed control plane (the same MQTT gateway that
-// carries `open`/`close`), so this package owns no transport of its own.
+// The browser half of the Helix WebRTC data plane. The device is the offerer; the
+// browser answers, trickles ICE, and speaks HelixStream over the channel directly.
+// Signaling rides the ordinary typed control plane, so this package owns no transport.
 
 export type IceServer = Readonly<{
   urls: readonly string[];
@@ -22,12 +15,7 @@ export type IceServer = Readonly<{
 export type PeerSignaller = Readonly<{
   /** Send our SDP answer / one ICE candidate to the device, via `signal`. */
   send: (signal: { answer?: string; candidate?: string }) => Promise<unknown>;
-  /**
-   * Subscribe to the device's trickled ICE candidates. The gateway routes them to
-   * this browser alone (it owns the session), so no filtering by peer is needed —
-   * but candidates for OTHER sessions on the same device would still arrive, hence
-   * the sessionId check at the call site.
-   */
+  /** Subscribe to the device's trickled ICE candidates. */
   onCandidate: (handler: (candidate: string) => void) => () => void;
 }>;
 
@@ -49,10 +37,7 @@ export type HelixPeer = Readonly<{
   close: () => void;
 }>;
 
-/**
- * Answer a device's offer and bring up the peer. Resolves as soon as the answer is
- * sent — the DataChannel opens asynchronously, so await `session` for the mux.
- */
+/** Answer a device's offer and bring up the peer; await `session` for the mux. */
 export const connectPeer = (options: PeerOptions): HelixPeer => {
   const connection = new RTCPeerConnection({
     iceServers: options.iceServers.map((server) => ({
@@ -79,9 +64,8 @@ export const connectPeer = (options: PeerOptions): HelixPeer => {
 
   connection.addEventListener('datachannel', ({ channel }: RTCDataChannelEvent) => {
     const open = (): void => {
-      // The browser is the mux client (odd stream ids); the device is the server
-      // (even) — the same parity the relayed gateway uses, so the device app's
-      // accept loop is identical on both transports.
+      // Browser is the mux client (odd stream ids), device the server — the same
+      // parity the relayed gateway uses, so the device's accept loop is identical.
       resolveSession(new HelixStreamSession(dataChannelTransport(channel), { client: true }));
     };
     if (channel.readyState === 'open') {
@@ -105,8 +89,7 @@ export const connectPeer = (options: PeerOptions): HelixPeer => {
 
   const unsubscribe = options.signaller.onCandidate((candidate) => {
     void connection.addIceCandidate(JSON.parse(candidate) as RTCIceCandidateInit).catch(() => {
-      // A candidate that arrives before the remote description, or one for a path
-      // already discarded, is normal — ICE is best-effort per candidate.
+      // A candidate arriving before the remote description is normal — ICE is best-effort.
     });
   });
 
@@ -132,11 +115,6 @@ export const connectPeer = (options: PeerOptions): HelixPeer => {
   };
 };
 
-/**
- * The ICE candidate pair actually in use — `host`/`srflx` means a DIRECT path (no
- * cloud bandwidth), `relay` means TURN. Worth surfacing: a session that silently
- * fell back to relay costs bandwidth, which is the thing P2P exists to avoid.
- */
 type CandidatePairReport = {
   type: string;
   state?: string;
@@ -146,11 +124,12 @@ type CandidatePairReport = {
   remoteCandidateId?: string;
 };
 
+/** The ICE candidate pair in use — `host`/`srflx` is a direct path, `relay` is TURN. */
 export const selectedCandidatePair = async (
   connection: RTCPeerConnection,
 ): Promise<{ local: string; remote: string } | null> => {
   const stats = await connection.getStats();
-  // Collect, then pick: assigning inside the forEach callback defeats TypeScript's
+  // Collect, then pick: assigning inside the forEach callback defeats TS's
   // control-flow narrowing, which then treats the null check below as dead code.
   const succeeded: CandidatePairReport[] = [];
   stats.forEach((report: unknown) => {

@@ -7,9 +7,7 @@ import type { HelixMessage } from '@helix/protocol-service';
 
 const MAX_LOG = 50;
 
-// Contract-agnostic transport probe: the test injects raw request-message JSON,
-// this wraps it in a Helix packet, sends it over whatever transport is above,
-// and surfaces every received packet verbatim to assert on.
+// Contract-agnostic transport probe: injects raw request JSON, sends it over the transport above, and surfaces received packets verbatim.
 export const RawMessagePanel = () => {
   const { transport, isConnected } = useHelixTransport();
   const [request, setRequest] = useState('');

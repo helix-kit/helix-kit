@@ -4,11 +4,8 @@ import type { HelixStreamSession } from '@helix/protocol-stream';
 
 import { openPeerChannel, openRelayChannel, type DeviceChannel } from '../data-plane';
 
-// One file transfer = one stream on the data plane, described by the stream's meta
-// blob. The mux gives each transfer its own credit window, so several can run at
-// once without one starving the others — and on the p2p transport the bytes never
-// touch the cloud at all, which is the whole point of putting bulk transfer here
-// rather than on the control plane.
+// One file transfer = one stream on the data plane; the mux gives each its own
+// credit window, so several can run at once without starving each other.
 
 export type TransferMeta = Readonly<{
   op: 'get' | 'put';
@@ -34,13 +31,8 @@ const openTransferChannel = (
     ? openRelayChannel(ctx.clientStreamUrl, ctx.sessionId, JSON.stringify(meta), handlers)
     : openPeerChannel(ctx.peerSession, JSON.stringify(meta), handlers);
 
-/**
- * Download a file, streaming it straight to disk.
- *
- * The chunks are written to a FileSystemWritableFileStream as they arrive rather
- * than being accumulated into a Blob — a multi-GB file would otherwise have to fit
- * in the tab's memory, which is exactly how the P2P experiment fell over.
- */
+// Download a file, streaming chunks straight to disk rather than accumulating a
+// Blob, so a multi-GB file need not fit in the tab's memory.
 export const downloadFile = async (
   ctx: TransferContext,
   path: string,
@@ -48,13 +40,10 @@ export const downloadFile = async (
   onProgress?: TransferProgress,
 ): Promise<number> => {
   let received = 0;
-  // Writes are serialised through a promise chain: onData is a synchronous
-  // callback, but sink.write() is async, and letting them interleave would corrupt
-  // the file's byte order.
+  // Serialise writes through a promise chain: onData is synchronous but sink.write()
+  // is async, and interleaving would corrupt the file's byte order.
   let queue: Promise<void> = Promise.resolve();
 
-  // Named rather than inlined into the handlers: the promise work belongs in a
-  // function, not in the body of an event callback.
   const flushAndClose = (): Promise<void> => queue.then(() => sink.close());
   const abandon = (): void => {
     void queue.finally(() => sink.close().catch(() => undefined));
@@ -92,18 +81,13 @@ export const downloadFile = async (
   });
 };
 
-// Chunk size for uploads. Comfortably under the mux's 32 KiB max DATA payload, so a
-// write is never split, and small enough that progress updates stay smooth.
+// Upload chunk size: under the mux's 32 KiB max DATA payload so a write is never split.
 const UPLOAD_CHUNK_KB = 16;
 const BYTES_PER_KB = 1024;
 const UPLOAD_CHUNK_BYTES = UPLOAD_CHUNK_KB * BYTES_PER_KB;
 
-/**
- * Upload a file, reading it from disk in chunks.
- *
- * Backpressure comes from the mux's credit window (and, on p2p, the DataChannel's
- * buffered-amount gate underneath it), so a fast disk cannot outrun a slow link.
- */
+// Upload a file in chunks; backpressure from the mux's credit window keeps a fast
+// disk from outrunning a slow link.
 export const uploadFile = async (
   ctx: TransferContext,
   path: string,
@@ -130,8 +114,8 @@ export const uploadFile = async (
                   ? new Uint8Array(value)
                   : concat(carry, new Uint8Array(value));
               while (buffer.byteLength >= UPLOAD_CHUNK_BYTES) {
-                // Await: this is the backpressure. Without it the mux's credit
-                // window silently drops everything past the first 256 KiB.
+                // Await: this is the backpressure. Without it the mux drops everything
+                // past the first 256 KiB.
                 await channel.send(slice(buffer, 0, UPLOAD_CHUNK_BYTES));
                 buffer = buffer.subarray(UPLOAD_CHUNK_BYTES);
                 sent += UPLOAD_CHUNK_BYTES;

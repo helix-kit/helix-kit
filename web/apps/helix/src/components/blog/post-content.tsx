@@ -6,14 +6,7 @@ import type { MDXComponents } from 'mdx/types';
 
 import './post-content.css';
 
-// MDX component map for blog posts.
-//
-// The docs map (components/geistdocs/mdx-components.tsx) pulls in
-// `fumadocs-ui/mdx` + TypeTable, which are styled by fumadocs-ui/css/preset.css
-// — and that stylesheet is deliberately confined to the /docs route group so the
-// Geist docs theme never leaks into the marketing site. The blog therefore reuses
-// only the app-local, portable components (CodeBlock and Mermaid depend on the
-// design system alone) and lets Tailwind `prose` style the plain GFM elements.
+// Blog MDX map reuses only app-local components; the fumadocs docs map is confined to /docs so its theme never leaks here.
 const components: MDXComponents = {
   pre: CodeBlock,
   Mermaid,

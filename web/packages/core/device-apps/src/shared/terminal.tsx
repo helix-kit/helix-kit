@@ -31,11 +31,8 @@ import '@xterm/xterm/css/xterm.css';
 import './terminal.css';
 
 const OPEN_TIMEOUT_MS = 15_000;
-// The device dials /stream/device after the `open` reply; the browser then
-// attaches to /stream/client and retries until that device socket is registered.
-// A local Go device registers in well under a second, but an ESP32 bridge's mTLS
-// dial takes a few seconds — so the window has to be generous (~12s) or a slow
-// device races the client attach and lands in "closed".
+// Generous client-attach window (~12s): a slow ESP32 bridge's mTLS dial races the
+// attach and lands in "closed" if the retry budget is too tight.
 const CLIENT_RETRY_MS = 600;
 const CLIENT_MAX_ATTEMPTS = 20;
 const LIST_POLL_MS = 4000;
@@ -50,8 +47,6 @@ const MAX_FONT = 30;
 const DEFAULT_FONT = 14;
 const DEFAULT_THEME: ThemeName = 'Dark';
 
-// The session shape the device's `list` returns. The Linux `shell` and ESP32
-// `console` contracts are aligned on it, so one terminal renders both.
 const sessionInfoSchema = z.object({
   sessionId: z.string(),
   createdAt: z.number().int(),
@@ -59,9 +54,6 @@ const sessionInfoSchema = z.object({
 });
 type SessionInfo = z.infer<typeof sessionInfoSchema>;
 
-// The contract surface this terminal drives — open/close/list with the shapes it
-// uses. Real service contracts (shell, console) are structurally compatible and
-// are cast to this for the typed hooks, so one terminal renders both.
 const _terminalContract = {
   service: 'stream',
   methods: {
@@ -87,8 +79,7 @@ type TerminalContract = typeof _terminalContract;
 type Status = 'connecting' | 'opening' | 'connected' | 'closed' | 'error';
 type ThemeName = 'Black' | 'Dark' | 'Light' | 'White';
 
-// GitHub-style ANSI palettes so TUIs (top, ls --color, vim) render legibly on
-// both dark and light backgrounds.
+// GitHub-style ANSI palettes so TUIs render legibly on dark and light backgrounds.
 const DARK_ANSI = {
   black: '#484f58', red: '#ff7b72', green: '#3fb950', yellow: '#d29922',
   blue: '#58a6ff', magenta: '#bc8cff', cyan: '#39c5cf', white: '#b1bac4',
@@ -144,7 +135,6 @@ const readTheme = (key: string): ThemeName => {
   return value !== null && value in THEMES ? value : DEFAULT_THEME;
 };
 
-// The status LED colour. Extracted from a nested ternary so each branch reads.
 const statusDotClass = (status: Status): string => {
   if (status === 'connected') {
     return 'bg-emerald-500';
@@ -164,8 +154,6 @@ type SessionsProps = {
   close: (sessionId: string) => void;
 };
 
-// A header popover listing every open shell session on the device (this tab's
-// session is marked) with a per-session close — including other sessions.
 const SessionsPopover = ({
   sessions,
   label,
@@ -250,9 +238,6 @@ type TransportProps = {
   path: string | null;
 };
 
-// Which data plane carries the bytes, and (for p2p) which path ICE actually chose.
-// The path is worth showing: a peer that quietly fell back to TURN still works but
-// costs cloud bandwidth, which is the whole thing P2P is here to avoid.
 const PICKER_BUTTON = 'px-2 py-1';
 const PICKER_ACTIVE = 'text-foreground';
 const PICKER_IDLE = 'hover:text-foreground';
@@ -327,8 +312,6 @@ type ControlsProps = {
   p2pEnabled: boolean;
 };
 
-// Compact controls rendered into the app header via <HeaderPortal>: throughput
-// stats, font size, terminal palette, and connection status/reconnect.
 const StreamControls = ({
   status,
   detail,
@@ -418,11 +401,8 @@ const StreamControls = ({
   );
 };
 
-// The interactive terminal. Control (open the session) rides the MQTT gateway
-// via the typed `shell` service; the terminal bytes ride the data plane's
-// /stream/client WebSocket. Keystrokes go up as binary; geometry changes go up
-// as a text resize signal. Fills the viewport; its controls live in the app
-// header. Must be rendered inside <MqttGatewayProvider>.
+// The interactive terminal: control over the typed MQTT service, bytes over the
+// data plane. Must be rendered inside <MqttGatewayProvider>.
 export type StreamTerminalProps = {
   clientStreamUrl: string;
   deviceStreamUrl: string;
@@ -459,7 +439,6 @@ export const StreamTerminal = ({
   const sessionRef = useRef<string | null>(null);
   const bytesRef = useRef({ inBytes: 0, outBytes: 0 });
   const rateRef = useRef({ last: 0, at: 0 });
-  // Keystroke round-trip probe: time a lone keystroke until its echo returns.
   const rttRef = useRef<{ sentAt: number | null; samples: number[] }>({
     sentAt: null,
     samples: [],
@@ -494,16 +473,9 @@ export const StreamTerminal = ({
     rtt: number | null;
   }>({ inBytes: 0, outBytes: 0, rate: 0, rtt: null });
 
-  // Which data plane carries the terminal bytes. P2P goes browser<->device direct
-  // (no cloud bandwidth); relay goes through the gateway and always works. Terminal
-  // traffic is tiny either way — the switch matters because it exercises the same
-  // transport that bulk transfers will use, and because a network that blocks P2P
-  // must still get a shell.
   const [transport, setTransport] = useState<DataPlaneTransport>('relay');
   const [icePath, setIcePath] = useState<string | null>(null);
 
-  // Surface the ICE path ICE settled on: 'relay' means the session fell back to
-  // TURN and is costing cloud bandwidth, which is exactly what P2P avoids.
   const reportIcePath = useCallback((connection: RTCPeerConnection | null) => {
     if (connection === null) {
       setIcePath(null);
@@ -514,18 +486,13 @@ export const StreamTerminal = ({
       return undefined;
     });
   }, []);
-  // Force the peer through TURN even when a direct path exists. Only meaningful for
-  // p2p; the way to prove the TURN relay actually works.
   const [forceRelay, setForceRelay] = useState(false);
-  // The ICE servers must be in hand BEFORE we open: they are passed to the device in
-  // the `open` command, and a device that gathers no STUN/TURN candidates can only
-  // ever fail to connect.
+  // ICE servers must be in hand before opening: they are passed to the device in the
+  // `open` command, and a device that gathers no candidates can only fail to connect.
   const { iceServers, isLoading: iceLoading } = useIceServers(transport === 'p2p');
 
-  // Attach the terminal to the session's data plane. The two transports differ
-  // only in how the channel is built: relayed, it is a WebSocket to the gateway;
-  // peer-to-peer, it is one stream on the mux running over the DataChannel. Every
-  // line below this is identical either way — which is the point of DeviceChannel.
+  // Attach the terminal to the session's data plane; identical for both transports,
+  // which is the point of DeviceChannel.
   const attachClient = useCallback(
     (sessionId: string, attempt: number): void => {
       const term = termRef.current;
@@ -568,8 +535,7 @@ export const StreamTerminal = ({
             return;
           }
           if (!opened && attempt < CLIENT_MAX_ATTEMPTS) {
-            // Re-enter through the ref: a useCallback may not reference its own
-            // binding from inside its initialiser.
+            // Re-enter through the ref: a useCallback can't reference its own binding.
             setTimeout(() => attachRef.current?.(sessionId, attempt + 1), CLIENT_RETRY_MS);
             return;
           }
@@ -593,13 +559,11 @@ export const StreamTerminal = ({
     attachRef.current = attachClient;
   }, [attachClient]);
 
-  // Create the terminal once and wire keystroke/resize outputs. xterm is
-  // imported dynamically (client-only): its addons are UMD modules that touch
-  // `self` at eval time, which would crash server rendering.
+  // Create the terminal once; xterm is imported dynamically because its addons
+  // touch `self` at eval time and would crash server rendering.
   useEffect(() => {
-    // An object, not a `let`: TypeScript narrows a boolean `let` to `false` here
-    // (the cleanup that flips it runs in a closure the flow analysis can't see),
-    // which makes the guard below look like an unnecessary condition.
+    // An object, not a `let`: TS would narrow a boolean `let` to `false` here (the
+    // cleanup that flips it runs in a closure flow analysis can't see).
     const lifecycle = { disposed: false };
     let observer: ResizeObserver | null = null;
     let raf = 0;
@@ -641,7 +605,6 @@ export const StreamTerminal = ({
         channelRef.current?.signal(JSON.stringify({ type: 'resize', cols, rows }));
       });
 
-      // Extracted so the observer callback does not nest three levels deep.
       const refit = (): void => {
         try {
           fitRef.current?.fit();
@@ -664,7 +627,6 @@ export const StreamTerminal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Apply font-size changes: update xterm, refit (which resizes the PTY), persist.
   useEffect(() => {
     const term = termRef.current;
     if (term === null) {
@@ -676,7 +638,6 @@ export const StreamTerminal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fontSize]);
 
-  // Apply appearance changes.
   useEffect(() => {
     if (termRef.current !== null) {
       termRef.current.options.theme = THEMES[themeName];
@@ -685,7 +646,6 @@ export const StreamTerminal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeName]);
 
-  // Roll up throughput once per second for the header readout.
   useEffect(() => {
     const id = window.setInterval(() => {
       const { inBytes, outBytes } = bytesRef.current;
@@ -703,7 +663,6 @@ export const StreamTerminal = ({
     };
   }, []);
 
-  // Keep the gateway connected.
   useEffect(() => {
     void mqtt.connect();
     return () => {
@@ -712,7 +671,6 @@ export const StreamTerminal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nonce]);
 
-  // Once the gateway is up, open a shell session and attach the data stream.
   useEffect(() => {
     if (
       !shell.isConnected ||
@@ -783,8 +741,8 @@ export const StreamTerminal = ({
 
   const closeSession = useCallback(
     (sessionId: string) => {
-      // If we're closing our own session, drop the terminal too so the UI
-      // doesn't sit "connected" against a stream the device just tore down.
+      // Closing our own session: drop the terminal too, so the UI doesn't sit
+      // "connected" against a stream the device just tore down.
       if (sessionId === sessionRef.current) {
         reconnect();
       }

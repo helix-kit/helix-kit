@@ -14,8 +14,7 @@ type AuthContext = Readonly<{
 }>;
 
 export type MqttGatewayBridgeOptions = Readonly<{
-  // The browser gateway WS shares the public server with the APIs and the data
-  // plane's client endpoint via one upgrade router — no dedicated port.
+  // Shares the public server with the APIs and data-plane endpoint via one upgrade router.
   upgrades: UpgradeRouter;
   mqttClient: mqtt.MqttClient;
   websocketPath?: string;

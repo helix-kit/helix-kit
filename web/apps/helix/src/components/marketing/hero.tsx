@@ -35,7 +35,6 @@ export const Hero = () => {
       id="home"
     >
       <div className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-10 lg:grid-cols-2 lg:gap-8">
-        {/* left — copy */}
         <motion.div className="max-w-xl" {...wrap}>
           <motion.div
             className="border-border/70 bg-card/40 text-muted-foreground mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
@@ -103,7 +102,6 @@ export const Hero = () => {
           </motion.div>
         </motion.div>
 
-        {/* right — live panels */}
         <div className="grid gap-4 lg:pl-6">
           <StatusTerminal />
           <StatCards />

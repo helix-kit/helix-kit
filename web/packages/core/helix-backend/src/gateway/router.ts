@@ -27,15 +27,7 @@ const DEFAULT_REQUEST_OWNER_TTL_MS = 120_000;
 const requestOwnerKey = (deviceId: string, requestId: string): string =>
   `${deviceId.length}:${deviceId}${requestId}`;
 
-// A `sessionId` in a payload marks a long-lived sub-session: a shell, a tunnel, a
-// WebRTC peer. Unlike a requestId it outlives the request that created it, and it
-// belongs to ONE browser — the far end of that terminal, that peer connection.
-//
-// The gateway learns the ownership from the exchange that creates the session and
-// then routes by it. Nothing here knows what a session *is*: no service name, no
-// method name, no notion of WebRTC. That is the point — it is why the device apps
-// can trickle SDP/ICE through the ordinary control plane without the gateway
-// growing a signaling side-channel for them.
+// sessionId marks a long-lived sub-session (shell/tunnel/WebRTC peer) owned by one browser; the gateway routes by it without knowing what the session IS, which is how SDP/ICE trickle through the control plane with no dedicated signaling channel.
 const sessionIdOf = (packet: HelixPacket<HelixMessage>): string | null => {
   const { payload } = packet.message;
   if (typeof payload !== 'object' || payload === null) {
@@ -83,17 +75,12 @@ export class GatewayRouter<TAuth = unknown> {
     }
 
     const { deviceId } = client.context;
-    // Learn who owns a session from the client that talks about it. Deliberately
-    // NOT an authorization check: any browser authorized for the device may manage
-    // its sessions (the shell UI lists every session and lets you close another
-    // tab's). Ownership here is for ROUTING device pushes back, nothing more.
+    // Learn ownership from the client that talks about the session; not an authz check (any browser authorized for the device may manage its sessions).
     const sessionId = sessionIdOf(packet);
     if (sessionId !== null) {
       const key = requestOwnerKey(deviceId, sessionId);
       const owner = this.#sessionOwners.get(key);
-      // The client that opens a session keeps it. Otherwise a second tab closing
-      // someone else's session would take ownership of it and start receiving its
-      // pushes — stealing the ICE candidates of a peer it does not own.
+      // The client that opens a session keeps it, so a second tab closing someone else's session can't steal its pushes.
       if (owner === undefined || !this.#clients.has(owner)) {
         this.#sessionOwners.set(key, connectionId);
       }
@@ -126,9 +113,7 @@ export class GatewayRouter<TAuth = unknown> {
       }
     }
 
-    // Unsolicited, but session-scoped: deliver it only to the browser that owns
-    // the session. Without this a device's ICE candidates — and any future
-    // per-session push — would be broadcast to every tab watching the device.
+    // Session-scoped: deliver only to the owning browser, else it broadcasts to every tab watching the device.
     const sessionId = sessionIdOf(packet);
     if (sessionId !== null) {
       const owner = this.#sessionOwners.get(requestOwnerKey(deviceId, sessionId));

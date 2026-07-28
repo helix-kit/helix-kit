@@ -34,8 +34,6 @@ const BleControls = () => {
   );
 };
 
-// HelixEsp32BleProvider renders HelixTransportProvider internally, so the
-// RawMessagePanel inside talks over BLE with no extra wiring.
 export const BlePanel = () => (
   <HelixEsp32BleProvider>
     <BleControls />

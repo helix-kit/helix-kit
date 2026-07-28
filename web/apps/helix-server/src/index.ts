@@ -20,9 +20,7 @@ import {
 } from './roles';
 import { buildWorkflowDeps } from './roles/workflow-runtime';
 
-// Migrate DBOS's system schema once, then exit. Run before launching a fleet of
-// dispatch processes so they don't race each other's schema migration (which
-// deadlocks in Postgres); they then find the schema ready and skip the DDL.
+// Migrate DBOS's system schema once, then exit; run before a fleet of dispatch processes so they don't race the migration (deadlocks in Postgres).
 const migrateDbosAndExit = async (): Promise<void> => {
   if (env.DBOS_SYSTEM_DATABASE_URL === undefined) {
     throw new Error('HELIX_DBOS_MIGRATE requires DBOS_SYSTEM_DATABASE_URL.');
@@ -54,9 +52,7 @@ const start = async (): Promise<{ close: () => Promise<void> }> => {
     closers.push(() => dbPool.end());
   }
 
-  // The gateway (HTTP event ingestion) and the ingest bridge both produce; the
-  // writer consumes. Co-located roles share one queue instance; when split, each
-  // process builds its own against the same topic and coordinates through Kafka.
+  // Gateway and ingest produce, writer consumes; co-located roles share one queue instance, split roles coordinate through Kafka on the same topic.
   const producerNeeded = roles.has('gateway') || roles.has('ingest');
   const needsQueue = producerNeeded || roles.has('writer') || roles.has('dispatch');
   const eventQueue = needsQueue

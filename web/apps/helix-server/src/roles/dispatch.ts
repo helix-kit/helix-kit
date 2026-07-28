@@ -45,12 +45,7 @@ const messageToTrigger = (message: KafkaMessage): WorkflowTriggerData | null => 
   });
 };
 
-// The dispatch role turns ingested device events into workflow runs. In
-// 'inngest' mode it forwards each event to the durable engine (which owns the
-// backlog); in 'direct' and 'dbos' modes it runs the same graph in-process under
-// a bounded worker pool, so backlog surfaces as Kafka consumer lag. 'direct' has
-// no durability; 'dbos' checkpoints each step to Postgres (in-process, no engine
-// round-trip) — the load test compares the two engines' cost.
+// The dispatch role turns ingested device events into workflow runs: 'inngest' forwards to the durable engine; 'direct'/'dbos' run the graph in-process under a bounded worker pool ('direct' non-durable, 'dbos' checkpoints to Postgres).
 export const startDispatch = async (deps: {
   db: DatabaseClient;
   queue: DeviceEventQueue;

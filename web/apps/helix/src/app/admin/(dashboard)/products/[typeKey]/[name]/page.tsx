@@ -56,9 +56,7 @@ const ProductLinePage = async ({
         </div>
       </div>
 
-      {/* Current head release per channel — what each channel currently serves
-          (the release_channel_head pointer), which is not necessarily the newest
-          version in the table below. */}
+      {/* Head release per channel (release_channel_head pointer), not necessarily the newest. */}
       {line.channelHeads.length > 0 ? (
         <div className="shrink-0">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">

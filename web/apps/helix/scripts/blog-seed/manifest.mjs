@@ -1,10 +1,4 @@
-// Blog seed manifest. Each entry's `file` is a GitHub-flavored MDX document (the
-// article body, no h1 — the title is rendered separately) under ./posts/. It is
-// compiled at request time by src/lib/blog-mdx.ts. The seed script
-// (seed.mjs) upserts these into the `post` table keyed by `slug`.
-//
-// Posts are ordered newest-first; publishedAt is spaced backwards from BASE_DATE
-// in seed.mjs so the blog index shows a realistic timeline.
+// Blog seed manifest; each `file` is an MDX body under ./posts/, seeded newest-first (publishedAt spaced backwards from BASE_DATE in seed.mjs).
 export const posts = [
   {
     slug: 'flash-esp32-from-your-browser-with-web-serial',

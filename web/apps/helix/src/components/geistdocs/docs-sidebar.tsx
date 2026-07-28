@@ -36,8 +36,6 @@ const getDefaultOpen = (pathname: string): number => {
   return index === -1 ? 0 : index;
 };
 
-// ─── Version row (static — Helix docs are unversioned) ───────────────────────
-
 const VersionRow = () => (
   <div className="border-foreground/5 flex items-center gap-2 border-b px-4 py-[9px]">
     <svg
@@ -57,8 +55,6 @@ const VersionRow = () => (
     </span>
   </div>
 );
-
-// ─── Search row ──────────────────────────────────────────────────────────────
 
 const SearchRow = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { setOpenSearch } = useSearchContext();
@@ -91,8 +87,6 @@ const SearchRow = ({ onNavigate }: { onNavigate?: () => void }) => {
     </button>
   );
 };
-
-// ─── Section item ────────────────────────────────────────────────────────────
 
 const SidebarSection = ({
   section,
@@ -135,8 +129,6 @@ const SidebarSection = ({
   </div>
 );
 
-// ─── Footer ──────────────────────────────────────────────────────────────────
-
 const SidebarFooter = () => (
   <div className="border-foreground/5 text-foreground/40 flex items-center gap-1 border-t p-2">
     <a
@@ -154,16 +146,13 @@ const SidebarFooter = () => (
   </div>
 );
 
-// ─── Sidebar body (shared by desktop aside + mobile sheet) ───────────────────
-
 const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
   const pathname = usePathname();
   const [currentOpen, setCurrentOpen] = useState(() => getDefaultOpen(pathname));
   const [trackedPath, setTrackedPath] = useState(pathname);
   const navRef = useRef<HTMLElement>(null);
 
-  // Re-open the section for the active page when navigating (the React-approved
-  // "adjust state during render" pattern — no effect, no cascading render).
+  // Re-open the active section on navigation via the "adjust state during render" pattern.
   if (pathname !== trackedPath) {
     setTrackedPath(pathname);
     setCurrentOpen(getDefaultOpen(pathname));
@@ -235,8 +224,6 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
     </>
   );
 };
-
-// ─── Public component ────────────────────────────────────────────────────────
 
 export const DocsSidebar = () => {
   const { isOpen, setIsOpen } = useSidebarContext();

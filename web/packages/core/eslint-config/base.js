@@ -9,11 +9,7 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import turboPlugin from 'eslint-plugin-turbo';
 import tseslint from 'typescript-eslint';
 
-/**
- * A shared ESLint configuration for the repository.
- *
- * @type {import("eslint").Linter.Config}
- * */
+/** Shared ESLint configuration for the repository. @type {import("eslint").Linter.Config} */
 export const config = [
   js.configs.recommended,
   eslintConfigPrettier,
@@ -30,7 +26,6 @@ export const config = [
     rules: {
       'turbo/no-undeclared-env-vars': 'warn',
 
-      // TypeScript rules
       '@typescript-eslint/ban-ts-comment': [
         'error',
         {
@@ -83,7 +78,6 @@ export const config = [
       ],
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
 
-      // Core JavaScript/Style rules
       'array-bracket-spacing': ['error', 'never'],
       'arrow-parens': ['error', 'always'],
       'comma-dangle': ['error', 'always-multiline'],
@@ -181,7 +175,6 @@ export const config = [
       ],
       yoda: 'error',
 
-      // Promise rules
       'promise/always-return': 'error',
       'promise/avoid-new': 'off',
       'promise/catch-or-return': 'error',
@@ -194,7 +187,6 @@ export const config = [
       'promise/param-names': 'error',
       'promise/valid-params': 'error',
 
-      // Security rules
       'security/detect-buffer-noassert': 'error',
       'security/detect-child-process': 'error',
       'security/detect-disable-mustache-escape': 'error',
@@ -205,7 +197,6 @@ export const config = [
       'security/detect-object-injection': 'off',
       'security/detect-unsafe-regex': 'error',
 
-      // SonarJS rules
       'sonarjs/cognitive-complexity': ['off', 15],
       'sonarjs/different-types-comparison': 'warn',
       'sonarjs/function-return-type': 'off',
@@ -235,7 +226,6 @@ export const config = [
       'sonarjs/pseudo-random': 'warn',
       'sonarjs/table-header': 'warn',
 
-      // Import rules
       'import/extensions': [
         'error',
         'never',

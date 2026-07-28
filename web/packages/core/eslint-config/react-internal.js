@@ -10,10 +10,7 @@ import tseslint from 'typescript-eslint';
 
 import { config as baseConfig } from './base.js';
 
-/**
- * A custom ESLint configuration for libraries that use React.
- *
- * @type {import("eslint").Linter.Config} */
+/** ESLint configuration for libraries that use React. @type {import("eslint").Linter.Config} */
 export const config = [
   ...baseConfig,
   js.configs.recommended,
@@ -42,16 +39,13 @@ export const config = [
     rules: {
       ...pluginReactHooks.configs.recommended.rules,
 
-      // React scope no longer necessary with new JSX transform
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'warn',
 
-      // React Hooks rules
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/refs': 'off',
       'react-hooks/rules-of-hooks': 'error',
 
-      // JSX rules
       'react/jsx-boolean-value': ['error', 'never'],
       'react/jsx-curly-brace-presence': [
         'error',
@@ -84,7 +78,6 @@ export const config = [
         },
       ],
 
-      // React component rules
       'react/no-array-index-key': 'error',
       'react/no-danger': 'warn',
       'react/no-unsafe': 'error',
@@ -92,7 +85,6 @@ export const config = [
       'react/self-closing-comp': 'error',
       'react/void-dom-elements-no-children': 'error',
 
-      // JSX A11y rules
       'jsx-a11y/alt-text': 'error',
       'jsx-a11y/anchor-has-content': 'error',
       'jsx-a11y/anchor-is-valid': 'error',

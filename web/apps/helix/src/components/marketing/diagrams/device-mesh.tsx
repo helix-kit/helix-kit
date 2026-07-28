@@ -1,9 +1,5 @@
 import { Cpu, Server, Smartphone } from 'lucide-react';
 
-/* An isometric "device room": a wireframe perspective box with glowing device
- * nodes wired to a central hub. Connection lines pulse with flowing energy and
- * nodes gently float. All motion is CSS (always runs; stops under reduced motion). */
-
 const nodes = [
   { id: 'a', Icon: Cpu, left: '50%', top: '22%', x: 200, y: 70, delay: 0 },
   { id: 'b', Icon: Server, left: '22%', top: '72%', x: 88, y: 232, delay: 0.4 },
@@ -21,7 +17,6 @@ export const DeviceMesh = () => (
         </filter>
       </defs>
 
-      {/* floor glow */}
       <ellipse
         cx="200"
         cy="250"
@@ -32,14 +27,12 @@ export const DeviceMesh = () => (
         ry="26"
       />
 
-      {/* perspective wireframe box */}
       <g opacity="0.35" stroke="var(--color-border)" strokeWidth="1">
         <path d="M28 34 L372 34 L372 286 L28 286 Z" />
         <path d="M140 108 L260 108 L260 208 L140 208 Z" opacity="0.7" />
         <path d="M28 34 L140 108 M372 34 L260 108 M372 286 L260 208 M28 286 L140 208" />
       </g>
 
-      {/* connection lines with flowing energy */}
       {nodes.map((n) => (
         <line
           key={n.id}
@@ -56,7 +49,6 @@ export const DeviceMesh = () => (
       ))}
     </svg>
 
-    {/* central hub */}
     <div
       className="absolute"
       style={{ left: '50%', top: '54%', transform: 'translate(-50%,-50%)' }}
@@ -66,7 +58,6 @@ export const DeviceMesh = () => (
       </div>
     </div>
 
-    {/* device nodes — outer div centers, inner div floats via CSS */}
     {nodes.map((n) => (
       <div
         key={n.id}

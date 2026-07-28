@@ -6,8 +6,7 @@ import { type RoleCloser } from './roles';
 import { env } from '../env';
 import { buildEventIngestionMqttClient, closeMqttClient } from '../mqtt';
 
-// The ingest role subscribes to device event topics over a durable MQTT 5
-// session and micro-batches the raw bytes into the Kafka event queue.
+// Subscribes to device event topics over durable MQTT 5 and micro-batches bytes into Kafka.
 export const startIngest = async (deps: { queue: DeviceEventQueue }): Promise<RoleCloser> => {
   const eventIngestionClient = await buildEventIngestionMqttClient();
   attachDeviceEventIngestion({

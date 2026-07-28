@@ -1,8 +1,4 @@
-// @helix/protocol-stream — HelixStream: a transport-agnostic multiplexer that
-// carries many bidirectional byte streams over one binary connection. It is the
-// TypeScript peer of linux/device/go/internal/stream and is byte-compatible
-// with it. Used server-side (the gateway) to bridge browser/subdomain traffic
-// to a device's data-plane connection.
+// @helix/protocol-stream — HelixStream: transport-agnostic multiplexer for many bidirectional byte streams over one binary connection; byte-compatible TS peer of linux/device/go/internal/stream.
 
 export {
   FRAME_HEADER,

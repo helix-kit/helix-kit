@@ -4,10 +4,7 @@ import { runWorkflowWithSteps, type StepTools } from './executor';
 import { DEVICE_EVENT_WORKFLOW } from './graph';
 import { type WorkflowDeps, type WorkflowRunOutcome, type WorkflowTriggerData } from './types';
 
-// StepTools backed by DBOS.runStep — the SAME graph executor drives both Inngest
-// and DBOS; only the durable-step backend differs. The crucial difference from
-// Inngest: DBOS runs in *this* Node process, so a step is an in-process call that
-// checkpoints to Postgres — no HTTP round-trip to a separate engine per step.
+// Unlike Inngest, DBOS runs in-process: a step checkpoints to Postgres directly, no HTTP round-trip.
 const dbosStep: StepTools = {
   run: <T>(id: string, handler: () => Promise<T> | T): Promise<T> =>
     DBOS.runStep<T>(async () => handler(), { name: id }),
@@ -15,9 +12,7 @@ const dbosStep: StepTools = {
 
 let registeredWorkflow: ((data: WorkflowTriggerData) => Promise<WorkflowRunOutcome>) | null = null;
 
-// Configure + register the workflow, then launch DBOS (which connects to the
-// system database and runs its own schema migrations). Call once at startup
-// before running any workflow.
+// Call once at startup, before running any workflow.
 const DEFAULT_SYSTEM_DB_POOL_SIZE = 100;
 
 export const initDbosWorkflow = async (params: {
@@ -29,11 +24,9 @@ export const initDbosWorkflow = async (params: {
   DBOS.setConfig({
     name: 'helix-workflow',
     systemDatabaseUrl: params.systemDatabaseUrl,
-    // DBOS keeps its checkpoint tables in this schema of the given database, so it
-    // can share the app's Postgres (a dedicated schema, not a separate database).
+    // Dedicated schema in the app's Postgres, not a separate database.
     systemDatabaseSchemaName: params.systemDatabaseSchema ?? 'dbos',
-    // The connection pool bounds how many checkpoint writes run concurrently — a
-    // small pool serializes runs even when CPU/Postgres are idle.
+    // A small pool serializes runs even when CPU/Postgres are idle.
     systemDatabasePoolSize: params.systemDatabasePoolSize ?? DEFAULT_SYSTEM_DB_POOL_SIZE,
   });
   registeredWorkflow = DBOS.registerWorkflow(

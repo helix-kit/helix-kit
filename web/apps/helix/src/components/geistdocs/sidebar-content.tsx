@@ -2,9 +2,7 @@ import { BookOpen, Boxes, Cable, Network, Rocket } from 'lucide-react';
 
 import type { LucideIcon } from 'lucide-react';
 
-// Hand-authored docs navigation, mirroring the better-auth docs sidebar model:
-// each section is a collapsible accordion with an icon, and each page is an item
-// with its own icon. Keep this in sync with content/docs/meta.json.
+// Hand-authored docs navigation; keep in sync with content/docs/meta.json.
 export interface DocsListItem {
   title: string;
   href: string;

@@ -53,8 +53,6 @@ type Transfer = {
   error?: string;
 };
 
-// What a transfer reads as: its error if it failed, else bytes moved (of the total
-// when we know it).
 const transferLabel = (item: Transfer): string => {
   if (item.error !== undefined) {
     return item.error;
@@ -63,8 +61,7 @@ const transferLabel = (item: Transfer): string => {
   return item.total > 0 ? `${moved} / ${fmtBytes(item.total)}` : moved;
 };
 
-// Progress bar width. A transfer whose total we don't know (0) shows nothing until
-// it completes, rather than a bar that lies about how far along it is.
+// A transfer of unknown total (0) shows nothing until it completes, not a lying bar.
 const progressPercent = (item: Transfer): number => {
   if (item.total > 0) {
     return Math.min(PERCENT, (item.bytes / item.total) * PERCENT);

@@ -5,8 +5,6 @@ const sortingState = z.array(z.object({ id: z.string(), desc: z.boolean() }));
 
 const DEFAULT_PAGE_SIZE = 10;
 
-// Keys mirror the builds table's column ids and the `releases.builds.list`
-// tRPC input (typeKey/source/status).
 export const buildsSearchParsers = {
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),

@@ -4,9 +4,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 import { createPortal } from 'react-dom';
 
-// A slot in a parent-mounted header that child surfaces can render into, so a
-// full-bleed app (e.g. the shell) can put its controls/stats in the app header
-// instead of eating terminal space. Ported from Fluxery's header-portal pattern.
+// A slot in a parent-mounted header that child surfaces can render into, so a full-bleed app can put controls in the app header.
 type HeaderPortalContextValue = {
   portalRef: HTMLElement | null;
   setPortalRef: (ref: HTMLElement | null) => void;

@@ -17,11 +17,7 @@ const MQTT_QOS_AT_LEAST_ONCE = 1;
 const DEFAULT_BATCH_SIZE = 500;
 const DEFAULT_FLUSH_INTERVAL_MS = 5;
 
-// Bridges device event messages from MQTT into the durable Kafka queue. Incoming
-// events are micro-batched and flushed as a single multi-message produce (on a
-// short timer or when the batch fills) so the per-message produce cost is
-// amortized; the writer consumes the queue and persists to the database.
-// Resubscribes on every (re)connect so a dropped broker connection self-heals.
+// Bridges MQTT device events into the durable Kafka queue, micro-batched to amortize produce cost.
 export const attachDeviceEventIngestion = (options: DeviceEventIngestionBridgeOptions): void => {
   const { mqttClient, queue, logger } = options;
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;

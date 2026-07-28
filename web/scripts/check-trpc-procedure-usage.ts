@@ -2,10 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// typescript@7 (native Go compiler, see web/pnpm-workspace.yaml) no longer ships
-// the classic JS compiler API this analyzer needs (ts.createSourceFile,
-// ts.SyntaxKind, ...) — same constraint as the lint toolchain, so we pull in
-// the aliased classic line instead of the root `typescript` devDependency.
+// typescript@7 (native Go compiler) dropped the classic JS compiler API this
+// analyzer needs, so we import the aliased classic line.
 import ts from 'typescript-classic';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -116,11 +114,8 @@ const DEFAULT_CONFIG: UsageConfig = {
   manualUsages: [],
   reportJsonPath: '../reports/trpc-procedure-usage.json',
   reportMarkdownPath: '../reports/trpc-procedure-usage.md',
-  // Roots that mount a served/consumed tRPC router: createRootRouter(...) calls,
-  // fetchRequestHandler/createOpenApiHttpHandler({ router }) call sites, and
-  // t.createCallerFactory(...) call sites are auto-discovered here — no
-  // hand-maintained entrypoint list, so a newly-composed root is picked up the
-  // next time this runs without a config change.
+  // Router mount points (createRootRouter, handler `router:` args, createCallerFactory)
+  // are auto-discovered under these roots — no hand-maintained entrypoint list.
   rootScanRoots: ['apps'],
   usageRoots: ['apps', 'packages', '../tests/e2e', '../tooling', '../cloud'],
 };
@@ -384,11 +379,8 @@ const getProcedureOpenApiMeta = (expression: ts.Expression): OpenApiMeta | null 
   return null;
 };
 
-/**
- * Resolve a module specifier (relative, `@/*` app alias, or a `@helix/*`
- * package import backed by that package's `exports` map) to candidate
- * absolute file paths.
- */
+// Resolve a module specifier (relative, `@/*` alias, or `@helix/*` package) to
+// candidate absolute file paths.
 const resolveImportPath = (
   fromFile: string,
   moduleSpecifier: string,
@@ -446,10 +438,8 @@ const toPackageSubpath = (packageName: string, specifier: string): string | null
   return `./${specifier.slice(packageName.length + 1)}`;
 };
 
-/**
- * Find the app root (the parent of the nearest ancestor `src/` directory) so
- * `@/*` aliases can be resolved without parsing each app's tsconfig paths.
- */
+// App root = parent of the nearest ancestor `src/`, so `@/*` aliases resolve
+// without parsing each app's tsconfig paths.
 const findAppRoot = (fromFile: string): string | null => {
   let currentDir = path.dirname(fromFile);
   let parentDir = path.dirname(currentDir);
@@ -479,10 +469,8 @@ const findExistingFile = async (candidates: string[]): Promise<string | null> =>
   return null;
 };
 
-/**
- * Index every `@helix/*` package's dev `exports` map so bare-specifier
- * imports (e.g. `@helix/backend/blog`) can be resolved to source files.
- */
+// Index every `@helix/*` package's `exports` map so bare-specifier imports
+// resolve to source files.
 const buildPackageIndex = async (): Promise<Map<string, PackageInfo>> => {
   const index = new Map<string, PackageInfo>();
   for (const packagesRoot of ['packages/core', 'packages/protocol']) {
@@ -591,7 +579,6 @@ class RouterAnalyzer {
           continue;
         }
         if (statement.exportClause === undefined) {
-          // export * from './module'
           info.starExportFiles.push(referencedFile);
         } else if (ts.isNamedExports(statement.exportClause)) {
           for (const element of statement.exportClause.elements) {
@@ -628,10 +615,7 @@ class RouterAnalyzer {
     return info;
   }
 
-  /**
-   * Follow local exports and `export {} from`/`export *` re-export chains to
-   * the expression that actually initializes `name` in `file`.
-   */
+  // Follow local exports and re-export chains to the expression that initializes `name`.
   async resolveExport(file: string, name: string, depth = 0): Promise<ResolvedIdentifier | null> {
     if (depth > MAX_RESOLUTION_DEPTH) {
       return null;
@@ -653,10 +637,7 @@ class RouterAnalyzer {
     return null;
   }
 
-  /**
-   * Resolve an identifier used in `file` to its defining expression, whether
-   * it was imported from elsewhere or declared/exported locally.
-   */
+  // Resolve an identifier in `file` to its defining expression, imported or local.
   async resolveIdentifier(file: string, name: string): Promise<ResolvedIdentifier | null> {
     const moduleInfo = await this.getModuleInfo(file);
     const imported = moduleInfo.imports.get(name);
@@ -667,8 +648,7 @@ class RouterAnalyzer {
     if (exported !== null) {
       return exported;
     }
-    // Fall back to a function-scoped `const name = ...` (e.g. a router built
-    // inline inside a handler-construction function, never exported).
+    // Fall back to a function-scoped `const name = ...` (e.g. an inline, never-exported router).
     return this.findLocalDeclaration(file, name);
   }
 
@@ -696,12 +676,8 @@ class RouterAnalyzer {
     return found;
   }
 
-  /**
-   * Unwrap an expression down to the `t.router({...})` shape object it
-   * ultimately produces — following identifiers, `createRouterFactory<T>()(fn)`
-   * currying, arrow/function bodies, and `createRootRouter({...})` /
-   * `t.router({...})` calls.
-   */
+  // Unwrap an expression down to the `t.router({...})` shape object it produces,
+  // following identifiers, factory currying, and function bodies.
   async resolveRouterShape(
     file: string,
     expression: ts.Expression,
@@ -792,9 +768,7 @@ class RouterAnalyzer {
         return this.resolveRouterShape(file, factoryArgument, depth + 1);
       }
 
-      // Direct invocation of an already-fully-applied factory value, e.g.
-      // `blogPublicRouter(t)` where `blogPublicRouter` is itself
-      // `createRouterFactory<Ctx>()((t) => t.router({...}))` — resolve the
+      // Direct invocation of an already-fully-applied factory value: resolve the
       // callee and descend into what it evaluates to, ignoring call arguments.
       if (ts.isIdentifier(callee)) {
         const resolvedCallee = await this.resolveIdentifier(file, callee.text);
@@ -819,10 +793,7 @@ class RouterAnalyzer {
     return null;
   }
 
-  /**
-   * Walk a resolved `t.router({...})` shape object, recording procedure
-   * leaves and recursing into nested/mounted sub-routers.
-   */
+  // Walk a resolved router shape, recording procedure leaves and recursing into sub-routers.
   async walkRouterShape(
     file: string,
     shapeNode: ts.ObjectLiteralExpression,
@@ -874,11 +845,7 @@ class RouterAnalyzer {
     }
   }
 
-  /**
-   * Discover every place a router tree is actually mounted/served/called —
-   * `createRootRouter({...})`, `fetchRequestHandler`/`createOpenApiHttpHandler`
-   * `router:` arguments, and `t.createCallerFactory(...)` — and walk each one.
-   */
+  // Discover every place a router tree is mounted/served/called and walk each one.
   discoverRootsInFile(sourceFile: ts.SourceFile): void {
     const file = sourceFile.fileName;
 
@@ -990,11 +957,8 @@ const collectCallExpressionUsages = (
           }
         }
       } else if (chain !== null && terminal !== undefined && proceduresByPath.has(terminal)) {
-        // A root-level procedure invoked directly through a tRPC server
-        // caller (t.createCallerFactory) has no .query/.mutate/.useQuery
-        // suffix — it's just `caller.procedureName(...)`. `terminal` can
-        // only collide with a procedure path here when that path has no
-        // mount-key prefix, i.e. is exactly this shape.
+        // A root-level procedure invoked directly through a server caller has no
+        // .query/.mutate suffix — it's just `caller.procedureName(...)`.
         usagesByPath.get(terminal)?.push({
           kind: 'direct-call',
           location: getNodeLocation(sourceFile, node.expression),

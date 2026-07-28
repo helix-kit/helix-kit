@@ -7,9 +7,6 @@ import {
 
 import { env } from '../env';
 
-// Shared construction for the dispatch + workflow roles so both agree on the
-// Inngest wiring, run mode, gate threshold, and fake node latencies.
-
 export const buildInngestClient = (): WorkflowInngestClient =>
   createInngestClient({
     baseUrl: env.INNGEST_BASE_URL,

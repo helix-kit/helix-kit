@@ -21,8 +21,7 @@ const presignSchema = z.object({
   headers: z.record(z.string(), z.string()),
 });
 
-// Content-addressed presign: return the CAS key; only hand out a PUT URL if the
-// blob is not already stored (dedupe).
+// Content-addressed presign: return the CAS key; only hand out a PUT URL if not already stored.
 const presignBlob = async (
   storage: StorageProvider,
   sha256: string,
@@ -120,8 +119,7 @@ const toDescriptor = (
   })),
 });
 
-// Context for the public release/build control-plane API (CI + build-callback +
-// admin triggers). Auth is per-procedure via bearer tokens read from headers.
+// Context for the public release/build control-plane API; auth is per-procedure via bearer tokens.
 export type ReleasesApiContext = Readonly<{
   db: DatabaseClient;
   storage: StorageProvider;
@@ -141,7 +139,6 @@ const readBearer = (headers: Headers): string | null => {
 export const releasesApiRouter = createRouterFactory<ReleasesApiContext>()((t) => {
   const { procedure, router } = t;
   return router({
-    // --- CI plane (scoped ci_token) ---
     ciArtifactUploadUrl: procedure
       .meta({ openapi: { method: 'POST', path: '/api/ci/artifacts/upload-url' } })
       .input(
@@ -174,7 +171,6 @@ export const releasesApiRouter = createRouterFactory<ReleasesApiContext>()((t) =
         });
       }),
 
-    // --- Custom build request (Tier-0 dedupe by config_hash) ---
     buildsRequest: procedure
       .meta({ openapi: { method: 'POST', path: '/api/builds/request' } })
       .input(
@@ -196,13 +192,9 @@ export const releasesApiRouter = createRouterFactory<ReleasesApiContext>()((t) =
       )
       .mutation(async ({ ctx, input }) => {
         await verifyCiToken(ctx.db, readBearer(ctx.headers), { typeKey: input.typeKey });
-        // Shared Tier-0 request core. The caller (a CLI, the admin build UI, or a
-        // real CI worker) is responsible for dispatching the returned build id +
-        // callback token to a build worker.
         return requestBuild(ctx.db, input);
       }),
 
-    // --- Build worker callbacks (per-build token) ---
     buildArtifactUrl: procedure
       .meta({ openapi: { method: 'POST', path: '/api/build/artifact-url' } })
       .input(
@@ -268,7 +260,6 @@ export const releasesApiRouter = createRouterFactory<ReleasesApiContext>()((t) =
         return { ok: true, releaseId: result.releaseId };
       }),
 
-    // --- OTA trigger (admin/ci) ---
     otaTrigger: procedure
       .meta({ openapi: { method: 'POST', path: '/api/ota/trigger' } })
       .input(z.object({ deviceId: z.string() }))

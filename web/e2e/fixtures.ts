@@ -1,7 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks -- `use` here is the Playwright fixture callback, not the React hook */
-// Persistent bundled-Chromium context from a repo-local profile. The persisted
-// per-origin grant is what lets real navigator.serial reconnect without the
-// native port-picker dialog (grant once via `npm run grant`).
+// Persistent Chromium profile: the persisted per-origin grant lets navigator.serial reconnect without the port-picker dialog (grant once via `npm run grant`).
 import { test as base, chromium, type BrowserContext, type Page } from '@playwright/test';
 
 import { BROWSER_PROFILE_DIR, HEADLESS } from './serial/config';

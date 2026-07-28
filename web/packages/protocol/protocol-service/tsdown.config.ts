@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown';
 
-import { createEntriesFromPackageExports } from '../../../scripts/package-exports';
+import { createEntriesFromPackageExports } from '../../../scripts/package-exports.ts';
 
 export default defineConfig({
   clean: true,

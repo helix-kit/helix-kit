@@ -1,8 +1,6 @@
 export type RoleCloser = () => Promise<void>;
 
-// `dispatch` (Kafka -> Inngest / inline) and `workflow` (the Inngest serve
-// endpoint) are opt-in: they only run when named explicitly, so existing
-// deployments and load tests keep the historical gateway+ingest+writer topology.
+// `dispatch` and `workflow` are opt-in: they run only when named explicitly.
 const ROLES = ['gateway', 'ingest', 'writer', 'dispatch', 'workflow'] as const;
 const DEFAULT_ROLES = ['gateway', 'ingest', 'writer'] as const;
 type Role = (typeof ROLES)[number];

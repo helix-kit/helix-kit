@@ -24,7 +24,6 @@ type ResolvedArtifact = Readonly<{
   typeKey: string;
 }>;
 
-// A profile_track row (drizzle-inferred shape).
 type Track = typeof profileTrack.$inferSelect;
 
 export type ResolvedTrackArtifact = Readonly<{
@@ -36,11 +35,9 @@ export type ResolvedTrackArtifact = Readonly<{
   sizeBytes: number | null;
 }>;
 
-// The rich resolution of a single track: which release + variant it lands on (or
-// why it doesn't), plus the artifacts that variant carries.
+// The resolution of a single track: which release + variant it lands on (or why it doesn't), plus its artifacts.
 export type TrackResolution = Readonly<{
-  // 'no-release' = no pin and no channel head; 'no-variant' = release found but no
-  // ready variant matches the selector; 'resolved' = fully resolved.
+  // 'no-release' = no pin and no channel head; 'no-variant' = release found but no ready variant matches the selector.
   status: 'resolved' | 'no-release' | 'no-variant';
   source: 'pinned' | 'channel' | null;
   release: Readonly<{
@@ -54,8 +51,7 @@ export type TrackResolution = Readonly<{
   artifacts: ResolvedTrackArtifact[];
 }>;
 
-// Resolve one track: pinned release or channel head → release → matching ready
-// variant (GIN `@>` containment on the selector) → its artifacts.
+// Resolve one track: pinned release or channel head → release → matching ready variant (GIN `@>` containment) → artifacts.
 export const resolveTrack = async (db: DatabaseClient, track: Track): Promise<TrackResolution> => {
   let releaseId: string | null = track.pinnedReleaseId;
   let source: 'pinned' | 'channel' | null = track.pinnedReleaseId === null ? null : 'pinned';
@@ -145,8 +141,7 @@ const tracksForDevice = async (db: DatabaseClient, deviceId: string): Promise<Tr
     );
 };
 
-// Every artifact a device is allowed to run: device → device_profile →
-// profile_track → resolveTrack → artifacts (the OTA/download authorization set).
+// Every artifact a device is allowed to run — the OTA/download authorization set.
 const resolveDeviceArtifacts = async (
   db: DatabaseClient,
   deviceId: string,
@@ -171,8 +166,7 @@ const resolveDeviceArtifacts = async (
   return resolved;
 };
 
-// The set of blob storage keys a device may fetch — the authorization set for the
-// profile-gated download session.
+// The set of blob storage keys a device may fetch — the authorization set for the profile-gated download session.
 export const resolveDeviceAllowedKeys = async (
   db: DatabaseClient,
   deviceId: string,
@@ -193,8 +187,7 @@ type OtaTarget = Readonly<{
   variantId: string;
 }>;
 
-// The OTA update target for a device: the resolved `app` blob (path + sha256 +
-// version) that the OTA producer advertises and the device then fetches.
+// The OTA update target for a device: the resolved `app` blob the producer advertises and the device fetches.
 export const resolveOtaTarget = async (
   db: DatabaseClient,
   deviceId: string,
@@ -218,8 +211,7 @@ export const resolveOtaTarget = async (
   };
 };
 
-// Per-track resolution for a whole profile — backs the admin "what does this
-// profile resolve to" preview.
+// Per-track resolution for a whole profile — backs the admin "what does this profile resolve to" preview.
 export const resolveProfileTracks = async (
   db: DatabaseClient,
   profileId: string,

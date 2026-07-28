@@ -2,9 +2,7 @@ import { LinuxPortForwardSurface } from './surface';
 
 import type { DeviceApp } from '../types';
 
-// The Linux port-forward app — expose a service reachable from a Linux device at
-// a public `<session>.port.<domain>` URL, tunnelled over the Helix data plane.
-// Gated on the `linux-port-forward` device feature.
+// The Linux port-forward app: expose a device-local service at a public `<session>.port.<domain>` URL over the Helix data plane.
 export const linuxPortForwardApp: DeviceApp = {
   slug: 'linux-port-forward',
   title: 'Port forward',

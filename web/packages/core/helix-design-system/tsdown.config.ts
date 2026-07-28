@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { defineConfig } from 'tsdown';
 
-import { createEntriesFromPackageExports } from '../../../scripts/package-exports';
+import { createEntriesFromPackageExports } from '../../../scripts/package-exports.ts';
 
 type PackageJsonDependencies = {
   dependencies?: Record<string, string>;

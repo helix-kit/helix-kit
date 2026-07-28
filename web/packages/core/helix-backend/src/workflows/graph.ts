@@ -3,14 +3,7 @@ import { type WorkflowGraph, type WorkflowNode } from './types';
 const syncNode = (id: string, type: string): WorkflowNode => ({ id, type, kind: 'sync' });
 const asyncNode = (id: string, type: string): WorkflowNode => ({ id, type, kind: 'async' });
 
-// The hardcoded device-event automation used by the load test. Six nodes,
-// three sync (batched into one durable step) then three async (one durable step
-// each), modelling: event arrives -> normalize + if/else gate -> query the
-// device's recent events (fast) -> summarize with an LLM (slow, ~5s) -> deliver
-// a notification (fast, and record the terminal result).
-//
-//   trigger ─> normalize ─> gate ─> query-events ─> summarize ─> notify
-//   └────────── sync chain ────────┘ └──────────── async steps ───────────┘
+// Hardcoded six-node device-event graph used by the load test: three sync nodes then three async nodes.
 // Node ids, named once so each literal is not duplicated across nodes + edges.
 const ID = {
   trigger: 'trigger',

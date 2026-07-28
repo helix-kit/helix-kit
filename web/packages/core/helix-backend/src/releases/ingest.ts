@@ -101,8 +101,7 @@ const toAdapterArtifact = (input: IngestArtifact): AdapterArtifact => {
   };
 };
 
-// Select-then-insert keeps artifact rows unique without fighting partial-index
-// ON CONFLICT inference; blob bytes are immutable per sha256 so this is safe.
+// Select-then-insert keeps artifact rows unique without fighting partial-index ON CONFLICT inference.
 const upsertArtifact = async (tx: Tx, typeKey: string, input: IngestArtifact): Promise<string> => {
   if (isRefArtifact(input)) {
     const [existing] = await tx
@@ -295,9 +294,7 @@ const publishRelease = async (
   }
 };
 
-// The single ingestion path for BOTH CI register (owner=null, source='ci') and
-// custom-build callback (owner set, source='custom'). Idempotent on the natural
-// keys (sha256 / type+name+version / release+selectorHash / variant+role).
+// The single ingestion path for both CI register and custom-build callback; idempotent on natural keys.
 export const ingestRelease = async (
   db: DatabaseClient,
   descriptor: IngestReleaseDescriptor,

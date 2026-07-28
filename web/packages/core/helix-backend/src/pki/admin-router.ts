@@ -8,19 +8,14 @@ import type { DatabaseClient } from '../db';
 import { deviceCertificate } from '../db/schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin surface for the device-certificate lifecycle: list every certificate
-// issued to a device (with issuance / expiry timestamps + current state) and
-// revoke one. Revocation is native — it calls step-ca's /1.0/revoke so the
-// serial lands on the CRL that mosquitto and the mTLS gateway enforce — and
-// records the revocation in the device_certificate row for the admin UI.
+// Admin surface for the device-certificate lifecycle: list + revoke via step-ca's native /1.0/revoke, which lands the serial on the CRL mosquitto and the mTLS gateway enforce.
 export type CertificatesAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type CertificatesAdminContext = Readonly<{
   db: DatabaseClient;
   user: CertificatesAdminSessionUser | null;
   adminRoles: readonly string[];
-  // Absent when the app has no step-ca wiring (e.g. env unset). Listing still
-  // works; revoke throws a clear PRECONDITION_FAILED.
+  // Absent when the app has no step-ca wiring; listing still works, revoke throws PRECONDITION_FAILED.
   stepCaSettings: StepCaSettings | null;
 }>;
 
@@ -46,8 +41,7 @@ export const deviceCertificatesAdminRouter = createRouterFactory<CertificatesAdm
   });
 
   return t.router({
-    // Every certificate issued to a device, newest first. `state` folds the
-    // stored status together with expiry so the UI needs no clock logic.
+    // Every certificate issued to a device, newest first; `state` folds status + expiry so the UI needs no clock logic.
     list: adminProcedure
       .input(z.object({ deviceId: z.string().min(1) }))
       .query(async ({ ctx, input }) => {
@@ -75,9 +69,7 @@ export const deviceCertificatesAdminRouter = createRouterFactory<CertificatesAdm
         }));
       }),
 
-    // Revoke a certificate: mark the row revoked, then tell step-ca to add the
-    // serial to the CRL. step-ca is authoritative for the CRL, so we call it
-    // even for an already-expired cert to keep the two stores consistent.
+    // step-ca is authoritative for the CRL, so revoke calls it even for an already-expired cert.
     revoke: adminProcedure
       .input(
         z.object({

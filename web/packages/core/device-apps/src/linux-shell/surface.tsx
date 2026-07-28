@@ -10,11 +10,8 @@ import { getStreamConfig } from '../data-plane';
 import { StreamTerminal } from '../shared/terminal';
 import { useClientOnly } from '../use-client-only';
 
-// The Linux remote-shell surface: a full terminal to the device over the Helix
-// gateway (control) + data plane (bytes, relayed or peer-to-peer). Gated on the
-// `linux-shell` feature.
+// The Linux remote-shell surface: a full terminal to the device over the Helix gateway + data plane.
 export const LinuxShellSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
-  // null on the server and during hydration, then the browser-derived URLs.
   const config = useClientOnly(getStreamConfig);
 
   if (config === null) {

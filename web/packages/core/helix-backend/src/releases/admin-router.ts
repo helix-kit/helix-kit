@@ -16,20 +16,14 @@ import {
 } from '../db/release-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin (sysadmin) read surface over the release control plane: product lines,
-// releases + variants/artifacts, and custom-build history. Distinct from
-// `releasesApiRouter`, which is the machine-facing CI/build API authed by bearer
-// tokens; this router is authed by the consuming app's session/role, mirroring
-// `blogAdminRouter`.
+// Admin (sysadmin) read surface over the release control plane, authed by session/role (unlike the bearer-token `releasesApiRouter`).
 export type ReleasesAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type ReleasesAdminContext = Readonly<{
   db: DatabaseClient;
   user: ReleasesAdminSessionUser | null;
   adminRoles: readonly string[];
-  // The long-running build container's base URL (its GET /catalog + POST /build),
-  // and the release-backend base the worker calls back to ({url}/api/build/*) —
-  // which must be reachable *from the container*. Null when unconfigured.
+  // Build container base URL and the callback base it must reach; null when unconfigured.
   buildWorkerUrl: string | null;
   buildCallbackBaseUrl: string | null;
 }>;
@@ -93,8 +87,7 @@ const RELEASE_LIST_COLUMNS = {
   publishedAt: release.publishedAt,
 } as const;
 
-// Shared server-side paginated release list — the flat list and the per-line
-// list differ only in their `filters`.
+// Shared server-side paginated release list — the flat list and per-line list differ only in `filters`.
 const runReleaseList = async (
   db: DatabaseClient,
   filters: SQL[],
@@ -103,8 +96,7 @@ const runReleaseList = async (
   perPage: number,
 ) => {
   const where = filters.length > 0 ? and(...filters) : undefined;
-  // Aggregate + LEFT JOIN for the variant count — a correlated subquery in the
-  // select renders columns unqualified and mis-correlates.
+  // Aggregate + LEFT JOIN for the variant count — a correlated subquery here mis-correlates columns.
   const variantAgg = db
     .select({
       releaseId: variant.releaseId,
@@ -146,8 +138,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
     createdAt: build.createdAt,
   } as const;
 
-  // Product lines are grouped by (type_key, name) — the identity that ties every
-  // version of the same "thing" together.
+  // Product lines are grouped by (type_key, name) — the identity tying every version of the same "thing" together.
   const PRODUCT_SORTABLE = {
     name: release.name,
     typeKey: release.typeKey,
@@ -156,8 +147,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
   } as const;
 
   return t.router({
-    // Server-side paginated / filtered / sorted release list backing the admin
-    // DataTable. Filter + sort state arrives from the URL (nuqs) via the page.
+    // Server-side paginated / filtered / sorted release list backing the admin DataTable.
     list: adminProcedure
       .input(
         listInput.extend({
@@ -185,8 +175,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
         return runReleaseList(ctx.db, filters, input.sort, input.page, input.perPage);
       }),
 
-    // Facet option sources for the release list toolbar (artifact types + the
-    // set of channels that actually appear on releases).
+    // Facet option sources for the release list toolbar.
     filterOptions: adminProcedure.query(async ({ ctx }) => {
       const types = await ctx.db
         .select({ key: artifactType.key, displayName: artifactType.displayName })
@@ -199,8 +188,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
       return { types, channels: channelRows.map((row) => row.channel) };
     }),
 
-    // Release detail: the release row plus every variant and the artifacts each
-    // variant links (roles, storage mode, sha256/size or registry ref).
+    // Release detail: the release row plus every variant and the artifacts each variant links.
     getById: adminProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
       const [releaseRow] = await ctx.db
         .select()
@@ -253,9 +241,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
       };
     }),
 
-    // Product lines: every (type_key, name) with its release count, the channels
-    // it ships to, and its latest version — the top of the Products → line →
-    // release → detail drill-down.
+    // Product lines: the top of the Products → line → release → detail drill-down.
     products: t.router({
       list: adminProcedure
         .input(
@@ -285,8 +271,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
               channels: sql<
                 string[]
               >`array_agg(distinct ${release.channel} order by ${release.channel})`,
-              // Raw aggregates skip the column decoder, so map it back through
-              // the timestamp column or the driver returns a bare string.
+              // Raw aggregates skip the column decoder, so map it back through the timestamp column.
               latestCreatedAt: sql`max(${release.createdAt})`.mapWith(release.createdAt),
             })
             .from(release)
@@ -296,8 +281,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
             .limit(input.perPage)
             .offset((input.page - 1) * input.perPage);
 
-          // Latest version per line via distinct-on (a correlated subquery inside
-          // the grouped select does not render correctly through drizzle).
+          // Latest version per line via distinct-on (a correlated subquery here doesn't render correctly through drizzle).
           const latest = await ctx.db
             .selectDistinctOn([release.typeKey, release.name], {
               typeKey: release.typeKey,
@@ -329,8 +313,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
           return { rows, pageCount: Math.max(1, Math.ceil(total / input.perPage)) };
         }),
 
-      // Line summary: identity, status counts, the channels it ships to, and the
-      // current head release per channel. Returns null for an unknown line.
+      // Line summary: identity, status counts, channels, and the current head release per channel.
       get: adminProcedure
         .input(z.object({ typeKey: z.string(), name: z.string() }))
         .query(async ({ ctx, input }) => {
@@ -389,8 +372,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
           };
         }),
 
-      // The releases within one line — same shape/columns as the flat list, but
-      // scoped to an exact (type_key, name).
+      // The releases within one line — same shape as the flat list, scoped to an exact (type_key, name).
       releases: adminProcedure
         .input(
           listInput.extend({
@@ -474,14 +456,12 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
         return { types };
       }),
 
-      // Whether the custom-firmware builder is usable in this deployment (the
-      // build container + callback base are both configured).
+      // Whether the custom-firmware builder is usable in this deployment.
       serviceStatus: adminProcedure.query(({ ctx }) => ({
         configured: ctx.buildWorkerUrl !== null && ctx.buildCallbackBaseUrl !== null,
       })),
 
-      // The build-options catalog (apps/features/chips/...), proxied from the
-      // running build container so the option lists track the firmware sources.
+      // The build-options catalog, proxied from the running build container so option lists track firmware sources.
       catalog: adminProcedure.query(async ({ ctx }) => {
         if (ctx.buildWorkerUrl === null) {
           throw new TRPCError({
@@ -492,8 +472,7 @@ export const releasesAdminRouter = createRouterFactory<ReleasesAdminContext>()((
         return fetchCatalog(ctx.buildWorkerUrl);
       }),
 
-      // Request a custom firmware build: Tier-0 dedupe, then dispatch the queued
-      // build to the container, which builds and calls back to register a release.
+      // Request a custom firmware build: Tier-0 dedupe, then dispatch to the container, which calls back to register a release.
       request: adminProcedure.input(buildRequestInput).mutation(async ({ ctx, input }) => {
         if (ctx.buildWorkerUrl === null || ctx.buildCallbackBaseUrl === null) {
           throw new TRPCError({

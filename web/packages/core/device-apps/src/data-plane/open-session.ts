@@ -2,18 +2,12 @@ import { connectPeer, type IceServer } from '@helix/protocol-peer';
 
 import type { HelixStreamSession } from '@helix/protocol-stream';
 
-// Opening a data-plane session, over either transport, from the browser's side.
-//
-// The control-plane half is identical for both: `open` the app's session, then
-// attach. What differs is only how the bytes get there — and on the p2p path, the
-// extra WebRTC handshake that `open`'s response kicks off (the device is the
-// offerer, so its offer comes back IN that response).
+// Opening a data-plane session over either transport from the browser's side.
 
 export type DataPlaneTransport = 'relay' | 'p2p';
 
-// The subset of a typed device-service client this needs. Kept structural so it
-// works with any app's generated contract (shell, port-forward, files…) — they all
-// include the same `peer` contract fragment.
+// The subset of a typed device-service client this needs; structural so it works
+// with any app's generated contract.
 export type SessionService = Readonly<{
   request: (method: string, payload: unknown) => Promise<unknown>;
   subscribe: (
@@ -47,18 +41,11 @@ export type OpenedSession = Readonly<{
 
 const CANDIDATE_METHOD = 'candidate';
 
-// The device dials this to reach the gateway data plane. The URL may already carry
-// query params (a per-deployment override), so append rather than assume.
+// The URL may already carry query params, so append rather than assume.
 const withSession = (url: string, sessionId: string): string =>
   `${url}${url.includes('?') ? '&' : '?'}session=${encodeURIComponent(sessionId)}`;
 
-/**
- * Explain why `openSession` failed, in terms the operator can act on.
- *
- * The device answers `open` only if the app is actually running on it, so a timeout
- * here is far more often "that app isn't running on the device" than a network
- * fault. Surfacing the raw request-id timeout tells nobody anything.
- */
+/** Explain an openSession failure; a timeout usually means the app isn't running. */
 export const openFailureMessage = (error: unknown, appBinary: string): string => {
   const message = error instanceof Error ? error.message : String(error);
   if (message.toLowerCase().includes('timed out')) {
@@ -67,13 +54,7 @@ export const openFailureMessage = (error: unknown, appBinary: string): string =>
   return message;
 };
 
-/**
- * Ask the device to open a session and, for p2p, complete the WebRTC handshake.
- *
- * Resolves once the data plane is usable: for relay that is immediately after the
- * device has dialled the gateway; for p2p, once the DataChannel is open and the mux
- * is live.
- */
+/** Ask the device to open a session and, for p2p, complete the WebRTC handshake. */
 export const openSession = async (options: OpenSessionOptions): Promise<OpenedSession> => {
   if (options.transport === 'relay') {
     await options.service.request('open', {
@@ -93,8 +74,8 @@ export const openSession = async (options: OpenSessionOptions): Promise<OpenedSe
     };
   }
 
-  // The device answers `open` with its SDP offer, so one control-plane round trip
-  // both creates the session and starts the handshake.
+  // The device answers `open` with its SDP offer, so one round trip both creates the
+  // session and starts the handshake.
   const opened = (await options.service.request('open', {
     sessionId: options.sessionId,
     transport: 'p2p',
@@ -128,9 +109,7 @@ export const openSession = async (options: OpenSessionOptions): Promise<OpenedSe
               sessionId?: string;
               candidate?: string;
             };
-            // The gateway already routes a session's pushes to its owner, but a
-            // browser may own several sessions on one device (two terminals): only
-            // take the candidates for this one.
+            // A browser may own several sessions on one device: take only this one's candidates.
             if (payload.sessionId === options.sessionId && payload.candidate !== undefined) {
               handler(payload.candidate);
             }

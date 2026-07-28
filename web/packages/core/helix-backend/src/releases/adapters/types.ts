@@ -4,8 +4,7 @@ import { type StorageSignedRequest } from '../../storage/interface';
 
 export type Selector = Readonly<Record<string, unknown>>;
 
-// A variant's artifact as the adapter sees it (role + placement + the underlying
-// artifact row's storage fields), independent of drizzle row typing.
+// A variant's artifact as the adapter sees it, independent of drizzle row typing.
 export type AdapterArtifact = Readonly<{
   role: string;
   offset: string | null;
@@ -21,8 +20,7 @@ export type AdapterArtifact = Readonly<{
   metadata: unknown;
 }>;
 
-// What a consumer (device / CLI / UI) gets back from resolution — either signed
-// blob URLs or a registry coordinate + install instruction.
+// What a consumer gets back from resolution — either signed blob URLs or a registry coordinate.
 export type ConsumerInstruction =
   | Readonly<{
       mode: 'blob';

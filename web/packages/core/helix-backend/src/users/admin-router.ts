@@ -6,10 +6,7 @@ import type { DatabaseClient } from '../db';
 import { session, user } from '../db/auth-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin (sysadmin) read surface over the account directory. The *list* is a
-// Drizzle query here (paginated/filtered/sorted); user mutations (set role, ban,
-// delete, impersonate) go through the better-auth admin API on the client, which
-// handles session revocation and impersonation — mirroring a prior production system.
+// Admin (sysadmin) read surface: list is a Drizzle query here; user mutations (role/ban/delete/impersonate) go through the better-auth admin API client-side.
 export type UsersAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type UsersAdminContext = Readonly<{
@@ -133,8 +130,7 @@ export const usersAdminRouter = createRouterFactory<UsersAdminContext>()((t) => 
       return { roles: Array.from(new Set(roles)) };
     }),
 
-    // Assign a role. Done here (not via the better-auth client) so any app role
-    // is assignable — the better-auth client's role type is fixed to admin/user.
+    // Done here, not via the better-auth client, since its role type is fixed to admin/user.
     setRole: adminProcedure
       .input(z.object({ userId: z.string(), role: z.enum(['user', 'admin', 'sysadmin']) }))
       .mutation(async ({ ctx, input }) => {

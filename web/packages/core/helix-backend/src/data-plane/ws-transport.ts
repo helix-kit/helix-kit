@@ -1,11 +1,7 @@
 import type { StreamTransport } from '@helix/protocol-stream';
 import type { WebSocket } from 'ws';
 
-/**
- * Adapt a Node `ws` WebSocket to the HelixStream StreamTransport. The
- * HelixStreamSession guarantees one reader and serialized writes, matching
- * what `ws` expects.
- */
+/** Adapt a Node `ws` WebSocket to the HelixStream StreamTransport. */
 export const wsTransport = (socket: WebSocket): StreamTransport => {
   const transport: StreamTransport = {
     send: (data) => {

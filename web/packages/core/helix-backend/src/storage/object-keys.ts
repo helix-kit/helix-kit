@@ -6,8 +6,7 @@ const CAS_STORAGE_PREFIX = 'cas';
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
-// Content-addressed key for a release artifact blob: cas/<sha256>. Global (not
-// kind-namespaced) so identical bytes dedupe across every artifact type.
+// Content-addressed key for a release artifact blob: cas/<sha256>, global so identical bytes dedupe across types.
 export const joinCasKey = (sha256: string): string => {
   if (!SHA256_HEX.test(sha256)) {
     throw new StoragePathError('sha256');

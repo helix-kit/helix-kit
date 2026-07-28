@@ -35,7 +35,6 @@ export const generateCiToken = (): { secret: string; prefix: string; hash: strin
 };
 
 // Verify a CI bearer against ci_token, enforcing scope for the target action.
-// Throws UNAUTHORIZED (no/invalid token) or FORBIDDEN (out of scope).
 export const verifyCiToken = async (
   db: DatabaseClient,
   secret: string | null,

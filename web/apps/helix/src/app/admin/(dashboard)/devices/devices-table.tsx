@@ -46,9 +46,7 @@ const copy = async (value: string) => {
   }
 };
 
-// One-time reveal of a freshly created / rotated access token. Opened
-// programmatically (no trigger of its own), so it goes through ResponsiveModal
-// directly rather than MutationModal/DeleteConfirmDialog.
+// Opened programmatically with no trigger, so it uses ResponsiveModal directly.
 const TokenDialog = ({ token, onClose }: { token: RevealedToken | null; onClose: () => void }) => (
   <ResponsiveModal
     description="Copy it now — this token is shown only once and cannot be retrieved later."

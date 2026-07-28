@@ -9,9 +9,7 @@ const MQTT_QOS_AT_LEAST_ONCE = 1;
 
 const deviceInTopic = (deviceId: string): string => `helix/device/${deviceId}/in`;
 
-// Path-based OTA producer: resolves the device's target `app` blob and publishes
-// an `ota-update` command to the device's /in topic. The device then requests a
-// profile-gated signed URL for `packagePath` and downloads + verifies `sha256`.
+// Path-based OTA producer: resolves the device's target `app` blob and publishes an `ota-update` command to /in.
 export const createOtaPublisher =
   (mqttClient: MqttClient, db: DatabaseClient) =>
   async (deviceId: string): ReturnType<typeof resolveOtaTarget> => {

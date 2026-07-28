@@ -9,10 +9,7 @@ import { device, deviceEvent } from '../db/schema';
 import { prefixedId } from '../releases/ids';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin (sysadmin) management surface for the device registry: list enrolled
-// devices (with event count + last-seen derived from device_event), register
-// new devices with a generated access token, toggle active, rotate the token,
-// and delete. Mirrors the releases/blog admin routers (session/role auth).
+/** Admin (sysadmin) management surface for the device registry (list/register/toggle/rotate-token/delete). */
 export type DevicesAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type DevicesAdminContext = Readonly<{
@@ -34,8 +31,7 @@ const sortInput = z.array(z.object({ id: z.string(), desc: z.boolean() }));
 
 const newToken = (): string => randomBytes(TOKEN_BYTES).toString('hex');
 
-// A device with no events yields NULL, so decode null explicitly rather than
-// through the timestamp column (which would type it non-null).
+// A device with no events yields NULL; decode it explicitly rather than via the (non-null-typed) timestamp column.
 const decodeLastSeen = (value: unknown): Date | null =>
   value === null ? null : new Date(value as string);
 
@@ -54,8 +50,7 @@ export const devicesAdminRouter = createRouterFactory<DevicesAdminContext>()((t)
   } as const;
 
   return t.router({
-    // Server-side paginated / filtered / sorted device list backing the admin
-    // DataTable. The access token is never returned here — only on create/rotate.
+    // Paginated/filtered/sorted device list backing the admin DataTable; access token never returned here.
     list: adminProcedure
       .input(
         z.object({
@@ -87,8 +82,7 @@ export const devicesAdminRouter = createRouterFactory<DevicesAdminContext>()((t)
           return item.desc ? desc(column) : asc(column);
         });
 
-        // Aggregate events per device, then LEFT JOIN — a correlated subquery in
-        // the select renders columns unqualified and mis-correlates.
+        // Aggregate events per device, then LEFT JOIN — a correlated subquery in select mis-correlates.
         const eventAgg = ctx.db
           .select({
             deviceId: deviceEvent.deviceId,
@@ -129,8 +123,7 @@ export const devicesAdminRouter = createRouterFactory<DevicesAdminContext>()((t)
         return { rows, pageCount: Math.max(1, Math.ceil(total / input.perPage)) };
       }),
 
-    // Public single-device overview backing /device/[id] — readable by anyone
-    // (no admin gate), and never exposes the access token. Mutations stay admin.
+    // Public single-device overview backing /device/[id] — no admin gate, never exposes the access token.
     get: t.procedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
       const [row] = await ctx.db
         .select({
@@ -138,8 +131,7 @@ export const devicesAdminRouter = createRouterFactory<DevicesAdminContext>()((t)
           name: device.name,
           description: device.description,
           isActive: device.isActive,
-          // Filter on the literal id (a bound param) — not a correlation to the
-          // outer column, which renders unqualified in select context.
+          // Filter on the literal id (bound param), not a correlation, which renders unqualified in select context.
           eventCount: sql<number>`(
             select count(*)::int from ${deviceEvent} where ${deviceEvent.deviceId} = ${input.id}
           )`,
@@ -156,9 +148,7 @@ export const devicesAdminRouter = createRouterFactory<DevicesAdminContext>()((t)
       return row ?? null;
     }),
 
-    // Register a device. The access token is returned exactly once (the device
-    // authenticates ingestion/cert issuance with it); it is not stored in plain
-    // view anywhere the list can read.
+    // Register a device; the access token is returned exactly once.
     create: adminProcedure
       .input(
         z.object({

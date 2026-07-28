@@ -7,8 +7,7 @@ const MINUTE_S = 60;
 const HOUR_S = 3600;
 const SHORT_ID_LENGTH = 8;
 
-// A monotonically-updating "now" (unix ms) for live relative timestamps. Shared
-// by the device-app session lists (shell, port-forward) so ages tick smoothly.
+// A monotonically-updating "now" (unix ms) for live relative timestamps.
 export const useNow = (intervalMs: number = SECOND_MS): number => {
   const [now, setNow] = useState<number>(() => Date.now());
   useEffect(() => {

@@ -1,7 +1,3 @@
-// Real ESP32 over Web Bluetooth through the shared transport packages. The test
-// injects raw request JSON and asserts on the raw response — the harness knows
-// nothing about gpio. No grant/profile: the native BLE chooser is driven via
-// CDP DeviceAccess (which, unlike Web Serial, covers Web Bluetooth).
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures';
@@ -29,8 +25,7 @@ type RawCdpSession = {
   on: (event: string, handler: (payload: unknown) => void) => void;
 };
 
-// The BLE chooser populates asynchronously as devices are discovered, so
-// deviceRequestPrompted re-fires with a growing list; select on first match.
+// deviceRequestPrompted re-fires with a growing list as devices are discovered; select on first match.
 const autoSelectHelixDevice = async (page: Page): Promise<void> => {
   const cdp = (await page.context().newCDPSession(page)) as unknown as RawCdpSession;
   await cdp.send('DeviceAccess.enable');
@@ -75,7 +70,7 @@ const sendAndExpectLevel = async (page: Page, requestJson: string, level: 0 | 1)
       await expect(lastReceived).toHaveText(expected, { timeout: 6_000 });
       return;
     } catch {
-      // Notification not in yet — retry.
+      // retry
     }
   }
   await expect(lastReceived).toHaveText(expected);

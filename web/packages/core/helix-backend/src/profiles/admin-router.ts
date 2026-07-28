@@ -9,9 +9,7 @@ import { prefixedId } from '../releases/ids';
 import { resolveDeviceTracks, resolveProfileTracks } from '../releases/resolve';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin (sysadmin) control plane for device profiles: the reusable release-policy
-// bundles (`profile` + `profile_track`) and the device↔profile assignment
-// (`device_profile`) that the resolver turns into a device's allowed/OTA artifacts.
+/** Admin (sysadmin) control plane for device profiles: release-policy bundles + device↔profile assignment. */
 export type ProfilesAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type ProfilesAdminContext = Readonly<{
@@ -53,7 +51,6 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
   } as const;
 
   return t.router({
-    // ---- Profiles ----
     list: adminProcedure
       .input(
         z.object({
@@ -119,8 +116,7 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
         return { rows, pageCount: Math.max(1, Math.ceil(total / input.perPage)) };
       }),
 
-    // Profile detail: the profile, its tracks resolved to concrete releases, and
-    // the devices it's assigned to.
+    // Profile detail: the profile, its tracks resolved to concrete releases, and the devices it's assigned to.
     get: adminProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
       const [row] = await ctx.db.select().from(profile).where(eq(profile.id, input.id)).limit(1);
       if (row === undefined) {
@@ -185,7 +181,6 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
       return { ok: true };
     }),
 
-    // ---- Tracks ----
     addTrack: adminProcedure
       .input(
         trackConfigInput.extend({
@@ -242,8 +237,7 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
         return { ok: true };
       }),
 
-    // Options for the (guided) add/edit-track form: types + their selector keys,
-    // the release lines, channels, and releases available to pin.
+    // Options for the add/edit-track form: types + selector keys, release lines, channels, and pinnable releases.
     trackOptions: adminProcedure.query(async ({ ctx }) => {
       const types = await ctx.db
         .select({
@@ -280,7 +274,6 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
       };
     }),
 
-    // ---- Device assignment (both directions) ----
     assignDevice: adminProcedure
       .input(z.object({ profileId: z.string(), deviceId: z.string() }))
       .mutation(async ({ ctx, input }) => {
@@ -305,8 +298,7 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
         return { ok: true };
       }),
 
-    // Devices matching a query, optionally excluding those already on a profile —
-    // for the profile page's "add device" picker.
+    // Devices matching a query, optionally excluding those already on a profile — for the "add device" picker.
     deviceSearch: adminProcedure
       .input(z.object({ query: z.string().default(''), excludeProfileId: z.string().optional() }))
       .query(async ({ ctx, input }) => {
@@ -368,7 +360,6 @@ export const profilesAdminRouter = createRouterFactory<ProfilesAdminContext>()((
           .limit(SEARCH_LIMIT);
       }),
 
-    // ---- Resolve preview ----
     // What a device currently resolves to across all its assigned profiles.
     resolveDevice: adminProcedure
       .input(z.object({ deviceId: z.string() }))

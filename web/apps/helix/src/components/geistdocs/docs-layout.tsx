@@ -7,10 +7,7 @@ interface DocsLayoutProps {
   tree: ComponentProps<typeof FumadocsDocsLayout>['tree'];
 }
 
-// The reading chrome (topbar + fixed sidebar) is supplied by the docs route
-// layout; fumadocs only owns the page content + table of contents here. The
-// `docs-layout` class (see docs.css) pads the content for our fixed sidebar and
-// topbar, mirroring the better-auth docs layout.
+// The docs route layout supplies the topbar + fixed sidebar; fumadocs only owns the page content + TOC here.
 export const DocsLayout = ({ tree, children }: DocsLayoutProps) => (
   <FumadocsDocsLayout
     containerProps={{

@@ -12,8 +12,7 @@ import { toast } from 'sonner';
 
 import { useTRPCMutation, useTRPCQuery } from '@/server/react';
 
-// Which cloud features this profile enables for its devices. Disabled by default;
-// a device override can still force any of these on/off per device.
+// Which cloud features this profile enables for its devices.
 export const FeaturesPanel = ({ profileId }: { profileId: string }) => {
   const features = useTRPCQuery((api) => api.features.profileFeatures.queryOptions({ profileId }));
   const setFeature = useTRPCMutation((api) =>

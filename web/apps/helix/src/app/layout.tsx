@@ -10,10 +10,7 @@ import AppProviders from './providers';
 
 import type { Metadata } from 'next';
 
-// One app, one <html>. This root serves BOTH the public site (marketing, docs,
-// blog) and the product (admin, device apps), so it carries the fonts the
-// marketing/docs CSS depends on: globals.css maps --font-sans onto
-// --font-geist-sans, and everything falls back to Arial without these loaders.
+// globals.css maps --font-sans onto --font-geist-sans; without these loaders everything falls back to Arial.
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -24,7 +21,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Display face for the marketing hero + section headings (the "Helix Spine").
 const spaceGrotesk = Space_Grotesk({
   variable: '--font-display',
   subsets: ['latin'],
@@ -54,9 +50,7 @@ const RootLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => (
-  // suppressHydrationWarning: the theme bootstrap (see providers.tsx) sets the
-  // theme class on <html> before hydration, which would otherwise trip a
-  // mismatch warning.
+  // suppressHydrationWarning: the theme bootstrap (providers.tsx) sets the theme class before hydration.
   <html
     className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`}
     lang="en"

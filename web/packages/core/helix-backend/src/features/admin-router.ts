@@ -8,10 +8,7 @@ import type { DatabaseClient } from '../db';
 import { deviceFeatureOverride, feature, profileFeature } from '../db/feature-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-// Admin (sysadmin) control plane for device feature flags: reading the catalog
-// (auto-seeded from the FeatureRegistry), toggling which features a profile
-// enables, and setting per-device overrides (the admin exceptions). The
-// effective set for a device is computed by resolveDeviceFeatures.
+// Admin control plane for device feature flags: catalog, profile grants, and per-device overrides.
 export type FeaturesAdminSessionUser = Readonly<{ id: string; role: string | null }>;
 
 export type FeaturesAdminContext = Readonly<{

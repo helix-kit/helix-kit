@@ -24,8 +24,7 @@ export const SectionRail = () => {
     let frame = 0;
 
     const compute = () => {
-      // The active section is the last one whose top has scrolled above 42% of
-      // the viewport — a deterministic rule that always has exactly one winner.
+      // Active section = the last one whose top has scrolled above 42% of the viewport (always exactly one winner).
       const line = window.innerHeight * 0.42;
       let current: string = FIRST;
       for (const s of sections) {

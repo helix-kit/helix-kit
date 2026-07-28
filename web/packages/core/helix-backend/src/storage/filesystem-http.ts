@@ -16,9 +16,7 @@ const HTTP_OK = 200;
 const HTTP_SERVER_ERROR = 500;
 const BYTES_PER_KIB = 1024;
 
-// The signed URL's HMAC signature is the authorization, not the request origin —
-// so a browser on any origin (e.g. the app on :3000 fetching a blob from the
-// file server on :4000) may read it. Allow cross-origin reads.
+// HMAC signature is the authorization, not origin, so allow cross-origin reads.
 const CORS_HEADERS: Record<string, string> = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, PUT, OPTIONS',

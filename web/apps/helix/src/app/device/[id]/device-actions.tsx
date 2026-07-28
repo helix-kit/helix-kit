@@ -17,8 +17,7 @@ import { toast } from 'sonner';
 import { useSession } from '@/lib/auth-client';
 import { useTRPCMutation } from '@/server/react';
 
-// Client-side gate so the (public) page hides destructive controls from
-// non-admins; the mutations are admin-gated server-side regardless.
+// Client-side gate to hide destructive controls; mutations are admin-gated server-side.
 const ADMIN_ROLES = ['admin', 'sysadmin'];
 
 export const DeviceActions = ({

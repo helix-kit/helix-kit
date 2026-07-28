@@ -2,8 +2,7 @@ import { runtimeOrigin } from '@/lib/site';
 
 import type { MetadataRoute } from 'next';
 
-// Rendered per request so the origin comes from the appliance's PUBLIC_APP_URL
-// rather than being baked in at build time — see runtimeOrigin.
+// Rendered per request so the origin comes from runtimeOrigin, not baked in at build time.
 export const dynamic = 'force-dynamic';
 
 const robots = (): MetadataRoute.Robots => {

@@ -1,15 +1,4 @@
-// The feature registry: the machinery a consuming app uses to register the
-// cloud-accessible device features it actually ships. By design a feature
-// definition is *only a name* — the registry deliberately does not know how a
-// feature is used (its route, gateway scope, UI, or default). Those live at the
-// usage site, in the app that consumes this package.
-//
-// Registration is by import side-effect: an app declares `defineFeature('x')`
-// co-located with the code that uses feature `x`, so a feature is registered
-// only when that code is actually imported into the build. A custom server that
-// never imports feature X never registers X. A build/startup step then reads the
-// populated registry and seeds the DB catalog (see ./seed).
-
+// Registry of cloud-accessible device feature names (usage — route, scope, UI — lives at the call site); registration is by import side-effect via `defineFeature`, so an app that never imports a feature never registers it (see ./seed for the DB catalog).
 export type FeatureDefinition = Readonly<{ key: string }>;
 
 export class FeatureRegistry {
@@ -39,9 +28,7 @@ export class FeatureRegistry {
   }
 }
 
-// A single registry instance shared across every module in the process. Keyed on
-// a global symbol so that multiple copies of this package (e.g. duplicated by a
-// bundler) still populate one registry rather than several disjoint ones.
+// Keyed on a global symbol so multiple copies of this package (e.g. duplicated by a bundler) share one registry.
 const GLOBAL_KEY = Symbol.for('helix.featureRegistry');
 
 const globalStore = globalThis as { [key: symbol]: unknown };

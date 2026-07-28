@@ -10,10 +10,7 @@ import { getStreamConfig } from '../data-plane';
 import { StreamTerminal } from '../shared/terminal';
 import { useClientOnly } from '../use-client-only';
 
-// The UART console surface: a terminal to a target device's serial console,
-// bridged by an ESP32 running the Helix `console` firmware. Rides the same
-// HelixStream data plane as the Linux shell, but relay-only (the bridge has no
-// WebRTC). Gated on the `uart-console` feature.
+// UART console surface: a terminal to a device's serial console bridged by an ESP32 running the `console` firmware; rides the HelixStream data plane, relay-only.
 export const UartConsoleSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
   const config = useClientOnly(getStreamConfig);
 

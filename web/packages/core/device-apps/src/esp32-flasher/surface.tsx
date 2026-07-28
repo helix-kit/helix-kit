@@ -22,10 +22,7 @@ import type { DeviceAppSurfaceProps } from '../types';
 
 import { useDeviceAppApi } from '../trpc';
 
-// The ESP32 flashing utility surface: it resolves the firmware(s) this device is
-// entitled to (from its profiles, via the app's espFlasher tRPC router), lets the
-// user pick one, and flashes it to a locally-connected ESP32 over Web Serial with
-// live progress + logs. No manual manifest URL — the system provides it.
+// ESP32 flashing surface: resolves the device's entitled firmware, lets the user pick one, and flashes it over Web Serial.
 export const Esp32FlasherSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
   const api = useDeviceAppApi<EspFlasherRouter>('espFlasher');
   const firmwaresQuery = useQuery(api.getFirmwares.queryOptions({ deviceId }));
@@ -38,8 +35,7 @@ export const Esp32FlasherSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
   const { error, flash, flashing, progress } = useEsp32Flasher();
   const [log, setLog] = useState<readonly string[]>([]);
 
-  // Web Serial is client-only; useSyncExternalStore returns the server snapshot
-  // (false) during SSR and the real value after hydration, without a mismatch.
+  // useSyncExternalStore returns the server snapshot (false) during SSR, then the real value after hydration, without a mismatch.
   const webSerialSupported = useSyncExternalStore(
     () => () => {},
     () => typeof navigator !== 'undefined' && 'serial' in navigator,
@@ -59,7 +55,7 @@ export const Esp32FlasherSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
         },
       });
     } catch {
-      // The flash error is surfaced via the hook's `error` state.
+      // surfaced via the hook's `error` state
     }
   }, [flash, selected]);
 

@@ -1,7 +1,5 @@
 /* eslint-disable no-console, sonarjs/no-os-command-from-path -- setup script: prints progress and shells out to `sudo` for the tty prep */
-// Best-effort CP210x prep (via `sudo -n`, never fatal). `setfacl` grants tty
-// access; `stty -hupcl` disables hangup-on-close so opening/closing the port
-// does not reset the ESP32. Mirrors the app's ESP32_LINUX_SERIAL_PREP_COMMAND.
+// Best-effort CP210x prep (sudo -n, never fatal); stty -hupcl disables hangup-on-close so the port does not reset the ESP32.
 import { execFileSync } from 'node:child_process';
 
 import { RUN_SERIAL_PREP, SERIAL_PORT_PATH } from './serial/config';

@@ -13,8 +13,7 @@ import { ChevronRight } from 'lucide-react';
 import { deviceApps } from '@/device-apps/registry';
 import { resolveDeviceFeatureSet } from '@/device-apps/resolve';
 
-// The device's app launcher: every registered app whose feature gating is
-// satisfied for this device. Apps gated off by disabled features are hidden.
+// The device's app launcher: every registered app whose feature gating is satisfied.
 export const DeviceAppsSection = async ({ deviceId }: { deviceId: string }) => {
   const features = await resolveDeviceFeatureSet(deviceId);
   const available = deviceApps.filter((app) => isDeviceAppAvailable(app, features));

@@ -10,8 +10,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: isCI,
-  // A retry relaunches the browser with a fresh device handle, recovering from a
-  // transient "device lost" on a marginal USB path.
+  // A retry relaunches the browser with a fresh device handle, recovering from a transient "device lost".
   retries: Number(process.env.HELIX_E2E_RETRIES ?? 2),
   reporter: [['list'], ['html', { open: 'never' }]],
   globalSetup: './global-setup.ts',

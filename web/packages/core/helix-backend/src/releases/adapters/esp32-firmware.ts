@@ -68,8 +68,7 @@ const buildManifest = (args: ManifestBuildArgs, urlFor?: Map<string, string>) =>
   };
 };
 
-// esp32-firmware: content-addressed blobs (bootloader/partition-table/ota-data/app)
-// with flash offsets; the resolved manifest is the browser flasher's shape.
+// esp32-firmware: content-addressed blobs with flash offsets; the manifest is the browser flasher's shape.
 export const esp32FirmwareAdapter: ArtifactTypeAdapter = {
   key: 'esp32-firmware',
 

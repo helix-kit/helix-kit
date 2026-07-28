@@ -21,8 +21,7 @@ export const BuildWizard = ({ catalog }: { catalog: BuildCatalog }) => {
   const [buildId, setBuildId] = useState<string | null>(null);
   const [cacheHit, setCacheHit] = useState(false);
   const [hitReleaseId, setHitReleaseId] = useState<string | null>(null);
-  // Latch a terminal build so polling stops. A ref (updated during render) rather
-  // than state, so there is no setState-in-effect and no extra render.
+  // A ref (not state) so latching a terminal build avoids setState-in-effect.
   const doneRef = useRef(false);
 
   const request = useTRPCMutation((api) =>

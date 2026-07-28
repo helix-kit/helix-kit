@@ -52,8 +52,7 @@ export const ReleasesTable = ({
   pageCount: number;
   types: { key: string; displayName: string }[];
   channels: string[];
-  // 'line' scope drops the Name + Type columns (constant within a product line)
-  // and promotes Version to the link into the release detail.
+  // 'line' scope drops the Name + Type columns and promotes Version to the detail link.
   scope?: 'all' | 'line';
 }) => {
   const columns = useMemo<ColumnDef<ReleaseRow>[]>(() => {

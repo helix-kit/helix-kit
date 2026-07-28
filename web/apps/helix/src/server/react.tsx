@@ -20,8 +20,7 @@ import { createQueryClient, links } from '@/server/utils';
 
 const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
 
-// Exposed so device pages can compose the app's tRPC context alongside the
-// device-apps context under a single shared QueryClient (see device-providers).
+// Exposed so device pages can compose this context alongside the device-apps context under one shared QueryClient.
 export { TRPCProvider as AppTRPCProvider };
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
@@ -51,9 +50,7 @@ export const TRPCReactProvider = (props: { readonly children: React.ReactNode })
   );
 };
 
-// The standard client hooks: pass a builder that turns the typed tRPC proxy into
-// React Query options (`.queryOptions()` / `.mutationOptions()`). This is the
-// only supported client surface — there is no classic `api.x.useQuery` client.
+// Client hooks: pass a builder that turns the typed tRPC proxy into React Query options — the only supported client surface.
 export const useTRPCMutation = <
   TData = unknown,
   TError = DefaultError,

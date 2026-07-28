@@ -1,0 +1,46 @@
+{
+  "service": "gpio-control",
+  "methods": {
+    "setGpio": {
+      "name": "set-gpio",
+      "input": "setGpioRequest",
+      "output": "gpioStatePayload",
+      "error": "errorPayload"
+    },
+    "readGpio": {
+      "name": "read-gpio",
+      "input": "readGpioRequest",
+      "output": "gpioStatePayload",
+      "error": "errorPayload"
+    }
+  },
+  "messages": {
+    "state": {
+      "name": "gpio-control-state",
+      "payload": "gpioStatePayload"
+    },
+    "error": {
+      "name": "gpio-control-error",
+      "payload": "errorPayload"
+    }
+  },
+  "schemas": {
+    "setGpioRequest": {
+      "pin": { "type": "number", "required": true, "integer": true, "minimum": 0, "maximum": 39 },
+      "high": { "type": "boolean", "required": true }
+    },
+    "readGpioRequest": {
+      "pin": { "type": "number", "required": false, "integer": true, "minimum": 0, "maximum": 39 }
+    },
+    "gpioPinState": {
+      "pin": { "type": "number", "required": true, "integer": true },
+      "level": { "type": "number", "required": true, "integer": true, "minimum": 0, "maximum": 1 }
+    },
+    "gpioStatePayload": {
+      "pins": { "type": "array", "items": "gpioPinState", "required": true }
+    },
+    "errorPayload": {
+      "error": { "type": "string", "required": true }
+    }
+  }
+}

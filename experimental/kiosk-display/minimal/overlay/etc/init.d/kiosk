@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+# Launch the cage + WebKitGTK kiosk once devices and the site server are up.
+description="Helix WebKitGTK kiosk (cage)"
+
+command="/usr/local/bin/kiosk-session"
+command_background="yes"
+pidfile="/run/kiosk.pid"
+output_log="/var/log/kiosk.log"
+error_log="/var/log/kiosk.log"
+
+depend() {
+    need udev site-httpd
+    after udev-trigger
+}

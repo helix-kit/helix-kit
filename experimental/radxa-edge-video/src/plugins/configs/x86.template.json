@@ -1,0 +1,32 @@
+{
+  "_note": "x86 template. docker-entrypoint.sh fills model/providers/decoder/encoder from detected hardware; the host binary fills the RTSP/RTMP host. 4 streams of the same detector mirror the board grid.",
+  "host": { "warmup_ms": 1500, "serialize_infer": false },
+  "streams": [
+    { "label": "s1",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream1", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_ort",     "params": { "model": "${MODEL}", "providers": ${PROVIDERS}, "share_session": true } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } } },
+    { "label": "s2",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream2", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_ort",     "params": { "model": "${MODEL}", "providers": ${PROVIDERS}, "share_session": true } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "green" } } },
+    { "label": "s3",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream3", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_ort",     "params": { "model": "${MODEL}", "providers": ${PROVIDERS}, "share_session": true } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } } },
+    { "label": "s4",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream4", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_ort",     "params": { "model": "${MODEL}", "providers": ${PROVIDERS}, "share_session": true } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "green" } } }
+  ],
+  "compositor": { "module": "hx_comp_grid", "params": { "cols": 2, "rows": 2, "grid_w": 1280, "grid_h": 720 } },
+  "sink":       { "module": "hx_sink_gst",  "params": { "url": "rtmp://${HOST}:1935/detgrid", "width": 1280, "height": 720, "encoder": "${ENCODER}" } }
+}

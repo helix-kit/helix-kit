@@ -1,0 +1,28 @@
+#!/bin/sh
+# Bring up the fullscreen WebKitGTK kiosk under the cage Wayland compositor.
+# Tuned for a GPU-less QEMU aarch64 box (software rendering everywhere) so the
+# numbers reflect the worst case; a real RPi Zero 2W has a VideoCore GPU and
+# would offload compositing.
+set -eu
+
+export XDG_RUNTIME_DIR=/run/kiosk
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+# cage / wlroots: software renderer, no hardware cursor, seat via the seatd daemon.
+export WLR_RENDERER=pixman
+export WLR_NO_HARDWARE_CURSORS=1
+export LIBSEAT_BACKEND=seatd
+
+# WebKitGTK: no GL/DMABUF compositing -> drops the GPU process, pure software.
+export WEBKIT_DISABLE_COMPOSITING_MODE=1
+export WEBKIT_DISABLE_DMABUF_RENDERER=1
+export LIBGL_ALWAYS_SOFTWARE=1
+export GDK_BACKEND=wayland
+
+# A kiosk shows mostly static content: drop the JSC JIT (saves the WebProcess
+# ~10-15 MiB of RWX code memory) and the bubblewrap sandbox (trusted local URL).
+export JavaScriptCoreUseJIT=0
+export WEBKIT_DISABLE_SANDBOX=1
+
+exec cage -- python3 /usr/local/bin/kiosk-shell.py

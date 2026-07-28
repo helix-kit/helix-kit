@@ -1,0 +1,58 @@
+{
+  "service": "ui",
+  "methods": {
+    "info": {
+      "name": "info",
+      "input": "uiInfoRequest",
+      "output": "uiInfoPayload",
+      "error": "errorPayload"
+    },
+    "refresh": {
+      "name": "refresh",
+      "input": "uiRefreshRequest",
+      "output": "uiInfoPayload",
+      "error": "errorPayload"
+    },
+    "pointer": {
+      "name": "pointer",
+      "input": "uiPointerRequest",
+      "output": "uiAckPayload",
+      "error": "errorPayload"
+    }
+  },
+  "messages": {
+    "info": {
+      "name": "ui-info",
+      "payload": "uiInfoPayload"
+    },
+    "ack": {
+      "name": "ui-ack",
+      "payload": "uiAckPayload"
+    },
+    "error": {
+      "name": "ui-error",
+      "payload": "errorPayload"
+    }
+  },
+  "schemas": {
+    "uiInfoRequest": {},
+    "uiRefreshRequest": {},
+    "uiPointerRequest": {
+      "x": { "type": "number", "required": true, "integer": true, "minimum": 0, "maximum": 4095 },
+      "y": { "type": "number", "required": true, "integer": true, "minimum": 0, "maximum": 4095 },
+      "pressed": { "type": "boolean", "required": true }
+    },
+    "uiInfoPayload": {
+      "width": { "type": "number", "required": true, "integer": true },
+      "height": { "type": "number", "required": true, "integer": true },
+      "format": { "type": "string", "required": true },
+      "ready": { "type": "boolean", "required": true }
+    },
+    "uiAckPayload": {
+      "ok": { "type": "boolean", "required": true }
+    },
+    "errorPayload": {
+      "error": { "type": "string", "required": true }
+    }
+  }
+}

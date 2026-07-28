@@ -1,0 +1,67 @@
+{
+  "apps": [
+    {
+      "name": "led_blinker",
+      "component": "led_blinker",
+      "header": "led_blinker.h",
+      "start": "led_blinker_start",
+      "label": "LED Blinker",
+      "description": "Blinks the on-board LED on a fixed cadence. The minimal example app."
+    },
+    {
+      "name": "led_blinker_two",
+      "component": "led_blinker_two",
+      "header": "led_blinker_two.h",
+      "start": "led_blinker_two_start",
+      "label": "LED Blinker (Two)",
+      "description": "A second blink app on a different pin/cadence, for testing multi-app builds."
+    },
+    {
+      "name": "gpio_control",
+      "component": "gpio_control",
+      "header": "gpio_control.h",
+      "start": "gpio_control_start",
+      "label": "GPIO Control",
+      "description": "Exposes a Helix service to read and drive GPIO pins remotely."
+    },
+    {
+      "name": "status_display",
+      "component": "status_display",
+      "header": "status_display.h",
+      "start": "status_display_start",
+      "label": "Status Display",
+      "description": "Reports device status/health over the Helix protocol."
+    },
+    {
+      "name": "ui_demo",
+      "component": "ui_demo",
+      "header": "ui_demo.h",
+      "start": "ui_demo_start",
+      "features": [
+        "ui",
+        "no-storage"
+      ],
+      "label": "UI Demo (LVGL)",
+      "description": "On-device LVGL screens streamed to a host viewer. Pulls in the LVGL UI stack and drops the on-device storage stack to fit."
+    },
+    {
+      "name": "console_bridge",
+      "component": "console_bridge",
+      "header": "console_bridge.h",
+      "start": "console_bridge_start",
+      "label": "Serial Console Bridge",
+      "description": "Bridges a target device's UART console to the Helix protocol so it can be driven remotely (field UART-to-network console server)."
+    },
+    {
+      "name": "sd_smoke",
+      "component": "sd_smoke",
+      "header": "sd_smoke.h",
+      "start": "sd_smoke_start",
+      "features": [
+        "no-storage"
+      ],
+      "label": "SD Smoke Test",
+      "description": "Bring-up test for an SPI SD card sharing a GPT-partitioned card with a Radxa board. Probes the card, sanity-reads the GPT and the Helix partition, then writes/reads back a file clamped to that partition only."
+    }
+  ]
+}

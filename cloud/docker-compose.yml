@@ -1,0 +1,807 @@
+x-helix-app-environment: &helix_app_environment
+  NODE_ENV: production
+  # All Node processes run in UTC so naive `timestamp` columns are read/written
+  # consistently (device_event etc. store UTC wall-clock).
+  TZ: UTC
+  HOSTNAME: 0.0.0.0
+  PORT: "3000"
+  DATABASE_URL: postgres://${POSTGRES_USER:-helix}:${POSTGRES_PASSWORD:-helix-local-dev}@postgres:5432/${POSTGRES_DB:-helix}
+  STORAGE_PROVIDER: ${STORAGE_PROVIDER:-S3}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_REGION: ${AWS_REGION:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+  REDIS_HOST: inngest-redis
+  REDIS_PORT: "6379"
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-helix-local-better-auth-secret}
+  BETTER_AUTH_URL: ${PUBLIC_APP_URL}
+  OPENFGA_API_URL: ${OPENFGA_API_URL:-http://openfga:8080}
+  OPENFGA_STORE_NAME: ${OPENFGA_STORE_NAME:-helix}
+  MQTT_STEP_CA_URL: ${MQTT_STEP_CA_URL:-https://step-ca:9000}
+  MQTT_STEP_CA_ROOT_CERT_PATH: ${MQTT_STEP_CA_ROOT_CERT_PATH:-/run/helix-step-ca/certs/root_ca.crt}
+  MQTT_STEP_CA_DEVICE_PROVISIONER_NAME: ${MQTT_STEP_CA_DEVICE_PROVISIONER_NAME:-helix-device}
+  MQTT_STEP_CA_DEVICE_PROVISIONER_JWK_PATH: ${MQTT_STEP_CA_DEVICE_PROVISIONER_JWK_PATH:-/run/helix-step-ca/jwk/device-provisioner.jwk.json}
+  HELIX_SERVER_AUTH_SECRET: ${HELIX_SERVER_AUTH_SECRET:-helix-local-server-secret}
+  MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-local-dev-placeholder}
+  MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-local-dev-placeholder}
+  MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID:-common}
+  SMTP_SERVER: ${SMTP_SERVER:-smtp://smtp.example.com:587}
+  SMTP_USER: ${SMTP_USER:-dev}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-dev}
+  EMAIL_SENDER_ADDRESS: ${EMAIL_SENDER_ADDRESS:-dev@example.com}
+  # Web Push VAPID server keys (runtime). The public key is build-inlined via the
+  # NEXT_PUBLIC_VAPID_PUBLIC_KEY GH Actions variable, so it is not set here.
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+  NEXT_PUBLIC_BASE_URL: ${PUBLIC_APP_URL}
+  NEXT_PUBLIC_HELIX_CLOUD_GATEWAY_BASE_URL: ${PUBLIC_APP_URL}
+  HELIX_PACKAGE_RELEASE_TOKEN: ${HELIX_PACKAGE_RELEASE_TOKEN:-}
+  LOCAL_SYSADMIN_EMAIL: ${LOCAL_SYSADMIN_EMAIL:-}
+  LOCAL_SYSADMIN_NAME: ${LOCAL_SYSADMIN_NAME:-}
+  LOCAL_SYSADMIN_PASSWORD: ${LOCAL_SYSADMIN_PASSWORD:-}
+  OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-helix}
+  OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-}
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
+  INNGEST_BASE_URL: ${HELIX_INNGEST_BASE_URL:-http://inngest:8288}
+  INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:-}
+  INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:-}
+  HELIX_WORKFLOW_SCHEDULER_URL: ${HELIX_WORKFLOW_SCHEDULER_URL:-http://helix:3000}
+  WORKFLOW_SERVICE_TOKEN: ${WORKFLOW_SERVICE_TOKEN:-}
+  WORKFLOW_MAX_CONCURRENCY: ${WORKFLOW_MAX_CONCURRENCY:-5}
+
+x-helix-bootstrap-service: &helix_bootstrap_service
+  # Prefer the GHCR image when HELIX_CLOUD_INIT_IMAGE is set (the deploy .env
+  # sets it and `deploy-cloud.sh` pulls it); otherwise build locally from the
+  # Dockerfile below. Same dual-mode pattern as the app services.
+  image: ${HELIX_CLOUD_INIT_IMAGE:-helix-cloud-init:local}
+  build:
+    context: ..
+    dockerfile: web/apps/helix/Dockerfile.init
+  restart: "no"
+  environment:
+    <<: *helix_app_environment
+  volumes:
+    - ./.local-pki/step-ca/certs:/run/helix-step-ca/certs:ro
+    - ./.local-pki/step-ca/jwk:/run/helix-step-ca/jwk:ro
+  depends_on:
+    postgres:
+      condition: service_healthy
+    openfga:
+      condition: service_started
+
+services:
+  gateway-proxy:
+    mem_limit: 128m
+    memswap_limit: 256m
+    cpus: 0.2
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    profiles: ["tls"]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      HELIX_SERVER_UPSTREAM: ${HELIX_SERVER_UPSTREAM:-helix-server:4000}
+      NEXTJS_UPSTREAM: ${NEXTJS_UPSTREAM:-helix:3000}
+      TURBO_CACHE_UPSTREAM: ${TURBO_CACHE_UPSTREAM:-turbo-cache:3000}
+      PORT_FORWARD_UPSTREAM: ${PORT_FORWARD_UPSTREAM:-helix-server:4020}
+      # This image has no DNS provider module, so leave CADDY_ACME_DNS empty: the
+      # *.port wildcard then falls back to Caddy's internal CA (fine for a local
+      # APP_DOMAIN). A publicly-trusted wildcard needs the appliance's build.
+      CADDY_ACME_DNS: ${CADDY_ACME_DNS:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      helix-server:
+        condition: service_healthy
+      helix:
+        condition: service_healthy
+      turbo-cache:
+        condition: service_started
+
+  turbo-cache-init:
+    image: alpine:3.22
+    restart: "no"
+    command: ["sh", "-c", "chown -R 1001:1001 /cache"]
+    volumes:
+      - helix_turbo_cache_data:/cache
+
+  turbo-cache:
+    mem_limit: 128m
+    memswap_limit: 256m
+    cpus: 0.15
+    image: ducktors/turborepo-remote-cache:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOST: 0.0.0.0
+      AUTH_MODE: static
+      TURBO_TOKEN: ${TURBO_TOKEN:?set TURBO_TOKEN}
+      STORAGE_PROVIDER: local
+      STORAGE_PATH: /cache
+      STORAGE_PATH_USE_TMP_FOLDER: "false"
+      BODY_LIMIT: ${TURBO_CACHE_BODY_LIMIT:-104857600}
+      LOG_LEVEL: ${TURBO_CACHE_LOG_LEVEL:-info}
+      TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${TURBO_REMOTE_CACHE_SIGNATURE_KEY:-}
+    volumes:
+      - helix_turbo_cache_data:/cache
+    depends_on:
+      turbo-cache-init:
+        condition: service_completed_successfully
+
+  postgres:
+    mem_limit: 512m
+    memswap_limit: 1024m
+    cpus: 0.6
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-helix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helix-local-dev}
+      POSTGRES_DB: ${POSTGRES_DB:-helix}
+    volumes:
+      - helix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  openfga-migrate:
+    image: openfga/openfga:latest
+    restart: "no"
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://${POSTGRES_USER:-helix}:${POSTGRES_PASSWORD:-helix-local-dev}@postgres:5432/${POSTGRES_DB:-helix}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  openfga:
+    mem_limit: 200m
+    memswap_limit: 400m
+    cpus: 0.3
+    image: openfga/openfga:latest
+    restart: unless-stopped
+    command: ["run", "--playground-enabled", "--playground-addr", "0.0.0.0:3002"]
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "127.0.0.1:${OPENFGA_PLAYGROUND_PORT:-3002}:3002"
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://${POSTGRES_USER:-helix}:${POSTGRES_PASSWORD:-helix-local-dev}@postgres:5432/${POSTGRES_DB:-helix}?sslmode=disable
+      OPENFGA_LOG_FORMAT: json
+    depends_on:
+      openfga-migrate:
+        condition: service_completed_successfully
+
+  inngest-postgres:
+    mem_limit: 320m
+    memswap_limit: 640m
+    cpus: 0.4
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_DB: ${INNGEST_POSTGRES_DB:-inngest}
+      POSTGRES_USER: ${INNGEST_POSTGRES_USER:-inngest}
+      POSTGRES_PASSWORD: ${INNGEST_POSTGRES_PASSWORD:-password}
+    volumes:
+      - helix_inngest_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${INNGEST_POSTGRES_USER:-inngest} -d ${INNGEST_POSTGRES_DB:-inngest}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inngest-redis:
+    mem_limit: 192m
+    memswap_limit: 384m
+    cpus: 0.3
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - helix_inngest_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  inngest:
+    mem_limit: 768m
+    memswap_limit: 1536m
+    cpus: 0.9
+    image: inngest/inngest:v1.17.4
+    restart: unless-stopped
+    command: "inngest start"
+    ports:
+      - "8288:8288"
+      - "8289:8289"
+    environment:
+      INNGEST_REDIS_URI: redis://inngest-redis:6379
+      INNGEST_POSTGRES_URI: postgres://${INNGEST_POSTGRES_USER:-inngest}:${INNGEST_POSTGRES_PASSWORD:-password}@inngest-postgres:5432/${INNGEST_POSTGRES_DB:-inngest}
+      INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:?set INNGEST_EVENT_KEY}
+      INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:?set INNGEST_SIGNING_KEY}
+    depends_on:
+      inngest-postgres:
+        condition: service_healthy
+      inngest-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8288/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Hourly retention sweep for the self-hosted Inngest server's observability
+  # tables, which it never prunes on its own. Keeps run history (trace_runs /
+  # traces / events — what the Helix UI reads) for 7 days and trims the
+  # unread spans/history tables to 24h. See inngest-cleanup.sql / .sh.
+  inngest-cleanup:
+    mem_limit: 96m
+    memswap_limit: 192m
+    cpus: 0.2
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      PGHOST: inngest-postgres
+      PGPORT: "5432"
+      PGUSER: ${INNGEST_POSTGRES_USER:-inngest}
+      PGPASSWORD: ${INNGEST_POSTGRES_PASSWORD:-password}
+      PGDATABASE: ${INNGEST_POSTGRES_DB:-inngest}
+      CLEANUP_INTERVAL_SECONDS: "3600"
+    volumes:
+      - ./inngest-cleanup.sql:/cleanup.sql:ro
+      - ./inngest-cleanup.sh:/inngest-cleanup.sh:ro
+    entrypoint: ["bash", "/inngest-cleanup.sh"]
+    depends_on:
+      inngest-postgres:
+        condition: service_healthy
+
+  mosquitto:
+    mem_limit: 96m
+    memswap_limit: 192m
+    cpus: 0.2
+    build:
+      context: ./mosquitto
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "8883:8883"
+      - "8884:8884"
+    tmpfs:
+      - /mosquitto/log
+    volumes:
+      - ./mosquitto/mosquitto.conf:/bootstrap/config/mosquitto.conf:ro
+      - ./mosquitto/device.acl:/bootstrap/config/device.acl:ro
+      - ./mosquitto/service.acl:/bootstrap/config/service.acl:ro
+      - ./.local-pki/mqtt/broker:/bootstrap/certs:ro
+      - ./.local-pki/mqtt:/bootstrap/pki:ro
+      - mosquitto_data:/mosquitto/data
+    depends_on:
+      step-ca:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mosquitto_sub",
+          "--cafile",
+          "/mosquitto/certs/root_ca.crt",
+          "--cert",
+          "/mosquitto/pki/helix-server/client.crt",
+          "--key",
+          "/mosquitto/pki/helix-server/client.key",
+          "-h",
+          "127.0.0.1",
+          "-p",
+          "8884",
+          "-t",
+          "$$SYS/#",
+          "-C",
+          "1",
+          "-i",
+          "healthcheck",
+          "-W",
+          "3",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  step-ca:
+    mem_limit: 96m
+    memswap_limit: 192m
+    cpus: 0.15
+    image: smallstep/step-ca:latest
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./.local-pki/step-ca:/home/step
+    command:
+      [
+        "step-ca",
+        "/home/step/config/ca.json",
+        "--password-file",
+        "/home/step/secrets/password.txt",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "step",
+          "ca",
+          "health",
+          "--ca-url",
+          "https://127.0.0.1:9000",
+          "--root",
+          "/home/step/certs/root_ca.crt",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  redpanda:
+    mem_limit: 600m
+    memswap_limit: 1200m
+    cpus: 0.6
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.8
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "512M"
+      - --reserve-memory
+      - "0M"
+      - --check=false
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+      - --set
+      - redpanda.auto_create_topics_enabled=false
+      - --set
+      - log_retention_ms=259200000
+      - --set
+      - retention_bytes=2147483648
+      - --set
+      - log_segment_size=134217728
+    ports:
+      - "19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "rpk cluster info -X brokers=127.0.0.1:9092 >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  helix-server:
+    mem_limit: 200m
+    memswap_limit: 400m
+    cpus: 0.3
+    image: ${HELIX_SERVER_IMAGE:-helix-server:local}
+    build:
+      context: ../web
+      dockerfile: apps/helix-server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+      - "8443:8443"
+    environment:
+      # Inherit the app's storage config so device presign resolves the same bucket.
+      <<: *helix_app_environment
+      DATABASE_URL: postgres://${POSTGRES_USER:-helix}:${POSTGRES_PASSWORD:-helix-local-dev}@postgres:5432/${POSTGRES_DB:-helix}
+      EVENT_QUEUE_BROKERS: redpanda:9092
+      DEVICE_EVENT_RETENTION_SECONDS: ${DEVICE_EVENT_RETENTION_SECONDS:-604800}
+      DEVICE_EVENT_RETENTION_SWEEP_BATCH_SIZE: ${DEVICE_EVENT_RETENTION_SWEEP_BATCH_SIZE:-10000}
+      DEVICE_HEARTBEAT_RETENTION_SWEEP_INTERVAL_SECONDS: ${DEVICE_HEARTBEAT_RETENTION_SWEEP_INTERVAL_SECONDS:-600}
+      MQTT_BROKER_URL: mqtts://mosquitto:8884
+      MQTT_TLS_CA_CERT_PATH: /run/helix-mqtt/root_ca.crt
+      MQTT_TLS_CLIENT_CERT_PATH: /run/helix-mqtt/client.crt
+      MQTT_TLS_CLIENT_KEY_PATH: /run/helix-mqtt/client.key
+      MQTT_TLS_SERVER_NAME: mosquitto
+      DEVICE_MTLS_PORT: "8443"
+      DEVICE_MTLS_SERVER_CERT_PATH: /run/helix-mqtt/server.crt
+      DEVICE_MTLS_SERVER_KEY_PATH: /run/helix-mqtt/server.key
+      DEVICE_MTLS_CA_CERT_PATH: /run/helix-mqtt/root_ca.crt
+      PORT: "4000"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      TURN_SERVER_URL: ${TURN_SERVER_URL:-}
+      TURN_USERNAME: ${TURN_USERNAME:-helix}
+      TURN_CREDENTIAL: ${TURN_CREDENTIAL:-helix-secret}
+      WS_RATE_LIMIT_MAX_COMMAND_MESSAGES: ${WS_RATE_LIMIT_MAX_COMMAND_MESSAGES:-40}
+      WS_RATE_LIMIT_MAX_MESSAGES: ${WS_RATE_LIMIT_MAX_MESSAGES:-120}
+      WS_RATE_LIMIT_WINDOW_MS: ${WS_RATE_LIMIT_WINDOW_MS:-5000}
+      LOG_LEVEL: ${HELIX_SERVER_LOG_LEVEL:-info}
+      METRICS_PORT: "9464"
+      DEVICE_ID: ${DEVICE_ID:-default}
+    volumes:
+      - ./.local-pki/mqtt/helix-server:/run/helix-mqtt:ro
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  helix-init:
+    <<: *helix_bootstrap_service
+    command: ["node", "dist/cli/migrate.js"]
+
+  helix-seed-sysadmin:
+    <<: *helix_bootstrap_service
+    profiles: ["manual"]
+    command: ["node", "dist/cli/seed-sysadmin.js"]
+
+  helix-seed-catalog:
+    <<: *helix_bootstrap_service
+    profiles: ["manual"]
+    command: ["node", "dist/cli/seed-catalog.js"]
+
+  helix-seed-demo:
+    <<: *helix_bootstrap_service
+    profiles: ["manual"]
+    command: ["node", "dist/cli/seed-demo.js"]
+
+  helix:
+    mem_limit: 1100m
+    memswap_limit: 2200m
+    cpus: 1.4
+    image: ${HELIX_CLOUD_APP_IMAGE:-helix-cloud-app:local}
+    build:
+      context: ../web
+      dockerfile: apps/helix/Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_URL: ${PUBLIC_APP_URL}
+        NEXT_PUBLIC_HELIX_CLOUD_GATEWAY_BASE_URL: ${PUBLIC_APP_URL}
+    restart: unless-stopped
+    user: "0:0"
+    environment:
+      <<: *helix_app_environment
+    volumes:
+      - ./.local-pki/step-ca/certs:/run/helix-step-ca/certs:ro
+      - ./.local-pki/step-ca/jwk:/run/helix-step-ca/jwk:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga:
+        condition: service_started
+      inngest-redis:
+        condition: service_healthy
+      helix-server:
+        condition: service_healthy
+      helix-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.status < 500 ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  coturn:
+    mem_limit: 128m
+    memswap_limit: 256m
+    cpus: 0.2
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TURN_PUBLIC_IP: ${TURN_PUBLIC_IP:-}
+      TURN_PRIVATE_IP: ${TURN_PRIVATE_IP:-}
+      TURN_REALM: ${TURN_REALM:-${APP_DOMAIN:-helix.local}}
+      # Signs the ephemeral TURN credentials /api/ice-config mints; coturn verifies
+      # them with the same secret. There is deliberately no shared TURN password.
+      TURN_STATIC_AUTH_SECRET: ${TURN_STATIC_AUTH_SECRET:?set TURN_STATIC_AUTH_SECRET in .env}
+    volumes:
+      - ./coturn/turnserver.conf:/etc/helix-turnserver.conf:ro
+      - ./coturn/entrypoint.sh:/usr/local/bin/helix-coturn-entrypoint.sh:ro
+    command: ["/bin/sh", "/usr/local/bin/helix-coturn-entrypoint.sh"]
+
+  # ---------------------------------------------------------------------------
+  # Observability stack (Grafana + Prometheus + Loki + Tempo + exporters).
+  # Opt-in: gated behind the "observability" profile so a bare `up` doesn't pull
+  # in the heavy monitoring containers. Start with:
+  #   docker compose --profile observability up -d
+  # To ship app traces here, also set in .env:
+  #   OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+  #   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+  # ---------------------------------------------------------------------------
+  grafana:
+    profiles: ["observability"]
+    memswap_limit: 640m
+    cpus: 0.3
+    image: grafana/grafana:13.0.1
+    restart: unless-stopped
+    mem_limit: ${GRAFANA_MEMORY_LIMIT:-320m}
+    mem_reservation: ${GRAFANA_MEMORY_RESERVATION:-128m}
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      GOMEMLIMIT: ${GRAFANA_GOMEMLIMIT:-144MiB}
+      GOGC: ${GRAFANA_GOGC:-50}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-helix-observability}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_LOG_MODE: console
+      GF_LOG_LEVEL: ${GRAFANA_LOG_LEVEL:-warn}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_SNAPSHOTS_EXTERNAL_ENABLED: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "false"
+      GF_ALERTING_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+  prometheus:
+    profiles: ["observability"]
+    mem_limit: 256m
+    memswap_limit: 512m
+    cpus: 0.3
+    image: prom/prometheus:v3.11.2
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      blackbox-exporter:
+        condition: service_started
+      cadvisor:
+        condition: service_started
+      node-exporter:
+        condition: service_started
+      postgres-exporter:
+        condition: service_started
+      redis-exporter:
+        condition: service_started
+
+  loki:
+    profiles: ["observability"]
+    mem_limit: 180m
+    memswap_limit: 360m
+    cpus: 0.25
+    image: grafana/loki:3.7.1
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki.yml"]
+    ports:
+      - "127.0.0.1:${LOKI_PORT:-3100}:3100"
+    volumes:
+      - loki_data:/loki
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+
+  tempo:
+    profiles: ["observability"]
+    mem_limit: 200m
+    memswap_limit: 400m
+    cpus: 0.25
+    image: grafana/tempo:2.10.4
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    ports:
+      - "127.0.0.1:${TEMPO_PORT:-3200}:3200"
+    volumes:
+      - tempo_data:/var/tempo
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+
+  otel-collector:
+    profiles: ["observability"]
+    mem_limit: 160m
+    memswap_limit: 320m
+    cpus: 0.2
+    image: otel/opentelemetry-collector-contrib:0.148.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yml"]
+    volumes:
+      - ./observability/otel-collector/config.yml:/etc/otelcol/config.yml:ro
+    depends_on:
+      tempo:
+        condition: service_started
+
+  alloy:
+    profiles: ["observability"]
+    mem_limit: 200m
+    memswap_limit: 400m
+    cpus: 0.25
+    image: grafana/alloy:v1.16.0
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "127.0.0.1:${ALLOY_PORT:-12345}:12345"
+    volumes:
+      - alloy_data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+    depends_on:
+      loki:
+        condition: service_started
+
+  node-exporter:
+    profiles: ["observability"]
+    mem_limit: 64m
+    memswap_limit: 128m
+    cpus: 0.1
+    image: quay.io/prometheus/node-exporter:v1.11.1
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|run/docker/netns/.+)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+
+  cadvisor:
+    profiles: ["observability"]
+    mem_limit: 160m
+    memswap_limit: 320m
+    cpus: 0.2
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    privileged: true
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+
+  postgres-exporter:
+    profiles: ["observability"]
+    mem_limit: 64m
+    memswap_limit: 128m
+    cpus: 0.1
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    restart: unless-stopped
+    command:
+      - --extend.query-path=/etc/postgres-exporter/queries.yml
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-helix}:${POSTGRES_PASSWORD:-helix-local-dev}@postgres:5432/${POSTGRES_DB:-helix}?sslmode=disable
+    volumes:
+      - ./observability/postgres-exporter/queries.yml:/etc/postgres-exporter/queries.yml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis-exporter:
+    profiles: ["observability"]
+    mem_limit: 64m
+    memswap_limit: 128m
+    cpus: 0.1
+    image: oliver006/redis_exporter:latest
+    restart: unless-stopped
+    command: ["--redis.addr=redis://inngest-redis:6379"]
+    depends_on:
+      inngest-redis:
+        condition: service_healthy
+
+  mosquitto-exporter:
+    profiles: ["observability"]
+    mem_limit: 64m
+    memswap_limit: 128m
+    cpus: 0.1
+    image: jryberg/mosquitto-exporter:v0.7.7
+    restart: unless-stopped
+    command:
+      - --endpoint
+      - ssl://mosquitto:8884
+      - --cert
+      - /run/helix-mqtt/client.crt
+      - --key
+      - /run/helix-mqtt/client.key
+      - --client-id
+      - mosquitto-exporter
+    volumes:
+      - ./.local-pki/mqtt/helix-server:/run/helix-mqtt:ro
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+  blackbox-exporter:
+    profiles: ["observability"]
+    mem_limit: 64m
+    memswap_limit: 128m
+    cpus: 0.1
+    image: quay.io/prometheus/blackbox-exporter:latest
+    restart: unless-stopped
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    volumes:
+      - ./observability/blackbox/config.yml:/etc/blackbox_exporter/config.yml:ro
+
+  portainer:
+    profiles: ["observability"]
+    mem_limit: 128m
+    memswap_limit: 256m
+    cpus: 0.15
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    ports:
+      - "${PORTAINER_PORT:-9443}:9443"
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  caddy_data:
+  caddy_config:
+  helix_postgres_data:
+  helix_inngest_postgres_data:
+  helix_inngest_redis_data:
+  helix_turbo_cache_data:
+  mosquitto_data:
+  redpanda_data:
+  grafana_data:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  alloy_data:
+  portainer_data:

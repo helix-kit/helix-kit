@@ -1,0 +1,2 @@
+# Build artifacts + provisioning bundles produced by `helix device` commands.
+.bundle/

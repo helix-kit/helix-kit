@@ -1,0 +1,7 @@
+{
+  "full": ["overview", "settings", "workflow", "charts", "grid"],
+  "minimal": ["overview", "settings"],
+  "workflow-only": ["overview", "settings", "workflow"],
+  "charts-only": ["overview", "settings", "charts"],
+  "no-workflow": ["overview", "settings", "charts", "grid"]
+}

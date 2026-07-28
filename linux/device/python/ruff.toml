@@ -1,0 +1,17 @@
+# Ruff configuration for the device-side Python packages.
+#
+# These target CPython 3.10 (the device runtime), NOT the 3.14 the repo's dev
+# tooling targets. Without this, the root config's `target-version = "py314"`
+# lets ruff apply 3.14-only rewrites here — e.g. PEP 758 turns
+# `except (OSError, ValueError):` into `except OSError, ValueError:`, which is a
+# SyntaxError on the device. Ruff resolves the closest config per file, so this
+# governs everything under linux/device/python.
+
+target-version = "py310"
+line-length = 100
+
+# Generated bindings are emitted by `helix protocol generate-all`, not hand-edited.
+extend-exclude = ["**/generated"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

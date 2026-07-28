@@ -1,0 +1,927 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 20,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Docker",
+                  "color": "blue"
+                },
+                "1": {
+                  "text": "Systemd (native)",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 3
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "clamp_max(count(container_cpu_usage_seconds_total{id=~\"/system.slice/helix-.+\\\\.service\"}) or vector(0), 1)"
+        }
+      ],
+      "title": "Deployment platform",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Host overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])) * 100)",
+          "refId": "A"
+        }
+      ],
+      "title": "Host CPU used",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Host memory used",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Root disk used",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "expr": "node_load1 / count(count by (cpu) (node_cpu_seconds_total{mode=\"idle\"}))",
+          "refId": "A"
+        }
+      ],
+      "title": "Load average / CPU",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (mode) (rate(node_cpu_seconds_total{mode!=\"idle\"}[$__rate_interval])) * 100",
+          "refId": "A",
+          "legendFormat": "{{mode}}"
+        }
+      ],
+      "title": "Host CPU by mode",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "refId": "A",
+          "legendFormat": "used"
+        },
+        {
+          "expr": "node_memory_Cached_bytes",
+          "refId": "B",
+          "legendFormat": "cache"
+        },
+        {
+          "expr": "node_memory_Buffers_bytes",
+          "refId": "C",
+          "legendFormat": "buffers"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes",
+          "refId": "D",
+          "legendFormat": "available"
+        }
+      ],
+      "title": "Host memory breakdown",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (device) (rate(node_disk_read_bytes_total{device!~\"loop.*|ram.*\"}[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "read {{device}}"
+        },
+        {
+          "expr": "sum by (device) (rate(node_disk_written_bytes_total{device!~\"loop.*|ram.*\"}[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "write {{device}}"
+        }
+      ],
+      "title": "Host disk IO",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (device) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|br-.*|docker.*\"}[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "rx {{device}}"
+        },
+        {
+          "expr": "sum by (device) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|br-.*|docker.*\"}[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "tx {{device}}"
+        }
+      ],
+      "title": "Host network throughput",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 1
+      },
+      "id": 10,
+      "panels": [],
+      "title": "Container groups",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) ((label_replace(rate(container_cpu_usage_seconds_total{name!=\"\",image!=\"\",cpu=\"total\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/helix-.+\\\\.service\",cpu=\"total\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\"))) * 100",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "CPU by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) ((label_replace(container_memory_working_set_bytes{name!=\"\",image!=\"\"}, \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(container_memory_working_set_bytes{id=~\"/system.slice/helix-.+\\\\.service\"}, \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\")))",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Memory by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) ((label_replace(rate(container_network_receive_bytes_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_network_receive_bytes_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\")))",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Network receive by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) ((label_replace(rate(container_network_transmit_bytes_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_network_transmit_bytes_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\")))",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Network transmit by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Per-container hotspots",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "id": 16,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "topk(15, sum by (service) ((label_replace(rate(container_cpu_usage_seconds_total{name!=\"\",image!=\"\",cpu=\"total\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/helix-.+\\\\.service\",cpu=\"total\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\"))) * 100)",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Top CPU services",
+      "type": "bargauge",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "id": 17,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "topk(15, sum by (service) ((label_replace(container_memory_working_set_bytes{name!=\"\",image!=\"\"}, \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(container_memory_working_set_bytes{id=~\"/system.slice/helix-.+\\\\.service\"}, \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\"))))",
+          "refId": "A",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Top memory services",
+      "type": "bargauge",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 12,
+        "h": 8
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (service) ((label_replace(rate(container_fs_reads_bytes_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_fs_reads_bytes_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\"))))",
+          "refId": "A",
+          "legendFormat": "read {{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "expr": "topk(10, sum by (service) ((label_replace(rate(container_fs_writes_bytes_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_fs_writes_bytes_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\"))))",
+          "refId": "B",
+          "legendFormat": "write {{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "Disk reads / writes by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 50,
+        "w": 12,
+        "h": 8
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) ((label_replace(rate(container_oom_events_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_oom_events_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\")))",
+          "refId": "A",
+          "legendFormat": "oom {{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "expr": "sum by (service) ((label_replace(rate(container_memory_failures_total{name!=\"\",image!=\"\"}[$__rate_interval]), \"service\", \"$1\", \"name\", \"(.+)\") or label_replace(rate(container_memory_failures_total{id=~\"/system.slice/helix-.+\\\\.service\"}[$__rate_interval]), \"service\", \"$1\", \"id\", \"/system.slice/helix-(.+)\\\\.service\")))",
+          "refId": "B",
+          "legendFormat": "memfail {{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "title": "OOM / memory failures by service",
+      "type": "timeseries",
+      "description": "Per-service via cAdvisor. Works on both docker (container name) and the single-container appliance (systemd cgroup id). Network/disk are per-cgroup and may be sparse on the appliance (shared netns)."
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "helix",
+    "resources",
+    "docker"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Resource Utilization",
+  "uid": "helix-resource-utilization",
+  "version": 1,
+  "weekStart": ""
+}

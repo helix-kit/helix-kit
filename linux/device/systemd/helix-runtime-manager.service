@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# helix-runtime-manager — the root daemon that reconciles installed packages onto
+# systemd units (auto-start on boot) and serves the runtime control API. Runs as
+# root because it drives systemctl and writes /etc/helix and the package DB.
+[Unit]
+Description=Helix runtime manager
+After=helixd.service
+Wants=helixd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/helix/bin/helix-runtime-manager -service runtime
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

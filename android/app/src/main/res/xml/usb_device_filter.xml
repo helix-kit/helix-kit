@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- USB-to-UART bridges found on ESP32 dev boards, plus native-USB ESP32s.
+     Matching one of these on attach lets Android offer the Helix app and grant
+     it access to that connection. -->
+<resources>
+    <!-- Silicon Labs CP210x (e.g. CP2102) -->
+    <usb-device vendor-id="4292" />
+    <!-- WCH CH340/CH341 -->
+    <usb-device vendor-id="6790" />
+    <!-- FTDI FT232 family -->
+    <usb-device vendor-id="1027" />
+    <!-- Espressif native USB (ESP32-S2/S3/C3 CDC-ACM) -->
+    <usb-device vendor-id="12346" />
+</resources>

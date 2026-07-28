@@ -1,0 +1,316 @@
+<p>MQTT is the protocol most small embedded devices reach for the moment they need to talk to the outside world: it is lightweight, works over a single long-lived TCP connection, and gives you a publish/subscribe model instead of the request/response dance of HTTP. This tutorial walks through the whole path end to end &mdash; standing up a Mosquitto broker on Linux, securing it properly, and writing ESP32 firmware in the Arduino framework that publishes sensor telemetry and listens for remote commands. By the end you will have a broker you control, a topic layout that scales past one device, and firmware that survives Wi-Fi drops without falling over.</p>
+
+<h2>MQTT basics in five minutes</h2>
+
+<p>MQTT (Message Queuing Telemetry Transport) is built around three roles. A <strong>broker</strong> is the server that every client connects to; it never initiates a connection itself. <strong>Publishers</strong> send messages to a named <strong>topic</strong>, a slash-delimited string like <code>devices/esp32-01/telemetry</code>. <strong>Subscribers</strong> tell the broker which topics (or topic patterns) they care about, and the broker forwards every matching message to them. A single client can be a publisher and a subscriber at the same time, and most embedded devices are exactly that.</p>
+
+<p>A few concepts you will use constantly:</p>
+
+<ul>
+<li><strong>Wildcards.</strong> <code>+</code> matches exactly one topic level, <code>#</code> matches everything below a point. Subscribing to <code>devices/+/telemetry</code> catches telemetry from every device; <code>devices/#</code> catches everything under <code>devices</code>, including commands and status.</li>
+<li><strong>QoS (Quality of Service).</strong> Every publish and subscribe carries a QoS level of 0, 1, or 2 that controls delivery guarantees. Covered in detail below.</li>
+<li><strong>Retained messages.</strong> A publish flagged <code>retain=true</code> is stored by the broker and immediately replayed to any new subscriber on that topic. This is how a dashboard that connects after a device has already reported its state can still learn the last known value.</li>
+<li><strong>Last Will and Testament (LWT).</strong> When a client connects, it can register a message the broker should publish on its behalf if the connection drops uncleanly (no clean disconnect, TCP reset, keepalive timeout). This is the standard way to detect a device going offline.</li>
+<li><strong>Keepalive.</strong> The client tells the broker an interval (in seconds); if the broker hears nothing &mdash; not even a PINGREQ &mdash; for 1.5x that interval, it treats the connection as dead and fires the LWT.</li>
+</ul>
+
+<blockquote>MQTT has no built-in request/response, no schema, and no discovery mechanism. Topic naming and payload format are entirely up to you &mdash; get the topic hierarchy right early, because renaming topics later means touching every client.</blockquote>
+
+<h2>Prerequisites</h2>
+
+<ul>
+<li>A Linux machine (or VM/container) to run the broker &mdash; any recent Debian/Ubuntu works for the apt instructions below.</li>
+<li>An ESP32 dev board, USB cable, and the Arduino IDE (or <code>arduino-cli</code>) with the <code>esp32</code> board package installed.</li>
+<li>The <code>PubSubClient</code> library by Nick O'Leary, installed via Library Manager or <code>arduino-cli lib install PubSubClient</code>.</li>
+<li>A Wi-Fi network the broker machine and the ESP32 can both reach.</li>
+</ul>
+
+<h2>Standing up the broker</h2>
+
+<h3>Option A: apt install</h3>
+
+<p>On Debian/Ubuntu, Mosquitto and its command-line client tools are packaged directly:</p>
+
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y mosquitto mosquitto-clients
+
+# stop the default service while we hand-write a config
+sudo systemctl stop mosquitto
+sudo systemctl disable mosquitto</code></pre>
+
+<h3>Option B: Docker</h3>
+
+<p>If you would rather not install anything system-wide, the official image only needs a config file and a couple of mounted volumes:</p>
+
+<pre><code class="language-bash">mkdir -p ~/mosquitto/{config,data,log}
+# put mosquitto.conf (below) into ~/mosquitto/config/mosquitto.conf
+
+docker run -d --name mosquitto \
+  -p 1883:1883 \
+  -v ~/mosquitto/config:/mosquitto/config \
+  -v ~/mosquitto/data:/mosquitto/data \
+  -v ~/mosquitto/log:/mosquitto/log \
+  eclipse-mosquitto:2</code></pre>
+
+<h3>Writing mosquitto.conf</h3>
+
+<p>Start with the quickest possible setup to prove connectivity &mdash; anonymous access on the standard port. This is fine on an isolated lab network, never on anything reachable from the internet:</p>
+
+<pre><code class="language-ini"># mosquitto.conf -- anonymous, local testing only
+listener 1883 0.0.0.0
+allow_anonymous true
+
+persistence true
+persistence_location /var/lib/mosquitto/
+log_dest file /var/log/mosquitto/mosquitto.log</code></pre>
+
+<p>Once that works, switch to authenticated access. Generate a password file with <code>mosquitto_passwd</code> (it hashes and salts the password, it does not store it in plaintext):</p>
+
+<pre><code class="language-bash">sudo mosquitto_passwd -c /etc/mosquitto/passwd esp32-01
+# prompts for a password; drop -c when adding subsequent users
+sudo mosquitto_passwd /etc/mosquitto/passwd dashboard</code></pre>
+
+<pre><code class="language-ini"># mosquitto.conf -- authenticated
+listener 1883 0.0.0.0
+allow_anonymous false
+password_file /etc/mosquitto/passwd
+
+persistence true
+persistence_location /var/lib/mosquitto/
+log_dest file /var/log/mosquitto/mosquitto.log</code></pre>
+
+<p>Run it in the foreground first so you can see connection logs while you debug, then move it to a service once it behaves:</p>
+
+<pre><code class="language-bash">sudo mosquitto -c /etc/mosquitto/mosquitto.conf -v</code></pre>
+
+<p>Verify from another terminal with the CLI tools that shipped with <code>mosquitto-clients</code>. Subscribe wide, then publish into it:</p>
+
+<pre><code class="language-bash">mosquitto_sub -h localhost -t 'devices/#' -v -u dashboard -P &lt;password&gt;
+
+# in a second terminal
+mosquitto_pub -h localhost -t 'devices/esp32-01/telemetry' \
+  -m '{"temp_c":21.4}' -u esp32-01 -P &lt;password&gt;</code></pre>
+
+<p>If the subscriber prints <code>devices/esp32-01/telemetry {"temp_c":21.4}</code>, the broker is working and you are ready to point real firmware at it.</p>
+
+<h2>Designing a topic hierarchy</h2>
+
+<p>A topic scheme that scales past a single device puts the device identifier as a fixed segment and groups by purpose underneath it. A layout that works well for sensor/actuator devices:</p>
+
+<table>
+<thead>
+<tr><th>Topic</th><th>Direction</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>devices/&lt;id&gt;/telemetry</code></td><td>device &rarr; broker</td><td>Periodic sensor readings, JSON payload</td></tr>
+<tr><td><code>devices/&lt;id&gt;/status</code></td><td>device &rarr; broker</td><td>Retained online/offline state, also the LWT target</td></tr>
+<tr><td><code>devices/&lt;id&gt;/cmd</code></td><td>broker &rarr; device</td><td>Commands sent to the device (relay on/off, config changes)</td></tr>
+<tr><td><code>devices/&lt;id&gt;/cmd/ack</code></td><td>device &rarr; broker</td><td>Acknowledgement that a command was applied</td></tr>
+</tbody>
+</table>
+
+<p>With this scheme a dashboard subscribes once to <code>devices/+/telemetry</code> and <code>devices/+/status</code> to see every device, while a single device only ever subscribes to its own <code>devices/&lt;id&gt;/cmd</code>. Keep identifiers stable (MAC-derived or a provisioned serial) rather than reusing something like a Wi-Fi SSID that can change.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrow1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+</marker>
+</defs>
+<rect x="290" y="120" width="140" height="60" rx="8" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="360" y="155" text-anchor="middle" fill="currentColor" font-size="15">Mosquitto broker</text>
+
+<rect x="20" y="20" width="150" height="50" rx="8" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="95" y="50" text-anchor="middle" fill="currentColor" font-size="13">ESP32 sensor node</text>
+
+<rect x="20" y="230" width="150" height="50" rx="8" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="95" y="260" text-anchor="middle" fill="currentColor" font-size="13">ESP32 relay node</text>
+
+<rect x="550" y="20" width="150" height="50" rx="8" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="625" y="50" text-anchor="middle" fill="currentColor" font-size="13">Dashboard (web)</text>
+
+<rect x="550" y="230" width="150" height="50" rx="8" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="625" y="260" text-anchor="middle" fill="currentColor" font-size="13">Logger / consumer</text>
+
+<line x1="170" y1="55" x2="290" y2="135" stroke="currentColor" marker-end="url(#arrow1)"></line>
+<text x="205" y="80" fill="currentColor" font-size="11">publish telemetry</text>
+
+<line x1="430" y1="150" x2="550" y2="55" stroke="currentColor" marker-end="url(#arrow1)"></line>
+<text x="470" y="90" fill="currentColor" font-size="11">subscribe devices/+/#</text>
+
+<line x1="430" y1="165" x2="550" y2="250" stroke="currentColor" marker-end="url(#arrow1)"></line>
+<text x="460" y="230" fill="currentColor" font-size="11">subscribe telemetry</text>
+
+<line x1="290" y1="165" x2="170" y2="250" stroke="currentColor" marker-end="url(#arrow1)"></line>
+<text x="185" y="230" fill="currentColor" font-size="11">devices/relay-01/cmd</text>
+</svg>
+<figcaption>Sensor nodes publish telemetry into the broker; the dashboard and logger subscribe to it; commands flow the other direction to the relay node.</figcaption>
+</figure>
+
+<h2>Publishing telemetry from the ESP32</h2>
+
+<p>The Arduino framework plus <code>PubSubClient</code> is the fastest path to a working client. Install <code>WiFi.h</code> (bundled with the ESP32 board package), <code>PubSubClient</code>, and optionally <code>ArduinoJson</code> for building payloads.</p>
+
+<pre><code class="language-cpp">#include &lt;WiFi.h&gt;
+#include &lt;PubSubClient.h&gt;
+
+const char* WIFI_SSID = "your-ssid";
+const char* WIFI_PASS = "your-password";
+
+const char* MQTT_HOST = "192.168.1.50";
+const uint16_t MQTT_PORT = 1883;
+const char* MQTT_USER = "esp32-01";
+const char* MQTT_PASS = "supersecret";
+
+const char* DEVICE_ID = "esp32-01";
+char telemetryTopic[64];
+char statusTopic[64];
+char cmdTopic[64];
+
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+
+void setupWifi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  snprintf(telemetryTopic, sizeof(telemetryTopic), "devices/%s/telemetry", DEVICE_ID);
+  snprintf(statusTopic, sizeof(statusTopic), "devices/%s/status", DEVICE_ID);
+  snprintf(cmdTopic, sizeof(cmdTopic), "devices/%s/cmd", DEVICE_ID);
+
+  setupWifi();
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+}</code></pre>
+
+<p>A single publish that sends a JSON telemetry payload with QoS 0 (fire and forget, the right default for periodic sensor readings):</p>
+
+<pre><code class="language-cpp">void publishTelemetry(float tempC, float humidity) {
+  char payload[96];
+  snprintf(payload, sizeof(payload),
+           "{\"temp_c\":%.1f,\"humidity\":%.1f,\"uptime_s\":%lu}",
+           tempC, humidity, millis() / 1000);
+  mqtt.publish(telemetryTopic, payload, false); // retain=false
+}</code></pre>
+
+<h2>Subscribing to commands</h2>
+
+<p>To receive commands, register a callback before connecting, subscribe once the connection is established, and let <code>mqtt.loop()</code> pump incoming messages on every iteration of <code>loop()</code>.</p>
+
+<pre><code class="language-cpp">void onMessage(char* topic, byte* payload, unsigned int len) {
+  String msg;
+  for (unsigned int i = 0; i &lt; len; i++) {
+    msg += (char)payload[i];
+  }
+  Serial.printf("cmd on %s: %s\n", topic, msg.c_str());
+
+  if (msg == "relay_on") {
+    digitalWrite(RELAY_PIN, HIGH);
+  } else if (msg == "relay_off") {
+    digitalWrite(RELAY_PIN, LOW);
+  }
+}</code></pre>
+
+<p>Wire the callback in <code>setup()</code> with <code>mqtt.setCallback(onMessage);</code> before the first connection attempt.</p>
+
+<h2>Connecting with a Last Will, and reconnecting reliably</h2>
+
+<p>The overload of <code>connect()</code> that takes LWT arguments lets the broker announce a device as offline the moment the TCP connection dies, without the device doing anything itself. Publish a retained <code>"online"</code> status right after connecting so the two states bracket the connection's lifetime:</p>
+
+<pre><code class="language-cpp">bool mqttReconnect() {
+  // clientId, user, pass, willTopic, willQos, willRetain, willMessage
+  bool ok = mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS,
+                          statusTopic, 1, true, "offline");
+  if (ok) {
+    mqtt.publish(statusTopic, "online", true); // retained
+    mqtt.subscribe(cmdTopic, 1);
+  }
+  return ok;
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    setupWifi();
+    return;
+  }
+
+  if (!mqtt.connected()) {
+    static unsigned long lastAttempt = 0;
+    unsigned long now = millis();
+    if (now - lastAttempt &gt; 5000) {
+      lastAttempt = now;
+      mqttReconnect();
+    }
+  } else {
+    mqtt.loop();
+
+    static unsigned long lastPublish = 0;
+    unsigned long now = millis();
+    if (now - lastPublish &gt; 10000) {
+      lastPublish = now;
+      publishTelemetry(readTempC(), readHumidity());
+    }
+  }
+}</code></pre>
+
+<p>The 5-second backoff between reconnect attempts is deliberately non-blocking &mdash; it never calls <code>delay()</code> for the full retry window, so a stuck Wi-Fi connection does not stall the entire loop. For a production device, back this off exponentially (5s, 10s, 20s, capping around a minute) so a broker outage does not turn a fleet of devices into a reconnect storm the instant it comes back.</p>
+
+<h2>Reliability: QoS, retained state, and keepalive</h2>
+
+<p>QoS controls what the broker (and, for subscribes, the client) guarantees about delivery. Higher QoS costs more round trips and more RAM on the ESP32 side to track in-flight message state, so pick the lowest level that satisfies the requirement.</p>
+
+<table>
+<thead>
+<tr><th>QoS</th><th>Guarantee</th><th>Cost</th><th>Use for</th></tr>
+</thead>
+<tbody>
+<tr><td>0</td><td>At most once &mdash; fire and forget, no acknowledgement</td><td>One packet, no retries</td><td>Frequent sensor telemetry where a dropped sample is harmless</td></tr>
+<tr><td>1</td><td>At least once &mdash; broker acknowledges (PUBACK); sender retries until acked, so duplicates are possible</td><td>One extra round trip, sender must track unacked messages</td><td>Commands and status changes that must arrive, where a duplicate is safe (idempotent commands)</td></tr>
+<tr><td>2</td><td>Exactly once &mdash; four-way handshake (PUBREC/PUBREL/PUBCOMP) guarantees no duplicates</td><td>Two extra round trips, more state to track</td><td>Non-idempotent actions, e.g. "increment counter" or billing-relevant events</td></tr>
+</tbody>
+</table>
+
+<p>Keepalive is set as the second-to-last consideration when connecting; <code>PubSubClient</code> defaults to 15 seconds, configurable with <code>mqtt.setKeepAlive(seconds)</code> before calling <code>connect()</code>. Shorter intervals detect a dead device faster but generate more PINGREQ/PINGRESP traffic; 30&ndash;60 seconds is reasonable for a battery-conscious device that is not latency-sensitive about presence detection.</p>
+
+<p>Retained messages and the LWT work together to give any subscriber an accurate picture of device state even if it connects long after the device did: a dashboard that starts up subscribes to <code>devices/+/status</code> and immediately receives the last retained value for every device, whether that is <code>"online"</code> from a healthy device or <code>"offline"</code> left behind by the broker firing an LWT.</p>
+
+<h2>The ESP-IDF alternative: esp-mqtt</h2>
+
+<p>If you are building on ESP-IDF rather than Arduino, the built-in <code>esp-mqtt</code> component (<code>esp_mqtt_client</code>) is event-driven rather than loop-polled and supports TLS out of the box. The shape is different but the concepts &mdash; LWT, QoS, subscribe callback &mdash; carry over directly:</p>
+
+<pre><code class="language-c">esp_mqtt_client_config_t cfg = {
+    .broker.address.uri = "mqtt://192.168.1.50:1883",
+    .credentials.username = "esp32-01",
+    .credentials.authentication.password = "supersecret",
+    .session.last_will.topic = "devices/esp32-01/status",
+    .session.last_will.msg = "offline",
+    .session.last_will.qos = 1,
+    .session.last_will.retain = true,
+};
+esp_mqtt_client_handle_t client = esp_mqtt_client_init(&amp;cfg);
+esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+esp_mqtt_client_start(client);</code></pre>
+
+<p>In <code>mqtt_event_handler</code>, handle <code>MQTT_EVENT_CONNECTED</code> to subscribe and publish the retained <code>"online"</code> status, and <code>MQTT_EVENT_DATA</code> to react to incoming command messages &mdash; the same lifecycle as the Arduino version, just delivered through IDF's event loop instead of a polled <code>loop()</code>.</p>
+
+<h2>Troubleshooting</h2>
+
+<ul>
+<li><strong>Connection refused / connection timed out.</strong> Confirm the broker is actually listening: <code>sudo ss -tlnp | grep 1883</code>. If it only shows <code>127.0.0.1:1883</code>, your <code>listener</code> line is bound to localhost only &mdash; use <code>listener 1883 0.0.0.0</code>. Check the host firewall (<code>ufw status</code>, or your cloud provider's security group) allows inbound TCP 1883 from the ESP32's network.</li>
+<li><strong>Connection refused, not authorized (rc=5 in PubSubClient).</strong> Username/password mismatch against <code>password_file</code>, or <code>allow_anonymous false</code> with no credentials supplied. Regenerate the password file entry with <code>mosquitto_passwd</code> and restart Mosquitto &mdash; it re-reads the file on start, not live.</li>
+<li><strong>Client connects but never receives messages.</strong> Almost always a topic mismatch: check for a trailing slash, a typo in the device ID segment, or a subscribe issued before the connection callback fired. Use <code>mosquitto_sub -t '#' -v</code> from a shell on the broker host to see every topic actually flowing, unfiltered.</li>
+<li><strong>Subscriber gets a stale value it did not expect.</strong> That is a retained message from an earlier test publish. Clear it by publishing an empty payload with retain set: <code>mosquitto_pub -t devices/esp32-01/status -r -n</code>.</li>
+<li><strong>Device reconnects in a tight loop.</strong> Usually the reconnect logic calling <code>connect()</code> every pass of <code>loop()</code> with no backoff, which can also trip Mosquitto's default connection-rate limiting. Add the millis()-based backoff shown above.</li>
+<li><strong>Wi-Fi drops silently, LWT never fires.</strong> The LWT only fires once the broker's keepalive window expires or the TCP socket errors out; a long keepalive combined with a flaky Wi-Fi radio can leave a device looking "online" for up to 1.5x the keepalive after it actually vanished. Shorten the keepalive if presence detection needs to be fast.</li>
+<li><strong>Large JSON payloads get truncated.</strong> <code>PubSubClient</code>'s default buffer is 256 bytes for both send and receive; call <code>mqtt.setBufferSize(512)</code> (or larger) before connecting if your telemetry payload is bigger.</li>
+</ul>
+
+<h2>Wrap-up</h2>
+
+<p>A Mosquitto broker with a password file, a topic hierarchy with the device ID as its first segment, and an ESP32 client that registers a Last Will before it ever publishes a reading covers the vast majority of what a small IoT deployment needs from MQTT. The remaining production concerns &mdash; TLS listeners, per-device ACLs restricting each client to its own topic subtree, and moving from a password file to a database-backed auth plugin &mdash; are extensions of exactly the same configuration file and connection call you just wrote, not a different system.</p>

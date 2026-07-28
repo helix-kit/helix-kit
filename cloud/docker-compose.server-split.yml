@@ -1,0 +1,49 @@
+# Role-split overlay for helix-server (opt-in). See docs/07 (role split).
+#
+# By default `docker compose up` runs ONE helix-server container with all
+# data-plane roles (gateway + ingest + writer) sharing a single Node event loop.
+# Layer this file to split those roles across processes so they use more cores,
+# coordinating only through mosquitto / redpanda / postgres:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.server-split.yml up -d
+#
+# The primary `helix-server` service keeps its name, ports (4000/8443) and health
+# endpoint and runs the gateway role, so dependents (helix, caddy) and the Caddy
+# upstream are unchanged. `ingest` and `writer` run as sibling processes with no
+# published ports and no HTTP health check.
+services:
+  helix-server:
+    environment:
+      HELIX_SERVER_ROLES: gateway
+
+  helix-server-ingest:
+    extends:
+      file: docker-compose.yml
+      service: helix-server
+    environment:
+      HELIX_SERVER_ROLES: ingest
+    # No HTTP surface: drop the inherited ports and health check.
+    ports: !reset []
+    healthcheck:
+      disable: true
+    # extends does not copy depends_on; re-declare what the ingest role needs.
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  helix-server-writer:
+    extends:
+      file: docker-compose.yml
+      service: helix-server
+    environment:
+      HELIX_SERVER_ROLES: writer
+    ports: !reset []
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy

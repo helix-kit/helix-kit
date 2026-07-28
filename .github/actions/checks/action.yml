@@ -1,0 +1,118 @@
+name: Web checks
+description: >-
+  Lint / typecheck / unused / format / deps for the web/ monorepo, run ALL IN
+  PARALLEL as background jobs. Publishes one Check Run per check. Assumes the
+  caller already did checkout + pnpm/setup-node + `pnpm install`, and — for the
+  turbo cache to actually hit — that it set the same globalEnv vars the build
+  step used. Reads $CI_LOG_DIR. Outputs any_failed.
+
+outputs:
+  any_failed:
+    description: "'true' if any check failed"
+    value: ${{ steps.gate.outputs.any_failed }}
+
+runs:
+  using: composite
+  steps:
+    # All checks run concurrently as background jobs, each writing its log + exit
+    # code to $CI_LOG_DIR. A matrix would mean N runners and N `pnpm install`s;
+    # this shares one install AND the local turbo cache the build just warmed.
+    # `turbo` (lint + typecheck) is the long pole, so the lighter checks finish
+    # underneath it.
+    - name: Run checks (parallel)
+      shell: bash
+      working-directory: web
+      run: |
+        set -uo pipefail
+        mkdir -p "$CI_LOG_DIR"
+        # BLOCKING: these fail the run.
+        declare -A CHECKS=(
+          [turbo]="pnpm run lint && pnpm run typecheck"
+          [format]="pnpm run format:check"
+          [exports]="pnpm run exports:check"
+          [typecheck-scripts]="pnpm run typecheck:scripts"
+        )
+        # ADVISORY: reported as a Check Run, but does NOT fail the pipeline.
+        # `unused` (knip + unused-tRPC-procedure scan) currently reports ~48 unused
+        # exports that predate this pipeline — gating on it would make every build
+        # red on day one. Clean that up, then move `unused` into CHECKS above.
+        declare -A ADVISORY=(
+          [unused]="pnpm run unused"
+        )
+        pids=()
+        for slug in "${!CHECKS[@]}" "${!ADVISORY[@]}"; do
+          cmd="${CHECKS[$slug]:-${ADVISORY[$slug]:-}}"
+          ( eval "$cmd" >"$CI_LOG_DIR/$slug.log" 2>&1; echo $? >"$CI_LOG_DIR/$slug.exit" ) &
+          pids+=("$!")
+        done
+        for pid in "${pids[@]}"; do wait "$pid" || true; done
+
+        # Advisory checks never fail the gate — record that for the Gate step.
+        printf '%s\n' "${!ADVISORY[@]}" > "$CI_LOG_DIR/advisory.txt"
+
+        # Surface every check's output in the job log, grouped, in a stable order.
+        for slug in turbo format exports typecheck-scripts unused; do
+          rc=$(cat "$CI_LOG_DIR/$slug.exit" 2>/dev/null || echo 1)
+          [ "$rc" = "0" ] && icon="✅" || icon="❌"
+          echo "::group::$icon $slug (exit $rc)"
+          cat "$CI_LOG_DIR/$slug.log" 2>/dev/null || true
+          echo "::endgroup::"
+        done
+
+    - name: Publish check runs
+      if: always()
+      continue-on-error: true
+      uses: actions/github-script@v7
+      env:
+        RESULTS: |
+          turbo|Lint & Typecheck
+          format|Format
+          unused|Unused exports (advisory)
+          exports|Package exports
+          typecheck-scripts|Script typecheck
+      with:
+        script: |
+          const fs = require('fs');
+          const dir = process.env.CI_LOG_DIR;
+          const sha = context.payload.pull_request?.head?.sha ?? context.sha;
+          for (const line of process.env.RESULTS.trim().split('\n')) {
+            const [slug, name] = line.split('|');
+            let rc = 1;
+            try { rc = parseInt(fs.readFileSync(`${dir}/${slug}.exit`, 'utf8').trim(), 10); } catch {}
+            let log = '';
+            try { log = fs.readFileSync(`${dir}/${slug}.log`, 'utf8'); } catch {}
+            // A Check Run summary is capped at 65535 chars — keep the TAIL, which
+            // is where the failure is.
+            const summary = log.length > 60000 ? `…\n${log.slice(-60000)}` : log;
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name,
+              head_sha: sha,
+              status: 'completed',
+              conclusion: rc === 0 ? 'success' : 'failure',
+              output: {
+                title: rc === 0 ? 'Passed' : `Failed (exit ${rc})`,
+                summary: '```\n' + summary + '\n```',
+              },
+            });
+          }
+
+    - name: Gate
+      id: gate
+      if: always()
+      shell: bash
+      run: |
+        any_failed=false
+        advisory=$(cat "$CI_LOG_DIR/advisory.txt" 2>/dev/null || true)
+        for slug in turbo format exports typecheck-scripts unused; do
+          rc=$(cat "$CI_LOG_DIR/$slug.exit" 2>/dev/null || echo 1)
+          if [ "$rc" != "0" ]; then
+            if grep -qx "$slug" <<<"$advisory"; then
+              echo "::warning::advisory check '$slug' failed (not gating)"
+            else
+              any_failed=true
+            fi
+          fi
+        done
+        echo "any_failed=$any_failed" >> "$GITHUB_OUTPUT"

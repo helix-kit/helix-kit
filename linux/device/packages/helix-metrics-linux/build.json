@@ -1,0 +1,5 @@
+{
+  "goBinaries": [
+    { "cmd": "helix-metrics-linux", "dest": "usr/lib/helix/metrics/helix-metrics-linux" }
+  ]
+}

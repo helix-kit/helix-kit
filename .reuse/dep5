@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *
+Copyright: 2026 Hardik Jain
+License: AGPL-3.0-only
+
+Files: docs/*
+Copyright: 2026 Hardik Jain
+License: CC-BY-SA-4.0

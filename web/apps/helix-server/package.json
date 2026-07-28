@@ -1,0 +1,32 @@
+{
+  "name": "@helix/server-app",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsdown",
+    "lint": "eslint --max-warnings=0 .",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@helix/backend": "workspace:*",
+    "@helix/logger": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
+    "inngest": "^4.12.0",
+    "kafkajs": "^2.2.4",
+    "mqtt": "^5.15.2",
+    "trpc-to-openapi": "^3.3.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@workspace/eslint-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "tsdown": "^0.22.4",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,160 @@
+[project]
+name = "helix"
+version = "0.1.0"
+description = "Helix platform developer tooling"
+readme = "docs/01-Plan.md"
+license = "AGPL-3.0-only"
+requires-python = ">=3.14"
+dependencies = [
+    "bleak>=1.1.1",
+    "click>=8.4.2",
+    "pyserial>=3.5",
+]
+
+[project.scripts]
+helix = "tooling.cli:cli"
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+namespaces = false
+include = [
+  "tooling*",
+  "linux",
+  "linux.platform_os*",
+  "embedded*",
+]
+exclude = [
+  "embedded.esp32.core*",
+]
+
+[tool.setuptools.exclude-package-data]
+platform_os = [
+  "artifacts/**",
+  ".venv/**",
+  ".mypy_cache/**",
+  ".ruff_cache/**",
+  "__pycache__/**",
+]
+embedded = [
+  "esp32/core/.build/**",
+  "esp32/core/out/**",
+  "esp32/core/**/__pycache__/**",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "mypy>=2.1.0",
+    "paho-mqtt>=2.1.0",
+    "pytest>=8.4.0",
+    "websocket-client>=1.9.0",
+    "ruff>=0.15.20",
+    "types-pyserial>=3.5.0.20260712",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+# Build artifacts and vendored trees are not first-party code. `cloud/ami/artifacts`
+# holds a debootstrapped rootfs (an entire CPython stdlib, root-owned) — linting it
+# is meaningless and black/mypy cannot even traverse it. Generated bindings are owned
+# by `helix protocol generate-all`, not hand-edited, so they are excluded too.
+exclude = [
+  "platform_os/artifacts",
+  "cloud/ami/artifacts",
+  "embedded/esp32/core/.build",
+  "embedded/esp32/core/managed_components",
+  "embedded/esp32/core/out",
+  ".venv",
+  "platform_os/.venv",
+  "linux/device/python/**/generated",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "B",
+  "UP",
+  "SIM",
+]
+ignore = []
+
+[tool.black]
+line-length = 100
+target-version = ["py314"]
+# `extend-exclude` (not `exclude`) so black KEEPS its built-in excludes — overriding
+# them makes black walk node_modules and the vendored rootfs.
+#
+# linux/device/python is excluded here on purpose: it targets CPython 3.10, and black
+# has no per-directory config, so this run's py314 target would apply 3.14-only
+# rewrites to it (PEP 758: `except (A, B):` -> `except A, B:` — a SyntaxError on the
+# device). `helix lint python` formats that tree separately with --target-version py310.
+extend-exclude = '''
+/(
+  platform_os/artifacts
+  | cloud/ami/artifacts
+  | embedded/esp32/core/\.build
+  | embedded/esp32/core/managed_components
+  | embedded/esp32/core/out
+  | node_modules
+  | generated
+  | linux/device/python
+)/
+'''
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+# Derive dotted module names from the repo root (tests/e2e/x.py -> tests.e2e.x) so the
+# per-module overrides below actually match; without this every file is a bare
+# top-level module and `module = ["tests.*"]` never applies.
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "."
+exclude = [
+  "platform_os/artifacts/",
+  "cloud/ami/artifacts/",
+  "embedded/esp32/core/.build/",
+  # Third-party ESP-IDF components fetched by the component manager (LVGL ships its
+  # own Python test harness); they are dependencies, not our source.
+  "embedded/esp32/core/managed_components/",
+  "embedded/esp32/core/out/",
+  "node_modules/",
+  # The device Python packages target CPython 3.10 and are installed per-service
+  # (their own venvs / import roots), so they cannot share this run's module map.
+  # They are type-checked by linux/device/python/mypy.ini — see `helix lint python`.
+  "linux/device/python/",
+]
+
+# Tests and throwaway prototypes are still checked for REAL errors (bad attributes,
+# wrong argument types) but are not required to carry full annotations — they are
+# exercised by pytest / are scratch code. Same split a prior production device tree uses.
+[[tool.mypy.overrides]]
+module = ["tests.*", "conftest", "experimental.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_untyped_decorators = false
+
+# PyGObject (the kiosk-display shell) ships no stubs.
+[[tool.mypy.overrides]]
+module = ["gi", "gi.*"]
+ignore_missing_imports = true
+
+# The e2e suite imports its sibling helpers pytest-style (`from _events import ...`),
+# which relies on pytest putting the test dir on sys.path. mypy resolves those files
+# as `tests.e2e.*`, so the bare names look unresolvable; adding tests/e2e to mypy_path
+# instead would make each file resolvable under two module names.
+[[tool.mypy.overrides]]
+module = ["_events", "_gateway", "conftest"]
+ignore_missing_imports = true

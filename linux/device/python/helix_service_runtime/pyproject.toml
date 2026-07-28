@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helix-service-runtime"
+version = "0.1.0"
+description = "Thin Python IPC SDK for building Helix device apps on the helixd core"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]

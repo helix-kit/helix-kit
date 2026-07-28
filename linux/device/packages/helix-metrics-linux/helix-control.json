@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "helix-metrics-linux",
+  "version": "0.1.0",
+  "kind": "go-binary"
+}

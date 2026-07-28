@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# helixd — the app-agnostic device core (MQTT<->IPC bridge + event spool + cert
+# enrollment/rotation). Runs as the unprivileged helix user. Part of the base
+# runtime; app services attach to its IPC socket and are supervised separately
+# by helix-runtime-manager.
+[Unit]
+Description=Helix device core (helixd)
+After=network-online.target
+Wants=network-online.target
+# Keep retrying indefinitely: a device that boots before it is provisioned (or
+# briefly loses its config mount) must recover on its own, not latch failed.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=helix
+Group=helix
+ExecStart=/usr/lib/helix/bin/helixd -service helixd
+Restart=always
+RestartSec=2
+# Create /run/helix (IPC socket) and /var/lib/helix (event spool) owned by helix.
+RuntimeDirectory=helix
+RuntimeDirectoryMode=0750
+StateDirectory=helix
+
+[Install]
+WantedBy=helix.target

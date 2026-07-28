@@ -1,0 +1,61 @@
+{
+  "name": "@helix/protocol-service",
+  "version": "0.0.1",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "dev": "tsdown --watch",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./react": {
+      "import": "./src/react.tsx",
+      "types": "./src/react.tsx"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "./react": {
+        "import": "./dist/react.js",
+        "types": "./dist/react.d.ts"
+      }
+    }
+  },
+  "dependencies": {
+    "@helix/protocol-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.96.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.101.2",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "react": "19.2.7",
+    "tsdown": "^0.22.4",
+    "typescript": "^7.0.2"
+  }
+}

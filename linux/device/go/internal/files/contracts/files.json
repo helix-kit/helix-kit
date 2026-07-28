@@ -1,0 +1,79 @@
+{
+  "service": "files",
+  "includes": [
+    {
+      "path": "../../peer/contracts/peer.fragment.json",
+      "extends": { "peerOpenInput": "OpenInput", "peerSessionOutput": "SessionOutput" }
+    }
+  ],
+  "schemas": {
+    "OpenInput": {
+      "sessionId": { "type": "string", "required": true },
+      "dataUrl": { "type": "string", "required": false },
+      "token": { "type": "string", "required": false }
+    },
+    "CloseInput": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "SessionOutput": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "ListInput": {
+      "path": { "type": "string", "required": false }
+    },
+    "FileEntry": {
+      "name": { "type": "string", "required": true },
+      "path": { "type": "string", "required": true },
+      "size": { "type": "number", "integer": true, "required": true },
+      "isDir": { "type": "boolean", "required": true },
+      "modifiedAt": { "type": "number", "integer": true, "required": true }
+    },
+    "ListOutput": {
+      "path": { "type": "string", "required": true },
+      "parent": { "type": "string", "required": false },
+      "entries": { "type": "array", "items": "FileEntry", "required": true }
+    },
+    "RootsInput": {},
+    "RootsOutput": {
+      "roots": { "type": "array", "items": "string", "required": true }
+    },
+    "TransferMeta": {
+      "op": { "type": "string", "required": true },
+      "path": { "type": "string", "required": true },
+      "size": { "type": "number", "integer": true, "required": false }
+    },
+    "Error": {
+      "error": { "type": "string", "required": true }
+    }
+  },
+  "methods": {
+    "open": {
+      "name": "open",
+      "outputName": "opened",
+      "input": "OpenInput",
+      "output": "SessionOutput",
+      "error": "Error"
+    },
+    "close": {
+      "name": "close",
+      "outputName": "closed",
+      "input": "CloseInput",
+      "output": "SessionOutput",
+      "error": "Error"
+    },
+    "list": {
+      "name": "list",
+      "outputName": "listing",
+      "input": "ListInput",
+      "output": "ListOutput",
+      "error": "Error"
+    },
+    "roots": {
+      "name": "roots",
+      "outputName": "roots",
+      "input": "RootsInput",
+      "output": "RootsOutput",
+      "error": "Error"
+    }
+  }
+}

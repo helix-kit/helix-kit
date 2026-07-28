@@ -1,0 +1,4 @@
+# Feature fragment: remove the MQTT cloud transport (telemetry, health
+# heartbeats, cloud command delivery). The device still supports serial, BLE,
+# and WebSocket command transports.
+CONFIG_HELIX_TRANSPORT_MQTT=n

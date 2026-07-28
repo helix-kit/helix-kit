@@ -1,0 +1,42 @@
+{
+  "uid": "helixdemo",
+  "title": "Helix Tunnel Demo",
+  "tags": ["helix", "tunnel"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Random Walk (via tunnel)",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Live Value",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ]
+    }
+  ]
+}

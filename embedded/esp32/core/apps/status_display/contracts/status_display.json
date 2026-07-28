@@ -1,0 +1,28 @@
+{
+  "service": "status-display",
+  "methods": {
+    "setText": {
+      "name": "set-text"
+    }
+  },
+  "messages": {
+    "state": {
+      "name": "display-state"
+    },
+    "error": {
+      "name": "status-display-error"
+    }
+  },
+  "schemas": {
+    "setTextRequest": {
+      "text": "string"
+    },
+    "displayStatePayload": {
+      "text": "string",
+      "ready": "boolean"
+    },
+    "errorPayload": {
+      "error": "string"
+    }
+  }
+}

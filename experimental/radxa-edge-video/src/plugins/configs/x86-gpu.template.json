@@ -1,0 +1,32 @@
+{
+  "_note": "GPU-resident x86: hx_infer_ort_gpu does letterbox+normalize on the GPU (cv::cuda) and runs ORT via IoBinding on the GPU input buffer; sink uses NVENC. entrypoint fills MODEL/DECODER/ENCODER; host fills HOST.",
+  "host": { "warmup_ms": 2000, "serialize_infer": false },
+  "streams": [
+    { "label": "g1",
+      "source":      { "module": "hx_src_gst",         "params": { "url": "rtsp://${HOST}:8554/stream1", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_passthrough",  "params": {} },
+      "infer":       { "module": "hx_infer_ort_gpu",    "params": { "model": "${MODEL}", "size": 640 } },
+      "postprocess": { "module": "hx_post_yolo11",      "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes",    "params": { "color": "orange" } } },
+    { "label": "g2",
+      "source":      { "module": "hx_src_gst",         "params": { "url": "rtsp://${HOST}:8554/stream2", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_passthrough",  "params": {} },
+      "infer":       { "module": "hx_infer_ort_gpu",    "params": { "model": "${MODEL}", "size": 640 } },
+      "postprocess": { "module": "hx_post_yolo11",      "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes",    "params": { "color": "green" } } },
+    { "label": "g3",
+      "source":      { "module": "hx_src_gst",         "params": { "url": "rtsp://${HOST}:8554/stream3", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_passthrough",  "params": {} },
+      "infer":       { "module": "hx_infer_ort_gpu",    "params": { "model": "${MODEL}", "size": 640 } },
+      "postprocess": { "module": "hx_post_yolo11",      "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes",    "params": { "color": "orange" } } },
+    { "label": "g4",
+      "source":      { "module": "hx_src_gst",         "params": { "url": "rtsp://${HOST}:8554/stream4", "fps": 12, "decoder": "${DECODER}" } },
+      "preprocess":  { "module": "hx_pre_passthrough",  "params": {} },
+      "infer":       { "module": "hx_infer_ort_gpu",    "params": { "model": "${MODEL}", "size": 640 } },
+      "postprocess": { "module": "hx_post_yolo11",      "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes",    "params": { "color": "green" } } }
+  ],
+  "compositor": { "module": "hx_comp_grid", "params": { "cols": 2, "rows": 2, "grid_w": 1280, "grid_h": 720 } },
+  "sink":       { "module": "hx_sink_gst",  "params": { "url": "rtmp://${HOST}:1935/detgrid", "width": 1280, "height": 720, "encoder": "${ENCODER}" } }
+}

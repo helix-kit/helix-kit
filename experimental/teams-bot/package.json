@@ -1,0 +1,25 @@
+{
+  "name": "helix-teams-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental Helix Teams bot prototype (Vercel Chat SDK) — proves inbound events + server-initiated proactive notifications",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env --import tsx src/server.ts",
+    "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chat-adapter/slack": "^4.33.0",
+    "@chat-adapter/state-memory": "^4.33.0",
+    "@chat-adapter/teams": "^4.33.0",
+    "@hono/node-server": "^2.0.8",
+    "chat": "^4.33.0",
+    "hono": "^4.12.29"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  }
+}

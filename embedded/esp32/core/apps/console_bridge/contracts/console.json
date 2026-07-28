@@ -1,0 +1,89 @@
+{
+  "service": "console",
+  "methods": {
+    "open": {
+      "name": "open",
+      "input": "openSessionRequest",
+      "output": "sessionPayload",
+      "error": "errorPayload"
+    },
+    "close": {
+      "name": "close",
+      "input": "closeRequest",
+      "output": "sessionPayload",
+      "error": "errorPayload"
+    },
+    "list": {
+      "name": "list",
+      "output": "sessionsPayload",
+      "error": "errorPayload"
+    },
+    "configure": {
+      "name": "configure",
+      "input": "configureRequest",
+      "output": "configPayload",
+      "error": "errorPayload"
+    }
+  },
+  "messages": {
+    "opened": {
+      "name": "opened",
+      "payload": "sessionPayload"
+    },
+    "closed": {
+      "name": "closed",
+      "payload": "sessionPayload"
+    },
+    "sessions": {
+      "name": "sessions",
+      "payload": "sessionsPayload"
+    },
+    "configured": {
+      "name": "configured",
+      "payload": "configPayload"
+    },
+    "error": {
+      "name": "console-error",
+      "payload": "errorPayload"
+    }
+  },
+  "schemas": {
+    "openSessionRequest": {
+      "sessionId": { "type": "string", "required": true },
+      "transport": { "type": "string", "required": false },
+      "dataUrl": { "type": "string", "required": false },
+      "token": { "type": "string", "required": false }
+    },
+    "closeRequest": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "configureRequest": {
+      "uart": { "type": "number", "required": false, "integer": true, "minimum": 0, "maximum": 2 },
+      "baud": { "type": "number", "required": false, "integer": true, "minimum": 300, "maximum": 4000000 },
+      "txPin": { "type": "number", "required": false, "integer": true, "minimum": 0, "maximum": 39 },
+      "rxPin": { "type": "number", "required": false, "integer": true, "minimum": 0, "maximum": 39 }
+    },
+    "sessionPayload": {
+      "sessionId": { "type": "string", "required": true },
+      "offer": { "type": "string", "required": false }
+    },
+    "sessionInfo": {
+      "sessionId": { "type": "string", "required": true },
+      "createdAt": { "type": "number", "required": true, "integer": true },
+      "terminals": { "type": "number", "required": true, "integer": true }
+    },
+    "sessionsPayload": {
+      "sessions": { "type": "array", "items": "sessionInfo", "required": true }
+    },
+    "configPayload": {
+      "ok": { "type": "boolean", "required": true },
+      "uart": { "type": "number", "required": true, "integer": true },
+      "baud": { "type": "number", "required": true, "integer": true },
+      "txPin": { "type": "number", "required": true, "integer": true },
+      "rxPin": { "type": "number", "required": true, "integer": true }
+    },
+    "errorPayload": {
+      "error": { "type": "string", "required": true }
+    }
+  }
+}

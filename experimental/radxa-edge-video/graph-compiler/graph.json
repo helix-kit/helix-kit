@@ -1,0 +1,23 @@
+{
+  "_note": "ONE portable pipeline graph, defined once (this is what the React editor emits). Each backend compiles it to that platform's native, zero-copy GStreamer pipeline. Nodes are semantic (roles + params); the backend picks the implementation + model artifact per platform.",
+  "name": "4cam-yolo11s-grid",
+  "streams": [
+    "rtsp://${HOST}:8554/stream1",
+    "rtsp://${HOST}:8554/stream2",
+    "rtsp://${HOST}:8554/stream3",
+    "rtsp://${HOST}:8554/stream4"
+  ],
+  "nodes": [
+    { "id": "dec",     "role": "decode" },
+    { "id": "batch",   "role": "batch",     "params": { "width": 1280, "height": 720 } },
+    { "id": "det",     "role": "detect",    "params": { "model": "yolo11s", "conf": 0.35, "nms": 0.45, "classes": 80 } },
+    { "id": "track",   "role": "track" },
+    { "id": "tile",    "role": "tile",      "params": { "cols": 2, "rows": 2, "width": 1280, "height": 720 } },
+    { "id": "osd",     "role": "overlay" },
+    { "id": "sink",    "role": "sink",      "params": { "kind": "rtsp", "port": 8560 } }
+  ],
+  "edges": [
+    ["streams", "dec"], ["dec", "batch"], ["batch", "det"], ["det", "track"],
+    ["track", "tile"], ["tile", "osd"], ["osd", "sink"]
+  ]
+}

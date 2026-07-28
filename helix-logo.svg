@@ -1,0 +1,291 @@
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Helix animated logo</title>
+  <desc id="desc">Animated modular Helix logo for edge, embedded, and cloud systems.</desc>
+
+  <defs>
+    <linearGradient id="bgGradient" x1="64" y1="32" x2="448" y2="480">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="48%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <linearGradient id="spineGradient" x1="160" y1="96" x2="352" y2="416">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="45%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <linearGradient id="coreGradient" x1="210" y1="190" x2="310" y2="318">
+      <stop offset="0%" stop-color="#ecfeff" />
+      <stop offset="40%" stop-color="#67e8f9" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+
+    <linearGradient id="accentGradient" x1="128" y1="160" x2="384" y2="352">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.38" />
+    </filter>
+
+    <style>
+      .pulse-core {
+        transform-origin: 256px 256px;
+        animation: pulse-core 3s ease-in-out infinite;
+      }
+
+      .data-line {
+        stroke-dasharray: 18 16;
+        animation: data-flow 2.6s linear infinite;
+      }
+
+      .data-line.reverse {
+        animation-direction: reverse;
+        animation-duration: 3.2s;
+      }
+
+      .node {
+        transform-origin: center;
+        animation: node-pulse 2.4s ease-in-out infinite;
+      }
+
+      .node.delay-1 {
+        animation-delay: 0.25s;
+      }
+
+      .node.delay-2 {
+        animation-delay: 0.5s;
+      }
+
+      .node.delay-3 {
+        animation-delay: 0.75s;
+      }
+
+      .scan {
+        animation: scan 3.8s ease-in-out infinite;
+      }
+
+      .wordmark {
+        letter-spacing: 2px;
+      }
+
+      @keyframes pulse-core {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.96;
+        }
+        50% {
+          transform: scale(1.045);
+          opacity: 1;
+        }
+      }
+
+      @keyframes data-flow {
+        from {
+          stroke-dashoffset: 0;
+        }
+        to {
+          stroke-dashoffset: -68;
+        }
+      }
+
+      @keyframes node-pulse {
+        0%,
+        100% {
+          opacity: 0.72;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.18);
+        }
+      }
+
+      @keyframes scan {
+        0%,
+        100% {
+          opacity: 0;
+          transform: translateY(-84px);
+        }
+        12% {
+          opacity: 0.75;
+        }
+        50% {
+          opacity: 0.9;
+        }
+        88% {
+          opacity: 0.75;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(84px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pulse-core,
+        .data-line,
+        .data-line.reverse,
+        .node,
+        .scan {
+          animation: none;
+        }
+      }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="104" fill="url(#bgGradient)" />
+
+  <!-- Subtle grid -->
+  <g opacity="0.12">
+    <path d="M96 128H416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M96 192H416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M96 256H416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M96 320H416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M96 384H416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M128 96V416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M192 96V416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M256 96V416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M320 96V416" stroke="#94a3b8" stroke-width="1" />
+    <path d="M384 96V416" stroke="#94a3b8" stroke-width="1" />
+  </g>
+
+  <!-- Main modular H / helix spine -->
+  <g filter="url(#glow)">
+    <!-- Left vertical spine -->
+    <path
+      class="data-line"
+      d="M178 132V380"
+      stroke="url(#spineGradient)"
+      stroke-width="10"
+      stroke-linecap="round"
+    />
+
+    <!-- Right vertical spine -->
+    <path
+      class="data-line reverse"
+      d="M334 132V380"
+      stroke="url(#spineGradient)"
+      stroke-width="10"
+      stroke-linecap="round"
+    />
+
+    <!-- Cross links -->
+    <path
+      d="M178 176C216 176 218 216 256 216C294 216 296 176 334 176"
+      stroke="url(#accentGradient)"
+      stroke-width="9"
+      stroke-linecap="round"
+    />
+    <path
+      d="M178 256C216 256 218 256 256 256C294 256 296 256 334 256"
+      stroke="url(#accentGradient)"
+      stroke-width="9"
+      stroke-linecap="round"
+    />
+    <path
+      d="M178 336C216 336 218 296 256 296C294 296 296 336 334 336"
+      stroke="url(#accentGradient)"
+      stroke-width="9"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <!-- Nodes -->
+  <g filter="url(#glow)">
+    <circle class="node" cx="178" cy="132" r="12" fill="#22d3ee" />
+    <circle class="node delay-1" cx="178" cy="256" r="12" fill="#34d399" />
+    <circle class="node delay-2" cx="178" cy="380" r="12" fill="#f59e0b" />
+
+    <circle class="node delay-2" cx="334" cy="132" r="12" fill="#22d3ee" />
+    <circle class="node delay-3" cx="334" cy="256" r="12" fill="#34d399" />
+    <circle class="node delay-1" cx="334" cy="380" r="12" fill="#f59e0b" />
+  </g>
+
+  <!-- Central secure chip/core -->
+  <g class="pulse-core" filter="url(#softShadow)">
+    <rect x="214" y="214" width="84" height="84" rx="22" fill="url(#coreGradient)" />
+    <rect x="229" y="229" width="54" height="54" rx="14" fill="#042f2e" opacity="0.82" />
+
+    <!-- Chip pins -->
+    <path d="M238 214V198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M256 214V198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M274 214V198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+
+    <path d="M238 314V298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M256 314V298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M274 314V298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+
+    <path d="M214 238H198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M214 256H198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M214 274H198" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+
+    <path d="M314 238H298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M314 256H298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+    <path d="M314 274H298" stroke="#67e8f9" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Shield/check mark inside chip -->
+    <path
+      d="M256 239L274 247V260C274 273 266 279 256 283C246 279 238 273 238 260V247L256 239Z"
+      stroke="#ccfbf1"
+      stroke-width="4"
+      stroke-linejoin="round"
+      fill="none"
+    />
+    <path
+      d="M247 260L254 267L266 251"
+      stroke="#a7f3d0"
+      stroke-width="4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- Scanning line -->
+  <rect
+    class="scan"
+    x="148"
+    y="254"
+    width="216"
+    height="3"
+    rx="1.5"
+    fill="#ccfbf1"
+    opacity="0.8"
+  />
+
+  <!-- Wordmark -->
+  <text
+    class="wordmark"
+    x="256"
+    y="444"
+    text-anchor="middle"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="42"
+    font-weight="800"
+    fill="#f8fafc"
+  >
+    HELIX
+  </text>
+
+</svg>

@@ -1,0 +1,2 @@
+export const SECONDS_IN_MINUTE = 60;
+export const MILLISECONDS_IN_SECONDS = 1000;

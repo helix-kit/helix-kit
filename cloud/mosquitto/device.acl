@@ -1,0 +1,10 @@
+# Device listener ACLs.
+# `%u` expands to the certificate identity because `use_identity_as_username true`
+# is enabled on the device listener.
+
+# Command/response data plane (cloud <-> device via the WS gateway bridge).
+pattern read helix/device/%u/in
+pattern write helix/device/%u/out
+
+# Durable telemetry events (ingested to the database).
+pattern write helix/device/%u/service/+/event

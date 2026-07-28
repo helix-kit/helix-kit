@@ -1,0 +1,53 @@
+{
+  "comment": [
+    "Peer signaling — the shared contract fragment every P2P-capable stream app includes.",
+    "WebRTC is a data-plane TRANSPORT under HelixStream, not an app: a service opts in by",
+    "declaring `includes` and mapping its own open-input / session-output schemas onto the",
+    "`peerOpenInput` / `peerSessionOutput` roles below. The signaling itself rides the",
+    "ordinary control plane (MQTT gateway), so there is no side channel.",
+    "",
+    "The DEVICE is the offerer (it also creates the DataChannel), so `open` answers with the",
+    "SDP offer in its normal response — no extra round trip. The browser replies with its",
+    "answer, and both sides trickle ICE candidates, via `signal`. Device -> browser candidates",
+    "ride an unsolicited response (empty requestId), which the gateway unicasts to the session",
+    "owner."
+  ],
+  "schemas": {
+    "IceServer": {
+      "urls": { "type": "array", "items": "string", "required": true },
+      "username": { "type": "string", "required": false },
+      "credential": { "type": "string", "required": false }
+    },
+    "SignalInput": {
+      "sessionId": { "type": "string", "required": true },
+      "answer": { "type": "string", "required": false },
+      "candidate": { "type": "string", "required": false }
+    },
+    "SignalOutput": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "PeerCandidate": {
+      "sessionId": { "type": "string", "required": true },
+      "candidate": { "type": "string", "required": true }
+    }
+  },
+  "extends": {
+    "peerOpenInput": {
+      "transport": { "type": "string", "required": false },
+      "iceServers": { "type": "array", "items": "IceServer", "required": false },
+      "iceTransportPolicy": { "type": "string", "required": false }
+    },
+    "peerSessionOutput": {
+      "offer": { "type": "string", "required": false }
+    }
+  },
+  "methods": {
+    "signal": {
+      "name": "signal",
+      "outputName": "signaled",
+      "input": "SignalInput",
+      "output": "SignalOutput",
+      "error": "Error"
+    }
+  }
+}

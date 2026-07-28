@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# BASE image for the GPU-resident x86 pipeline: CUDA-enabled OpenCV (cv::cuda) + ONNX Runtime GPU
+# + GStreamer nvcodec. Heavy (compiles OpenCV with CUDA, ~30-60 min) — built ONCE; the thin app
+# image (Dockerfile.x86-cuda-app) builds the plugins on top for fast iteration.
+#   docker build -f Dockerfile.x86-cuda -t helix-x86-cuda-base .
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+# The host's IPv6 route to the registry/apt CDN is flaky ("network unreachable"); force IPv4.
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      g++ make cmake git wget ca-certificates pkg-config unzip \
+      libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+      gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+      gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools \
+      libjpeg-dev libpng-dev libtbb-dev libeigen3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- OpenCV + contrib with CUDA (arch 7.5 = Turing / GTX 1650), scoped module list for speed ---
+ARG CV=4.10.0
+RUN cd /tmp \
+    && wget -4 -q -O opencv.zip https://github.com/opencv/opencv/archive/${CV}.zip \
+    && wget -4 -q -O contrib.zip https://github.com/opencv/opencv_contrib/archive/${CV}.zip \
+    && unzip -q opencv.zip && unzip -q contrib.zip \
+    && cd opencv-${CV} && mkdir build && cd build \
+    && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local \
+       -D OPENCV_EXTRA_MODULES_PATH=/tmp/opencv_contrib-${CV}/modules \
+       -D WITH_CUDA=ON -D CUDA_ARCH_BIN=7.5 -D CUDA_ARCH_PTX=7.5 \
+       -D WITH_CUDNN=OFF -D OPENCV_DNN_CUDA=OFF \
+       -D BUILD_opencv_world=OFF -D BUILD_LIST=core,cudev,imgproc,imgcodecs,cudaarithm,cudawarping,cudaimgproc \
+       -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_EXAMPLES=OFF -D BUILD_DOCS=OFF \
+       -D WITH_GSTREAMER=OFF -D WITH_FFMPEG=OFF -D WITH_GTK=OFF -D WITH_QT=OFF \
+       -D BUILD_opencv_python2=OFF -D BUILD_opencv_python3=OFF \
+       .. \
+    && make -j"$(nproc)" && make install && ldconfig \
+    && cd / && rm -rf /tmp/opencv* /tmp/contrib.zip
+
+# --- ONNX Runtime GPU (C++) ---
+ARG ORT_VER=1.19.2
+RUN wget -4 -q https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VER}/onnxruntime-linux-x64-gpu-${ORT_VER}.tgz \
+    && tar xf onnxruntime-linux-x64-gpu-${ORT_VER}.tgz \
+    && mv onnxruntime-linux-x64-gpu-${ORT_VER} /opt/onnxruntime \
+    && rm onnxruntime-linux-x64-gpu-${ORT_VER}.tgz
+
+ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+# (app image adds the plugins on top of this base)

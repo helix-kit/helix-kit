@@ -1,0 +1,38 @@
+{
+  "name": "@helix/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "Hardware-in-the-loop Playwright e2e tests that drive real devices through the shared Helix transport packages via a minimal browser harness.",
+  "scripts": {
+    "harness": "vite",
+    "harness:build": "vite build",
+    "grant": "playwright test --project=grant --headed",
+    "test": "playwright test --project=webserial",
+    "test:headed": "playwright test --project=webserial --headed",
+    "test:xvfb": "xvfb-run -a playwright test --project=webserial",
+    "test:ble": "xvfb-run -a playwright test --project=ble",
+    "report": "playwright show-report",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@helix/protocol-core": "workspace:*",
+    "@helix/protocol-service": "workspace:*",
+    "@helix/transport-ble": "workspace:*",
+    "@helix/transport-serial": "workspace:*",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "@workspace/eslint-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.3"
+  }
+}

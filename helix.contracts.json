@@ -1,0 +1,135 @@
+{
+  "contracts": [
+    {
+      "source": "embedded/esp32/platform/contracts/provisioning.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/platform/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "embedded/esp32/platform/contracts/ota.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/platform/generated/contracts"
+        },
+        {
+          "target": "typescript",
+          "out": "web/apps/helix/src/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "embedded/esp32/platform/contracts/events.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/platform/generated/contracts"
+        },
+        {
+          "target": "typescript",
+          "out": "web/apps/helix/src/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "embedded/esp32/core/apps/gpio_control/contracts/gpio_control.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/core/apps/gpio_control/generated/contracts"
+        },
+        {
+          "target": "typescript",
+          "out": "web/apps/helix/src/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "embedded/esp32/core/apps/status_display/contracts/status_display.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/core/apps/status_display/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "linux/device/go/internal/echo/contracts/echo.json",
+      "outputs": [
+        {
+          "target": "go",
+          "out": "linux/device/go/internal/echo/generated"
+        },
+        {
+          "target": "python",
+          "out": "linux/device/python/helix_echo/src/helix_echo/generated"
+        }
+      ]
+    },
+    {
+      "source": "linux/device/go/internal/shell/contracts/shell.json",
+      "outputs": [
+        {
+          "target": "go",
+          "out": "linux/device/go/internal/shell/generated"
+        },
+        {
+          "target": "typescript",
+          "out": "web/packages/core/device-apps/src/linux-shell/generated"
+        }
+      ]
+    },
+    {
+      "source": "linux/device/go/internal/portforward/contracts/port_forward.json",
+      "outputs": [
+        {
+          "target": "go",
+          "out": "linux/device/go/internal/portforward/generated"
+        },
+        {
+          "target": "typescript",
+          "out": "web/packages/core/device-apps/src/linux-port-forward/generated"
+        }
+      ]
+    },
+    {
+      "source": "linux/device/go/internal/files/contracts/files.json",
+      "outputs": [
+        {
+          "target": "go",
+          "out": "linux/device/go/internal/files/generated"
+        },
+        {
+          "target": "typescript",
+          "out": "web/packages/core/device-apps/src/linux-files/generated"
+        }
+      ]
+    },
+    {
+      "source": "ui/contracts/ui.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "ui/generated/contracts"
+        }
+      ]
+    },
+    {
+      "source": "embedded/esp32/core/apps/console_bridge/contracts/console.json",
+      "outputs": [
+        {
+          "target": "embedded-c",
+          "out": "embedded/esp32/core/apps/console_bridge/generated/contracts"
+        },
+        {
+          "target": "typescript",
+          "out": "web/packages/core/device-apps/src/uart-console/generated"
+        }
+      ]
+    }
+  ]
+}

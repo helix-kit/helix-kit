@@ -1,0 +1,322 @@
+{
+  "defaults": {
+    "envFiles": ["internal", "secrets", "site"],
+    "restart": "on-failure",
+    "restartSec": 3,
+    "wantedBy": "multi-user.target"
+  },
+
+  "masked": [
+    "postgresql.service",
+    "postgresql@.service",
+    "redis-server.service",
+    "redis-server@.service",
+    "redpanda.service",
+    "mosquitto.service",
+    "caddy.service",
+    "coturn.service",
+    "getty.target",
+    "getty@.service",
+    "autovt@.service",
+    "console-getty.service",
+    "serial-getty@.service",
+    "systemd-logind.service"
+  ],
+
+  "targets": {
+    "helix.target": {
+      "description": "Helix cloud appliance (full stack)",
+      "requires": ["multi-user.target"],
+      "after": ["multi-user.target"],
+      "install": "multi-user.target",
+      "extra": { "Unit": { "Documentation": "file:/opt/helix/README", "AllowIsolate": "yes" } }
+    },
+    "helix-observability.target": {
+      "description": "Helix observability stack (Grafana, Prometheus, Loki, Tempo, exporters)",
+      "wants": ["prometheus", "loki", "tempo", "otel-collector", "alloy", "grafana", "node-exporter", "postgres-exporter", "redis-exporter", "mosquitto-exporter", "cadvisor"]
+    }
+  },
+
+  "services": {
+    "seed-env": {
+      "description": "Helix seed environment (first-boot secrets + internal wiring)",
+      "type": "oneshot", "remainAfterExit": true, "envFiles": "none",
+      "after": ["local-fs.target"],
+      "before": ["postgres", "pki", "install-bundles"],
+      "execStart": "/opt/helix/bin/seed-env.sh",
+      "extra": { "Unit": { "DefaultDependencies": "no" } }
+    },
+    "pki": {
+      "description": "Helix MQTT PKI bootstrap (step-ca)",
+      "type": "oneshot", "remainAfterExit": true,
+      "after": ["seed-env"], "wants": ["seed-env"],
+      "before": ["step-ca", "mosquitto"],
+      "execStart": "/opt/helix/bin/pki-init.sh"
+    },
+    "install-bundles": {
+      "description": "Helix install app bundles into /opt/helix/apps",
+      "type": "oneshot", "remainAfterExit": true, "envFiles": "none",
+      "after": ["seed-env"], "wants": ["seed-env"],
+      "before": ["app", "helix-server", "bootstrap"],
+      "execStart": "/opt/helix/bin/install-bundles.sh",
+      "execStartPost": ["/bin/sh -c 'chown -R helix:helix /opt/helix/apps'"]
+    },
+    "postgres": {
+      "description": "Helix Postgres (app + inngest databases)",
+      "type": "notify", "envFiles": "none", "restartSec": 2,
+      "after": ["seed-env"], "wants": ["seed-env"],
+      "user": "postgres", "group": "postgres",
+      "environment": { "PGDATA": "/var/lib/helix/postgres" },
+      "comment": "ExecStartPre runs as root (the leading +) to chown the volume + initdb on first boot.",
+      "execStartPre": ["+/opt/helix/bin/pg-prepare.sh"],
+      "execStart": "/usr/lib/postgresql/17/bin/postgres -D /var/lib/helix/postgres",
+      "extra": { "Service": { "ExecReload": "/bin/kill -HUP $MAINPID", "KillSignal": "SIGINT", "TimeoutStartSec": "120" } }
+    },
+    "pg-roles": {
+      "description": "Helix create Postgres roles + databases",
+      "type": "oneshot", "remainAfterExit": true, "envFiles": ["internal", "secrets"],
+      "after": ["postgres"], "requires": ["postgres"],
+      "before": ["openfga", "inngest", "bootstrap"],
+      "execStart": "/opt/helix/bin/pg-roles.sh"
+    },
+    "redis": {
+      "description": "Helix Redis (inngest queue)",
+      "type": "notify", "envFiles": "none", "restartSec": 2,
+      "after": ["seed-env"],
+      "user": "redis", "group": "redis",
+      "comment": "--supervised systemd makes redis send the sd_notify READY signal that\nType=notify waits for (else the unit hangs in 'activating' and inngest's\nRequires= dependency fails).",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/redis && chown -R redis:redis /var/lib/helix/redis'"],
+      "execStart": "/usr/bin/redis-server --bind 127.0.0.1 --port 6379 --dir /var/lib/helix/redis --save 60 1000 --supervised systemd",
+      "extra": { "Service": { "RuntimeDirectory": "helix-redis" } }
+    },
+    "openfga": {
+      "description": "Helix OpenFGA (authorization)",
+      "envFiles": ["internal", "secrets"], "restartSec": 2,
+      "after": ["postgres", "pg-roles"], "requires": ["postgres", "pg-roles"],
+      "user": "openfga", "group": "openfga",
+      "environment": { "OPENFGA_DATASTORE_ENGINE": "postgres", "OPENFGA_LOG_FORMAT": "json", "OPENFGA_GRPC_ADDR": "0.0.0.0:8181" },
+      "comment": "gRPC moved off 8081 (Redpanda's schema registry also defaults to 8081 in\nthe single namespace). The app uses only the HTTP API (8080).",
+      "execStartPre": ["/bin/sh -c 'until pg_isready -h 127.0.0.1 -q; do sleep 1; done'", "/usr/local/bin/openfga migrate"],
+      "execStart": "/usr/local/bin/openfga run --playground-enabled --playground-addr 0.0.0.0:3002"
+    },
+    "redpanda": {
+      "description": "Helix Redpanda (device-event bus)",
+      "envFiles": "none",
+      "after": ["seed-env"],
+      "user": "redpanda", "group": "redpanda",
+      "comment": "Redpanda v26's bare `redpanda start` dropped the listener flags; they live\non `rpk redpanda start`. dev-container = single-node/low-resource. ADVERTISED\nlisteners can't be ADDR_ANY, so set kafka+rpc advertise to 127.0.0.1.",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/redpanda && chown -R redpanda:redpanda /var/lib/helix/redpanda'"],
+      "execStart": "/usr/bin/rpk redpanda start --mode dev-container --smp 1 --config /var/lib/helix/redpanda/redpanda.yaml --kafka-addr PLAINTEXT://0.0.0.0:9092 --advertise-kafka-addr PLAINTEXT://127.0.0.1:9092 --rpc-addr 0.0.0.0:33145 --advertise-rpc-addr 127.0.0.1:33145 --set redpanda.data_directory=/var/lib/helix/redpanda --set redpanda.auto_create_topics_enabled=false"
+    },
+    "inngest": {
+      "description": "Helix Inngest (workflow engine, self-hosted)",
+      "envFiles": ["internal", "secrets"],
+      "after": ["postgres", "pg-roles", "redis"], "requires": ["postgres", "pg-roles", "redis"],
+      "user": "inngest", "group": "inngest",
+      "execStartPre": ["/bin/sh -c 'until pg_isready -h 127.0.0.1 -q; do sleep 1; done'"],
+      "execStart": "/usr/local/bin/inngest start"
+    },
+    "step-ca": {
+      "description": "Helix step-ca (MQTT certificate authority)",
+      "envFiles": "none", "restartSec": 2,
+      "after": ["pki"], "requires": ["pki"],
+      "user": "stepca", "group": "stepca",
+      "environment": { "STEPPATH": "/var/lib/helix/step-ca" },
+      "execStart": "/usr/local/bin/step-ca /var/lib/helix/step-ca/config/ca.json --password-file /var/lib/helix/step-ca/secrets/password.txt"
+    },
+    "mosquitto": {
+      "description": "Helix Mosquitto MQTT broker (TLS)",
+      "envFiles": "none", "restartSec": 2,
+      "after": ["pki", "step-ca"], "requires": ["pki"], "wants": ["step-ca"],
+      "user": "mosquitto", "group": "mosquitto",
+      "comment": "Renamed binary path dodges the host's path-based AppArmor 'mosquitto'\nprofile, which would deny config reads from /usr/sbin/mosquitto. The second\nExecStartPre stages the initial CRL (needs step-ca up) before the listener\nbinds; helix-crl-sync keeps it fresh + reloads us on change (SIGHUP).",
+      "execStartPre": ["+/opt/helix/bin/mosquitto-prepare.sh", "+/opt/helix/bin/crl-sync.sh once"],
+      "execStart": "/usr/local/sbin/helix-mosquitto -c /mosquitto/config/mosquitto.conf",
+      "extra": { "Service": { "ExecReload": "/bin/kill -HUP $MAINPID" } }
+    },
+    "crl-sync": {
+      "description": "Helix CRL sync (step-ca CRL to mosquitto + mTLS gateway)",
+      "envFiles": "none", "restartSec": 10,
+      "after": ["step-ca", "mosquitto"], "wants": ["step-ca"],
+      "comment": "Runs as root: writes the CRL into the mosquitto + helix-server cert dirs\nand reloads mosquitto when it changes. The Helix Server watches its own copy.",
+      "execStart": "/opt/helix/bin/crl-sync.sh daemon"
+    },
+    "bootstrap": {
+      "description": "Helix data bootstrap (roles, topic, migrations, sysadmin)",
+      "type": "oneshot", "remainAfterExit": true, "user": "root",
+      "after": ["postgres", "pg-roles", "openfga", "redpanda", "install-bundles"],
+      "requires": ["postgres", "pg-roles", "install-bundles"],
+      "before": ["app"],
+      "execStartPre": ["/bin/sh -c 'until pg_isready -h 127.0.0.1 -q; do sleep 1; done'"],
+      "execStart": "/opt/helix/bin/bootstrap.sh"
+    },
+    "app": {
+      "description": "Helix cloud app (Next.js)",
+      "after": ["bootstrap", "openfga", "inngest", "helix-server"], "requires": ["bootstrap"],
+      "user": "helix", "group": "helix",
+      "workingDirectory": "/opt/helix/apps/helix-cloud-app/current",
+      "environment": { "PORT": "3000" },
+      "execStart": "/usr/bin/node apps/helix/server.js"
+    },
+    "helix-server": {
+      "description": "Helix Server (device WS, MQTT bridge, and backend workers)",
+      "comment": "Runs all data-plane roles in one process by default. With\nHELIX_SERVER_ROLES_SPLIT=1 in site.env this runs the gateway role only and the\nhelix-server-ingest/-writer units run the rest. See docs/07 (role split).",
+      "after": ["postgres", "redpanda", "mosquitto", "install-bundles"], "requires": ["install-bundles"],
+      "user": "helix", "group": "helix",
+      "workingDirectory": "/opt/helix/apps/helix-server/current",
+      "environment": { "PORT": "4000" },
+      "execStart": "/opt/helix/bin/helix-server-launch.sh"
+    },
+    "helix-server-ingest": {
+      "description": "Helix Server ingest role (MQTT to Kafka producer)",
+      "comment": "Only runs when HELIX_SERVER_ROLES_SPLIT is enabled (ExecCondition).",
+      "after": ["postgres", "redpanda", "mosquitto", "install-bundles"], "requires": ["install-bundles"],
+      "user": "helix", "group": "helix",
+      "workingDirectory": "/opt/helix/apps/helix-server/current",
+      "environment": { "HELIX_SERVER_ROLES": "ingest" },
+      "extra": { "Service": { "ExecCondition": "/opt/helix/bin/helix-server-split-enabled.sh" } },
+      "execStart": "/usr/bin/node dist/index.js"
+    },
+    "helix-server-writer": {
+      "description": "Helix Server writer role (Kafka to Postgres consumer)",
+      "comment": "Only runs when HELIX_SERVER_ROLES_SPLIT is enabled (ExecCondition).",
+      "after": ["postgres", "redpanda", "mosquitto", "install-bundles"], "requires": ["install-bundles"],
+      "user": "helix", "group": "helix",
+      "workingDirectory": "/opt/helix/apps/helix-server/current",
+      "environment": { "HELIX_SERVER_ROLES": "writer" },
+      "extra": { "Service": { "ExecCondition": "/opt/helix/bin/helix-server-split-enabled.sh" } },
+      "execStart": "/usr/bin/node dist/index.js"
+    },
+    "caddy": {
+      "description": "Helix Caddy (TLS reverse proxy)",
+      "envFiles": ["internal", "site"],
+      "after": ["app", "helix-server"], "wants": ["app"],
+      "user": "caddy", "group": "caddy",
+      "comment": "Reuses the shared cloud/Caddyfile (env-driven upstreams); the appliance\npoints them all at 127.0.0.1 (single namespace). APP_DOMAIN/ACME_EMAIL and the\nCloudflare token come from site.env; CADDY_ACME_DNS is derived into internal.env\nby seed-env.sh. PORT_FORWARD_UPSTREAM is Helix Server's port-forward listener,\nwhich fronts the *.port.<domain> wildcard site.",
+      "environment": {
+        "XDG_DATA_HOME": "/var/lib/helix/caddy",
+        "XDG_CONFIG_HOME": "/var/lib/helix/caddy",
+        "NEXTJS_UPSTREAM": "127.0.0.1:3000",
+        "HELIX_SERVER_UPSTREAM": "127.0.0.1:4000",
+        "TURBO_CACHE_UPSTREAM": "127.0.0.1:3000",
+        "PORT_FORWARD_UPSTREAM": "127.0.0.1:4020"
+      },
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/caddy && chown -R caddy:caddy /var/lib/helix/caddy'"],
+      "execStart": "/usr/bin/caddy run --config /etc/helix/Caddyfile --adapter caddyfile",
+      "extra": { "Service": { "AmbientCapabilities": "CAP_NET_BIND_SERVICE" } }
+    },
+    "update-agent": {
+      "description": "Helix update agent (root self-upgrade daemon)",
+      "envFiles": ["internal", "secrets"],
+      "after": ["seed-env", "install-bundles"], "wants": ["seed-env"],
+      "comment": "Runs as ROOT (no User=) so it can swap /opt/helix/apps and restart the\napp units the unprivileged cloud app cannot. Listens on 127.0.0.1:9787 and\nis driven by the sysadmin Updates page (appliance.triggerUpgrade).",
+      "execStart": "/usr/bin/node /opt/helix/bin/update-agent.mjs"
+    },
+    "coturn": {
+      "description": "Helix coturn (WebRTC TURN relay)",
+      "envFiles": ["internal", "secrets", "site"],
+      "after": ["seed-env"], "wants": ["seed-env"],
+      "comment": "The fallback path for the WebRTC data plane: relays a session when the device\nand the browser cannot find a direct route (symmetric NAT, UDP-blocking VPN).\nHarmless when unused — a direct peer never touches it.\n\nNeeds the host network (a relay owns real ports), which the native delivery\nalready has. It stays up but useless until site.env has TURN_PUBLIC_IP and the\nfirewall opens 3478/tcp+udp, 5349/tcp+udp and the 49160-49259/udp relay range\n(`helix ami sg-turn`). Credentials are ephemeral and HMAC-signed from\nTURN_STATIC_AUTH_SECRET in secrets.env — never a shared password.",
+      "execStartPre": ["/opt/helix/bin/coturn-prepare.sh"],
+      "execStart": "/usr/bin/turnserver -c /run/helix-turnserver.conf"
+    },
+
+    "prometheus": {
+      "description": "Helix Prometheus", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target"],
+      "user": "observ", "group": "observ",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/prometheus && chown -R observ:observ /var/lib/helix/prometheus'"],
+      "execStart": "/var/lib/helix/observability/bin/prometheus --config.file=/etc/helix/observability/prometheus.yml --storage.tsdb.path=/var/lib/helix/prometheus --storage.tsdb.retention.time=15d --web.enable-lifecycle"
+    },
+    "loki": {
+      "description": "Helix Loki", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target"],
+      "user": "observ", "group": "observ",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/loki && chown -R observ:observ /var/lib/helix/loki'"],
+      "execStart": "/var/lib/helix/observability/bin/loki -config.file=/etc/helix/observability/loki.yml"
+    },
+    "tempo": {
+      "description": "Helix Tempo", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target"],
+      "user": "observ", "group": "observ",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/tempo && chown -R observ:observ /var/lib/helix/tempo'"],
+      "execStart": "/var/lib/helix/observability/bin/tempo -config.file=/etc/helix/observability/tempo.yml"
+    },
+    "otel-collector": {
+      "description": "Helix OpenTelemetry Collector", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "tempo"],
+      "user": "observ", "group": "observ",
+      "execStart": "/var/lib/helix/observability/bin/otelcol-contrib --config=/etc/helix/observability/otel-collector.yml"
+    },
+    "alloy": {
+      "description": "Helix Alloy (journald -> Loki)", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "loki"],
+      "user": "observ", "group": "observ",
+      "comment": "Reads the journal — needs the systemd-journal group.",
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/alloy && chown -R observ:observ /var/lib/helix/alloy'"],
+      "execStart": "/var/lib/helix/observability/bin/alloy run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/helix/alloy /etc/helix/observability/config.alloy",
+      "extra": { "Service": { "SupplementaryGroups": "systemd-journal" } }
+    },
+    "grafana": {
+      "description": "Helix Grafana", "enabled": false, "envFiles": ["site"],
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "prometheus", "loki", "tempo"],
+      "user": "observ", "group": "observ",
+      "comment": "Runs as observ off the tarball (no apt grafana). Port 3001 (app owns 3000).",
+      "environment": {
+        "GF_SERVER_HTTP_PORT": "3001",
+        "GF_PATHS_DATA": "/var/lib/helix/grafana",
+        "GF_PATHS_PROVISIONING": "/etc/helix/observability/grafana/provisioning",
+        "GF_PATHS_LOGS": "/var/log/grafana",
+        "GF_USERS_ALLOW_SIGN_UP": "false",
+        "GF_AUTH_ANONYMOUS_ENABLED": "false",
+        "GF_ANALYTICS_REPORTING_ENABLED": "false",
+        "GF_LOG_MODE": "console"
+      },
+      "execStartPre": ["+/bin/sh -c 'mkdir -p /var/lib/helix/grafana /var/log/grafana && chown -R observ:observ /var/lib/helix/grafana /var/log/grafana'"],
+      "execStart": "/var/lib/helix/observability/grafana/current/bin/grafana server --homepath=/var/lib/helix/observability/grafana/current --packaging=docker"
+    },
+    "node-exporter": {
+      "description": "Helix node-exporter", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target"],
+      "user": "observ", "group": "observ",
+      "execStart": "/var/lib/helix/observability/bin/node_exporter --web.listen-address=127.0.0.1:9100"
+    },
+    "postgres-exporter": {
+      "description": "Helix postgres-exporter", "enabled": false, "envFiles": ["internal", "secrets"],
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "postgres"],
+      "user": "observ", "group": "observ",
+      "comment": "DATA_SOURCE_NAME is derived from the generated DB credentials (DATABASE_URL).",
+      "execStart": "/bin/sh -c 'DATA_SOURCE_NAME=\"$DATABASE_URL?sslmode=disable\" exec /var/lib/helix/observability/bin/postgres_exporter --web.listen-address=127.0.0.1:9187'"
+    },
+    "redis-exporter": {
+      "description": "Helix redis-exporter", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "redis"],
+      "user": "observ", "group": "observ",
+      "execStart": "/var/lib/helix/observability/bin/redis_exporter --redis.addr=redis://127.0.0.1:6379 --web.listen-address=127.0.0.1:9121"
+    },
+    "mosquitto-exporter": {
+      "description": "Helix mosquitto-exporter", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target", "mosquitto"],
+      "user": "helix", "group": "helix",
+      "comment": "Runs as helix to read the Helix Server MQTT client cert (600 helix:helix); subscribes to $SYS over the service listener like the cloud deployment.",
+      "execStart": "/var/lib/helix/observability/bin/mosquitto_exporter --endpoint ssl://127.0.0.1:8884 --cert /var/lib/helix/mqtt/helix-server/client.crt --key /var/lib/helix/mqtt/helix-server/client.key --client-id mosquitto-exporter --bind-address 127.0.0.1:9234"
+    },
+    "cadvisor": {
+      "description": "Helix cAdvisor (per-service cgroup metrics)", "enabled": false, "envFiles": "none",
+      "wantedBy": "helix-observability.target",
+      "partOf": ["helix-observability.target"], "after": ["helix-observability.target"],
+      "comment": "Runs as root for cgroup/proc access. Raw cgroup mode (no docker/containerd) so each systemd service is reported as a container_* series labelled by cgroup id (/system.slice/helix-*.service). Port 9338 (8080/8081 are taken by openfga).",
+      "execStart": "/var/lib/helix/observability/bin/cadvisor --port=9338 --listen_ip=127.0.0.1 --docker= --containerd= --housekeeping_interval=10s --store_container_labels=false --raw_cgroup_prefix_whitelist=/system.slice/helix"
+    }
+  }
+}

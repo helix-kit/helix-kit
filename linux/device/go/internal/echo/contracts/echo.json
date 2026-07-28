@@ -1,0 +1,24 @@
+{
+  "service": "echo",
+  "schemas": {
+    "PingInput": {
+      "message": { "type": "string", "required": false }
+    },
+    "PongOutput": {
+      "echo": { "type": "string", "required": true },
+      "service": { "type": "string", "required": true }
+    },
+    "Error": {
+      "error": { "type": "string", "required": true }
+    }
+  },
+  "methods": {
+    "ping": {
+      "name": "ping",
+      "outputName": "pong",
+      "input": "PingInput",
+      "output": "PongOutput",
+      "error": "Error"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "helix-web",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "build": "turbo run build --continue=always",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint --continue=always",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx,mjs}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx,mjs}\"",
+    "typecheck": "turbo run typecheck --continue=always",
+    "exports:check": "tsx ./scripts/sync-package-exports.ts",
+    "exports:sync": "tsx ./scripts/sync-package-exports.ts --write",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
+    "unused": "tsx ./scripts/run-unused.ts",
+    "unused:fix": "knip --fix --fix-type exports,types --format",
+    "unused:trpc": "tsx ./scripts/check-trpc-procedure-usage.ts",
+    "update:check": "npm-check-updates --deep --errorLevel 2 --reject recharts,html-to-image",
+    "update:apply": "npm-check-updates --deep -u --reject recharts,html-to-image",
+    "clean": "find . -type d \\( -name node_modules -o -name .next -o -name .turbo -o -name dist \\) -prune -exec rm -rf {} +"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@workspace/typescript-config": "workspace:*",
+    "knip": "^6.25.0",
+    "prettier": "^3.9.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "npm-check-updates": "^22.2.9",
+    "turbo": "^2.10.4",
+    "typescript": "^7.0.2",
+    "typescript-classic": "npm:typescript@^6.0.3"
+  },
+  "dependencies": {
+    "tsx": "^4.22.4"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=24"
+  }
+}

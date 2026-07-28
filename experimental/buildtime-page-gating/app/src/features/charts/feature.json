@@ -1,0 +1,7 @@
+{
+  "id": "charts",
+  "route": "/charts",
+  "label": "Analytics",
+  "heavy": true,
+  "deps": ["recharts"]
+}

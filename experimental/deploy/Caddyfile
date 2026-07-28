@@ -1,0 +1,26 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+# Experimental: remote-shell UI + PTY relay (serves the React terminal and the
+# /__shell_ws__ + /__shell_agent__ WebSocket endpoints). Replaces the old
+# temporary file-server site.
+helix-kit.com {
+	reverse_proxy shell-gateway:9100
+}
+
+# Experimental: P2P transport signaling. Serves the web client and the
+# /__p2p__ SDP/ICE relay. Bulk data goes P2P (WebRTC), never through here.
+# Reuses the *.port wildcard cert so no new DNS/cert is needed.
+p2p.port.helix-kit.com {
+	reverse_proxy p2p-signaling:9200
+}
+
+# Experimental: port-forwarding. Agent control channel
+# (connect.port.helix-kit.com/__tunnel__) and per-session browser traffic
+# (<session>.port.helix-kit.com). flush_interval -1 keeps streaming un-buffered.
+*.port.helix-kit.com {
+	reverse_proxy port-gateway:9000 {
+		flush_interval -1
+	}
+}

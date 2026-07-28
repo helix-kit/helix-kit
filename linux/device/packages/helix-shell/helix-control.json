@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "helix-shell",
+  "version": "0.1.0",
+  "kind": "go-binary",
+  "depends": ["helixd (>= 0.1.0)"],
+  "service": {
+    "name": "shell",
+    "enabled": true,
+    "allowControl": true,
+    "allowUpdate": true,
+    "execStart": ["/usr/lib/helix/bin/helix-shell", "-service", "shell"],
+    "user": "helix",
+    "group": "helix",
+    "after": ["helixd.service"],
+    "wantedBy": ["helix.target"],
+    "restart": "on-failure",
+    "restartSec": 2
+  }
+}

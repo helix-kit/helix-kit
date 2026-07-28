@@ -1,0 +1,40 @@
+{
+  "host": { "warmup_ms": 1500 },
+  "_note": "Swap demo: same host binary + same .so's as mixed.json — only infer.nb changed to 11m. No recompile.",
+  "streams": [
+    {
+      "label": "11s-A",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream1", "fps": 15 } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_awnn",    "params": { "nb": "/home/radxa/lab/yolo11s.nb" } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } }
+    },
+    {
+      "label": "11s-B",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream2", "fps": 15 } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_awnn",    "params": { "nb": "/home/radxa/lab/yolo11s.nb" } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } }
+    },
+    {
+      "label": "11s-C",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream3", "fps": 15 } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_awnn",    "params": { "nb": "/home/radxa/lab/yolo11s.nb" } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } }
+    },
+    {
+      "label": "11s-D",
+      "source":      { "module": "hx_src_gst",      "params": { "url": "rtsp://${HOST}:8554/stream4", "fps": 15 } },
+      "preprocess":  { "module": "hx_pre_letterbox", "params": { "size": 640 } },
+      "infer":       { "module": "hx_infer_awnn",    "params": { "nb": "/home/radxa/lab/yolo11s.nb" } },
+      "postprocess": { "module": "hx_post_yolo11",   "params": { "conf": 0.35, "nms": 0.45 } },
+      "overlay":     { "module": "hx_overlay_boxes", "params": { "color": "orange" } }
+    }
+  ],
+  "compositor": { "module": "hx_comp_grid",       "params": { "cols": 2, "rows": 2, "grid_w": 1280, "grid_h": 720 } },
+  "sink":       { "module": "hx_sink_cedar_rtmp", "params": { "url": "rtmp://${HOST}:1935/detgrid", "width": 1280, "height": 720 } }
+}

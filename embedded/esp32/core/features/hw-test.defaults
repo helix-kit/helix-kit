@@ -1,0 +1,19 @@
+# Feature fragment: real-hardware (4 MB) test build.
+# Enables the on-device storage stack (FAT storage, file-transfer, single-table
+# DB, durable event queue) with test hooks, on a dual-OTA + storage + flashdb
+# layout. BLE is compiled out to guarantee the image fits a 1.25 MB OTA slot
+# (MQTT/Wi-Fi and USB-serial testing do not need it). Event-queue timing mirrors
+# the QEMU config so the same e2e tests pass on hardware.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_4mb_hw.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions_4mb_hw.csv"
+
+CONFIG_HELIX_STORAGE_FAT=y
+CONFIG_HELIX_FILE_TRANSFER=y
+CONFIG_HELIX_DB=y
+CONFIG_HELIX_EVENT_QUEUE=y
+CONFIG_HELIX_EVENTS_TEST_HOOKS=y
+CONFIG_HELIX_EVENT_QUEUE_RETENTION_SEC=15
+CONFIG_HELIX_EVENT_QUEUE_SWEEP_SEC=3600
+
+CONFIG_BT_ENABLED=n
+CONFIG_BT_NIMBLE_ENABLED=n

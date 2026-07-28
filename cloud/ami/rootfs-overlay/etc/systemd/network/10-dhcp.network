@@ -1,0 +1,10 @@
+# DHCP on the primary NIC. The kernel cmdline sets net.ifnames=0, so the Nitro
+# ENA interface is eth0.
+[Match]
+Name=eth0
+
+[Network]
+DHCP=yes
+
+[DHCPv4]
+UseHostname=false

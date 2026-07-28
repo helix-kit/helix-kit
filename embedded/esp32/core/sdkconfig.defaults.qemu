@@ -1,0 +1,44 @@
+# CONFIG_EXAMPLE_CONNECT_WIFI is not set
+CONFIG_EXAMPLE_CONNECT_ETHERNET=y
+# CONFIG_EXAMPLE_USE_INTERNAL_ETHERNET is not set
+CONFIG_EXAMPLE_USE_OPENETH=y
+CONFIG_EXAMPLE_CONNECT_IPV4=y
+# CONFIG_EXAMPLE_CONNECT_IPV6 is not set
+# CONFIG_ETH_USE_ESP32_EMAC is not set
+CONFIG_ETH_USE_OPENETH=y
+
+# 8 MB flash with a FAT data partition so the file-transfer / storage feature
+# has somewhere to write. QEMU emulates the larger SPI flash faithfully.
+# CONFIG_ESPTOOLPY_FLASHSIZE_4MB is not set
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="8MB"
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_8mb.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions_8mb.csv"
+
+# Mount the FAT storage partition and enable the generic file-transfer service.
+CONFIG_HELIX_STORAGE_FAT=y
+CONFIG_HELIX_FILE_TRANSFER=y
+
+# On-device single-table store (FlashDB KVDB on the `flashdb` partition).
+CONFIG_HELIX_DB=y
+
+# Durable event queue + events query service. A large sweep interval keeps the
+# background task dormant so the e2e test drives sweeps explicitly; short
+# retention so the cleanup path is exercisable; test hooks for simulate-delivery.
+CONFIG_HELIX_EVENT_QUEUE=y
+CONFIG_HELIX_EVENT_QUEUE_SWEEP_SEC=3600
+CONFIG_HELIX_EVENT_QUEUE_RETENTION_SEC=15
+CONFIG_HELIX_EVENTS_TEST_HOOKS=y
+
+# QEMU does not faithfully emulate the timer-group watchdogs; leaving them on
+# faults inside the watchdog ISR during boot. They protect against wedged tasks
+# on real hardware only, so disable them for the emulator.
+# CONFIG_ESP_INT_WDT is not set
+# CONFIG_ESP_TASK_WDT_INIT is not set
+
+# QEMU has no Bluetooth radio; the BT controller asserts in
+# btdm_low_power_mode_init during boot. Compile the NimBLE stack out (this also
+# compiles out the Helix BLE transport). BLE / OTA-over-BLE stay hardware-only
+# targets validated via the Web Serial / Web Bluetooth harness.
+CONFIG_BT_ENABLED=n
+CONFIG_BT_NIMBLE_ENABLED=n

@@ -1,0 +1,347 @@
+<p>Flashing a board over USB works fine on your desk. It stops working the moment that board is bolted to a wall, potted in resin, or sitting in a customer's garage two states away. Over-the-air (OTA) updates solve this by letting a running ESP32 download its own successor, boot into it, and quietly discard the old version once the new one proves itself. This post builds that pipeline from scratch on ESP-IDF v5.x: the partition layout that makes it possible, the <code>esp_https_ota</code> code that drives a download, and the rollback logic that keeps a bad build from bricking the fleet.</p>
+
+<h2>Why OTA Needs Two Copies of the App</h2>
+<p>The naive approach — erase the running app and write the new one in place — is exactly how you turn a remote device into a paperweight. If power drops, the connection stalls, or the new binary is simply broken, there is no old version left to fall back to. Every production-grade OTA scheme on the ESP32 avoids this with an A/B (dual-slot) layout: the flash holds <em>two</em> copies of the application, and the device always downloads into whichever one it is not currently running. The currently-booted image is never touched until its replacement has been written, verified, and proven to boot correctly.</p>
+<p>A small partition called <code>otadata</code> is what makes this a coherent scheme rather than a race condition. It does not hold firmware — it holds two 32-byte records, each with a sequence number, that say "the next thing to boot is this slot." The second-stage bootloader reads <code>otadata</code> on every boot and jumps to whichever app partition it points at. Update logic never touches the bootloader itself; it only ever writes a new app image and flips this pointer.</p>
+
+<h2>The Dual-Slot Layout</h2>
+<p>The default "factory" partition table that <code>idf.py create-project</code> generates has no OTA support at all — one app partition, no <code>otadata</code>. To get OTA you supply a custom <code>partitions.csv</code> with at least two app slots plus the <code>otadata</code> partition. Here is a layout for a device with 4&nbsp;MB of flash and no need for a factory-only recovery partition:</p>
+<pre><code class="language-ini"># Name,     Type,  SubType, Offset,    Size,      Flags
+nvs,        data,  nvs,     0x9000,    0x6000,
+otadata,    data,  ota,     0xf000,    0x2000,
+phy_init,   data,  phy,     0x11000,   0x1000,
+ota_0,      app,   ota_0,   0x20000,   0x180000,
+ota_1,      app,   ota_1,   0x1a0000,  0x180000,
+</code></pre>
+<p>The <code>ota_0</code>/<code>ota_1</code> subtypes are what tell <code>esp_ota_ops</code> "these two are a matched pair, cycle between them." You could keep the stock <code>factory</code> partition alongside them as a permanent fallback image that OTA never overwrites, but on a device that ships with OTA from day one, two equally-sized OTA slots is simpler and gives you the full 1.5&nbsp;MB per slot shown above rather than splitting it three ways.</p>
+
+<table>
+<thead>
+<tr><th>Partition</th><th>Type / Subtype</th><th>Offset</th><th>Size</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td>bootloader</td><td>—</td><td>0x1000</td><td>~28 KB</td><td>Second-stage bootloader; reads <code>otadata</code>, jumps to the active app</td></tr>
+<tr><td>partition table</td><td>—</td><td>0x8000</td><td>3 KB</td><td>The compiled form of <code>partitions.csv</code></td></tr>
+<tr><td>nvs</td><td>data / nvs</td><td>0x9000</td><td>24 KB</td><td>Wi-Fi credentials, app key-value storage</td></tr>
+<tr><td>otadata</td><td>data / ota</td><td>0xf000</td><td>8 KB</td><td>Two redundant records: which slot to boot next</td></tr>
+<tr><td>phy_init</td><td>data / phy</td><td>0x11000</td><td>4 KB</td><td>RF calibration data</td></tr>
+<tr><td>ota_0</td><td>app / ota_0</td><td>0x20000</td><td>1.5 MB</td><td>Application slot A</td></tr>
+<tr><td>ota_1</td><td>app / ota_1</td><td>0x1a0000</td><td>1.5 MB</td><td>Application slot B</td></tr>
+</tbody>
+</table>
+
+<p>Point <code>idf.py menuconfig</code> at this file under <strong>Partition Table → Custom partition table CSV</strong>, or set it directly in <code>sdkconfig</code>:</p>
+<pre><code class="language-ini">CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0x8000
+</code></pre>
+
+<figure>
+<svg viewBox="0 0 960 260" width="100%" role="img" aria-labelledby="diagram1title">
+<title id="diagram1title">Flash layout with otadata pointing at the active OTA slot</title>
+<defs>
+<marker id="arrow1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 Z" fill="currentColor"></path>
+</marker>
+</defs>
+<rect x="10" y="30" width="80" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="50" y="55" text-anchor="middle" font-size="11" fill="currentColor">Bootloader</text>
+<text x="50" y="70" text-anchor="middle" font-size="9" fill="currentColor">0x1000</text>
+
+<rect x="100" y="30" width="80" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="140" y="50" text-anchor="middle" font-size="10" fill="currentColor">Partition</text>
+<text x="140" y="62" text-anchor="middle" font-size="10" fill="currentColor">Table</text>
+<text x="140" y="76" text-anchor="middle" font-size="9" fill="currentColor">0x8000</text>
+
+<rect x="190" y="30" width="70" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="225" y="55" text-anchor="middle" font-size="11" fill="currentColor">nvs</text>
+<text x="225" y="70" text-anchor="middle" font-size="9" fill="currentColor">0x9000</text>
+
+<rect x="270" y="30" width="80" height="60" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="310" y="55" text-anchor="middle" font-size="11" fill="currentColor">otadata</text>
+<text x="310" y="70" text-anchor="middle" font-size="9" fill="currentColor">0xf000</text>
+
+<rect x="360" y="30" width="70" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="395" y="52" text-anchor="middle" font-size="10" fill="currentColor">phy_init</text>
+<text x="395" y="68" text-anchor="middle" font-size="9" fill="currentColor">0x11000</text>
+
+<rect x="440" y="30" width="230" height="60" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="555" y="52" text-anchor="middle" font-size="11" fill="currentColor">ota_0 (app) — ACTIVE</text>
+<text x="555" y="68" text-anchor="middle" font-size="9" fill="currentColor">0x20000 · 1.5 MB</text>
+
+<rect x="680" y="30" width="230" height="60" fill="currentColor" fill-opacity="0.03" stroke="currentColor"></rect>
+<text x="795" y="52" text-anchor="middle" font-size="11" fill="currentColor">ota_1 (app) — standby</text>
+<text x="795" y="68" text-anchor="middle" font-size="9" fill="currentColor">0x1a0000 · 1.5 MB</text>
+
+<path d="M310,90 C310,180 400,180 555,90" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow1)"></path>
+<text x="400" y="205" text-anchor="middle" font-size="10" fill="currentColor">active_index → ota_0</text>
+
+<path d="M310,90 C310,225 600,225 795,90" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow1)"></path>
+<text x="600" y="248" text-anchor="middle" font-size="10" fill="currentColor">fallback record → ota_1</text>
+</svg>
+<figcaption>otadata holds two redundant records; the bootloader follows whichever one has the higher sequence number to pick the active app slot.</figcaption>
+</figure>
+
+<h2>Enabling Rollback</h2>
+<p>Rollback is the safety net that makes the A/B scheme worth building: if a freshly-flashed image never confirms it's healthy, the bootloader automatically reverts to the previous slot on the next boot instead of retrying the broken one forever. It is off by default and needs two things turned on in <code>menuconfig</code>:</p>
+<pre><code class="language-ini"># Bootloader config
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# Component config → App Rollback / secure version, optional but recommended
+CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK=y
+</code></pre>
+<blockquote>Exact Kconfig symbol names shift slightly between IDF minor versions — search <code>menuconfig</code> for "rollback" rather than hand-editing <code>sdkconfig</code> blind.</blockquote>
+<p><code>CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE</code> is the one that matters for basic safety: it makes every freshly-booted OTA image start in a <code>PENDING_VERIFY</code> state, which the running app must explicitly confirm (covered below) or the bootloader treats the next boot as a failure and switches back.</p>
+<p><code>CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK</code> is a stricter, one-way variant: each image embeds a monotonically increasing "secure version" number, and the bootloader refuses to boot — or even accept, during OTA — any image whose secure version is lower than one it has already run. This stops an attacker (or a clumsy fleet operator) from downgrading a device to a build with a known vulnerability. Enable it once your update process actually tracks secure versions deliberately; it is irreversible per-device once a version has been accepted.</p>
+
+<h2>Implementing OTA with esp_https_ota</h2>
+<p>ESP-IDF's <code>esp_https_ota</code> component wraps <code>esp_http_client</code> and <code>esp_ota_ops</code> into a download-and-write pipeline. There are two ways to drive it: a single blocking call for the common case, and a handle-based loop when you need progress reporting or want to inspect the new image before committing to it.</p>
+
+<h3>The simple path: one call, one reboot</h3>
+<pre><code class="language-c">#include "esp_https_ota.h"
+#include "esp_ota_ops.h"
+#include "esp_log.h"
+
+static const char *TAG = "ota";
+
+extern const uint8_t server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const uint8_t server_cert_pem_end[]   asm("_binary_ca_cert_pem_end");
+
+void run_ota_update(const char *url)
+{
+    esp_http_client_config_t http_config = {
+        .url = url,
+        .cert_pem = (char *)server_cert_pem_start,
+        .timeout_ms = 10000,
+        .keep_alive_enable = true,
+    };
+
+    esp_https_ota_config_t ota_config = {
+        .http_config = &http_config,
+    };
+
+    ESP_LOGI(TAG, "Starting OTA from %s", url);
+    esp_err_t err = esp_https_ota(&ota_config);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "OTA succeeded, rebooting");
+        esp_restart();
+    } else {
+        ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(err));
+    }
+}
+</code></pre>
+<p>The certificate is pulled in with <code>EMBED_TXTFILES</code> in the component's <code>CMakeLists.txt</code>, which turns the PEM file into linked-in symbols:</p>
+<pre><code class="language-cpp">idf_component_register(SRCS "main.c"
+                        INCLUDE_DIRS "."
+                        EMBED_TXTFILES "certs/ca_cert.pem")
+</code></pre>
+<p>If you'd rather trust the standard public CA bundle (fine when the update server has a normal Let's Encrypt-style cert) swap <code>cert_pem</code> for <code>.crt_bundle_attach = esp_crt_bundle_attach</code> and enable <code>CONFIG_MBEDTLS_CERTIFICATE_BUNDLE</code> in <code>menuconfig</code> — one less thing to embed and rotate manually.</p>
+
+<h3>The advanced path: progress and a version check</h3>
+<p><code>esp_https_ota()</code> is fine when you just want the update applied. The handle-based API lets you read the new image's <code>esp_app_desc_t</code> before a single byte of flash is written, so you can skip a redundant download, and lets you report bytes-written as it goes:</p>
+<pre><code class="language-c">#include "esp_https_ota.h"
+#include "esp_app_desc.h"
+#include &lt;string.h&gt;
+
+static const char *TAG = "ota";
+
+esp_err_t run_ota_with_progress(const char *url)
+{
+    esp_http_client_config_t http_config = {
+        .url = url,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .timeout_ms = 10000,
+    };
+    esp_https_ota_config_t ota_config = {
+        .http_config = &http_config,
+        .partial_http_download = true,
+        .max_http_request_size = 4096,
+    };
+
+    esp_https_ota_handle_t handle = NULL;
+    esp_err_t err = esp_https_ota_begin(&ota_config, &handle);
+    if (err != ESP_OK) {
+        return err;
+    }
+
+    esp_app_desc_t new_desc;
+    err = esp_https_ota_get_img_desc(handle, &new_desc);
+    if (err != ESP_OK) {
+        esp_https_ota_abort(handle);
+        return err;
+    }
+
+    const esp_app_desc_t *running_desc = esp_ota_get_app_description();
+    if (strcmp(new_desc.version, running_desc->version) == 0) {
+        ESP_LOGW(TAG, "Already on version %s, skipping OTA", new_desc.version);
+        esp_https_ota_abort(handle);
+        return ESP_FAIL;
+    }
+    ESP_LOGI(TAG, "Updating %s -> %s", running_desc->version, new_desc.version);
+
+    while (1) {
+        err = esp_https_ota_perform(handle);
+        if (err != ESP_ERR_HTTPS_OTA_IN_PROGRESS) {
+            break;
+        }
+        ESP_LOGI(TAG, "Written %d bytes so far", esp_https_ota_get_image_len_read(handle));
+    }
+
+    if (err != ESP_OK || !esp_https_ota_is_complete_data_received(handle)) {
+        ESP_LOGE(TAG, "OTA stream incomplete: %s", esp_err_to_name(err));
+        esp_https_ota_abort(handle);
+        return ESP_FAIL;
+    }
+
+    err = esp_https_ota_finish(handle);
+    if (err == ESP_OK) {
+        esp_restart();
+    }
+    return err;
+}
+</code></pre>
+<p><code>esp_https_ota_perform()</code> is deliberately non-blocking-in-spirit: it reads and writes one buffer's worth of data per call and returns <code>ESP_ERR_HTTPS_OTA_IN_PROGRESS</code> until the stream ends, which is what gives you a hook to update a progress bar, feed a watchdog, or bail out on a cancel button between chunks.</p>
+
+<h2>Validating the New Image on First Boot</h2>
+<p>Writing the image and flipping the boot pointer is only half of rollback safety — the new image also has to actively prove it works. With <code>CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE</code> on, every OTA-written image boots into an <code>ESP_OTA_IMG_PENDING_VERIFY</code> state. If it never calls back to confirm itself, the <em>next</em> reset — including a crash-triggered one — makes the bootloader assume it's broken and switch back to the previous slot automatically.</p>
+<pre><code class="language-c">#include "esp_ota_ops.h"
+
+static bool self_test_passed(void)
+{
+    // check whatever proves the new build is healthy: Wi-Fi connects,
+    // sensors respond, a cloud handshake succeeds, etc.
+    return true;
+}
+
+void app_main(void)
+{
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+
+    if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            if (self_test_passed()) {
+                ESP_LOGI(TAG, "Self-test passed, marking image valid");
+                esp_ota_mark_app_valid_cancel_rollback();
+            } else {
+                ESP_LOGE(TAG, "Self-test failed, rolling back now");
+                esp_ota_mark_app_invalid_rollback_and_reboot();
+            }
+        }
+    }
+
+    // normal application startup continues here
+}
+</code></pre>
+<p>Keep the self-test fast and bounded — network connectivity, a sensor read, a handshake with your backend. Don't gate it behind anything that can hang forever, or you will never reach either branch and the watchdog will eventually reset you into the rollback path anyway, which is the correct outcome but not the one you wanted.</p>
+
+<h2>Hosting Firmware for Testing</h2>
+<p>For local development, a plain static file server is enough — <code>esp_https_ota</code> just needs a URL that returns the <code>.bin</code> bytes:</p>
+<pre><code class="language-bash">mkdir -p ota_server
+cp build/ota_demo.bin ota_server/
+cd ota_server
+python3 -m http.server 8070
+</code></pre>
+<p>That serves plain HTTP, which is fine on your bench network but should never be what a device in the field pulls from — firmware is exactly the kind of payload you don't want tampered with in transit. For anything past your desk, put it behind TLS. A self-signed cert is enough to exercise the code path:</p>
+<pre><code class="language-bash">openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout ota.key -out ota.crt \
+  -days 365 -subj "/CN=ota.example.com"
+</code></pre>
+<pre><code class="language-ini">server {
+    listen 443 ssl;
+    server_name ota.example.com;
+
+    ssl_certificate     /etc/nginx/certs/ota.crt;
+    ssl_certificate_key /etc/nginx/certs/ota.key;
+
+    location /firmware/ {
+        alias /var/www/ota/;
+        autoindex on;
+    }
+}
+</code></pre>
+<p>Embed <code>ota.crt</code> as <code>cert_pem</code> in the firmware exactly as shown above, and point <code>run_ota_update()</code> at <code>https://ota.example.com/firmware/ota_demo.bin</code>.</p>
+
+<h2>Building, Versioning, and Rolling Out</h2>
+<p>Set the app version explicitly in the project's top-level <code>CMakeLists.txt</code> so <code>esp_app_desc_t.version</code> means something — otherwise IDF falls back to a <code>git describe</code> string, which is fine for internal builds but awkward to compare programmatically:</p>
+<pre><code class="language-cpp">cmake_minimum_required(VERSION 3.16)
+set(PROJECT_VER "1.2.0")
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(ota_demo)
+</code></pre>
+<p>Then build and flash the first image over USB the normal way:</p>
+<pre><code class="language-bash">idf.py set-target esp32
+idf.py build
+idf.py -p /dev/ttyUSB0 flash monitor
+</code></pre>
+<p>The compiled application binary lands at <code>build/ota_demo.bin</code> — bump <code>PROJECT_VER</code>, rebuild, and that same path now holds the image you'll serve for the next OTA round. Drop it in the static file directory from the previous section, and trigger <code>run_ota_update()</code> from whatever event makes sense for your app: a button press, a scheduled timer, or a command your device already listens for over MQTT or HTTP. The mechanism that decides <em>when</em> to update is entirely up to your application; <code>esp_https_ota</code> only cares about the URL you hand it.</p>
+
+<figure>
+<svg viewBox="0 0 780 660" width="100%" role="img" aria-labelledby="diagram2title">
+<title id="diagram2title">OTA update and rollback sequence</title>
+<defs>
+<marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 Z" fill="currentColor"></path>
+</marker>
+</defs>
+
+<rect x="220" y="10" width="340" height="50" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="390" y="40" text-anchor="middle" font-size="12" fill="currentColor">Running app boots from Slot A</text>
+<line x1="390" y1="60" x2="390" y2="88" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="180" y="90" width="420" height="50" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="390" y="120" text-anchor="middle" font-size="12" fill="currentColor">Download new image into Slot B (esp_https_ota)</text>
+<line x1="390" y1="140" x2="390" y2="168" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="200" y="170" width="380" height="50" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="390" y="200" text-anchor="middle" font-size="12" fill="currentColor">Mark Slot B as the next-boot partition</text>
+<line x1="390" y1="220" x2="390" y2="248" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="280" y="250" width="220" height="50" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="390" y="280" text-anchor="middle" font-size="12" fill="currentColor">esp_restart()</text>
+<line x1="390" y1="300" x2="390" y2="328" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="170" y="330" width="440" height="50" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="390" y="352" text-anchor="middle" font-size="12" fill="currentColor">Bootloader boots Slot B</text>
+<text x="390" y="368" text-anchor="middle" font-size="10" fill="currentColor">state: PENDING_VERIFY</text>
+<line x1="390" y1="380" x2="390" y2="408" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="240" y="410" width="300" height="50" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="390" y="440" text-anchor="middle" font-size="12" fill="currentColor">App runs its own self-test</text>
+
+<line x1="330" y1="460" x2="180" y2="486" stroke="currentColor" marker-end="url(#arrow2)"></line>
+<line x1="450" y1="460" x2="600" y2="486" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="10" y="488" width="340" height="60" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="180" y="512" text-anchor="middle" font-size="11" fill="currentColor">Pass →</text>
+<text x="180" y="528" text-anchor="middle" font-size="11" fill="currentColor">mark_app_valid_cancel_rollback()</text>
+
+<rect x="430" y="488" width="340" height="60" fill="currentColor" fill-opacity="0.1" stroke="currentColor"></rect>
+<text x="600" y="512" text-anchor="middle" font-size="11" fill="currentColor">Fail / crash-loop →</text>
+<text x="600" y="528" text-anchor="middle" font-size="11" fill="currentColor">automatic rollback</text>
+
+<line x1="180" y1="548" x2="180" y2="576" stroke="currentColor" marker-end="url(#arrow2)"></line>
+<line x1="600" y1="548" x2="600" y2="576" stroke="currentColor" marker-end="url(#arrow2)"></line>
+
+<rect x="10" y="578" width="340" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="180" y="604" text-anchor="middle" font-size="11" fill="currentColor">Slot B is now the stable,</text>
+<text x="180" y="620" text-anchor="middle" font-size="11" fill="currentColor">confirmed active image</text>
+
+<rect x="430" y="578" width="340" height="60" fill="currentColor" fill-opacity="0.06" stroke="currentColor"></rect>
+<text x="600" y="604" text-anchor="middle" font-size="11" fill="currentColor">Bootloader reverts the boot</text>
+<text x="600" y="620" text-anchor="middle" font-size="11" fill="currentColor">pointer back to Slot A</text>
+</svg>
+<figcaption>The running app never touches its own slot — it writes the update to the other one, hands control to the bootloader, and only survives the next boot if it explicitly confirms itself healthy.</figcaption>
+</figure>
+
+<h2>Troubleshooting</h2>
+<ul>
+<li><strong>"OTA image too large" / esp_https_ota returns ESP_ERR_OTA_VALIDATE_FAILED at the tail end.</strong> The binary doesn't fit in the target slot. Check <code>ota_0</code>/<code>ota_1</code> size against your actual <code>build/*.bin</code> size (printed at the end of <code>idf.py build</code>), and either shrink the app (enable <code>CONFIG_COMPILER_OPTIMIZATION_SIZE</code>, trim unused components) or grow the slots in <code>partitions.csv</code> — remembering both slots must stay large enough to hold every future build, not just the current one.</li>
+<li><strong>TLS handshake fails or the connection resets immediately.</strong> Almost always a certificate mismatch: the PEM embedded as <code>cert_pem</code> doesn't match what the server presents, or you're using <code>crt_bundle_attach</code> against a self-signed cert that isn't in any public CA bundle. Also check the device's clock — TLS certificate validity checks fail silently if <code>time()</code> is still at the 1970 epoch because SNTP hasn't synced yet; sync time before starting OTA, not after.</li>
+<li><strong>Device boot-loops right after an update.</strong> The new image never called <code>esp_ota_mark_app_valid_cancel_rollback()</code>. With rollback enabled, an image stuck in <code>PENDING_VERIFY</code> that resets for any reason — including a plain crash — gets reverted on the next boot. Make sure the confirmation path in <code>app_main</code> actually runs and isn't gated behind something that can hang or crash first.</li>
+<li><strong>otadata looks corrupted, or the device won't pick the slot you expect.</strong> otadata keeps two redundant records specifically so one bad write doesn't strand the device; if both are damaged, erase the whole partition with <code>esptool.py erase_region</code> at its offset and reflash — the bootloader falls back to the lowest-numbered valid app partition when otadata is blank.</li>
+<li><strong>A known-good older build gets rejected during OTA.</strong> That's anti-rollback (<code>CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK</code>) doing its job — it refuses any image whose embedded secure version is lower than one the device has already accepted. This is a one-way ratchet per device; if you need to intentionally downgrade a fleet, that has to be planned around secure versioning, not worked around by disabling the check in the field.</li>
+</ul>
+
+<h2>Wrap-up</h2>
+<p>The whole scheme rests on three pieces working together: two equally-sized app slots so there's always a known-good fallback, an <code>otadata</code> pointer that only flips after a full successful download, and a rollback state machine that demands the new image prove itself before it's trusted permanently. Once <code>partitions.csv</code>, the rollback Kconfig options, and the self-test-then-confirm code are in place, the update itself is a small amount of code around <code>esp_https_ota</code> — the same handful of calls whether you're pushing one bug fix to a bench unit or rolling a firmware release out to thousands of devices you'll never see again.</p>

@@ -1,0 +1,27 @@
+---
+title: Introduction
+description: What Helix is and how its pieces fit together.
+type: overview
+---
+
+Helix is an open-source IoT platform assembled from **reusable, independently
+adoptable components**. It is not a single monolithic product — it is a set of
+libraries and SDKs you install and compose to build your own management platform.
+
+## The stack
+
+- **Embedded devices** — ESP32 (ESP-IDF) and Arduino/AVR firmware built on a
+  transport-abstracting protocol core.
+- **Edge Linux** — a minimal, purpose-built OS for Jetson, Raspberry Pi, and x86.
+- **Cloud platform** — orchestration, provisioning, releases/OTA, event
+  ingestion, and a gateway.
+- **Clients** — a React/Next.js web app and a native Android (Compose) app.
+
+Devices communicate over the **Helix protocol**: a transport-neutral framework
+that abstracts BLE, Serial, MQTT, and WebSockets behind one typed
+request/response + query/mutation surface.
+
+## Next steps
+
+- Read the [architecture overview](/docs/architecture) to see how the layers connect.
+- Explore the [protocol](/docs/protocol) that ties everything together.

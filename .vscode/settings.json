@@ -1,0 +1,70 @@
+{
+    "explorer.excludeGitIgnore": false,
+    "python.terminal.activateEnvironment": false,
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/.turbo": true,
+        "**/dist": true,
+        "**/.next": true,
+        "**/.mypy_cache": true,
+        "**/__pycache__": true
+    },
+    "go.useLanguageServer": true,
+    "go.toolsManagement.autoUpdate": false,
+    "go.toolsManagement.checkForUpdates": "local",
+    "go.alternateTools": {
+        "gopls": "${workspaceFolder}/device/go/.bin/gopls",
+        "staticcheck": "${workspaceFolder}/device/go/.bin/staticcheck",
+        "govulncheck": "${workspaceFolder}/device/go/.bin/govulncheck"
+    },
+    "go.toolsEnvVars": {
+        "GOBIN": "${workspaceFolder}/device/go/.bin"
+    },
+    "gopls": {
+        "semanticTokens": true,
+        "staticcheck": true,
+        "vulncheck": "Imports",
+        "analyses": {
+            "shadow": true,
+            "unusedparams": true
+        }
+    },
+    "[go]": {
+        "editor.defaultFormatter": "golang.Go",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "idf.currentSetup": "${env:HOME}/.espressif/v5.4.4/esp-idf",
+    "idf.espIdfPath": "${env:HOME}/.espressif/v5.4.4/esp-idf",
+    "idf.toolsPath": "${env:HOME}/.espressif",
+    "idf.pythonBinPath": "${env:HOME}/.espressif/python_env/idf5.4_py3.14_env/bin/python",
+    "idf.customExtraVars": {},
+    "C_Cpp.default.compilerPath": "${env:HOME}/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20260121/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc",
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/embedded/esp32/core/**",
+        "${workspaceFolder}/embedded/esp32/protocol/**",
+        "${workspaceFolder}/embedded/esp32/platform/**",
+        "${env:HOME}/.espressif/v5.4.4/esp-idf/components/**",
+        "${env:HOME}/.espressif/v5.4.4/esp-idf/examples/common_components/**"
+    ],
+    "C_Cpp.default.browse.path": [
+        "${workspaceFolder}/embedded/esp32/core/**",
+        "${workspaceFolder}/embedded/esp32/protocol/**",
+        "${workspaceFolder}/embedded/esp32/platform/**",
+        "${env:HOME}/.espressif/v5.4.4/esp-idf/components/**"
+    ],
+    "C_Cpp.default.browse.limitSymbolsToIncludedHeaders": false,
+    "C_Cpp.default.defines": [
+        "ESP_PLATFORM",
+        "_GNU_SOURCE"
+    ],
+    "clangd.path": "${env:HOME}/.espressif/tools/esp-clang/esp-18.1.2_20240912/esp-clang/bin/clangd",
+    "clangd.arguments": [
+        "--background-index",
+        "--query-driver=${env:HOME}/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20260121/xtensa-esp-elf/bin/xtensa-esp32-elf-*",
+        "--compile-commands-dir=${workspaceFolder}/embedded/esp32/core/.build/vscode"
+    ],
+    "cmake.ignoreCMakeListsMissing": true
+}

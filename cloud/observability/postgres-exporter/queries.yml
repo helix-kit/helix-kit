@@ -1,0 +1,119 @@
+pg_helix_table_stats:
+  query: |
+    select
+      schemaname,
+      relname,
+      n_live_tup::float8 as estimated_rows,
+      n_dead_tup::float8 as dead_rows,
+      (100.0 * n_dead_tup / greatest(n_live_tup + n_dead_tup, 1))::float8 as dead_pct,
+      pg_total_relation_size(relid)::float8 as total_bytes,
+      pg_relation_size(relid)::float8 as heap_bytes,
+      pg_indexes_size(relid)::float8 as index_bytes,
+      (pg_total_relation_size(relid) - pg_relation_size(relid) - pg_indexes_size(relid))::float8 as toast_bytes,
+      seq_scan::float8 as seq_scan,
+      seq_tup_read::float8 as seq_tup_read,
+      idx_scan::float8 as idx_scan,
+      idx_tup_fetch::float8 as idx_tup_fetch,
+      n_tup_ins::float8 as inserted_rows,
+      n_tup_upd::float8 as updated_rows,
+      n_tup_del::float8 as deleted_rows,
+      autovacuum_count::float8 as autovacuum_count,
+      autoanalyze_count::float8 as autoanalyze_count,
+      extract(epoch from now() - greatest(last_vacuum, last_autovacuum))::float8 as last_vacuum_age_seconds,
+      extract(epoch from now() - greatest(last_analyze, last_autoanalyze))::float8 as last_analyze_age_seconds
+    from pg_stat_user_tables
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name."
+    - relname:
+        usage: "LABEL"
+        description: "Table name."
+    - estimated_rows:
+        usage: "GAUGE"
+        description: "Estimated live rows in the table."
+    - dead_rows:
+        usage: "GAUGE"
+        description: "Estimated dead rows in the table."
+    - dead_pct:
+        usage: "GAUGE"
+        description: "Estimated percentage of dead rows."
+    - total_bytes:
+        usage: "GAUGE"
+        description: "Total table bytes including heap, indexes, and TOAST."
+    - heap_bytes:
+        usage: "GAUGE"
+        description: "Heap bytes for the table."
+    - index_bytes:
+        usage: "GAUGE"
+        description: "Index bytes for the table."
+    - toast_bytes:
+        usage: "GAUGE"
+        description: "TOAST bytes for the table."
+    - seq_scan:
+        usage: "COUNTER"
+        description: "Sequential scans on the table."
+    - seq_tup_read:
+        usage: "COUNTER"
+        description: "Rows read by sequential scans."
+    - idx_scan:
+        usage: "COUNTER"
+        description: "Index scans on the table."
+    - idx_tup_fetch:
+        usage: "COUNTER"
+        description: "Rows fetched by index scans."
+    - inserted_rows:
+        usage: "COUNTER"
+        description: "Rows inserted into the table."
+    - updated_rows:
+        usage: "COUNTER"
+        description: "Rows updated in the table."
+    - deleted_rows:
+        usage: "COUNTER"
+        description: "Rows deleted from the table."
+    - autovacuum_count:
+        usage: "COUNTER"
+        description: "Autovacuum runs for the table."
+    - autoanalyze_count:
+        usage: "COUNTER"
+        description: "Autoanalyze runs for the table."
+    - last_vacuum_age_seconds:
+        usage: "GAUGE"
+        description: "Seconds since the latest manual or automatic vacuum."
+    - last_analyze_age_seconds:
+        usage: "GAUGE"
+        description: "Seconds since the latest manual or automatic analyze."
+
+pg_helix_index_stats:
+  query: |
+    select
+      schemaname,
+      relname,
+      indexrelname,
+      pg_relation_size(indexrelid)::float8 as index_bytes,
+      idx_scan::float8 as idx_scan,
+      idx_tup_read::float8 as idx_tup_read,
+      idx_tup_fetch::float8 as idx_tup_fetch
+    from pg_stat_user_indexes
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name."
+    - relname:
+        usage: "LABEL"
+        description: "Table name."
+    - indexrelname:
+        usage: "LABEL"
+        description: "Index name."
+    - index_bytes:
+        usage: "GAUGE"
+        description: "Index size in bytes."
+    - idx_scan:
+        usage: "COUNTER"
+        description: "Scans using this index."
+    - idx_tup_read:
+        usage: "COUNTER"
+        description: "Index entries returned by scans."
+    - idx_tup_fetch:
+        usage: "COUNTER"
+        description: "Live table rows fetched by scans using this index."

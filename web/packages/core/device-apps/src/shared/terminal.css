@@ -1,0 +1,22 @@
+/* A thin, themed scrollbar with a STABLE gutter for the xterm scrollback
+   viewport, replacing the platform default. scrollbar-gutter:stable keeps the
+   width reserved so full-width TUI lines (top/htop) never render under it.
+   Ported from the experimental remote-shell UI. */
+.xterm-viewport {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #30363d transparent;
+}
+.xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 5px;
+}
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #3d444d;
+}

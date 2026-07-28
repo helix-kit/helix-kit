@@ -1,0 +1,7 @@
+{
+  "id": "grid",
+  "route": "/dashboard",
+  "label": "Dashboard grid",
+  "heavy": true,
+  "deps": ["react-grid-layout"]
+}

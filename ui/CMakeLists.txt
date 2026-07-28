@@ -1,0 +1,19 @@
+idf_component_register(
+    SRCS
+        "src/helix_ui.c"
+        "src/helix_ui_input.c"
+        "src/helix_ui_service.c"
+        "src/helix_ui_display_stream.c"
+        "screens/helix_ui_screen_hello.c"
+        "port/esp32/helix_ui_esp32.c"
+        "generated/contracts/ui_contract.c"
+    INCLUDE_DIRS
+        "include"
+        "screens"
+        "port/esp32"
+        "generated/contracts"
+    REQUIRES
+        esp_timer
+        lvgl
+        protocol
+)

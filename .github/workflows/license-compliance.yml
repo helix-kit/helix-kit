@@ -1,0 +1,26 @@
+name: License compliance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  licensing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check license declarations
+        run: bash scripts/check-licenses.sh
+      - name: Check DCO sign-offs
+        if: github.event_name == 'pull_request'
+        env:
+          DCO_BASE_REF: ${{ github.event.pull_request.base.sha }}
+          DCO_HEAD_REF: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/check-dco.sh

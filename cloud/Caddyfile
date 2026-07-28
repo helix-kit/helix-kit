@@ -1,0 +1,45 @@
+{
+	email {$ACME_EMAIL}
+
+	# Optional ACME DNS-01 challenge, substituted textually (empty when unset).
+	# Set it to `acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}` — the appliance's
+	# seed-env.sh derives exactly that whenever CLOUDFLARE_API_TOKEN is in site.env.
+	#
+	# Two things need it: the `*.port` wildcard cert below (HTTP-01 cannot issue
+	# wildcards at all), and any domain fronted by a proxy such as Cloudflare's
+	# (HTTP-01 would be answered by the proxy, not by us). It stays empty for the
+	# plain compose stack, whose caddy image carries no DNS provider module.
+	{$CADDY_ACME_DNS}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# Everything Helix Server's public HTTP listener owns: the health/ICE probes,
+	# the gateway + data-plane upgrades, and the trpc-to-openapi routers it mounts
+	# (pki → /api/certificates, releases → /api/{ci,build,builds,ota}) plus the FS
+	# storage route. Everything else is the Next.js app's (/api/{auth,trpc,upload}).
+	@helix_server path /api/health /api/ice-config /ws /stream/client /api/certificates/* /api/internal/fs-storage /api/ci/* /api/build/* /api/builds/* /api/ota/*
+
+	handle @helix_server {
+		reverse_proxy {$HELIX_SERVER_UPSTREAM}
+	}
+
+	handle_path /turbo-cache* {
+		reverse_proxy {$TURBO_CACHE_UPSTREAM}
+	}
+
+	handle {
+		reverse_proxy {$NEXTJS_UPSTREAM}
+	}
+}
+
+# Port forwarding: every forwarded session is published at <session>.port.<domain>.
+# Caddy TLS-terminates and proxies plain HTTP/1.1 to Helix Server's port-forward
+# listener, which reads the Host header to pick the device session to tunnel into.
+# flush_interval -1 turns off response buffering so streamed responses pass live.
+*.port.{$APP_DOMAIN} {
+	reverse_proxy {$PORT_FORWARD_UPSTREAM} {
+		flush_interval -1
+	}
+}

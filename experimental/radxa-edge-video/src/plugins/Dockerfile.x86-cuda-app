@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Thin app image on top of helix-x86-cuda-base: builds the plugins (incl. the GPU-resident
+# hx_infer_ort_gpu). Fast to rebuild (the heavy CUDA-OpenCV/ORT layers are in the base).
+#   docker build -f Dockerfile.x86-cuda-app -t helix-pipeline-x86-cuda .
+FROM helix-x86-cuda-base
+WORKDIR /pipeline
+COPY . /pipeline
+RUN make -f Makefile.x86cuda && chmod +x docker-entrypoint.sh
+ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+ENTRYPOINT ["/pipeline/docker-entrypoint.sh"]

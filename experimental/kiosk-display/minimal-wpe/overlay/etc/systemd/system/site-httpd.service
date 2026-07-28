@@ -1,0 +1,12 @@
+[Unit]
+Description=Helix kiosk static site (busybox httpd on 127.0.0.1:8080)
+After=local-fs.target
+Before=cog-kiosk.service
+
+[Service]
+ExecStart=/bin/busybox httpd -f -p 127.0.0.1:8080 -h /srv/www
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

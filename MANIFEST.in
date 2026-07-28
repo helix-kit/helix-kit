@@ -1,0 +1,6 @@
+prune platform_os/artifacts
+prune platform_os/.venv
+prune platform_os/.mypy_cache
+prune platform_os/.ruff_cache
+prune embedded/esp32/core/.build
+prune embedded/esp32/core/out

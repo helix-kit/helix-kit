@@ -1,0 +1,44 @@
+# EC2 deployment for the experimental Helix port-forwarding stack.
+#
+#   caddy    -- wildcard TLS (Cloudflare DNS-01) + reverse proxy, ports 80/443
+#   gateway  -- Node tunnel gateway on the internal network (no host ports)
+#
+# Both share a Docker network so Caddy can reach the gateway by name.
+# Bring up with:  docker compose --env-file .env up -d --build
+
+services:
+  gateway:
+    build:
+      context: ../gateway
+    image: helix-port-gateway:local
+    restart: unless-stopped
+    environment:
+      PORT: "9000"
+      BASE_DOMAIN: port.helix-kit.com
+    expose:
+      - "9000"
+
+  caddy:
+    image: ghcr.io/helix-kit/caddy-cloudflare:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/usr/share/caddy
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - gateway
+
+# Reuse the pre-existing top-level volumes that already hold the issued
+# wildcard cert, so Caddy does not re-run ACME on every redeploy.
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:
+    external: true

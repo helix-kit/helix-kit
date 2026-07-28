@@ -1,0 +1,260 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --panel: #111820;
+  --border: #1e2a37;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --green: #3fb950;
+  --red: #f85149;
+  --amber: #d29922;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  /* A fullscreen terminal must never scroll the page. Without this, any
+     sub-pixel overshoot (e.g. the xterm viewport's reserved classic scrollbar)
+     spills into a document scrollbar, which changes the size FitAddon measures
+     and drives a resize feedback loop -- the flicker on large windows. */
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  row-gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.topbar .brand {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.topbar .brand .accent {
+  color: var(--green);
+}
+
+.topbar .host {
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Appearance controls (Cockpit-style). */
+.ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ctl-label {
+  color: var(--text);
+  white-space: nowrap;
+}
+.stepper {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1c2128;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+.stepper:hover {
+  background: #2b3440;
+}
+.ctl-val {
+  min-width: 26px;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--text);
+}
+.select {
+  background: #1c2128;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.select:hover {
+  background: #2b3440;
+}
+.reset {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.reset:hover {
+  background: #21262d;
+  color: var(--text);
+}
+
+.stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: default;
+}
+.stats .down {
+  color: #58a6ff;
+}
+.stats .up {
+  color: var(--green);
+}
+.stats .rate {
+  color: var(--muted);
+  min-width: 62px;
+  text-align: right;
+}
+.stats .egress {
+  color: var(--amber);
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.5);
+}
+
+.dot.connected {
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+.dot.connecting {
+  background: var(--amber);
+}
+.dot.disconnected {
+  background: var(--red);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(63, 185, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0);
+  }
+}
+
+button.reconnect {
+  background: #21262d;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+button.reconnect:hover {
+  background: #2b3440;
+}
+
+.terminal-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  /* No right padding: the scrollbar must hug the window's right edge, not sit
+     inset from it. Small top/left breathing room only. */
+  padding: 6px 0 0 8px;
+  background: var(--bg);
+  /* Clip the terminal instead of letting it grow the page. */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Give the xterm scrollback viewport a thin, themed scrollbar with a STABLE
+   gutter. Styling ::-webkit-scrollbar opts into a classic (layout-consuming)
+   scrollbar consistently across platforms, and scrollbar-gutter:stable keeps
+   its width reserved so full-width TUI lines (top/htop) never render under it. */
+.xterm-viewport {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #30363d transparent;
+}
+.xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 5px;
+}
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #3d444d;
+}
+
+.terminal-wrap .xterm {
+  height: 100%;
+}
+
+.warn {
+  font-size: 11px;
+  color: var(--amber);
+  font-family: ui-monospace, monospace;
+}

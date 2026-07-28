@@ -1,0 +1,45 @@
+menu "Helix UI"
+
+config HELIX_UI_WIDTH
+    int "Screen width in pixels"
+    default 240
+    range 32 1024
+
+config HELIX_UI_HEIGHT
+    int "Screen height in pixels"
+    default 240
+    range 32 1024
+
+config HELIX_UI_DRAW_BUFFER_LINES
+    int "LVGL partial render buffer height, in lines"
+    default 40
+    range 4 240
+    help
+      LVGL renders the screen in horizontal slices of this height. Each slice
+      costs width * lines * 2 bytes of RAM and becomes one flush; taller slices
+      mean fewer, larger flushes.
+
+config HELIX_UI_STREAM_CHUNK_BYTES
+    int "Bytes per binary side-channel chunk"
+    default 1024
+    range 64 1024
+    help
+      Must not exceed the transport's maximum binary payload
+      (HELIX_SERIAL_BINARY_MAX_PAYLOAD for the serial transport).
+
+config HELIX_UI_TASK_STACK_BYTES
+    int "UI task stack size"
+    default 8192
+    range 4096 32768
+
+config HELIX_UI_TASK_PRIORITY
+    int "UI task priority"
+    default 4
+    range 1 20
+
+config HELIX_UI_MIN_IDLE_MS
+    int "Minimum idle between LVGL pumps"
+    default 10
+    range 1 100
+
+endmenu

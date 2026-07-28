@@ -1,0 +1,104 @@
+{
+  "service": "events",
+  "methods": {
+    "stats": {
+      "name": "stats",
+      "input": "emptyRequest",
+      "output": "statsPayload",
+      "error": "errorPayload"
+    },
+    "list": {
+      "name": "list",
+      "input": "listRequest",
+      "output": "listResponse",
+      "error": "errorPayload"
+    },
+    "get": {
+      "name": "get",
+      "input": "getRequest",
+      "output": "eventDetail",
+      "error": "errorPayload"
+    },
+    "emit": {
+      "name": "emit",
+      "input": "emitRequest",
+      "output": "emitResponse",
+      "error": "errorPayload"
+    },
+    "sweep": {
+      "name": "sweep",
+      "input": "emptyRequest",
+      "output": "sweepResponse",
+      "error": "errorPayload"
+    }
+  },
+  "messages": {
+    "changed": {
+      "name": "events-changed",
+      "payload": "statsPayload"
+    }
+  },
+  "schemas": {
+    "emptyRequest": {},
+    "errorPayload": {
+      "error": { "type": "string", "required": true }
+    },
+    "statsPayload": {
+      "pending": { "type": "number", "integer": true, "required": true },
+      "sent": { "type": "number", "integer": true, "required": true },
+      "expired": { "type": "number", "integer": true, "required": true },
+      "total": { "type": "number", "integer": true, "required": true }
+    },
+    "eventSummary": {
+      "id": { "type": "number", "integer": true, "required": true },
+      "msgId": { "type": "string", "required": true },
+      "service": { "type": "string", "required": true },
+      "eventType": { "type": "string", "required": true },
+      "status": { "type": "string", "required": true },
+      "attempts": { "type": "number", "integer": true, "required": true },
+      "createdTs": { "type": "number", "integer": true, "required": true },
+      "expiryTs": { "type": "number", "integer": true, "required": true },
+      "sentTs": { "type": "number", "integer": true, "required": true }
+    },
+    "eventDetail": {
+      "id": { "type": "number", "integer": true, "required": true },
+      "msgId": { "type": "string", "required": true },
+      "service": { "type": "string", "required": true },
+      "eventType": { "type": "string", "required": true },
+      "status": { "type": "string", "required": true },
+      "attempts": { "type": "number", "integer": true, "required": true },
+      "createdTs": { "type": "number", "integer": true, "required": true },
+      "expiryTs": { "type": "number", "integer": true, "required": true },
+      "sentTs": { "type": "number", "integer": true, "required": true },
+      "envelope": { "type": "string", "required": true }
+    },
+    "listRequest": {
+      "status": { "type": "string", "required": false },
+      "limit": { "type": "number", "integer": true, "required": false },
+      "offset": { "type": "number", "integer": true, "required": false }
+    },
+    "listResponse": {
+      "count": { "type": "number", "integer": true, "required": true },
+      "events": { "type": "array", "items": "eventSummary", "required": true }
+    },
+    "getRequest": {
+      "id": { "type": "number", "integer": true, "required": true }
+    },
+    "emitRequest": {
+      "service": { "type": "string", "required": true },
+      "eventType": { "type": "string", "required": true },
+      "payload": { "type": "json", "required": false },
+      "ttlSec": { "type": "number", "integer": true, "required": false }
+    },
+    "emitResponse": {
+      "id": { "type": "number", "integer": true, "required": true },
+      "msgId": { "type": "string", "required": true }
+    },
+    "sweepResponse": {
+      "retried": { "type": "number", "integer": true, "required": true },
+      "expired": { "type": "number", "integer": true, "required": true },
+      "cleaned": { "type": "number", "integer": true, "required": true },
+      "pending": { "type": "number", "integer": true, "required": true }
+    }
+  }
+}

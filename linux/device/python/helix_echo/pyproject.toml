@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helix-echo"
+version = "0.1.0"
+description = "Python echo device app for Helix, built on the generated typed contract"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+dependencies = ["helix-service-runtime"]
+
+[project.scripts]
+helix-echo = "helix_echo.service:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+helix-service-runtime = { path = "../helix_service_runtime", editable = true }

@@ -1,0 +1,7 @@
+{
+  "id": "settings",
+  "route": "/settings",
+  "label": "Settings",
+  "heavy": false,
+  "deps": []
+}

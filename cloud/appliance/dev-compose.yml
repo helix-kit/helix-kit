@@ -1,0 +1,36 @@
+# Run the appliance image as a DEV BACKEND. Everything the cloud app depends on
+# (Postgres, OpenFGA, Inngest, Redis, Redpanda, Mosquitto, step-ca) runs inside
+# this single container; you run `next dev` for the cloud app on the HOST against
+# it. Ports are mapped 1:1 so the container's generated 127.0.0.1 env works
+# verbatim on the host. Driven by scripts/appliance-dev.sh.
+services:
+  helix-dev:
+    image: helix-appliance:dev
+    container_name: helix-dev
+    privileged: true
+    cgroup: private
+    stop_signal: SIGRTMIN+3
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - helix_dev_data:/var/lib/helix
+    # Lets in-container services (workflow scheduler / Inngest) call back to the
+    # host's `next dev` app at host.docker.internal:3000 when needed.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:5432:5432"   # postgres
+      - "127.0.0.1:6379:6379"   # redis
+      - "127.0.0.1:8080:8080"   # openfga (HTTP API)
+      - "127.0.0.1:8288:8288"   # inngest API
+      - "127.0.0.1:8289:8289"   # inngest connect
+      - "127.0.0.1:9092:9092"   # redpanda kafka
+      - "127.0.0.1:8884:8884"   # mosquitto (service listener)
+      - "127.0.0.1:9000:9000"   # step-ca
+      - "127.0.0.1:4000:4000"   # helix-server Public HTTP API (WS + FS + PKI)
+      - "127.0.0.1:4001:4001"   # helix-server device mTLS data plane
+
+volumes:
+  helix_dev_data:

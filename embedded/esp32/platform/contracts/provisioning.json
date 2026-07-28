@@ -1,0 +1,50 @@
+{
+  "service": "provisioning",
+  "methods": {
+    "describeConfig": {
+      "name": "describe-config"
+    },
+    "getConfig": {
+      "name": "get-config"
+    },
+    "setConfig": {
+      "name": "set-config"
+    }
+  },
+  "messages": {
+    "config": {
+      "name": "provisioning-config"
+    },
+    "status": {
+      "name": "provisioning-status"
+    },
+    "error": {
+      "name": "provisioning-error"
+    }
+  },
+  "schemas": {
+    "describeConfigRequest": {},
+    "getConfigRequest": {
+      "domain": {
+        "type": "string",
+        "required": false
+      }
+    },
+    "setConfigRequest": {
+      "domain": "string",
+      "force": "boolean",
+      "values": "json"
+    },
+    "configPayload": {
+      "domains": "json"
+    },
+    "statusPayload": {
+      "status": "string",
+      "message": "string",
+      "restartRequired": "boolean"
+    },
+    "errorPayload": {
+      "error": "string"
+    }
+  }
+}

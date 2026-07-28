@@ -1,0 +1,3 @@
+# Feature fragment: remove the WebSocket command transport.
+CONFIG_HELIX_TRANSPORT_WEBSOCKET=n
+CONFIG_HTTPD_WS_SUPPORT=n

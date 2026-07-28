@@ -1,0 +1,5 @@
+{
+  "goBinaries": [
+    { "cmd": "helix-port-forward", "dest": "usr/lib/helix/bin/helix-port-forward" }
+  ]
+}

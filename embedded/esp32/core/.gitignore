@@ -1,0 +1,16 @@
+.build/
+out/
+build/
+build-host/
+build-qemu/
+build-profiles/
+managed_components/
+sdkconfig
+sdkconfig.*
+!sdkconfig.defaults
+!sdkconfig.defaults.qemu
+sdkconfig.qemu
+sdkconfig.old
+sdkconfig.qemu.old
+dependencies.lock
+generated/app_selection/app_selection.c

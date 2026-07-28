@@ -1,0 +1,108 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #0b1120;
+  color: #e2e8f0;
+  overflow: hidden;
+}
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 4vmin 6vmin;
+  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent) 22%, #0b1120), #0b1120 60%);
+  transition: background 0.3s ease;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  font-size: 2.2vmin;
+  color: var(--accent);
+}
+
+.dots {
+  display: flex;
+  gap: 1.4vmin;
+}
+
+.dot {
+  width: 1.6vmin;
+  height: 1.6vmin;
+  border-radius: 50%;
+  background: rgba(226, 232, 240, 0.2);
+}
+
+.dot.on {
+  background: var(--accent);
+  box-shadow: 0 0 2vmin var(--accent);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 70vw;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 2.4vmin;
+  color: var(--accent);
+  margin-bottom: 2vmin;
+}
+
+h1 {
+  font-size: 9vmin;
+  line-height: 1.02;
+  font-weight: 800;
+  margin-bottom: 3vmin;
+}
+
+.lede {
+  font-size: 3.2vmin;
+  line-height: 1.4;
+  color: #cbd5e1;
+  max-width: 60vw;
+}
+
+.clock {
+  margin-top: 5vmin;
+  font-variant-numeric: tabular-nums;
+  font-size: 5vmin;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4vmin;
+  font-size: 2.2vmin;
+  color: rgba(226, 232, 240, 0.55);
+}

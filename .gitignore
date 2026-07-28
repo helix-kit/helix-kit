@@ -1,0 +1,16 @@
+.venv/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+__pycache__/
+*.py[oc]
+.pnpm-store/
+.keys.local
+# Pinned Go analyzers installed by `helix lint go` (staticcheck, shadow, ...).
+linux/device/go/.bin/
+.helix-remote/
+radxa-cubie-a7z_bullseye_kde_t7.output_512.img
+radxa-cubie-a7z_bullseye_kde_t7.output_512.img.xz
+radxa-cubie-a7z_bullseye_kde_t7.sha512sum
+eyes-*.jpg
+.playwright-mcp/

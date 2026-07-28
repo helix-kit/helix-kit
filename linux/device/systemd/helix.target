@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# helix.target aggregates the Helix device services. The core (helixd) and every
+# app package's rendered unit attach here via WantedBy=helix.target, so enabling
+# this one target brings the whole device runtime up on boot.
+[Unit]
+Description=Helix device services
+Wants=helixd.service
+After=helixd.service
+
+[Install]
+WantedBy=multi-user.target

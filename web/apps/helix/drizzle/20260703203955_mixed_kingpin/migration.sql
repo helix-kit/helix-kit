@@ -1,0 +1,1 @@
+ALTER TABLE "device_event" ADD CONSTRAINT "device_event_device_id_message_id_unique" UNIQUE("device_id","message_id");

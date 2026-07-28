@@ -1,0 +1,16 @@
+[Unit]
+Description=NPU detection grid - standalone monitor display + WebRTC
+After=network.target sddm.service
+Conflicts=sddm.service
+[Service]
+Type=simple
+WorkingDirectory=/home/radxa/npu/examples/yolov5
+Environment=LD_LIBRARY_PATH=/home/radxa/npu/viplite-tina/lib/aarch64-none-linux-gnu/v2.0
+# 3rd arg "disp" = standalone direct-DRM display on the DP-alt-mode panel (1920x1080)
+ExecStart=/home/radxa/npu/examples/yolov5/npu_grid_display 192.168.1.35 model/v3/yolov5.nb disp
+Restart=always
+RestartSec=3
+StandardOutput=null
+StandardError=null
+[Install]
+WantedBy=multi-user.target

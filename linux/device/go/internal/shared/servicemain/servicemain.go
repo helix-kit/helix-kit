@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+// Package servicemain is the shared bootstrap every device binary (helixd and
+// each app) uses: flag parsing, logging, signal-driven shutdown, and running a
+// Runner to completion. An app's main() is a few lines that hand this a config
+// loader and a setup function.
+package servicemain
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+// Runner is the long-lived body of a service.
+type Runner interface {
+	Run(ctx context.Context) error
+}
+
+// Options configures Run for a concrete config type T.
+type Options[T any] struct {
+	ServiceName string
+	Version     string
+	// LoadConfig resolves the effective config for the given service name
+	// (config.Load), layering package defaults, /etc/helix overrides, and secrets.
+	LoadConfig func(service string) (T, error)
+	// Setup builds the Runner from loaded config. If the returned Runner also
+	// implements io.Closer-like Close(), it is closed on shutdown.
+	Setup func(cfg T, log *slog.Logger) (Runner, error)
+}
+
+// Run parses flags, loads config, and runs the service until SIGINT/SIGTERM.
+func Run[T any](opts Options[T]) {
+	service := flag.String("service", opts.ServiceName, "service name for config resolution")
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(opts.ServiceName, opts.Version)
+		return
+	}
+
+	// Log to stdout so systemd's StandardOutput=journal captures it uniformly
+	// (a service's stderr is not reliably journaled across init setups).
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})).
+		With("service", opts.ServiceName)
+
+	cfg, err := opts.LoadConfig(*service)
+	if err != nil {
+		fatal(opts.ServiceName, "load config: "+err.Error())
+	}
+
+	runner, err := opts.Setup(cfg, log)
+	if err != nil {
+		fatal(opts.ServiceName, "setup: "+err.Error())
+	}
+	if c, ok := runner.(interface{ Close() }); ok {
+		defer c.Close()
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	log.Info("starting")
+	if err := runner.Run(ctx); err != nil && ctx.Err() == nil {
+		fatal(opts.ServiceName, "run: "+err.Error())
+	}
+	log.Info("stopped")
+}
+
+func fatal(service, msg string) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n", service, msg)
+	os.Exit(1)
+}

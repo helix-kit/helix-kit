@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# x86 build of the plugin pipeline (inside the Docker container): ONNX Runtime + OpenCV +
+# GStreamer. The portable plugins (pre/post/overlay/compositor) are the SAME source as the
+# board build (src/plugins/Makefile) — only source(decoder param), infer(ORT), sink(gst) differ.
+ORT ?= /opt/onnxruntime
+CXX ?= g++
+OPT ?= -O2
+
+PKG_GST := $(shell pkg-config --cflags gstreamer-1.0)
+PKG_CV  := $(shell pkg-config --cflags opencv4)
+LGST    := $(shell pkg-config --libs gstreamer-1.0)
+LGSTAPP := $(shell pkg-config --libs gstreamer-app-1.0)
+LCV     := $(shell pkg-config --libs opencv4)
+SO      := $(OPT) -fPIC -I. -shared
+HDR     := helix_pipeline.h hx_json.h
+
+PLUGINS := hx_src_gst.so hx_pre_letterbox.so hx_infer_ort.so \
+           hx_post_yolov5.so hx_post_yolo11.so hx_post_pose.so \
+           hx_overlay_boxes.so hx_overlay_pose.so hx_comp_grid.so hx_sink_gst.so
+
+all: helix_pipeline $(PLUGINS)
+
+helix_pipeline: helix_pipeline.cpp $(HDR)
+	$(CXX) $(OPT) -I. $(PKG_CV) $(PKG_GST) helix_pipeline.cpp -o $@ $(LGST) $(LCV) -ldl -lpthread
+
+# gst source/sink (need appsrc/appsink from gstreamer-app)
+hx_src_gst.so: src_gst/hx_src_gst.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $(PKG_GST) $< -o $@ $(LGST) $(LGSTAPP)
+hx_sink_gst.so: sink_gst/hx_sink_gst.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $(PKG_GST) $< -o $@ $(LGST) $(LGSTAPP)
+
+# portable opencv-only plugins (identical source to the board build)
+hx_pre_letterbox.so: pre_letterbox/hx_pre_letterbox.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_post_yolov5.so: post_yolov5/hx_post_yolov5.cpp $(HDR) hx_detect_common.h
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_post_yolo11.so: post_yolo11/hx_post_yolo11.cpp $(HDR) hx_detect_common.h
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_post_pose.so: post_pose/hx_post_pose.cpp $(HDR) hx_detect_common.h
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_overlay_boxes.so: overlay_boxes/hx_overlay_boxes.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_overlay_pose.so: overlay_pose/hx_overlay_pose.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+hx_comp_grid.so: comp_grid/hx_comp_grid.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
+
+# ONNX Runtime infer (CUDA/CPU/TensorRT via EP selection)
+hx_infer_ort.so: infer_ort/hx_infer_ort.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) -I$(ORT)/include infer_ort/hx_infer_ort.cpp -o $@ \
+	    -L$(ORT)/lib -Wl,-rpath,$(ORT)/lib -lonnxruntime
+
+clean:
+	rm -f helix_pipeline $(PLUGINS)
+
+.PHONY: all clean

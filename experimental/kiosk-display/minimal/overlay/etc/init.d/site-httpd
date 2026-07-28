@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+# Serve the prebuilt React site on loopback with darkhttpd (~50 KB, one process).
+description="Helix kiosk static site"
+
+command="/usr/bin/darkhttpd"
+command_args="/srv/www --addr 127.0.0.1 --port 8080 --no-listing"
+command_background="yes"
+pidfile="/run/site-httpd.pid"
+
+depend() {
+    need localmount
+    before kiosk
+}

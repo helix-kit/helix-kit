@@ -1,0 +1,21 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+# Main site (unchanged).
+helix-kit.com {
+	root * /usr/share/caddy
+	file_server
+}
+
+# Every port-forwarding subdomain -- both the agent control channel
+# (connect.port.helix-kit.com/__tunnel__) and per-session browser traffic
+# (<session>.port.helix-kit.com) -- goes to the gateway.
+#
+# flush_interval -1 disables response buffering so SSE / streaming / chunked
+# responses reach the browser immediately.
+*.port.helix-kit.com {
+	reverse_proxy gateway:9000 {
+		flush_interval -1
+	}
+}

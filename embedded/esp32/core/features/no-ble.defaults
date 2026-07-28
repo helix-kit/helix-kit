@@ -1,0 +1,6 @@
+# Feature fragment: remove the BLE command transport.
+# Disables the NimBLE Bluetooth stack entirely (largest single flash saving)
+# which in turn compiles out the Helix BLE transport (HELIX_TRANSPORT_BLE
+# depends on BT_ENABLED && BT_NIMBLE_ENABLED).
+CONFIG_BT_ENABLED=n
+CONFIG_BT_NIMBLE_ENABLED=n

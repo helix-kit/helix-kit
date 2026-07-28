@@ -1,0 +1,228 @@
+@import '@helix/design-system/globals.css';
+@plugin '@tailwindcss/typography';
+
+@source './**/*.{ts,tsx}';
+@source '../../../../packages/core/helix-design-system/src/**/*.{ts,tsx}';
+@source '../../../../packages/core/device-apps/src/**/*.{ts,tsx}';
+
+/* Marketing / blog / admin theme tokens. The docs section (Fumadocs) owns its
+ * own token layer in the /docs route group. Light is default; `.dark` (driven by
+ * next-themes) flips to the dark, turquoise-accented brand palette. */
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #2dd4bf;
+  --primary-foreground: #04211c;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #3b82f6;
+  --chart-3: #06b6d4;
+  --chart-4: #22c55e;
+  --chart-5: #a855f7;
+  --radius: 0.5rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #09090b;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #04211c;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #2dd4bf;
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-geist-mono: var(--font-geist-mono), 'SFMono-Regular', Consolas, monospace;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #111113;
+  --card-foreground: #fafafa;
+  --popover: #111113;
+  --popover-foreground: #fafafa;
+  --primary: #2dd4bf;
+  --primary-foreground: #04211c;
+  --secondary: #18181b;
+  --secondary-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #2dd4bf;
+  --sidebar: #09090b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #04211c;
+  --sidebar-accent: #18181b;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #2dd4bf;
+}
+
+@theme inline {
+  /* Turquoise brand + gradient stops used by the marketing "Helix Spine". */
+  --color-brand: #2dd4bf;
+  --color-brand-light: #5eead4;
+  --color-brand-deep: #0d9488;
+  --color-brand-cyan: #22d3ee;
+  /* Display face for hero/section headings (Space Grotesk, loaded in layout). */
+  --font-heading: var(--font-display), var(--font-geist-sans), sans-serif;
+}
+
+/* Animated gradient sweep for the hero's brand headline accent. */
+@keyframes helix-shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Light packets travelling along the helix backdrop strands. */
+@keyframes helix-flow {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+/* Blinking terminal cursor. */
+@keyframes terminal-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Flowing energy along device-mesh connection lines (dash period = 14). */
+@keyframes mesh-flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+/* Orbit ring rotation for the spine's orbiting platform icons. */
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Counter-rotation so orbiting icons stay upright while their ring spins. */
+@keyframes orbit-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Slow drift for the ambient background glow blobs. */
+@keyframes blob-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -3%) scale(1.08);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.96);
+  }
+}
+
+/* Soft breathing pulse for spine nodes and status dots. */
+@keyframes node-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+/* Dashed data flow travelling down the spine strand. */
+@keyframes spine-flow {
+  to {
+    stroke-dashoffset: -320;
+  }
+}
+
+/* A packet travelling down a vertical connector. */
+@keyframes flow-down {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* A packet travelling along a horizontal connector. */
+@keyframes flow-right {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Travelling highlight along the live-event sparkline. */
+@keyframes spark-flow {
+  to {
+    stroke-dashoffset: -160;
+  }
+}
+
+/* Gentle floating bob for device-mesh nodes. */
+@keyframes float-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Smooth in-page anchor scrolling for the section rail (disabled if reduced). */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

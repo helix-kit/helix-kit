@@ -1,0 +1,15 @@
+# Tight context for the appliance build — only what the Dockerfile COPYs.
+*
+!cloud/appliance/bin
+!cloud/appliance/systemd-units.json
+!cloud/appliance/observability
+!cloud/appliance/mosquitto.conf
+!cloud/appliance/BASE_IMAGE_VERSION
+!cloud/appliance/bundles
+!cloud/Caddyfile
+!cloud/observability
+!cloud/mosquitto/mosquitto.conf
+!cloud/mosquitto/device.acl
+!cloud/mosquitto/service.acl
+!cloud/coturn/turnserver.conf
+!cloud/inngest-cleanup.sql

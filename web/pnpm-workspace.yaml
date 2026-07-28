@@ -1,0 +1,42 @@
+packages:
+  - "apps/*"
+  - "packages/core/*"
+  - "packages/protocol/*"
+  - "e2e"
+
+minimumReleaseAge: 0
+
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - current
+  libc:
+    - current
+    - musl
+
+overrides:
+  "@types/react": "^19.2.10"
+  "@types/react-dom": "^19.2.3"
+  "react": "19.2.7"
+  "react-dom": "19.2.7"
+  "zod": "4.4.3"
+  # typescript-eslint + sonarjs need the classic TypeScript JS API (ts.SyntaxKind,
+  # ts.createProgram), which typescript@7 (native Go compiler) no longer ships. Pin the
+  # lint toolchain's typescript to the last classic line while the rest of the repo
+  # compiles/typechecks on native 7. sonarjs takes typescript as a hard dep (not a peer),
+  # so it needs a scoped override; @typescript-eslint/* resolve it via the eslint-config peer.
+  "eslint-plugin-sonarjs>typescript": "^6.0.3"
+
+peerDependencyRules:
+  allowedVersions:
+    eslint: "10"
+
+allowBuilds:
+  "@parcel/watcher": false
+  esbuild: false
+  msgpackr-extract: false
+  msw: false
+  protobufjs: false
+  sharp: false
+  unrs-resolver: false

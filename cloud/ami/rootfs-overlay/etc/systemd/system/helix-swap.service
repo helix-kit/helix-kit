@@ -1,0 +1,23 @@
+# Memory headroom for the small (1 GiB) AMI target: a compressed in-RAM zram
+# swap (absorbs cold anon pages at ~3x compression, no disk I/O) backed by a
+# disk swapfile for overflow. On a 1 GiB t3.micro the full DBOS stack idles at
+# ~700 MB; without swap a load spike that pins RAM wedges the box unrecoverably
+# (the kernel can't reclaim process-pinned pages). zram-first turns that hard
+# memory-death into graceful, mostly-in-RAM degradation.
+#
+# Idempotent: skips whatever is already active, so it is safe across reboots.
+[Unit]
+Description=Helix swap (zram + disk overflow) for memory-constrained hosts
+DefaultDependencies=no
+After=local-fs.target
+Before=helix.target multi-user.target
+ConditionVirtualization=!container
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/helix/bin/helix-swap.sh
+ExecStop=/bin/sh -c 'swapoff /dev/zram0 2>/dev/null; swapoff /swapfile 2>/dev/null; true'
+
+[Install]
+WantedBy=multi-user.target

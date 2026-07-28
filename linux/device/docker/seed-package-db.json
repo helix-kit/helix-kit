@@ -1,0 +1,13 @@
+{
+  "entries": {
+    "helixd": {
+      "name": "helixd",
+      "version": "0.1.0",
+      "kind": "go-binary",
+      "status": "installed",
+      "sha256": "",
+      "files": ["/usr/lib/helix/bin/helixd"],
+      "installedAt": "2026-01-01T00:00:00Z"
+    }
+  }
+}

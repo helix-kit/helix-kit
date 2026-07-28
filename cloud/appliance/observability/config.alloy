@@ -1,0 +1,28 @@
+// Appliance Alloy — there is no docker.sock in a single container. Every
+// service is a systemd unit logging to journald, so we ship the journal to Loki
+// and label each line with its systemd unit.
+loki.source.journal "journal" {
+  forward_to    = [loki.write.local.receiver]
+  labels        = { job = "systemd-journal" }
+  relabel_rules = discovery.relabel.journal.rules
+  max_age       = "12h"
+}
+
+discovery.relabel "journal" {
+  targets = []
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    regex         = "helix-(.*)\\.service"
+    target_label  = "service_name"
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://127.0.0.1:3100/loki/api/v1/push"
+  }
+}

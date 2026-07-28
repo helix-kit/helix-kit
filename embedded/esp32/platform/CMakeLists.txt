@@ -1,0 +1,44 @@
+idf_component_register(
+    SRCS
+        "src/certificates.c"
+        "src/cloud.c"
+        "src/health.c"
+        "src/helix_event.c"
+        "src/helix_ota.c"
+        "src/helix_storage.c"
+        "src/helix_xfer_sink.c"
+        "src/helix_fs_sink.c"
+        "src/helix_file_service.c"
+        "src/helix_db.c"
+        "src/helix_db_service.c"
+        "src/helix_event_queue.c"
+        "src/helix_events_service.c"
+        "src/helix_config_store.c"
+        "src/helix_platform.c"
+        "src/helix_provisioning.c"
+        "src/helix_signed_url.c"
+        "src/time_sync.c"
+        "src/wifi.c"
+        "generated/contracts/ota_contract.c"
+        "generated/contracts/provisioning_contract.c"
+        "generated/contracts/events_contract.c"
+    INCLUDE_DIRS "include" "generated/contracts"
+    REQUIRES
+        app_update
+        esp_event
+        esp_http_client
+        esp_netif
+        esp_timer
+        esp_wifi
+        esp_https_ota
+        fatfs
+        flashdb
+        json
+        mbedtls
+        mqtt
+        nvs_flash
+        protocol
+        transports
+        protocol_examples_common
+        wear_levelling
+)

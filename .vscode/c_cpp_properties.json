@@ -1,0 +1,41 @@
+{
+    "configurations": [
+        {
+            "name": "ESP32",
+            "compilerPath": "${env:HOME}/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20260121/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc",
+            "includePath": [
+                "${workspaceFolder}/embedded/esp32/core/**",
+                "${workspaceFolder}/embedded/esp32/protocol/**",
+                "${workspaceFolder}/embedded/esp32/platform/**",
+                "${env:HOME}/.espressif/v5.4.4/esp-idf/components/**",
+                "${env:HOME}/.espressif/v5.4.4/esp-idf/examples/common_components/**"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/embedded/esp32/core/**",
+                    "${workspaceFolder}/embedded/esp32/protocol/**",
+                    "${workspaceFolder}/embedded/esp32/platform/**",
+                    "${env:HOME}/.espressif/v5.4.4/esp-idf/components/**"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            },
+            "forcedInclude": [
+                "${workspaceFolder}/embedded/esp32/core/.build/vscode/config/sdkconfig.h"
+            ],
+            "defines": [
+                "ESP_PLATFORM",
+                "_GNU_SOURCE"
+            ],
+            "recursiveIncludes": {
+                "reduce": "never"
+            },
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "compileCommands": [
+                "${workspaceFolder}/embedded/esp32/core/.build/vscode/compile_commands.json"
+            ]
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,223 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import click
+
+from tooling.common.paths import REPO_ROOT
+
+# The root program name every invocation path is prefixed with.
+_PROG = "helix"
+
+
+def _is_unset(value: object) -> bool:
+    """True for Click's "no default" sentinel (Click >= 8.2) or a bare None."""
+    return value is None or type(value).__name__ == "Sentinel"
+
+
+def _fmt_value(value: object) -> str:
+    """Render a default/value for a Markdown table cell, relativising repo paths."""
+    if isinstance(value, Path):
+        try:
+            return f"`{value.relative_to(REPO_ROOT)}`"
+        except ValueError:
+            return f"`{value}`"
+    if isinstance(value, bool):
+        return f"`{str(value).lower()}`"
+    if isinstance(value, (tuple, list)):
+        return f"`{list(value)}`" if value else "—"
+    if value == "":
+        return '`""`'
+    return f"`{value}`"
+
+
+def _type_desc(param: click.Parameter) -> str:
+    """Human-readable type, expanding Choice into its allowed values."""
+    ptype = param.type
+    if isinstance(ptype, click.Choice):
+        return "choice: " + ", ".join(f"`{c}`" for c in ptype.choices)
+    name = getattr(ptype, "name", "text") or "text"
+    if getattr(param, "multiple", False):
+        return f"{name} (repeatable)"
+    return name
+
+
+@dataclass
+class ParamDoc:
+    flags: str
+    type_desc: str
+    required: bool
+    default: str
+    envvar: str
+    help: str
+
+
+@dataclass
+class CommandDoc:
+    path: list[str]  # e.g. ["embedded", "esp32", "link"]
+    is_group: bool
+    help: str
+    usage: str
+    options: list[ParamDoc] = field(default_factory=list)
+    arguments: list[ParamDoc] = field(default_factory=list)
+    subcommands: list[str] = field(default_factory=list)  # child names, sorted
+
+    @property
+    def invocation(self) -> str:
+        return " ".join([_PROG, *self.path])
+
+    @property
+    def anchor(self) -> str:
+        return "-".join([_PROG, *self.path])
+
+
+def _param_doc(param: click.Parameter) -> ParamDoc:
+    flags = list(param.opts) + list(getattr(param, "secondary_opts", []) or [])
+    default = param.default
+    default_str = "—" if _is_unset(default) else _fmt_value(default)
+    envvar = param.envvar
+    if isinstance(envvar, (list, tuple)):
+        envvar = ", ".join(str(e) for e in envvar)
+    return ParamDoc(
+        flags=", ".join(f"`{f}`" for f in flags) if flags else f"`{param.name}`",
+        type_desc=_type_desc(param),
+        required=bool(param.required),
+        default=default_str,
+        envvar=f"`{envvar}`" if envvar else "—",
+        help=(getattr(param, "help", None) or "").replace("\n", " ").strip() or "—",
+    )
+
+
+def _walk(
+    command: click.Command, path: list[str], parent_ctx: click.Context | None
+) -> list[CommandDoc]:
+    """Depth-first flatten of the Click command tree into CommandDoc records."""
+    info_name = path[-1] if path else _PROG
+    ctx = click.Context(command, info_name=info_name, parent=parent_ctx)
+
+    options: list[ParamDoc] = []
+    arguments: list[ParamDoc] = []
+    for param in command.get_params(ctx):
+        if isinstance(param, click.Argument):
+            arguments.append(_param_doc(param))
+        elif param.name == "help":
+            continue  # the auto-added --help flag is noise in every table
+        else:
+            options.append(_param_doc(param))
+
+    is_group = isinstance(command, click.Group)
+    children = sorted(command.commands.items()) if isinstance(command, click.Group) else []
+
+    doc = CommandDoc(
+        path=list(path),
+        is_group=is_group,
+        help=(command.help or command.short_help or "").strip(),
+        usage=command.get_usage(ctx).replace("Usage: ", "", 1).strip(),
+        options=options,
+        arguments=arguments,
+        subcommands=[name for name, _ in children],
+    )
+
+    docs = [doc]
+    for name, child in children:
+        docs.extend(_walk(child, [*path, name], ctx))
+    return docs
+
+
+def collect(cli: click.Group) -> list[CommandDoc]:
+    """Flatten the whole CLI. First entry is the root program itself."""
+    return _walk(cli, [], None)
+
+
+def _param_table(title: str, rows: list[ParamDoc], is_arg: bool) -> list[str]:
+    if not rows:
+        return []
+    out = [f"**{title}**", ""]
+    if is_arg:
+        out.append("| Argument | Type | Required | Default | Env | Description |")
+    else:
+        out.append("| Flag(s) | Type | Required | Default | Env | Description |")
+    out.append("| --- | --- | :---: | --- | --- | --- |")
+    for r in rows:
+        req = "yes" if r.required else "no"
+        out.append(f"| {r.flags} | {r.type_desc} | {req} | {r.default} | {r.envvar} | {r.help} |")
+    out.append("")
+    return out
+
+
+def render_markdown(docs: list[CommandDoc]) -> str:
+    leaves = [d for d in docs if not d.is_group]
+    groups = [d for d in docs if d.is_group]
+
+    lines: list[str] = [
+        "# Helix CLI reference",
+        "",
+        "Generated by `helix reports cli-docs` — do not edit by hand.",
+        "",
+        (
+            f"The `{_PROG}` CLI exposes **{len(leaves)} runnable commands** across "
+            f"**{len(groups)} command groups**. Every command below is invoked as "
+            f"`{_PROG} <group> ... <command> [options]`."
+        ),
+        "",
+        "## Table of contents",
+        "",
+    ]
+
+    for d in docs[1:]:
+        indent = "  " * (len(d.path) - 1)
+        label = d.invocation
+        suffix = " *(group)*" if d.is_group else ""
+        lines.append(f"{indent}- [{label}](#{d.anchor}){suffix}")
+    lines.append("")
+
+    for d in docs[1:]:
+        depth = min(len(d.path) + 1, 6)  # groups start at h2
+        lines.append("")
+        lines.append(f'<a id="{d.anchor}"></a>')
+        lines.append(f"{'#' * depth} `{d.invocation}`" + (" *(group)*" if d.is_group else ""))
+        lines.append("")
+        if d.help:
+            lines.append(d.help)
+            lines.append("")
+        lines.append("**Usage:**")
+        lines.append("")
+        lines.append("```")
+        lines.append(d.usage)
+        lines.append("```")
+        lines.append("")
+        if d.is_group and d.subcommands:
+            child_paths = [
+                x for x in docs if x.path[:-1] == d.path and len(x.path) == len(d.path) + 1
+            ]
+            lines.append("**Subcommands:**")
+            lines.append("")
+            for c in child_paths:
+                summary = c.help.split("\n", 1)[0] if c.help else ""
+                link = f"[`{c.path[-1]}`](#{c.anchor})"
+                lines.append(f"- {link} — {summary}" if summary else f"- {link}")
+            lines.append("")
+        lines.extend(_param_table("Arguments", d.arguments, is_arg=True))
+        lines.extend(_param_table("Options", d.options, is_arg=False))
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_console(docs: list[CommandDoc]) -> str:
+    leaves = [d for d in docs if not d.is_group]
+    groups = [d for d in docs if d.is_group]
+    lines = [f"Documented {len(leaves)} commands across {len(groups)} groups:", ""]
+    for d in docs[1:]:
+        indent = "  " * (len(d.path) - 1)
+        marker = "▸" if d.is_group else "·"
+        lines.append(f"{indent}{marker} {d.invocation}")
+    return "\n".join(lines)
+
+
+def generate(cli: click.Group, output: Path) -> str:
+    """Introspect the CLI, write the Markdown reference, return a console summary."""
+    docs = collect(cli)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_markdown(docs), encoding="utf-8")
+    return render_console(docs)

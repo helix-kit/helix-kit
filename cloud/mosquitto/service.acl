@@ -1,0 +1,7 @@
+# Service listener ACLs for trusted cloud-side MQTT clients.
+
+user helix-server
+topic read $SYS/#
+topic write helix/device/+/in
+topic read helix/device/+/out
+topic read helix/device/+/service/+/event

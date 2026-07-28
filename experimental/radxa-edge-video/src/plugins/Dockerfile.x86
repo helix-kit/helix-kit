@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# x86 container for the Helix edge-video plugin pipeline. Reuses the portable plugins
+# (pre/post/overlay/compositor) unchanged; the accelerator-specific stages are the ORT infer
+# plugin and the gst source/sink. Build context = src/plugins/.
+#   docker build -f Dockerfile.x86 -t helix-pipeline-x86 .
+#   docker run --rm --gpus all --network host -v $PWD/models:/models helix-pipeline-x86
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      g++ make wget ca-certificates pkg-config \
+      libopencv-dev \
+      libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+      gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+      gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# ONNX Runtime GPU (C++ lib + headers). 1.19.x matches CUDA 12 + cuDNN 9 in the base image.
+ARG ORT_VER=1.19.2
+RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VER}/onnxruntime-linux-x64-gpu-${ORT_VER}.tgz \
+    && tar xf onnxruntime-linux-x64-gpu-${ORT_VER}.tgz \
+    && mv onnxruntime-linux-x64-gpu-${ORT_VER} /opt/onnxruntime \
+    && rm onnxruntime-linux-x64-gpu-${ORT_VER}.tgz
+
+WORKDIR /pipeline
+COPY . /pipeline
+RUN make -f Makefile.x86 && chmod +x docker-entrypoint.sh
+
+# NVIDIA runtime hint (used when run with --gpus all)
+ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+
+ENTRYPOINT ["/pipeline/docker-entrypoint.sh"]

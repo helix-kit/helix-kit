@@ -1,0 +1,9 @@
+{
+  "ignoreProcedures": [],
+  "ignoreUsagePaths": ["reports/**"],
+  "manualUsages": [],
+  "reportJsonPath": "../reports/trpc-procedure-usage.json",
+  "reportMarkdownPath": "../reports/trpc-procedure-usage.md",
+  "rootScanRoots": ["apps"],
+  "usageRoots": ["apps", "packages", "../tests/e2e", "../tooling", "../cloud"]
+}

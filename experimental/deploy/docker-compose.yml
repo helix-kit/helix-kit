@@ -1,0 +1,87 @@
+# Unified EC2 deployment for ALL Helix experiments sharing one Caddy.
+#
+#   caddy         -- wildcard TLS (Cloudflare DNS-01) + reverse proxy (80/443)
+#   port-gateway  -- port-forwarding tunnel gateway  (*.port.helix-kit.com)
+#   shell-gateway -- remote-shell UI + PTY relay      (helix-kit.com)
+#
+# Bring up with:  docker compose --env-file .env up -d --build
+#
+# Reuses the pre-existing external caddy volumes so the wildcard cert is not
+# re-issued on every redeploy.
+
+services:
+  port-gateway:
+    build:
+      context: ../port-forwarding/gateway
+    image: helix-port-gateway:local
+    restart: unless-stopped
+    environment:
+      PORT: "9000"
+      BASE_DOMAIN: port.helix-kit.com
+    expose:
+      - "9000"
+
+  shell-gateway:
+    build:
+      context: ../remote-shell
+    image: helix-shell-gateway:local
+    restart: unless-stopped
+    environment:
+      PORT: "9100"
+    expose:
+      - "9100"
+
+  # Experimental: P2P transport signaling (WebRTC SDP/ICE relay + web client).
+  # Only the handshake crosses this box; file/media payload flows P2P.
+  p2p-signaling:
+    build:
+      context: ../p2p-transport
+      dockerfile: signaling/Dockerfile
+    image: helix-p2p-signaling:local
+    restart: unless-stopped
+    environment:
+      PORT: "9200"
+    expose:
+      - "9200"
+
+  # Experimental: TURN relay (fallback for peers that can't go direct — e.g.
+  # corporate VPNs that block UDP). Direct P2P still bypasses EC2; only relayed
+  # sessions cross this box. Host network so it can own 3478/5349 + relay range.
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    # Run as root so coturn can read Caddy's root-owned wildcard key (0600).
+    user: "0:0"
+    environment:
+      TURN_PUBLIC_IP: "15.207.108.147"
+      TURN_PRIVATE_IP: "172.31.36.183"
+    volumes:
+      - ../p2p-transport/coturn/turnserver.conf:/etc/helix-turnserver.conf:ro
+      - ../p2p-transport/coturn/entrypoint.sh:/usr/local/bin/helix-coturn-entrypoint.sh:ro
+      - caddy_data:/certs:ro
+    command: ["/bin/sh", "/usr/local/bin/helix-coturn-entrypoint.sh"]
+
+  caddy:
+    image: ghcr.io/helix-kit/caddy-cloudflare:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - port-gateway
+      - shell-gateway
+      - p2p-signaling
+
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:
+    external: true

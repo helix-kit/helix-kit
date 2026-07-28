@@ -1,0 +1,138 @@
+%% SPDX-License-Identifier: CC-BY-SA-4.0
+%% ---
+%% Helix remote shell — end-to-end message routing, packet delivery, and layers.
+%% ---
+%% Two independent planes meet at one session id:
+%%   CONTROL plane  browser -> Caddy -> helix-server -> MQTT -> helixd -> IPC -> shell app
+%%                  (typed service contract; JSON HelixPacket; correlated by requestId)
+%%   DATA plane     browser -> Caddy -> helix-server --HelixStream mux--> shell app -> PTY
+%%                  (opaque bytes; binary frames; correlated by streamId)
+%% ---
+%% The device dials the data plane DIRECTLY on :4001 (mTLS), bypassing Caddy: the
+%% :4001 server cert carries the EC2 host SAN and the device proves identity with a
+%% client cert. The browser rides the public HTTPS server via Caddy.
+%% ---
+%% Sources: web/packages/core/helix-backend/src/data-plane/index.ts,
+%%          .../gateway/mqtt-bridge.ts, linux/device/go/internal/{core,stream,shell},
+%%          web/packages/core/device-apps/src/linux-shell/terminal.tsx, cloud/Caddyfile
+
+flowchart TB
+
+  %% ---------------------------------------------------------------- BROWSER
+  subgraph BROWSER["🖥️ BROWSER — https://helix-kit.com (device-apps / linux-shell)"]
+    direction TB
+    XTERM["xterm.js Terminal<br/>onData(keystrokes) · onResize(cols,rows) · write(output)"]
+    SVC["HelixServiceClient (typed)<br/>shellControlContract: open · close · list<br/>generated from shell.json"]
+    MQTTWS["MqttGatewayProvider transport<br/>WebSocket wss://helix-kit.com/ws?deviceId=ID"]
+    CLIWS["Data-plane WebSocket<br/>wss://helix-kit.com/stream/client<br/>?session=SID&amp;meta=urlenc(cols,rows)<br/>binaryType=arraybuffer"]
+  end
+
+  %% ---------------------------------------------------------------- EDGE
+  subgraph EDGE["🌐 EDGE — Caddy on EC2 (TLS terminate, HTTP/1.1 Upgrade proxy)"]
+    direction TB
+    CADDY["Caddyfile @helix_server<br/>path /ws /stream/client /api/certificates/* …<br/>→ reverse_proxy helix-server<br/>(everything else → the Next.js app)<br/><br/>NOTE: /stream/device is NOT routed here"]
+  end
+
+  %% ---------------------------------------------------------------- CLOUD
+  subgraph CLOUD["☁️ APPLIANCE (EC2) — helix-server, gateway role"]
+    direction TB
+    PUBSRV["Public HTTPS server + UpgradeRouter<br/>path-routes 'upgrade' events to noServer WSS"]
+    BRIDGE["MQTT bridge — GatewayRouter<br/>WS ⇄ MQTT, jsonPacketCodec"]
+    DPC["data-plane: clientWss (/stream/client)<br/>sessions.get(SID) → session.open(meta)"]
+    DPD["data-plane: deviceWss (/stream/device)<br/>deviceId ← client-cert CN (authoritative)<br/>serial → isRevoked() → DB revoked_at<br/>sessions.set(SID, HelixStreamSession{client:true})"]
+    MTLS["Device mTLS server :4001 + UpgradeRouter<br/>(shared with file transfer)<br/>requestCert + rejectUnauthorized"]
+    SESSMAP[("sessions Map<br/>sessionId → device HelixStream session")]
+  end
+
+  MOSQ["🦟 Mosquitto :8883 (mTLS)<br/>helix/device/ID/in — cloud→device (QoS 1)<br/>helix/device/ID/out — device→cloud (QoS 1)"]
+
+  %% ---------------------------------------------------------------- DEVICE
+  subgraph DEVICE["💻 DEVICE — laptop (linux/device/go)"]
+    direction TB
+    HELIXD["helixd (app-agnostic core)<br/>MQTT client (mTLS) ⇄ IPC server<br/>handleInbound: route by message.service"]
+    IPC["IPC bus — Unix socket, NDJSON<br/>/tmp/helix-laptop-device/ipc.sock<br/>register-service · command · respond · emit-event"]
+    SHELLAPP["helix-shell app<br/>DispatchCommands → DispatchShell (generated)<br/>HandleOpen / HandleClose / HandleList"]
+    GOSESS["stream.Session (HelixStream, Client:false)<br/>readLoop · acceptLoop · pingLoop"]
+    PTY["PTY — creack/pty<br/>pty.StartWithSize(/bin/bash -l, Winsize)<br/>stream.Pipe(stream ⇄ ptmx)"]
+    BASH["bash -l<br/>stdin/stdout/stderr on the pty slave"]
+  end
+
+  %% ================================================================ PHASE 0
+  HELIXD -. "①ᴬ boot: MQTT CONNECT mTLS :8883<br/>SUBSCRIBE helix/device/ID/in (QoS 1)" .-> MOSQ
+  SHELLAPP -. "①ᴮ boot: connect ipc.sock<br/>{method:'register-service', params:{service:'shell'}}" .-> IPC
+  IPC -. "registry: 'shell' → this conn" .-> HELIXD
+
+  %% ================================================================ PHASE 1 — CONTROL: open
+  XTERM -- "② sessionId = crypto.randomUUID()" --> SVC
+  SVC -- "③ request('open', {sessionId, dataUrl})<br/>dataUrl = wss://EC2-HOST:4001/stream/device?session=SID<br/>→ HelixPacket {requestId, message:{service:'shell', method:'open', payload}}" --> MQTTWS
+  MQTTWS -- "④ WSS frame (TLS 1.3) — TCP :443" --> CADDY
+  CADDY -- "⑤ HTTP/1.1 Upgrade → reverse_proxy" --> PUBSRV
+  PUBSRV -- "⑥ UpgradeRouter path '/ws'" --> BRIDGE
+  BRIDGE -- "⑦ PUBLISH helix/device/ID/in (QoS 1)<br/>payload = JSON HelixPacket" --> MOSQ
+  MOSQ -- "⑧ deliver to subscriber" --> HELIXD
+  HELIXD -- "⑨ handleInbound: message.service=='shell'<br/>NotifyService → notification<br/>{method:'command', params:{service,method,payload,requestId}}" --> IPC
+  IPC -- "⑩ NDJSON line over Unix socket" --> SHELLAPP
+
+  %% ================================================================ PHASE 2 — DATA: device dials in
+  SHELLAPP -- "⑪ HandleOpen: ClientTLS(ca,crt,key)<br/>DialWebSocket(dataUrl) + hdr X-Helix-Session/X-Helix-Token<br/>DIRECT to :4001 — bypasses Caddy (cert SAN = EC2 host)" --> MTLS
+  MTLS -- "⑫ mTLS handshake proves deviceId (cert CN)<br/>UpgradeRouter path '/stream/device'" --> DPD
+  DPD -- "⑬ register" --> SESSMAP
+  SHELLAPP -- "⑭ stream.NewSession(Client:false) → acceptLoop" --> GOSESS
+
+  %% ================================================================ PHASE 2b — CONTROL: response
+  SHELLAPP -- "⑮ return ShellSessionOutput{sessionId}<br/>Dispatch → ipcutil.Respond(requestId, 'opened', out)" --> IPC
+  IPC -- "⑯ {method:'respond', params:{method:'opened', payload, requestId}}" --> HELIXD
+  HELIXD -- "⑰ PUBLISH helix/device/ID/out (QoS 1)" --> MOSQ
+  MOSQ -- "⑱ gateway is SUBSCRIBEd to helix/device/+/out" --> BRIDGE
+  BRIDGE -- "⑲ receiveFromDevice → browser WS" --> MQTTWS
+  MQTTWS -- "⑳ HelixRequestRegistry.resolve(requestId)<br/>→ open() promise resolves" --> SVC
+
+  %% ================================================================ PHASE 3 — browser attaches
+  SVC -- "㉑ then → attachClient(sessionId)" --> CLIWS
+  CLIWS -- "㉒ WSS :443 — /stream/client?session=SID&amp;meta=..." --> CADDY
+  CADDY -- "㉓ reverse_proxy" --> PUBSRV
+  PUBSRV -- "㉔ UpgradeRouter path '/stream/client'" --> DPC
+  DPC -- "㉕ lookup sessionId" --> SESSMAP
+  DPC -- "㉖ session.open(meta) → HelixStream frame<br/>fOpen(0x01) streamId=ODD (gateway=client role)<br/>payload = meta bytes ('{cols,rows}')" --> GOSESS
+  GOSESS -- "㉗ readLoop → dispatch(fOpen) → accept chan<br/>acceptLoop → go handleTerminal(st)" --> PTY
+  PTY -- "㉘ json.Unmarshal(st.Meta()) → Winsize<br/>fork PTY + exec bash -l" --> BASH
+
+  %% ================================================================ PHASE 4 — steady state
+  XTERM == "㉙ KEYSTROKES: ws.send(Uint8Array) — BINARY frame" ==> CLIWS
+  CLIWS == "binary → isBinary=true" ==> DPC
+  DPC == "stream.write() → fData(0x02) streamId" ==> GOSESS
+  GOSESS == "st.onData → Pipe → write ptmx" ==> PTY
+  PTY == "pty master → slave" ==> BASH
+
+  BASH == "㉚ OUTPUT: stdout/stderr" ==> PTY
+  PTY == "Pipe reads ptmx → st.Write()<br/>chunked ≤ MaxChunk 32 KiB" ==> GOSESS
+  GOSESS == "fData(0x02) frames" ==> DPC
+  DPC == "stream.onData → client.send(chunk, binary)" ==> CLIWS
+  CLIWS == "ws.onmessage (ArrayBuffer) → term.write()" ==> XTERM
+
+  XTERM -. "㉛ RESIZE: ws.send(JSON '{type:resize,cols,rows}') — TEXT frame" .-> CLIWS
+  CLIWS -. "text → isBinary=false → stream.signal()" .-> DPC
+  DPC -. "fSignal(0x05) — opaque app control" .-> GOSESS
+  GOSESS -. "st.Signals() chan → pty.Setsize(Winsize)<br/>→ SIGWINCH" .-> BASH
+
+  GOSESS -. "㉜ FLOW CONTROL: fCredit(0x06) uint32 granted<br/>window 256 KiB, credit at ½ consumed<br/>sender blocks when window exhausted" .-> DPC
+  GOSESS -. "㉝ KEEPALIVE: fPing(0x10)/fPong(0x11) — streamId 0, 20s" .-> DPC
+
+  %% ================================================================ PHASE 5 — teardown
+  XTERM -. "㉞ close tab → ws close → stream.close() → fEnd(0x03)<br/>device: Pipe returns → ptmx.Close() → Process.Kill()" .-> PTY
+  SVC -. "㉟ OR request('close',{sessionId}) via CONTROL plane (steps ③–⑩)<br/>→ HandleClose → entry.cancel() → session.Close()<br/>→ WS drops → gateway session.onClose → sessions.delete(SID)" .-> SESSMAP
+
+  %% ---------------------------------------------------------------- styling
+  classDef browser fill:#e0f2fe,stroke:#0284c7,color:#082f49
+  classDef edge    fill:#fef9c3,stroke:#ca8a04,color:#422006
+  classDef cloud   fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef broker  fill:#fae8ff,stroke:#a21caf,color:#4a044e
+  classDef device  fill:#ffe4e6,stroke:#e11d48,color:#4c0519
+  classDef store   fill:#e2e8f0,stroke:#475569,color:#0f172a
+
+  class XTERM,SVC,MQTTWS,CLIWS browser
+  class CADDY edge
+  class PUBSRV,BRIDGE,DPC,DPD,MTLS cloud
+  class SESSMAP store
+  class MOSQ broker
+  class HELIXD,IPC,SHELLAPP,GOSESS,PTY,BASH device

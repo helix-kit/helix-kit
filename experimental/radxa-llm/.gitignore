@@ -1,0 +1,8 @@
+# Lab artifacts — reproducible from the scripts, never committed.
+.venv/
+data/
+adapters/
+results/
+models/
+__pycache__/
+*.pyc

@@ -1,0 +1,40 @@
+{
+  "service": "ota",
+  "methods": {
+    "otaUpdate": {
+      "name": "ota-update",
+      "input": "otaUpdateRequest",
+      "output": "otaStatusPayload",
+      "error": "errorPayload"
+    }
+  },
+  "messages": {
+    "status": {
+      "name": "ota-status",
+      "payload": "otaStatusPayload"
+    },
+    "error": {
+      "name": "ota-error",
+      "payload": "errorPayload"
+    }
+  },
+  "schemas": {
+    "otaUpdateRequest": {
+      "firmwareUrl": { "type": "string", "required": false },
+      "devicePath": { "type": "string", "required": false },
+      "packagePath": { "type": "string", "required": false },
+      "version": { "type": "string", "required": false },
+      "sha256": { "type": "string", "required": false }
+    },
+    "otaStatusPayload": {
+      "state": { "type": "string", "required": true },
+      "firmwareVersion": { "type": "string", "required": false },
+      "targetVersion": { "type": "string", "required": false },
+      "sha256": { "type": "string", "required": false },
+      "message": { "type": "string", "required": false }
+    },
+    "errorPayload": {
+      "error": { "type": "string", "required": true }
+    }
+  }
+}

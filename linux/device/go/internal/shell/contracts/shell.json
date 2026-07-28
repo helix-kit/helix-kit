@@ -1,0 +1,57 @@
+{
+  "service": "shell",
+  "includes": [
+    {
+      "path": "../../peer/contracts/peer.fragment.json",
+      "extends": { "peerOpenInput": "OpenInput", "peerSessionOutput": "SessionOutput" }
+    }
+  ],
+  "schemas": {
+    "OpenInput": {
+      "sessionId": { "type": "string", "required": true },
+      "dataUrl": { "type": "string", "required": false },
+      "token": { "type": "string", "required": false }
+    },
+    "CloseInput": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "ListInput": {},
+    "SessionOutput": {
+      "sessionId": { "type": "string", "required": true }
+    },
+    "SessionInfo": {
+      "sessionId": { "type": "string", "required": true },
+      "createdAt": { "type": "number", "integer": true, "required": true },
+      "terminals": { "type": "number", "integer": true, "required": true }
+    },
+    "SessionListOutput": {
+      "sessions": { "type": "array", "items": "SessionInfo", "required": true }
+    },
+    "Error": {
+      "error": { "type": "string", "required": true }
+    }
+  },
+  "methods": {
+    "open": {
+      "name": "open",
+      "outputName": "opened",
+      "input": "OpenInput",
+      "output": "SessionOutput",
+      "error": "Error"
+    },
+    "close": {
+      "name": "close",
+      "outputName": "closed",
+      "input": "CloseInput",
+      "output": "SessionOutput",
+      "error": "Error"
+    },
+    "list": {
+      "name": "list",
+      "outputName": "sessions",
+      "input": "ListInput",
+      "output": "SessionListOutput",
+      "error": "Error"
+    }
+  }
+}

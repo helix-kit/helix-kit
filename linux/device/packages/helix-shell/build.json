@@ -1,0 +1,5 @@
+{
+  "goBinaries": [
+    { "cmd": "helix-shell", "dest": "usr/lib/helix/bin/helix-shell" }
+  ]
+}

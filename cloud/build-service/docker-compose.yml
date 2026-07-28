@@ -1,0 +1,44 @@
+# Practice harness for the on-demand ESP32 build service.
+# mock-backend stands in for helix-server (dispatch + presign + storage + callback);
+# build-worker runs the real helix CLI inside the lean ESP-IDF image.
+#
+# Run:
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) \
+#   BUILD_CCACHE_DIR=/abs/warm/ccache BUILD_STORAGE_DIR=/abs/storage \
+#   docker compose -f cloud/build-service/docker-compose.yml up
+
+services:
+  mock-backend:
+    image: python:3.12-slim
+    command: ['python3', '/svc/mock_backend.py']
+    environment:
+      WORKER_URL: http://build-worker:9098
+      PUBLIC_URL: http://mock-backend:9099
+      STORAGE_DIR: /storage
+      MOCK_PORT: '9099'
+    volumes:
+      - ./:/svc:ro
+      - ${BUILD_STORAGE_DIR:-./.data/storage}:/storage
+    ports:
+      - '9099:9099'
+
+  build-worker:
+    image: helix/esp-idf:release-v5.4-lean
+    user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
+    working_dir: /repo
+    command: ['python3', '/svc/worker.py']
+    environment:
+      HOME: /tmp
+      HELIX_REPO_ROOT: /repo
+      HELIX_ESP32_ROOT: /repo/embedded/esp32/core
+      IDF_CCACHE_ENABLE: '1'
+      CCACHE_DIR: /ccache
+      PYTHONPATH: /repo
+      WORKER_PORT: '9098'
+      # Set HELIX_BUILD_FAKE=1 to synthesize artifacts (no ESP-IDF compile) — fast
+      # end-to-end verification of the request -> callback -> release flow.
+      HELIX_BUILD_FAKE: '${HELIX_BUILD_FAKE:-}'
+    volumes:
+      - ../../:/repo
+      - ./:/svc:ro
+      - ${BUILD_CCACHE_DIR:-./.data/ccache}:/ccache

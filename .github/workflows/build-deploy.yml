@@ -1,0 +1,276 @@
+# =============================================================================
+# Build, deploy & check — the web monorepo.
+#
+# Shape (adapted from a prior production cloud pipeline, which ships container images;
+# Helix ships ZIP BUNDLES over SSH instead, so "package" is a zip, not a push):
+#
+#   push/dispatch → ONE job, ONE runner, ONE `pnpm install`:
+#       install → turbo build (warms the LOCAL turbo cache)
+#              → zip the bundles (repackage, never rebuild)
+#              → scp to the box
+#              → START THE DEPLOY IN THE BACKGROUND, then run the checks —
+#                which hit the local turbo cache the build just made — then reap
+#                the deploy's exit code.
+#
+# The deploy is deliberately NOT gated on the checks: it starts first and the
+# checks run *concurrently with it*, so the wall clock is max(deploy, checks)
+# rather than their sum. Checks still fail the run — they gate quality, not the
+# rollout. If you want a hard gate, move the `Checks` step above `Start deploy`.
+#
+# The single biggest speed lever is the turbo cache. Two levels:
+#   - remote (TURBO_API/TURBO_TEAM/TURBO_TOKEN) — shared across runs AND devs;
+#   - local (.turbo, restored by actions/cache) — the fallback when no remote
+#     cache is configured, and what the checks reuse from the build in-run.
+# For either to work, the build and the checks MUST see identical values for
+# every var in turbo's `globalEnv` (124 of them) — a single mismatch changes the
+# `^build` hash and the checks rebuild everything from scratch. That is why the
+# env block below is at JOB level, not per-step.
+# =============================================================================
+name: Build, deploy & check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to the EC2 host after building
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+  TURBO_TELEMETRY_DISABLED: 1
+  TURBO_API: ${{ vars.TURBO_API }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  CI_LOG_DIR: ${{ github.workspace }}/ci-logs
+
+  # ---- turbo globalEnv: identical in build AND checks, or the cache misses ---
+  SKIP_ENV_VALIDATION: 'true'
+  # The bundle is packaged without a runtime env, so the build needs *some*
+  # value for the vars zod would otherwise demand. These are build-time only and
+  # are never baked into the client bundle (only NEXT_PUBLIC_* are).
+  DATABASE_URL: postgresql://build:build@localhost:5432/build
+  BETTER_AUTH_SECRET: build-time-placeholder-not-used-at-runtime
+  # NEXT_PUBLIC_* ARE inlined into the client bundle at build time — these must
+  # be the real public values.
+  NEXT_PUBLIC_BASE_URL: ${{ vars.PUBLIC_APP_URL }}
+  NEXT_PUBLIC_HELIX_DEVICE_STREAM_URL: ${{ vars.PUBLIC_DEVICE_STREAM_URL }}
+  # Keeps `sharp` (the only native, per-arch binary in the tree) out of the
+  # standalone output, so one zip runs on both x86_64 and the arm64/Graviton box.
+  HELIX_IMAGES_UNOPTIMIZED: 'true'
+
+jobs:
+  # Did anything that can change a bundle actually change? A docs-only push still
+  # runs the checks but skips the build/deploy.
+  detect:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'web/**'
+              - 'cloud/deploy/**'
+              - 'cloud/appliance/bin/install-bundles.sh'
+              - 'tooling/appliance/**'
+              - '.github/workflows/build-deploy.yml'
+              - '.github/actions/checks/**'
+
+  # ===========================================================================
+  # MAIN — build → package → deploy(background) ∥ checks → reap
+  # ===========================================================================
+  pipeline:
+    name: Build, deploy & check
+    needs: detect
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    concurrency:
+      # Never cancel a deploy mid-flight — a half-applied rollout is worse than a
+      # queued one.
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: false
+    environment:
+      name: Production
+    steps:
+      # Computed in a step, not job-level env: job env can't read `needs`
+      # reliably. `[skip ci]` is pre-evaluated as an expression so the commit
+      # message never reaches the shell (it is attacker-controlled text).
+      - name: Plan
+        id: plan
+        env:
+          WEB: ${{ needs.detect.outputs.web }}
+          DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
+        run: |
+          do_build=false
+          if { [ "$DISPATCH" = "true" ] || [ "$WEB" = "true" ]; } && [ "$SKIP_CI" != "true" ]; then
+            do_build=true
+          fi
+          echo "do_build=$do_build" >> "$GITHUB_OUTPUT"
+          echo "Build/deploy this run: $do_build"
+
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      # The zip packaging goes through the `helix` CLI, which is uv-managed —
+      # one developer entry point, in CI as on a laptop.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # The local turbo cache. Redundant when a remote cache is configured, and
+      # the whole game when one is not — restore-keys make a near-miss (same
+      # lockfile, different commit) still useful.
+      - name: Restore turbo cache
+        uses: actions/cache@v4
+        with:
+          path: web/.turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
+      - name: Install
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Version
+        id: version
+        run: echo "value=0.0.0+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # ---- BUILD (also warms the local turbo cache the checks reuse) ---------
+      - name: Build the apps
+        if: steps.plan.outputs.do_build == 'true'
+        working-directory: web
+        run: pnpm exec turbo run build --filter=helix --filter=@helix/server-app
+
+      # ---- PACKAGE: zip only. Everything expensive already happened. ---------
+      - name: Package bundles
+        if: steps.plan.outputs.do_build == 'true'
+        run: |
+          uv run helix appliance bundles \
+            --skip-build \
+            --arch arm64 \
+            --version "${{ steps.version.outputs.value }}"
+          ls -lh cloud/appliance/bundles/
+
+      # ---- DEPLOY in the BACKGROUND, so the checks run alongside it ----------
+      - name: Start deploy (background)
+        id: deploy_start
+        if: steps.plan.outputs.do_build == 'true' && (github.event_name == 'push' || inputs.deploy)
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          if [ "${{ vars.ENABLE_AUTO_DEPLOY }}" != "true" ]; then
+            echo "::notice::Auto-deploy disabled (ENABLE_AUTO_DEPLOY != 'true'); skipping."
+            echo "started=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=accept-new"
+          rm -f /tmp/deploy.exit
+
+          # Upload synchronously (we need to know it landed), then run the remote
+          # install in the background so the checks overlap the slow part.
+          $SSH "$EC2_USER@$EC2_HOST" 'mkdir -p ~/helix-staging'
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            cloud/appliance/bundles/*-"${VERSION}".zip \
+            "$EC2_USER@$EC2_HOST:~/helix-staging/"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            cloud/deploy/deploy.sh "$EC2_USER@$EC2_HOST:~/helix-staging/deploy.sh"
+
+          nohup bash -c "$SSH '$EC2_USER@$EC2_HOST' 'bash ~/helix-staging/deploy.sh \"$VERSION\"'; echo \$? > /tmp/deploy.exit" \
+            > /tmp/deploy.log 2>&1 &
+          echo $! > /tmp/deploy.pid
+          echo "started=true" >> "$GITHUB_OUTPUT"
+          echo "Deploy started in background (pid $(cat /tmp/deploy.pid)); checks run concurrently."
+
+      # ---- CHECKS (reuse the local turbo cache from the build above) ---------
+      - name: Checks
+        id: checks
+        uses: ./.github/actions/checks
+
+      # ---- Reap the background deploy and surface its result -----------------
+      - name: Wait for deploy
+        if: always() && steps.deploy_start.outputs.started == 'true'
+        run: |
+          pid=$(cat /tmp/deploy.pid 2>/dev/null || echo "")
+          [ -n "$pid" ] && while kill -0 "$pid" 2>/dev/null; do sleep 3; done
+          echo "=== deploy log ==="; cat /tmp/deploy.log 2>/dev/null || true
+          rc=$(cat /tmp/deploy.exit 2>/dev/null || echo 1)
+          echo "deploy exit code: $rc"
+          exit "$rc"
+
+      - name: Fail if any check failed
+        if: always() && steps.checks.outputs.any_failed == 'true'
+        run: |
+          echo "One or more checks failed — see the per-check groups and Check Runs above."
+          exit 1
+
+  # ===========================================================================
+  # PRs — checks only. No `environment: Production`, so the deploy secrets are
+  # not even available to a fork's PR run.
+  # ===========================================================================
+  pr-checks:
+    name: Checks
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pr-checks-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - name: Restore turbo cache
+        uses: actions/cache@v4
+        with:
+          path: web/.turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+      - name: Install
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      # The same env as `pipeline` (from the job-level block) — so a PR's turbo
+      # hashes match main's and both can share a cache entry.
+      - name: Checks
+        id: checks
+        uses: ./.github/actions/checks
+
+      - name: Fail if any check failed
+        if: always() && steps.checks.outputs.any_failed == 'true'
+        run: exit 1

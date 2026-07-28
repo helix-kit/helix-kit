@@ -1,0 +1,16 @@
+#!/bin/sh
+# Launch cog (WPE WebKit) straight onto KMS via its DRM platform — no Wayland
+# compositor at all. Software GL (llvmpipe) because the QEMU box has no GPU;
+# real hardware would use the VideoCore/GLES driver.
+set -eu
+
+export COG_PLATFORM_NAME=drm
+export LIBGL_ALWAYS_SOFTWARE=1
+# Static kiosk content: drop the JSC JIT to shave the WPEWebProcess.
+export JavaScriptCoreUseJIT=0
+export XDG_RUNTIME_DIR=/run/cog
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+URL="${KIOSK_URL:-http://127.0.0.1:8080/#/home}"
+exec cog --platform=drm "$URL"

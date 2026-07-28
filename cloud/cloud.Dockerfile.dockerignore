@@ -1,0 +1,11 @@
+# Context-trimming for cloud/cloud.Dockerfile (BuildKit reads <dockerfile>.dockerignore).
+# Keep ONLY the build artifacts; drop the heavy source install, git, caches.
+# NB: single-level `web/apps/*/node_modules` excludes the SOURCE installs but NOT
+# the standalone's own nested node_modules (web/apps/helix/.next/standalone/...).
+.git
+**/.turbo
+web/node_modules
+web/apps/*/node_modules
+web/packages/*/*/node_modules
+web/apps/*/.next/cache
+**/*.tsbuildinfo

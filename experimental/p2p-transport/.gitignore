@@ -1,0 +1,5 @@
+node_modules/
+signaling/node_modules/
+agent/p2p-agent
+*.log
+web/.playwright-mcp/

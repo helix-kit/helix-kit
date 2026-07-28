@@ -1,0 +1,47 @@
+#!/bin/sh
+# Memory report for the kiosk box: system-wide usage plus per-process PSS
+# (proportional set size — shared libraries counted once, the honest number).
+set -eu
+
+echo "==== free -m ===="
+free -m
+echo
+awk '/MemTotal/{t=$2}/MemAvailable/{a=$2}END{
+  printf "system used ~%d MiB of %d MiB total (%d MiB available)\n",(t-a)/1024,t/1024,a/1024
+}' /proc/meminfo
+echo
+
+echo "==== top processes by PSS ===="
+sum=0
+for d in /proc/[0-9]*; do
+  [ -r "$d/smaps_rollup" ] || continue
+  pss=$(awk '/^Pss:/{s+=$2} END{print s+0}' "$d/smaps_rollup" 2>/dev/null) || continue
+  comm=$(tr -d '\0' <"$d/comm" 2>/dev/null || echo '?')
+  echo "$pss ${d#/proc/} $comm"
+  sum=$((sum + pss))
+done | sort -rn | head -20 | awk '{printf "%9d KiB  pid %-6s %s\n",$1,$2,$3}'
+echo
+# recompute the sum (the pipe above ran in a subshell)
+sum=0
+for d in /proc/[0-9]*; do
+  [ -r "$d/smaps_rollup" ] || continue
+  pss=$(awk '/^Pss:/{s+=$2} END{print s+0}' "$d/smaps_rollup" 2>/dev/null) || continue
+  sum=$((sum + pss))
+done
+printf "total PSS across all userspace: %d KiB (~%d MiB)\n" "$sum" $((sum / 1024))
+
+echo
+echo "==== web-stack PSS (cage + WebKit + python + httpd) ===="
+web=0
+for d in /proc/[0-9]*; do
+  [ -r "$d/smaps_rollup" ] || continue
+  comm=$(tr -d '\0' <"$d/comm" 2>/dev/null || echo '?')
+  case "$comm" in
+    cage|WebKit*|python3|busybox) ;;
+    *) continue ;;
+  esac
+  pss=$(awk '/^Pss:/{s+=$2} END{print s+0}' "$d/smaps_rollup" 2>/dev/null) || continue
+  printf "%9d KiB  %s\n" "$pss" "$comm"
+  web=$((web + pss))
+done
+printf "web-stack PSS subtotal: %d KiB (~%d MiB)\n" "$web" $((web / 1024))

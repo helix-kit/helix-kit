@@ -1,0 +1,18 @@
+# Helix device UI (LVGL). Enabling this feature is what puts the `ui` component
+# into the build at all (see HELIX_FEATURES in core/CMakeLists.txt); selecting the
+# `ui_demo` app pulls it in automatically.
+#
+# LVGL renders on-device and the flushed rectangles stream to a host viewer over
+# the serial binary side-channel -- `helix ui sim`.
+
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_MEM_SIZE_KILOBYTES=48
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_USE_LOG=n
+CONFIG_LV_BUILD_EXAMPLES=n
+
+# ESP-IDF logs share UART0 with the binary frame stream and are not covered by
+# the transport's TX lock, so a chatty log can slice a frame in half. The host
+# resynchronises on the frame marker and drops the damaged frame, but keeping the
+# log quiet means it rarely has to.
+CONFIG_LOG_DEFAULT_LEVEL_WARN=y

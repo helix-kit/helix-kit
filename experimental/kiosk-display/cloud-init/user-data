@@ -1,0 +1,95 @@
+#cloud-config
+users:
+  - name: helix
+    groups: [adm, sudo]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    plain_text_passwd: helix
+ssh_pwauth: true
+disable_root: false
+package_update: true
+packages:
+  - dbus-x11
+  - openbox
+  - python3
+  - python3-gi
+  - x11-xserver-utils
+  - xinit
+  - xserver-xorg-legacy
+  - xterm
+runcmd:
+  - [bash, -lc, "apt-get install -y gir1.2-webkit2-4.1 || apt-get install -y gir1.2-webkit2-4.0"]
+  - [bash, -lc, "install -d -o helix -g helix /home/helix/helix"]
+  - [bash, -lc, "systemctl daemon-reload"]
+  - [bash, -lc, "systemctl enable --now home-helix-helix.mount"]
+  - [bash, -lc, "systemctl enable --now helix-kiosk-site.service"]
+write_files:
+  - path: /etc/sudoers.d/90-helix-nopasswd
+    permissions: "0440"
+    content: |
+      helix ALL=(ALL) NOPASSWD:ALL
+  - path: /etc/X11/Xwrapper.config
+    permissions: "0644"
+    content: |
+      allowed_users=anybody
+      needs_root_rights=yes
+  - path: /etc/systemd/system/home-helix-helix.mount
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Helix repo 9p mount
+
+      [Mount]
+      What=helix
+      Where=/home/helix/helix
+      Type=9p
+      Options=trans=virtio,version=9p2000.L,msize=104857600
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/systemd/system/helix-kiosk-site.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Helix kiosk static site (http.server on 127.0.0.1:8080)
+      Requires=home-helix-helix.mount
+      After=home-helix-helix.mount network.target
+
+      [Service]
+      User=helix
+      WorkingDirectory=/home/helix/helix/experimental/kiosk-display/site/dist
+      ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1
+      Restart=always
+      RestartSec=2
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /usr/local/bin/helix-kiosk-mount-repo
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      mkdir -p /home/helix/helix
+      if ! mountpoint -q /home/helix/helix; then
+        mount /home/helix/helix || mount -t 9p -o trans=virtio,version=9p2000.L,msize=104857600 helix /home/helix/helix
+      fi
+  - path: /usr/local/bin/helix-kiosk-lab
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      sudo /usr/local/bin/helix-kiosk-mount-repo
+      cd /home/helix/helix
+      export DISPLAY=:0
+      exec python3 experimental/kiosk-display/shell/kiosk-shell.py
+  - path: /usr/local/bin/helix-kiosk-start-x
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      if [ "$(tty)" = "/dev/tty1" ]; then
+        exec startx /usr/local/bin/helix-kiosk-lab -- :0 vt1
+      fi
+      exec sudo openvt -c 1 -f -- su - helix -c 'startx /usr/local/bin/helix-kiosk-lab -- :0 vt1'
+final_message: "Helix QEMU kiosk ready. SSH helix@localhost -p 2222 (password helix), then run helix-kiosk-start-x from the VM console."

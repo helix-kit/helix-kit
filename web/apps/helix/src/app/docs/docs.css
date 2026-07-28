@@ -1,0 +1,330 @@
+/* Docs-only styling. This file is imported ONLY by src/app/docs/layout.tsx so
+ * the geistdocs (Vercel Geist Docs) theme stays isolated to the /docs route
+ * group and never leaks into the marketing app. Do NOT import it globally. */
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/shadcn.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@source '../../**/*.{ts,tsx}';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Geist border radii */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Geist colors */
+  --color-background-100: var(--ds-background-100);
+  --color-background-200: var(--ds-background-200);
+
+  --color-gray-100: var(--ds-gray-100);
+  --color-gray-200: var(--ds-gray-200);
+  --color-gray-300: var(--ds-gray-300);
+  --color-gray-400: var(--ds-gray-400);
+  --color-gray-500: var(--ds-gray-500);
+  --color-gray-600: var(--ds-gray-600);
+  --color-gray-700: var(--ds-gray-700);
+  --color-gray-800: var(--ds-gray-800);
+  --color-gray-900: var(--ds-gray-900);
+  --color-gray-950: var(--ds-gray-950);
+  --color-gray-1000: var(--ds-gray-1000);
+
+  --color-gray-alpha-100: var(--ds-gray-alpha-100);
+  --color-gray-alpha-200: var(--ds-gray-alpha-200);
+  --color-gray-alpha-300: var(--ds-gray-alpha-300);
+  --color-gray-alpha-400: var(--ds-gray-alpha-400);
+  --color-gray-alpha-500: var(--ds-gray-alpha-500);
+  --color-gray-alpha-600: var(--ds-gray-alpha-600);
+
+  --color-blue-900: var(--ds-blue-900);
+  --color-red-900: var(--ds-red-900);
+  --color-amber-700: var(--ds-amber-700);
+  --color-green-900: var(--ds-green-900);
+  --color-brand: var(--ds-brand);
+}
+
+:root {
+  /* Geist neutral scale (light) */
+  --ds-background-100: oklch(1 0 0);
+  --ds-background-200: oklch(0.984 0 0);
+  --ds-gray-100: oklch(0.961 0 0);
+  --ds-gray-200: oklch(0.94 0 0);
+  --ds-gray-300: oklch(0.925 0 0);
+  --ds-gray-400: oklch(0.937 0 0);
+  --ds-gray-500: oklch(0.836 0 0);
+  --ds-gray-600: oklch(0.732 0 0);
+  --ds-gray-700: oklch(0.65 0 0);
+  --ds-gray-800: oklch(0.59 0 0);
+  --ds-gray-900: oklch(0.42 0 0);
+  --ds-gray-950: oklch(0.3 0 0);
+  --ds-gray-1000: oklch(0.205 0 0);
+  --ds-gray-alpha-100: oklch(0 0 0 / 0.05);
+  --ds-gray-alpha-200: oklch(0 0 0 / 0.081);
+  --ds-gray-alpha-300: oklch(0 0 0 / 0.1);
+  --ds-gray-alpha-400: oklch(0 0 0 / 0.08);
+  --ds-gray-alpha-500: oklch(0 0 0 / 0.21);
+  --ds-gray-alpha-600: oklch(0 0 0 / 0.24);
+  --ds-blue-900: oklch(53.18% 0.2399 256.99);
+  --ds-red-900: oklch(54.99% 0.232 25.29);
+  --ds-amber-700: oklch(81.87% 0.1969 76.46);
+  --ds-green-900: oklch(51.75% 0.1453 147.65);
+
+  /* Helix brand accent (turquoise) */
+  --ds-brand: #2dd4bf;
+
+  /* Sharp corners + fixed topbar height, matching the better-auth docs. */
+  --radius: 0.2rem;
+  --landing-topbar-height: 48px;
+  --background: var(--ds-background-100);
+  /* Warm neutral scale (matches the better-auth docs tone — a slight warm hue
+   * instead of the flat 0-chroma greys that read as cold/ugly). */
+  --foreground: oklch(0.147 0.004 49.25);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.147 0.004 49.25);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.147 0.004 49.25);
+  --primary: #0f766e;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.97 0.001 106.424);
+  --secondary-foreground: oklch(0.216 0.006 56.043);
+  --muted: oklch(0.97 0.001 106.424);
+  --muted-foreground: oklch(0.553 0.013 58.071);
+  --accent: oklch(0.97 0.001 106.424);
+  --accent-foreground: oklch(0.216 0.006 56.043);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.923 0.003 48.717);
+  --input: oklch(0.923 0.003 48.717);
+  --ring: var(--ds-brand);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--ds-brand);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: var(--ds-brand);
+
+  --color-fd-primary: var(--primary);
+}
+
+.dark {
+  --ds-background-100: oklch(0 0 0);
+  --ds-background-200: oklch(0.027 0 0);
+  --ds-gray-100: oklch(0.218 0 0);
+  --ds-gray-200: oklch(0.239 0 0);
+  --ds-gray-300: oklch(0.281 0 0);
+  --ds-gray-400: oklch(0.301 0 0);
+  --ds-gray-500: oklch(0.39 0 0);
+  --ds-gray-600: oklch(0.623 0 0);
+  --ds-gray-700: oklch(0.65 0 0);
+  --ds-gray-800: oklch(0.59 0 0);
+  --ds-gray-900: oklch(0.706 0 0);
+  --ds-gray-950: oklch(0.85 0 0);
+  --ds-gray-1000: oklch(0.946 0 0);
+  --ds-gray-alpha-100: oklch(1 0 0 / 0.07);
+  --ds-gray-alpha-200: oklch(1 0 0 / 0.09);
+  --ds-gray-alpha-300: oklch(1 0 0 / 0.13);
+  --ds-gray-alpha-400: oklch(1 0 0 / 0.14);
+  --ds-gray-alpha-500: oklch(1 0 0 / 0.24);
+  --ds-gray-alpha-600: oklch(1 0 0 / 0.51);
+  --ds-blue-900: oklch(71.7% 0.1648 250.79);
+  --ds-red-900: oklch(69.96% 0.2136 22.03);
+  --ds-amber-700: oklch(81.87% 0.1969 76.46);
+  --ds-green-900: oklch(73.1% 0.2158 148.29);
+
+  --ds-brand: #2dd4bf;
+
+  --background: var(--ds-background-100);
+  --foreground: oklch(0.985 0.001 106.423);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0.001 106.423);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0.001 106.423);
+  --primary: var(--ds-brand);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0.001 106.423);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.709 0.01 56.259);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--ds-brand);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--ds-brand);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--ds-brand);
+
+  --color-fd-primary: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Prose styles */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  @apply tracking-tight;
+}
+
+@layer utilities {
+  .line-numbers code {
+    counter-reset: step;
+    counter-increment: step 0;
+  }
+
+  .line-numbers code .line::before {
+    content: counter(step);
+    counter-increment: step;
+    @apply mr-6 inline-block w-6 text-right tabular-nums text-muted-foreground;
+  }
+}
+
+/* ─── Layout system (ported from the better-auth docs) ─────────────────────────
+ * The topbar (Navbar) and the sidebar (DocsSidebar) are fixed and rendered by
+ * the docs route layout; fumadocs only owns the content + TOC inside this
+ * container. We pad the container to clear the fixed topbar (top) and the fixed
+ * left pane (inline-start on desktop), and draw a 1px divider under the topbar
+ * at the pane edge. */
+.docs-layout {
+  --fd-sidebar-width: 0px;
+  --fd-toc-width: 0px;
+  --fd-layout-width: 100vw;
+  --fd-layout-offset: 0px;
+  --fd-page-width: 900px;
+  --fd-banner-height: var(--landing-topbar-height);
+  --landing-left-pane-width: min(22vw, 300px);
+  padding-top: var(--landing-topbar-height);
+}
+
+@media (min-width: 64rem) {
+  .docs-layout {
+    --fd-layout-width: min(calc(100vw - var(--landing-left-pane-width)), 1200px);
+    padding-inline-start: var(--landing-left-pane-width);
+  }
+
+  .docs-layout::before {
+    content: '';
+    position: fixed;
+    inset-block-start: 0;
+    height: var(--landing-topbar-height);
+    inset-inline-start: calc(var(--landing-left-pane-width) - 1px);
+    width: 1px;
+    background: var(--color-border);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 100;
+  }
+}
+
+@media (min-width: 80rem) {
+  .docs-layout {
+    --fd-toc-width: 280px;
+  }
+
+  .docs-layout #nd-toc {
+    padding-inline-start: 2rem;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+/* Prevent scroll-chaining and hide scrollbars in the TOC. */
+.docs-layout #nd-toc > div {
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+/* Docs prev/next footer nav — sharp, minimal, monospaced (better-auth style). */
+.docs-layout #nd-page article > div.\@container {
+  gap: 0;
+  border-top: 1px dashed color-mix(in oklch, var(--color-foreground) 8%, transparent);
+  padding-top: 0;
+  padding-bottom: 2rem;
+  margin-top: 3rem;
+}
+
+.docs-layout #nd-page article > div.\@container > a {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px dashed color-mix(in oklch, var(--color-foreground) 8%, transparent);
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-mono);
+  background: transparent;
+  transition: all 200ms ease;
+}
+
+.docs-layout #nd-page article > div.\@container > a:first-child {
+  border-right: 1px dashed color-mix(in oklch, var(--color-foreground) 8%, transparent);
+}
+
+.docs-layout #nd-page article > div.\@container > a:hover {
+  background: color-mix(in oklch, var(--color-foreground) 3%, transparent);
+  border-color: color-mix(in oklch, var(--color-foreground) 15%, transparent);
+  border-style: solid;
+}
+
+/* Align docs content with the topbar on mobile. */
+#nd-page {
+  @apply max-md:px-6;
+}
+
+/* TOC link colors. */
+#nd-toc a {
+  @apply text-muted-foreground hover:text-foreground;
+}
+
+#nd-toc a[data-active='true'] {
+  @apply text-foreground;
+}

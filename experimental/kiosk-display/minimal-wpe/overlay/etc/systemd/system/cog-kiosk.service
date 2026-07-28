@@ -1,0 +1,14 @@
+[Unit]
+Description=Helix WPE WebKit kiosk (cog, DRM platform)
+After=systemd-udev-settle.service seatd.service site-httpd.service
+Wants=seatd.service site-httpd.service
+
+[Service]
+ExecStart=/usr/local/bin/cog-session
+Restart=always
+RestartSec=3
+# cog-drm needs to be DRM master + read input; run as root on the seat.
+User=root
+
+[Install]
+WantedBy=multi-user.target

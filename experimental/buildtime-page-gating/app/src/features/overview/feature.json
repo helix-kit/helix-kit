@@ -1,0 +1,7 @@
+{
+  "id": "overview",
+  "route": "/overview",
+  "label": "Overview",
+  "heavy": false,
+  "deps": []
+}

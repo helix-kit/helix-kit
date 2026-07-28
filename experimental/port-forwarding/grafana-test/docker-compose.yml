@@ -1,0 +1,45 @@
+# Device-side Grafana behind the port-forwarding tunnel.
+#
+#   grafana  -- real Grafana OSS, no host ports (only reachable inside network)
+#   agent    -- Helix port-forwarding agent, forwards session "grafana" -> grafana:3000
+#
+# The "device" is this compose project on the laptop; nothing is published to
+# the host. Reachable only at https://grafana.port.helix-kit.com via the tunnel.
+#
+#   docker compose up -d --build
+#   → https://grafana.port.helix-kit.com  (admin / helixadmin)
+
+services:
+  grafana:
+    image: grafana/grafana-oss:11.2.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: helixadmin
+      # Match the public tunnel URL so absolute links, redirects, secure
+      # cookies and Grafana Live origin checks all line up.
+      GF_SERVER_ROOT_URL: https://grafana.port.helix-kit.com
+      GF_SERVER_DOMAIN: grafana.port.helix-kit.com
+      GF_LOG_LEVEL: warn
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+    expose:
+      - "3000"
+
+  agent:
+    build:
+      context: ../agent
+    image: helix-port-agent:local
+    restart: unless-stopped
+    command:
+      - "-session"
+      - "grafana"
+      - "-target"
+      - "grafana:3000"
+      - "-gateway"
+      - "wss://connect.port.helix-kit.com/__tunnel__"
+    depends_on:
+      - grafana

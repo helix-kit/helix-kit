@@ -1,0 +1,7 @@
+{
+  "id": "workflow",
+  "route": "/workflows",
+  "label": "Workflows",
+  "heavy": true,
+  "deps": ["@xyflow/react"]
+}

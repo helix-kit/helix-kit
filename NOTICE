@@ -1,0 +1,15 @@
+Helix
+Copyright (c) 2026 Hardik Jain
+
+Helix software is licensed under AGPL-3.0-only. Original documentation and
+non-code media are licensed under CC-BY-SA-4.0 unless otherwise stated.
+
+This repository uses third-party dependencies and may include files derived
+from third-party projects. Those materials retain their original copyright,
+license, attribution, and notice requirements. Package lockfiles identify
+resolved software dependencies; they do not replace notices required in a
+release.
+
+Before distributing a Helix release, generate and review a complete third-party
+license inventory for the exact release artifact. Do not remove copyright or
+license notices from copied, generated, or vendored files.

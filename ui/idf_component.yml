@@ -1,0 +1,9 @@
+version: "0.0.1"
+description: "Helix common device UI: LVGL screens behind a display-driver seam, shared by embedded and Linux devices."
+url: "https://github.com/helix-kit/helix-kit"
+license: "AGPL-3.0-only"
+dependencies:
+  idf:
+    version: ">=5.4"
+  lvgl/lvgl:
+    version: "^9.2.0"

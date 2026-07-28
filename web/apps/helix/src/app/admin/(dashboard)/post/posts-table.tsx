@@ -1,0 +1,171 @@
+'use client';
+
+import { useMemo } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { Badge } from '@helix/design-system/components/badge';
+import { Button } from '@helix/design-system/components/button';
+import { DataTable } from '@helix/design-system/components/data-table';
+import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
+import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+import { TableActions } from '@helix/design-system/components/table-actions';
+import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+import { type ColumnDef } from '@tanstack/react-table';
+import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { useTRPCMutation } from '@/server/react';
+import type { AppRouter } from '@/server/trpc';
+
+import type { inferRouterOutputs } from '@trpc/server';
+
+type PostRow = inferRouterOutputs<AppRouter>['blog']['list']['rows'][number];
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
+
+const RowActions = ({ post }: { post: PostRow }) => {
+  const router = useRouter();
+  const del = useTRPCMutation((api) =>
+    api.blog.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success('Post deleted');
+        router.refresh();
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    }),
+  );
+
+  return (
+    <TableActions>
+      <Button asChild className="size-8" size="icon" variant="ghost">
+        <Link aria-label="Edit post" href={`/admin/post/${post.id}`}>
+          <Pencil />
+        </Link>
+      </Button>
+      <DeleteConfirmDialog
+        description={`This permanently deletes "${post.title}". This cannot be undone.`}
+        isPending={del.isPending}
+        title="Delete post?"
+        trigger={
+          <Button aria-label="Delete post" className="size-8" size="icon" variant="destructive">
+            <Trash2 />
+          </Button>
+        }
+        onConfirm={() => {
+          del.mutate({ id: post.id });
+        }}
+      />
+    </TableActions>
+  );
+};
+
+export const PostsTable = ({ rows, pageCount }: { rows: PostRow[]; pageCount: number }) => {
+  const columns = useMemo<ColumnDef<PostRow>[]>(
+    () => [
+      {
+        id: 'title',
+        accessorKey: 'title',
+        header: ({ column }) => (
+          <Button
+            className="-ml-2.5"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc');
+            }}
+          >
+            Title
+            <ArrowUpDown />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <Link className="font-medium hover:underline" href={`/admin/post/${row.original.id}`}>
+            {row.original.title}
+          </Link>
+        ),
+        enableColumnFilter: true,
+        meta: { label: 'Title', variant: 'text', placeholder: 'Filter titles...' },
+      },
+      {
+        id: 'status',
+        accessorKey: 'published',
+        header: 'Status',
+        cell: ({ row }) => (
+          <Badge variant={row.original.published ? 'default' : 'outline'}>
+            {row.original.published ? 'Published' : 'Draft'}
+          </Badge>
+        ),
+        enableSorting: false,
+        enableColumnFilter: true,
+        meta: {
+          label: 'Status',
+          variant: 'multiSelect',
+          options: [
+            { label: 'Published', value: 'published' },
+            { label: 'Draft', value: 'draft' },
+          ],
+        },
+      },
+      {
+        id: 'slug',
+        accessorKey: 'slug',
+        header: 'Slug',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs">{row.original.slug}</span>
+        ),
+        enableSorting: false,
+      },
+      {
+        id: 'updatedAt',
+        accessorKey: 'updatedAt',
+        header: ({ column }) => (
+          <Button
+            className="-ml-2.5"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc');
+            }}
+          >
+            Updated
+            <ArrowUpDown />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs">
+            {dateFormatter.format(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => <RowActions post={row.original} />,
+        enableSorting: false,
+        enableHiding: false,
+      },
+    ],
+    [],
+  );
+
+  // shallow:false => page/sort/filter changes re-run the Server Component so the
+  // rows + pageCount come back from a fresh server query.
+  const { table } = useDataTable({
+    data: rows,
+    columns,
+    pageCount,
+    shallow: false,
+    getRowId: (row) => row.id,
+    initialState: { sorting: [{ id: 'updatedAt', desc: true }] },
+  });
+
+  return (
+    <DataTable className="min-h-0 flex-1" getItemValue={(row) => row.id} table={table}>
+      <DataTableToolbar table={table} />
+    </DataTable>
+  );
+};

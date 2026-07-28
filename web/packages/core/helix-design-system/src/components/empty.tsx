@@ -1,0 +1,81 @@
+import { cn } from '@helix/design-system/lib/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+const Empty = ({ className, ...props }: React.ComponentProps<'div'>) => (
+  <div
+    className={cn(
+      'flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-md border-dashed p-6 text-center text-balance',
+      className,
+    )}
+    data-slot="empty"
+    {...props}
+  />
+);
+
+const EmptyHeader = ({ className, ...props }: React.ComponentProps<'div'>) => (
+  <div
+    className={cn('flex max-w-sm flex-col items-center gap-2', className)}
+    data-slot="empty-header"
+    {...props}
+  />
+);
+
+const emptyMediaVariants = cva(
+  'mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  {
+    variants: {
+      variant: {
+        default: 'bg-transparent',
+        icon: "flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground [&_svg:not([class*='size-'])]:size-4",
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  },
+);
+
+const EmptyMedia = ({
+  className,
+  variant = 'default',
+  ...props
+}: React.ComponentProps<'div'> & VariantProps<typeof emptyMediaVariants>) => (
+  <div
+    className={cn(emptyMediaVariants({ variant, className }))}
+    data-slot="empty-icon"
+    data-variant={variant}
+    {...props}
+  />
+);
+
+const EmptyTitle = ({ className, ...props }: React.ComponentProps<'div'>) => (
+  <div
+    className={cn('font-heading text-sm font-medium', className)}
+    data-slot="empty-title"
+    {...props}
+  />
+);
+
+const EmptyDescription = ({ className, ...props }: React.ComponentProps<'p'>) => (
+  <div
+    className={cn(
+      'text-muted-foreground [&>a:hover]:text-primary text-xs/relaxed [&>a]:underline [&>a]:underline-offset-4',
+      className,
+    )}
+    data-slot="empty-description"
+    {...props}
+  />
+);
+
+const EmptyContent = ({ className, ...props }: React.ComponentProps<'div'>) => (
+  <div
+    className={cn(
+      'flex w-full max-w-sm min-w-0 flex-col items-center gap-2.5 text-xs text-balance',
+      className,
+    )}
+    data-slot="empty-content"
+    {...props}
+  />
+);
+
+export { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent, EmptyMedia };

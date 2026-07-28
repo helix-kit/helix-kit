@@ -1,0 +1,12 @@
+# Name,   Type, SubType, Offset,   Size,     Flags
+# 8 MB layout: factory + dual OTA (1.25 MB each) plus a FAT data partition
+# for the generic file-transfer / on-device storage feature. Used by the
+# QEMU build (see sdkconfig.defaults.qemu) and any 8 MB hardware target.
+nvs,      data, nvs,     0x9000,   0x6000,
+otadata,  data, ota,     0xf000,   0x2000,
+phy_init, data, phy,     0x11000,  0x1000,
+factory,  app,  factory, 0x20000,  0x140000,
+ota_0,    app,  ota_0,   0x160000, 0x140000,
+ota_1,    app,  ota_1,   0x2a0000, 0x140000,
+storage,  data, fat,     0x3e0000, 0x400000,
+flashdb,  0x40, 0x00,    0x7e0000, 0x20000,

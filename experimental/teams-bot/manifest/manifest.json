@@ -1,0 +1,35 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "0.1.0",
+  "id": "PASTE-YOUR-BOT-APP-ID-HERE",
+  "developer": {
+    "name": "Helix",
+    "websiteUrl": "https://example.com",
+    "privacyUrl": "https://example.com/privacy",
+    "termsOfUseUrl": "https://example.com/terms"
+  },
+  "name": {
+    "short": "Helix (dev)",
+    "full": "Helix Teams Bot (prototype)"
+  },
+  "description": {
+    "short": "Helix device notifications and commands in Teams.",
+    "full": "Experimental Helix bot: receive device alerts, acknowledge/reboot from a card, and chat with the bot. Built on the Vercel Chat SDK."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#2563EB",
+  "bots": [
+    {
+      "botId": "PASTE-YOUR-BOT-APP-ID-HERE",
+      "scopes": ["personal", "team", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": []
+}

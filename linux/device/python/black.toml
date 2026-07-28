@@ -1,0 +1,18 @@
+# Black configuration for the device-side Python packages.
+#
+# Black has no per-directory config discovery: run from anywhere under the repo it
+# finds the root pyproject.toml, which targets CPython 3.14. This tree targets 3.10,
+# where 3.14-only rewrites are invalid (PEP 758 turns `except (A, B):` into
+# `except A, B:` — a SyntaxError on the device). The root config therefore excludes
+# this tree, and `helix lint python` formats it with `black --config` pointed here.
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+# Generated bindings are emitted by `helix protocol generate-all`, not hand-edited.
+extend-exclude = '''
+/(
+  generated
+)/
+'''

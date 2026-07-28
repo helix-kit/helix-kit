@@ -1,0 +1,10 @@
+# Minimal inittab for the Helix kiosk Alpine image (QEMU aarch64 virt).
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+# Serial console on the QEMU virt UART.
+ttyAMA0::respawn:/sbin/getty -L 115200 ttyAMA0 vt100
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/openrc shutdown

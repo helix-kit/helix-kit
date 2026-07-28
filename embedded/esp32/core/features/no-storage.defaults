@@ -1,0 +1,9 @@
+# Drop the on-device storage stack: the FAT partition, the generic file-transfer
+# service, the FlashDB key-value store and the durable event queue. Roughly 50 KB
+# of flash, which a size-constrained app (the LVGL `ui_demo`, whose image is
+# dominated by LVGL) can spend elsewhere.
+
+CONFIG_HELIX_STORAGE_FAT=n
+CONFIG_HELIX_FILE_TRANSFER=n
+CONFIG_HELIX_DB=n
+CONFIG_HELIX_EVENT_QUEUE=n

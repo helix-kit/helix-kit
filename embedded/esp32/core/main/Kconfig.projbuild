@@ -1,0 +1,212 @@
+menu "ESP32 Firmware"
+
+config DEVICE_FIRMWARE_VERSION
+    string "Firmware version"
+    default "0.1.0-dev"
+
+config SNTP_SERVER
+    string "SNTP server"
+    default "pool.ntp.org"
+
+menu "Core"
+
+config MQTT_CERTIFICATE_PATH
+    string "MQTT certificate enrollment path"
+    default "/api/certificates/device"
+
+config OTA_PACKAGE_DOWNLOAD_SESSION_PATH
+    string "Package artifact download session path"
+    default "/api/external/storage/packages/download-session"
+
+config OTA_DEVICE_DOWNLOAD_SESSION_PATH
+    string "Device artifact download session path"
+    default "/api/external/storage/devices/download-session"
+
+config OTA_RESTART_DELAY_MS
+    int "Delay before rebooting after successful OTA"
+    default 1000
+    range 100 30000
+
+config HEARTBEAT_INTERVAL_SEC
+    int "Health event interval seconds"
+    default 30
+    range 5 3600
+
+endmenu
+
+menu "Storage & File Transfer"
+
+config HELIX_STORAGE_FAT
+    bool "Mount FAT storage partition"
+    default n
+    help
+      Mount a FAT filesystem (wear-levelled, on the SPI flash `storage`
+      data partition) at HELIX_STORAGE_MOUNT_POINT during boot. Requires a
+      partition table that declares a `storage, data, fat` partition
+      (e.g. partitions_8mb.csv). Backs the generic file-transfer service.
+
+config HELIX_STORAGE_MOUNT_POINT
+    string "FAT storage mount point"
+    depends on HELIX_STORAGE_FAT
+    default "/storage"
+
+config HELIX_STORAGE_PARTITION_LABEL
+    string "FAT storage partition label"
+    depends on HELIX_STORAGE_FAT
+    default "storage"
+
+config HELIX_FILE_TRANSFER
+    bool "Generic file-transfer service"
+    default n
+    help
+      Transport-agnostic chunked file-transfer service (`file` service on
+      the message layer). JSON control plane (begin/commit/abort) plus a
+      binary data side-channel over serial/BLE. Writes to a pluggable sink
+      (FAT file today; OTA partition as a future consumer).
+
+config HELIX_FILE_TRANSFER_MAX_SESSIONS
+    int "Concurrent file-transfer sessions"
+    depends on HELIX_FILE_TRANSFER
+    default 2
+    range 1 8
+
+config HELIX_DB
+    bool "On-device single-table store (FlashDB KVDB)"
+    default n
+    help
+      SQLite-like CRUD over a single table (insert/get/update/delete plus
+      WHERE/ORDER BY/LIMIT/COUNT) backed by FlashDB KVDB on a dedicated
+      `flashdb` flash partition (custom type 0x40). Requires the partition to
+      exist in the partition table (e.g. partitions_8mb.csv).
+
+endmenu
+
+menu "Event Queue"
+
+config HELIX_EVENT_QUEUE
+    bool "Durable store-and-forward event queue"
+    depends on HELIX_DB && HELIX_TRANSPORT_MQTT
+    default n
+    help
+      Persist every outbound device event locally (helix_db) before delivery,
+      track cloud delivery via MQTT QoS-1 acks, retry until delivered or
+      expired, and clean up sent events after a retention window. Also enables
+      the `events` query service. Requires HELIX_DB and the MQTT transport.
+
+config HELIX_EVENT_QUEUE_TTL_SEC
+    int "Default event TTL (max retry window) seconds"
+    depends on HELIX_EVENT_QUEUE
+    default 86400
+
+config HELIX_EVENT_QUEUE_SWEEP_SEC
+    int "Retry/cleanup sweep interval seconds"
+    depends on HELIX_EVENT_QUEUE
+    default 5
+    range 1 86400
+
+config HELIX_EVENT_QUEUE_RETENTION_SEC
+    int "Retention for delivered/expired events before cleanup, seconds"
+    depends on HELIX_EVENT_QUEUE
+    default 3600
+
+config HELIX_EVENT_QUEUE_MAX
+    int "Max stored events (backpressure evicts sent->expired->oldest)"
+    depends on HELIX_EVENT_QUEUE
+    default 128
+    range 8 100000
+
+config HELIX_EVENTS_TEST_HOOKS
+    bool "Events service test hooks (simulate-delivery)"
+    depends on HELIX_EVENT_QUEUE
+    default n
+    help
+      Expose a test-only `simulate-delivery` method that marks an event
+      delivered as if the broker had acked it. For QEMU/e2e testing where no
+      real broker is present. Leave off in production.
+
+endmenu
+
+menu "Transports"
+
+config HELIX_TRANSPORT_SERIAL
+    bool "Serial (UART) command transport"
+    default y
+    help
+      UART command transport used for local provisioning and control.
+
+config HELIX_TRANSPORT_BLE
+    bool "BLE command transport"
+    depends on BT_ENABLED && BT_NIMBLE_ENABLED
+    default y
+    help
+      NimBLE GATT command transport. Requires Bluetooth (CONFIG_BT_ENABLED and
+      CONFIG_BT_NIMBLE_ENABLED). Disable Bluetooth to compile out the NimBLE
+      stack together with this transport.
+
+config HELIX_TRANSPORT_WEBSOCKET
+    bool "WebSocket command transport"
+    depends on HTTPD_WS_SUPPORT
+    default y
+    help
+      HTTP server WebSocket command transport. Requires
+      CONFIG_HTTPD_WS_SUPPORT and Wi-Fi networking.
+
+config HELIX_TRANSPORT_MQTT
+    bool "MQTT cloud transport"
+    default y
+    help
+      MQTT(S) cloud transport used for telemetry, health heartbeats, and
+      remote command delivery. Requires Wi-Fi networking.
+
+endmenu
+
+menu "App Defaults"
+
+config LED_BLINKER_GPIO
+    int "LED blinker GPIO"
+    default 2
+    range 0 39
+
+config LED_BLINKER_INTERVAL_MS
+    int "LED blinker interval milliseconds"
+    default 500
+    range 50 60000
+
+config LED_BLINKER_TWO_GPIO
+    int "Second LED blinker primary GPIO"
+    default 16
+    range 0 39
+
+config LED_BLINKER_TWO_SECONDARY_GPIO
+    int "Second LED blinker secondary GPIO"
+    default 17
+    range 0 39
+
+config LED_BLINKER_TWO_INTERVAL_MS
+    int "Second LED blinker interval milliseconds"
+    default 1000
+    range 50 60000
+
+config STATUS_DISPLAY_SDA_GPIO
+    int "Status display I2C SDA GPIO"
+    default 21
+    range 0 39
+
+config STATUS_DISPLAY_SCL_GPIO
+    int "Status display I2C SCL GPIO"
+    default 22
+    range 0 39
+
+config STATUS_DISPLAY_I2C_ADDRESS
+    hex "Status display I2C address"
+    default 0x3C
+    range 0x03 0x77
+
+config STATUS_DISPLAY_I2C_HZ
+    int "Status display I2C frequency"
+    default 400000
+    range 10000 1000000
+
+endmenu
+
+endmenu

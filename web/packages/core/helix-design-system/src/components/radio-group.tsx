@@ -1,0 +1,40 @@
+'use client';
+
+import type * as React from 'react';
+
+import { cn } from '@helix/design-system/lib/utils';
+import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
+
+const RadioGroup = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) => (
+  <RadioGroupPrimitive.Root
+    className={cn('grid w-full gap-2', className)}
+    data-slot="radio-group"
+    {...props}
+  />
+);
+
+const RadioGroupItem = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) => (
+  <RadioGroupPrimitive.Item
+    className={cn(
+      'group/radio-group-item peer border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary relative flex aspect-square size-4 shrink-0 rounded-full border outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-3',
+      className,
+    )}
+    data-slot="radio-group-item"
+    {...props}
+  >
+    <RadioGroupPrimitive.Indicator
+      className="flex size-4 items-center justify-center"
+      data-slot="radio-group-indicator"
+    >
+      <span className="bg-primary-foreground absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+    </RadioGroupPrimitive.Indicator>
+  </RadioGroupPrimitive.Item>
+);
+
+export { RadioGroup, RadioGroupItem };

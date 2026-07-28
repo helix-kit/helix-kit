@@ -1,26 +1,18 @@
 import type { StreamTransport } from '@helix/protocol-stream';
 
-// Backpressure ceiling for the send buffer. RTCDataChannel.send() never blocks —
-// unlike a WebSocket, which at least applies TCP pressure — so a fast producer
-// (a file transfer) would otherwise grow bufferedAmount without bound until the
-// channel is torn down. The mux's per-stream credit window bounds ONE stream; this
-// bounds the sum across all of them.
+// Backpressure ceiling across all streams: RTCDataChannel.send() never blocks, so a
+// fast producer would otherwise grow bufferedAmount without bound.
 const HIGH_WATER_BYTES = 1_048_576; // 1 MiB
 
 /**
- * Adapts a WebRTC DataChannel to a HelixStream transport, so the SAME multiplexer
- * the gateway runs over a WebSocket runs here over a peer connection — and every
- * stream app (shell, port-forward, file transfer) works over either.
- *
- * The channel must be reliable + ordered: the frame codec assumes one whole frame
- * per message, and the credit/END/RESET logic assumes in-order, no-loss delivery.
+ * Adapt a WebRTC DataChannel to a HelixStream transport. The channel must be reliable
+ * and ordered: the frame codec and credit/END/RESET logic assume in-order, no-loss delivery.
  */
 export const dataChannelTransport = (channel: RTCDataChannel): StreamTransport => {
   channel.binaryType = 'arraybuffer';
   channel.bufferedAmountLowThreshold = HIGH_WATER_BYTES / 2;
 
-  // Frames queued while the send buffer is above the high-water mark, flushed in
-  // order when it drains. Order matters — the mux's framing is a stream.
+  // Frames queued while above the high-water mark, flushed in order when it drains.
   const backlog: Uint8Array[] = [];
   let flushing = false;
 
@@ -58,8 +50,7 @@ export const dataChannelTransport = (channel: RTCDataChannel): StreamTransport =
   });
 
   channel.addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
-    // A fresh view per message: the frame decoder hands payloads to the app as
-    // subarrays of this buffer, so it must not be reused.
+    // A fresh view per message: the decoder hands payloads to the app as subarrays of it.
     transport.onMessage(new Uint8Array(event.data));
   });
 

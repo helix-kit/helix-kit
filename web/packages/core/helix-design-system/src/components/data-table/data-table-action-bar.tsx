@@ -19,12 +19,7 @@ interface DataTableActionBarProps<TData> extends React.ComponentProps<typeof mot
   portalContainer?: Element | DocumentFragment | null;
 }
 
-/**
- * Floating bulk-action toolbar for selected rows.
- *
- * By default it becomes visible when the table has filtered selected rows and
- * portals into `document.body` after mount.
- */
+/** Floating bulk-action toolbar for selected rows; portals into `document.body`. */
 const DataTableActionBar = <TData,>({
   table,
   visible: visibleProp,
@@ -84,9 +79,7 @@ interface DataTableActionBarActionProps extends React.ComponentProps<typeof Butt
   isPending?: boolean;
 }
 
-/**
- * Standard action-bar button with optional tooltip and pending-state spinner.
- */
+/** Standard action-bar button with optional tooltip and pending-state spinner. */
 const DataTableActionBarAction = ({
   size = 'sm',
   tooltip,
@@ -133,9 +126,7 @@ interface DataTableActionBarSelectionProps<TData> {
   table: Table<TData>;
 }
 
-/**
- * Selection summary pill with an Escape-key discoverable clear-selection affordance.
- */
+/** Selection summary pill with an Escape-key clear-selection affordance. */
 const DataTableActionBarSelection = <TData,>({
   table,
 }: DataTableActionBarSelectionProps<TData>) => {

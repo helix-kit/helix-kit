@@ -81,25 +81,19 @@ export const env = createEnv({
       .positive()
       .default(DEFAULT_EVENT_QUEUE_PRODUCE_FLUSH_MS),
 
-    // ---- workflow (dispatch + Inngest) roles -------------------------------
     INNGEST_BASE_URL: z.string().default('http://127.0.0.1:8288'),
     INNGEST_EVENT_KEY: z.string().optional(),
     INNGEST_SIGNING_KEY: z.string().optional(),
-    // 'inngest' routes ingested events through the durable engine; 'direct' runs
-    // the same graph inline (no engine); 'dbos' runs it in-process via DBOS
-    // Transact (durable checkpoints to Postgres, no engine round-trip).
+    // 'inngest' = durable engine; 'direct' = inline no engine; 'dbos' = in-process DBOS Transact.
     HELIX_WORKFLOW_MODE: z.enum(['inngest', 'direct', 'dbos']).default('inngest'),
     // DBOS system database (checkpoint store) URL, for HELIX_WORKFLOW_MODE=dbos.
     DBOS_SYSTEM_DATABASE_URL: z.string().optional(),
-    // '1' => migrate the DBOS system schema then exit (run once before a fleet of
-    // dispatch processes so they don't race the migration).
+    // '1' => migrate the DBOS system schema then exit (run once before a fleet of dispatchers).
     HELIX_DBOS_MIGRATE: z.string().optional(),
-    // Postgres schema for DBOS's system tables. Per-process distinct schemas
-    // (dbos_0, dbos_1, ...) shard the coordination DB so instances stop contending.
+    // Postgres schema for DBOS's system tables; per-process distinct schemas shard contention.
     HELIX_DBOS_SCHEMA: z.string().optional(),
     HELIX_WORKFLOW_PORT: z.coerce.number().int().positive().default(DEFAULT_WORKFLOW_PORT),
-    // The URL the self-hosted Inngest server calls back to invoke the function;
-    // both run in-container, so it defaults to loopback on the workflow port.
+    // The URL the self-hosted Inngest server calls back on; defaults to loopback.
     HELIX_WORKFLOW_SERVE_HOST: z.string().optional(),
     HELIX_WORKFLOW_DISPATCH_GROUP: z.string().default('helix-workflow-dispatch'),
     HELIX_WORKFLOW_CONCURRENCY: z.coerce
@@ -119,8 +113,7 @@ export const env = createEnv({
       .nonnegative()
       .default(DEFAULT_WORKFLOW_NOTIFY_MS),
     HELIX_WORKFLOW_GATE_THRESHOLD: z.coerce.number().int().default(DEFAULT_WORKFLOW_GATE_THRESHOLD),
-    // 'blocking' = fake in-worker sleep (holds a step slot); 'infer' = step.ai.infer
-    // against HELIX_WORKFLOW_INFER_BASE_URL (Inngest offloads + parks the run).
+    // 'blocking' = fake in-worker sleep; 'infer' = step.ai.infer (Inngest parks the run).
     HELIX_WORKFLOW_LLM_MODE: z.enum(['blocking', 'infer']).default('blocking'),
     HELIX_WORKFLOW_INFER_BASE_URL: z.string().optional(),
     HELIX_WORKFLOW_INFER_MODEL: z.string().default('fake'),
@@ -139,10 +132,8 @@ export const env = createEnv({
     DEVICE_MTLS_CA_CERT_PATH: z.string(),
     DEVICE_MTLS_SERVER_CERT_PATH: z.string(),
     DEVICE_MTLS_SERVER_KEY_PATH: z.string(),
-    // Device-cert revocation on the mTLS listener is enforced at the app layer
-    // (device_certificate.revoked_at), not via a CRL in the TLS context — a CRL
-    // there corrupts peer-cert reads on Node 24 / OpenSSL 3.5. See device-mtls/
-    // tls.ts. (MQTT revocation is still native mosquitto crlfile.)
+    // Device-cert revocation on the mTLS listener is enforced at the app layer, not via
+    // a CRL: a CRL in the TLS context corrupts peer-cert reads on Node 24 / OpenSSL 3.5.
 
     STORAGE_PROVIDER: z.enum(['AZURE', 'FS', 'MINIO', 'S3']).default('FS'),
     FS_STORAGE_ROOT: z.string().default('/var/lib/helix/storage'),

@@ -86,15 +86,7 @@ interface UseDataTableProps<TData>
   startTransition?: React.TransitionStartFunction;
 }
 
-/**
- * Builds a TanStack table instance whose pagination, sorting, and filter state
- * stay synchronized with the URL query string via `nuqs`.
- *
- * The returned table is configured for manual pagination, sorting, and
- * filtering so consumers can fetch server-backed rows from the current query
- * state. Filterable column ids should be stable because they are used as query
- * parameter keys.
- */
+/** Builds a TanStack table whose pagination/sorting/filter state syncs to the URL via `nuqs` (manual, server-backed; column ids are query keys). */
 export const useDataTable = <TData>(props: UseDataTableProps<TData>) => {
   const {
     columns,

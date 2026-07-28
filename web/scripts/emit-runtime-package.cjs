@@ -1,9 +1,8 @@
 'use strict';
 
-// Emits a minimal runtime package.json containing only the packages a bundled
-// service still imports at runtime (deps that the bundler kept external because
-// of dynamic requires). Versions are pinned from the build's installed
-// node_modules. Usage: node emit-runtime-package.cjs <bundle.js> <out.json>
+// Emits a minimal runtime package.json listing only the packages a bundled service
+// still imports at runtime, with versions pinned from the build's node_modules.
+// Usage: node emit-runtime-package.cjs <bundle.js> <out.json>
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -30,13 +29,11 @@ const addSpecifier = (name) => {
   }
 };
 
-// CJS interop requires and dynamic imports can appear anywhere. The `(?<!\{)`
-// skips JSDoc `@type {import('pkg')}` annotations (preceded by `{`).
+// The `(?<!\{)` skips JSDoc `@type {import('pkg')}` annotations (preceded by `{`).
 for (const match of code.matchAll(/(?<!\{)(?:require|import)\(\s*['"]([^'"]+)['"]\s*\)/g)) {
   addSpecifier(match[1]);
 }
-// Static ESM import/export-from statements are hoisted to the top of the bundle;
-// anchor to line start + the keyword so we don't match `from` inside code.
+// Anchor to line start + keyword so we don't match `from` inside code.
 for (const match of code.matchAll(
   /(?:^|\n)\s*(?:import|export)\b[^;\n]*?\bfrom\s*['"]([^'"]+)['"]/g,
 )) {
@@ -47,8 +44,7 @@ for (const match of code.matchAll(/(?:^|\n)\s*import\s*['"]([^'"]+)['"]/g)) {
   addSpecifier(match[1]);
 }
 
-// Optional native add-ons that libraries (e.g. ws) load in a try/catch and
-// work fine without; never install them into the slim runtime image.
+// Optional native add-ons libraries load in a try/catch; never install them into the image.
 const optionalNativeAddons = new Set(['bufferutil', 'utf-8-validate', 'pg-native']);
 
 const requireFromBundle = createRequire(bundlePath);
@@ -61,8 +57,7 @@ for (const name of [...externals].sort()) {
   try {
     version = requireFromBundle(`${name}/package.json`).version;
   } catch {
-    // Transitive externals (e.g. cross-fetch, iconv-lite) aren't resolvable from
-    // the bundle dir under pnpm; leave the version as "*" so npm picks latest.
+    // Transitive externals aren't resolvable from the bundle dir under pnpm; leave "*".
   }
   dependencies[name] = version;
 }

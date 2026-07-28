@@ -69,10 +69,8 @@ const progressPercent = (item: Transfer): number => {
   return item.done ? PERCENT : 0;
 };
 
-// Streaming a download straight to disk needs the File System Access API. Without
-// it we would have to buffer the whole file in the tab, which is exactly the
-// limitation that made the P2P experiment unusable for real files — so we say so
-// rather than silently degrading.
+// Streaming a download straight to disk needs the File System Access API; without
+// it we would have to buffer the whole file in the tab.
 const canStreamToDisk = (): boolean =>
   typeof window !== 'undefined' && 'showSaveFilePicker' in window;
 
@@ -91,9 +89,8 @@ export const FileBrowser = ({
   const files = useTypedDeviceService(filesControlContract, { timeoutMs: OPEN_TIMEOUT_MS });
 
   const [transport, setTransport] = useState<DataPlaneTransport>('p2p');
-  // The ICE servers must be in hand BEFORE we open: they are passed to the device
-  // in the `open` command, and a device that gathers no STUN/TURN candidates can
-  // only ever fail to connect.
+  // ICE servers must be in hand before opening: a device that gathers no candidates
+  // can only fail to connect.
   const { iceServers, isLoading: iceLoading } = useIceServers(transport === 'p2p');
   const [ready, setReady] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
@@ -106,9 +103,8 @@ export const FileBrowser = ({
   const closeRef = useRef<(() => void) | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
-  // Derived, not stored: "connecting" is the gateway, "opening" is the data plane
-  // being negotiated. Storing it meant setting state from an effect (which React
-  // rightly complains about) AND showing "connecting" for the whole 20s open.
+  // Derived, not stored: storing it meant setting state from an effect and showing
+  // "connecting" for the whole 20s open.
   const status: Status = ((): Status => {
     if (detail !== null) {
       return 'error';
@@ -120,8 +116,7 @@ export const FileBrowser = ({
   })();
 
   const rootsQuery = useTypedDeviceServiceQuery(files, 'roots', {}, { enabled: files.isConnected });
-  // Until the user navigates, show the device's first exposed root — derived, not
-  // pushed into state from an effect (which would cascade an extra render).
+  // Until the user navigates, show the device's first exposed root (derived, not stored).
   const currentPath = path !== '' ? path : (rootsQuery.data?.roots[0] ?? '');
   const listing = useTypedDeviceServiceQuery(
     files,
@@ -135,8 +130,6 @@ export const FileBrowser = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Surface the path ICE settled on: 'relay' means the transfer is going through
-  // TURN and costing cloud bandwidth, which is what p2p is here to avoid.
   const reportIcePath = useCallback((connection: RTCPeerConnection | null) => {
     if (connection === null) {
       setIcePath(null);
@@ -148,14 +141,12 @@ export const FileBrowser = ({
     });
   }, []);
 
-  // Open the data-plane session. Bulk file bytes are the reason p2p exists, so it
-  // is the default here — relay stays available for networks that block it.
+  // Open the data-plane session; p2p is the default since bulk file bytes are why it exists.
   useEffect(() => {
     if (!files.isConnected || sessionRef.current !== null) {
       return;
     }
-    // Wait for the ICE config on the p2p path — opening without it is a guaranteed
-    // ICE failure, not a degraded connection.
+    // Opening without the ICE config is a guaranteed failure, not a degraded connection.
     if (transport === 'p2p' && iceLoading) {
       return;
     }

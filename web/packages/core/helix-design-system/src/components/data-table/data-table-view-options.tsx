@@ -22,11 +22,7 @@ interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
 }
 
-/**
- * Column-visibility menu for hideable TanStack columns.
- *
- * Only columns with an accessor and `getCanHide()` enabled are listed.
- */
+/** Column-visibility menu for hideable TanStack columns. */
 export const DataTableViewOptions = <TData,>({ table }: DataTableViewOptionsProps<TData>) => {
   const columns = React.useMemo(
     () =>

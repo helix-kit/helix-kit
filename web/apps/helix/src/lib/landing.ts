@@ -1,7 +1,5 @@
-/* Single source of truth for all landing-page copy and illustrative data.
- * Content is deliberately centralized here so it's easy to revise without
- * touching component/animation code. Sample telemetry, git log, and community
- * messages are ILLUSTRATIVE placeholders (Helix is unreleased) — not real data. */
+// Single source of truth for landing-page copy. Sample telemetry, git log, and
+// community messages are ILLUSTRATIVE placeholders (Helix is unreleased), not real data.
 
 export const heroChips = [
   { label: 'Transport Neutral', icon: 'radio' },

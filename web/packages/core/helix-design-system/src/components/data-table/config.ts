@@ -1,8 +1,4 @@
-/**
- * Compile-time view of the supported data-table operators, variants, and sort
- * directions. Consumers can reference this type to stay aligned with the
- * published config object.
- */
+/** Compile-time view of the supported data-table operators, variants, and sort directions. */
 export type DataTableConfig = typeof dataTableConfig;
 
 const OPERATORS = {
@@ -12,11 +8,7 @@ const OPERATORS = {
   IS_NOT: { label: 'Is not', value: 'ne' as const },
 };
 
-/**
- * Canonical operator and filter metadata shared by the design-system data table
- * components and parser helpers. Values here intentionally match the query
- * parser enums in `parsers.ts`.
- */
+/** Canonical operator/filter metadata; values match the query parser enums in `parsers.ts`. */
 export const dataTableConfig = {
   textOperators: [
     { label: 'Contains', value: 'iLike' as const },

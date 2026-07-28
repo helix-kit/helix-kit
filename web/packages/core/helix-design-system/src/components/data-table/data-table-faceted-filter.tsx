@@ -29,12 +29,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   multiple?: boolean;
 }
 
-/**
- * Select or multiselect popover filter for categorical table columns.
- *
- * The current selection is written back through `column.setFilterValue()` as an
- * array of option values so it aligns with the shared table parser helpers.
- */
+/** Select or multiselect popover filter for categorical table columns. */
 export const DataTableFacetedFilter = <TData, TValue>({
   column,
   title,

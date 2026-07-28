@@ -1,10 +1,7 @@
-// Real ESP32 over Web Serial through the shared transport packages. The test
-// injects raw request JSON and asserts on the raw response — the harness knows
-// nothing about gpio. Prerequisite: `npm run grant` once for this profile/board.
-//
-// Retries below exist because opening the CP210x resets the ESP32 (DTR/RTS),
-// which drops requests during its ~1.5-2s boot and can briefly lose the link on
-// a marginal USB path.
+// Real ESP32 over Web Serial through the shared transport packages; inject raw
+// request JSON, assert on the raw response. Prerequisite: `npm run grant` once.
+// Retries exist because opening the CP210x resets the ESP32 (DTR/RTS), dropping
+// requests during its ~1.5-2s boot.
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures';
@@ -47,7 +44,6 @@ const ensureConnected = async (page: Page): Promise<void> => {
   await expect(page.getByTestId(CONNECTION_STATE)).toHaveText('connected');
 };
 
-// Inject a raw request and match the pin level in the raw response JSON.
 const sendAndExpectLevel = async (page: Page, requestJson: string, level: 0 | 1): Promise<void> => {
   const lastReceived = page.getByTestId('last-received');
   // eslint-disable-next-line security/detect-non-literal-regexp -- `level` is a typed 0 | 1, not user input

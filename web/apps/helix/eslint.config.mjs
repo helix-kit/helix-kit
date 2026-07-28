@@ -24,8 +24,7 @@ const eslintConfig = [
     },
   },
   {
-    // Marketing / docs / blog UI is dense with intentional literals (breakpoints,
-    // priorities, sizes, animation timings); the rule is pure noise there.
+    // Marketing / docs / blog UI is dense with intentional literals; the rule is noise there.
     files: [
       'src/app/(marketing)/**',
       'src/app/docs/**',

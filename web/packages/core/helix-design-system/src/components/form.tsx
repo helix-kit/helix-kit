@@ -20,10 +20,7 @@ import type * as LabelPrimitive from '@radix-ui/react-label';
 
 import { cn } from '../lib/utils';
 
-/**
- * Re-export of `react-hook-form`'s provider so Fluxery form primitives can
- * share one import path.
- */
+/** Re-export of `react-hook-form`'s provider so Fluxery form primitives share one import path. */
 type FormProps<
   TFieldValues extends FieldValues = FieldValues,
   TTransformedValues extends FieldValues | undefined = undefined,
@@ -50,10 +47,7 @@ type FormFieldContextValue<
 
 const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
 
-/**
- * Wraps `react-hook-form`'s `Controller` and exposes the field name to sibling
- * Fluxery form primitives through context.
- */
+/** Wraps `react-hook-form`'s `Controller` and exposes the field name to sibling primitives via context. */
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -68,12 +62,7 @@ const FormField = <
   );
 };
 
-/**
- * Returns the generated ids and validation state used by `FormLabel`,
- * `FormControl`, `FormDescription`, and `FormMessage`.
- *
- * Must be called within both `FormField` and `FormItem`.
- */
+/** Generated ids and validation state for the form primitives; call within `FormField` and `FormItem`. */
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext);
   const itemContext = React.useContext(FormItemContext);

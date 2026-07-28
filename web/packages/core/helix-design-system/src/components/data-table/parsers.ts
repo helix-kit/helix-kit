@@ -10,10 +10,7 @@ const sortingItemSchema = z.object({
   desc: z.boolean(),
 });
 
-/**
- * Creates a `nuqs` parser for JSON-encoded array state while rejecting entries
- * whose `id` values are not part of the current table column set.
- */
+// `nuqs` parser for JSON-encoded array state; rejects entries whose `id` is not a current column.
 const createGenericParser = <T extends { id: string }>(
   schema: z.ZodArray<z.ZodTypeAny>,
   serializeValue: (value: T[]) => string,
@@ -51,10 +48,7 @@ const createGenericParser = <T extends { id: string }>(
   });
 };
 
-/**
- * Returns a query-state parser for TanStack sorting state. When `columnIds` are
- * provided, unknown sort keys are treated as invalid and ignored.
- */
+/** Query-state parser for TanStack sorting state; unknown sort keys are ignored when `columnIds` are given. */
 export const getSortingStateParser = <TData>(columnIds?: string[] | Set<string>) => {
   return createGenericParser<ExtendedColumnSort<TData>>(
     z.array(sortingItemSchema),
@@ -74,17 +68,10 @@ const filterItemSchema = z.object({
   filterId: z.string(),
 });
 
-/**
- * Shape of each advanced-filter item once it has been validated from the query
- * string. `id` and `filterId` are both preserved because the UI tracks a stable
- * filter row separately from the column key.
- */
+/** A validated advanced-filter item; `id` and `filterId` are both kept since the UI tracks the filter row separately from the column. */
 export type FilterItemSchema = z.infer<typeof filterItemSchema>;
 
-/**
- * Returns a query-state parser for advanced filter definitions. When
- * `columnIds` are provided, filters targeting unknown columns are rejected.
- */
+/** Query-state parser for advanced filters; filters on unknown columns are rejected when `columnIds` are given. */
 export const getFiltersStateParser = <TData>(columnIds?: string[] | Set<string>) => {
   return createGenericParser<ExtendedColumnFilter<TData>>(
     z.array(filterItemSchema),

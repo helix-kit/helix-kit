@@ -92,7 +92,7 @@ const useSortableContext = (consumerName: string) => {
 
 interface GetItemValue<T> {
   /**
-   * Callback that returns a unique identifier for each sortable item. Required for array of objects.
+   * Unique id for each sortable item; required for object arrays.
    * @example getItemValue={(item) => item.id}
    */
   getItemValue: (item: T) => UniqueIdentifier;
@@ -107,7 +107,6 @@ type SortableRootProps<T> = DndContextProps & {
   flatCursor?: boolean;
 } & (T extends object ? GetItemValue<T> : Partial<GetItemValue<T>>);
 
-// Helper to safely get sortable index from drag data
 const getSortableIndex = (data: unknown): number => {
   if (typeof data === 'object' && data !== null && 'current' in data) {
     const { current } = data as { current?: unknown };
@@ -124,13 +123,7 @@ const getSortableIndex = (data: unknown): number => {
   return 0;
 };
 
-/**
- * Accessible drag-and-drop root built on top of `@dnd-kit`.
- *
- * Object arrays must provide `getItemValue` so the sortable ids remain stable
- * across reorders. When `onMove` is omitted, the component applies `arrayMove`
- * and emits the reordered collection through `onValueChange`.
- */
+/** Accessible drag-and-drop root on `@dnd-kit`; without `onMove` it applies `arrayMove` and emits via `onValueChange`. */
 const SortableRoot = <T,>(props: SortableRootProps<T>) => {
   const {
     value,
@@ -397,11 +390,7 @@ interface SortableItemProps extends React.ComponentPropsWithoutRef<'div'> {
   disabled?: boolean;
 }
 
-/**
- * Registers a draggable item with the surrounding sortable context.
- *
- * `value` must match one of the ids produced by the root `value` array.
- */
+/** Registers a draggable item; `value` must match an id from the root `value` array. */
 const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>((props, forwardedRef) => {
   const { value, style, asHandle, asChild, disabled, className, ...itemProps } = props;
 
@@ -559,11 +548,7 @@ interface SortableOverlayProps extends Omit<
   children?: ((params: { value: UniqueIdentifier }) => React.ReactNode) | React.ReactNode;
 }
 
-/**
- * Portal-based drag preview for the active sortable item.
- *
- * When no `container` is supplied it renders into `document.body` after mount.
- */
+/** Portal-based drag preview for the active sortable item; defaults to `document.body`. */
 const SortableOverlay = (props: SortableOverlayProps) => {
   const { container: containerProp, children, ...overlayProps } = props;
 
@@ -597,7 +582,6 @@ export {
   SortableItem,
   SortableItemHandle,
   SortableOverlay,
-  //
   SortableRoot as Root,
   SortableContent as Content,
   SortableItem as Item,

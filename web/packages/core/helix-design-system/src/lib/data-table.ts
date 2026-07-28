@@ -1,9 +1,6 @@
 import type { Column } from '@tanstack/react-table';
 
-/**
- * Computes sticky positioning styles for pinned data-table columns, including
- * optional inset borders for the outermost pinned edges.
- */
+/** Computes sticky positioning styles for pinned data-table columns. */
 export const getCommonPinningStyles = <TData>({
   column,
   withBorder = false,

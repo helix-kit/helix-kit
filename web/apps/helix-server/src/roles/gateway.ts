@@ -155,18 +155,15 @@ export const startGateway = async (deps: {
   const mqttClient = await buildMqttClient();
 
   const publicServer = await buildPublicServer({ db, mqttClient, storageProvider });
-  // One upgrade dispatcher on the public server so the gateway WS (/ws) and the
-  // data plane's client endpoint (/stream/client) share the same port as the
-  // APIs — no dedicated data-plane port.
+  // One upgrade dispatcher so the gateway WS (/ws) and /stream/client share the API port.
   const publicUpgrades = createUpgradeRouter(publicServer);
   const gatewayBridge = await startMqttGatewayBridge({ upgrades: publicUpgrades, mqttClient });
 
   await listen(publicServer, env.HELIX_HTTP_PORT);
   logger.info(`Helix Server public HTTP listening on ${env.HELIX_HTTP_PORT}.`);
 
-  // Read the device mTLS material once; the file-transfer router and the
-  // data-plane device stream share ONE mTLS listener (same step-ca certs, same
-  // port), so a device reaches everything over a single mTLS endpoint.
+  // The file-transfer router and the data-plane device stream share ONE mTLS listener,
+  // so a device reaches everything over a single mTLS endpoint.
   const mtlsMaterial = await readDeviceMtlsMaterial({
     caCertPath: env.DEVICE_MTLS_CA_CERT_PATH,
     serverCertPath: env.DEVICE_MTLS_SERVER_CERT_PATH,
@@ -176,11 +173,8 @@ export const startGateway = async (deps: {
   const mtlsServer = buildMTLSServer({ db, queue, storageProvider, material: mtlsMaterial });
   const deviceUpgrades = createUpgradeRouter(mtlsServer);
 
-  // The HelixStream data plane attaches its /stream/device upgrade onto the same
-  // device mTLS server (CN = device id) and its /stream/client upgrade onto the
-  // public server — no port of its own. Control still rides the MQTT gateway
-  // above; sessions pair the two by id. Revoked device certs are rejected here
-  // too (app-layer, matching the file-transfer path).
+  // The data plane attaches /stream/device onto the device mTLS server and /stream/client
+  // onto the public server — no port of its own; sessions pair the two by id.
   const dataPlane = await startDataPlane({
     clientUpgrades: publicUpgrades,
     deviceUpgrades,

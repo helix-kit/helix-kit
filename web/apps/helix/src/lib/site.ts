@@ -1,16 +1,9 @@
 import { env } from './env';
 
-// SKIP_ENV_VALIDATION (bundle packaging) bypasses zod AND its defaults, so this
-// can be undefined at build time — and robots.txt/sitemap.xml are prerendered,
-// which would crash the build. Resolve the origin once, with a fallback.
 const DEFAULT_ORIGIN = 'http://localhost:3000';
 
-// `env` types these as always-present (zod supplies defaults), but
-// SKIP_ENV_VALIDATION — which the bundle build uses, since a packaged bundle has
-// no runtime env — skips zod entirely, defaults included. So at build time they
-// really can be undefined, and robots.txt/sitemap.xml are PRERENDERED: an
-// undefined origin crashes the whole build. The cast admits that the declared
-// type is a lie under that flag.
+// SKIP_ENV_VALIDATION (bundle build) skips zod and its defaults, so these can be
+// undefined at build time even though the type says otherwise; the cast admits that.
 const fallback = (value: string, fallbackValue: string): string => {
   const raw = value as string | undefined;
   return raw === undefined || raw === '' ? fallbackValue : raw;
@@ -18,17 +11,9 @@ const fallback = (value: string, fallbackValue: string): string => {
 
 export const publicOrigin = fallback(env.NEXT_PUBLIC_BASE_URL, DEFAULT_ORIGIN);
 
-/**
- * The public origin, resolved at REQUEST time — for robots.txt and sitemap.xml.
- *
- * `publicOrigin` above comes from NEXT_PUBLIC_BASE_URL, which Next inlines at
- * BUILD time. That is fine for metadata in a bundle built for one site, but the
- * appliance ships ONE bundle to MANY installs on different domains: a baked-in
- * origin would have every appliance advertising someone else's URL (or, if the
- * build had no value, localhost — which is exactly what happened). PUBLIC_APP_URL
- * is a plain server var the appliance writes into site.env, so reading it here
- * (from a force-dynamic route) gives each install its own correct origin.
- */
+// The public origin resolved at REQUEST time (robots.txt/sitemap.xml): the appliance
+// ships one bundle to many installs, so a build-time baked-in origin would be wrong.
+// PUBLIC_APP_URL is a plain server var each install writes into site.env.
 export const runtimeOrigin = (): string => {
   const configured = process.env['PUBLIC_APP_URL'];
   return configured === undefined || configured === ''
@@ -47,8 +32,6 @@ export const site = {
   description:
     'An open-source IoT platform assembled from reusable, independently adoptable components: embedded firmware, a minimal edge Linux OS, a cloud control plane, and clients — all speaking one transport-neutral protocol.',
   url: publicOrigin,
-  // The console is now a route in THIS app, not a separate deployment — the
-  // marketing "Open the console" CTAs point at it directly.
   appUrl: '/admin',
   sourceUrl: sourceUrl,
 } as const;

@@ -22,8 +22,7 @@ import { cn } from '@helix/design-system/lib/utils';
 type ResponsiveModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Omit when the modal is opened programmatically (e.g. from another
-  // component's state) rather than by clicking a trigger of its own.
+  // Omit when the modal is opened programmatically rather than by its own trigger.
   trigger?: React.ReactNode;
   title?: React.ReactNode;
   description?: React.ReactNode;

@@ -10,11 +10,9 @@ import {
   Smartphone,
 } from 'lucide-react';
 
-/* The signature spine: a glowing double-helix running down the page with pulsing
- * nodes, and small platform icons orbiting a few of those nodes. Rendered with a
- * fixed viewBox stretched to the container (preserveAspectRatio="none") so it needs
- * NO client-side measurement — it can never fail to appear. All motion is CSS, so
- * it animates without waiting on hydration and respects `prefers-reduced-motion`. */
+// The signature spine: a glowing double-helix with orbiting platform icons. Uses a
+// fixed viewBox (no client measurement) and pure-CSS motion that respects
+// prefers-reduced-motion.
 
 const W = 160;
 const H = 2000;
@@ -63,16 +61,13 @@ const ORBITS: Orbit[] = [
 
 const OrbitNode = ({ top, ring, speed, icons }: Orbit) => (
   <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ top }}>
-    {/* ambient halo */}
     <div className="bg-brand/15 absolute top-1/2 left-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" />
-    {/* orbit path */}
     <div
       className="border-brand/20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
       style={{ width: ring, height: ring }}
     />
-    {/* pulsing core */}
     <div className="bg-brand relative size-3 [animation:node-pulse_3.5s_ease-in-out_infinite] rounded-full shadow-[0_0_18px_5px_var(--color-brand)] motion-reduce:animate-none" />
-    {/* orbiting icons — each rides its own delayed ring, counter-rotated to stay upright */}
+    {/* orbiting icons, counter-rotated to stay upright */}
     {icons.map((Icon, i) => {
       const delay = `${(-speed / icons.length) * i}s`;
       return (
@@ -107,7 +102,6 @@ export const OrbitSpine = () => (
     aria-hidden
     className="pointer-events-none absolute inset-0 z-0 hidden justify-end [mask-image:linear-gradient(to_bottom,transparent,black_4%,black_96%,transparent)] lg:flex"
   >
-    {/* pinned near the right, with padding so it isn't flush to the edge */}
     <div className="relative mr-8 h-full w-[280px] lg:mr-14 xl:mr-24">
       <svg
         className="absolute inset-0 h-full w-full"
@@ -126,7 +120,6 @@ export const OrbitSpine = () => (
           </filter>
         </defs>
 
-        {/* glow underlay */}
         <path
           d={STRAND_A}
           filter="url(#spine-blur)"
@@ -155,11 +148,9 @@ export const OrbitSpine = () => (
           />
         ))}
 
-        {/* crisp strands */}
         <path d={STRAND_A} opacity={0.6} stroke="url(#spine-grad)" strokeWidth={1.5} />
         <path d={STRAND_B} opacity={0.6} stroke="url(#spine-grad)" strokeWidth={1.5} />
 
-        {/* flowing energy */}
         <path
           className="[animation:spine-flow_2.4s_linear_infinite] motion-reduce:hidden"
           d={STRAND_A}

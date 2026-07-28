@@ -10,12 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 const DATE_FORMAT = 'dd-MM-yyyy';
 
-/**
- * Text input plus calendar popover for a single required date value.
- *
- * The component accepts and emits `Date` objects while displaying them in
- * `dd-MM-yyyy` format.
- */
+/** Text input plus calendar popover for a single required date value (`dd-MM-yyyy`). */
 const DateInput = (props: { date: Date; onChange: (date: Date) => void }) => {
   const [open, setOpen] = useState(false);
   const [dateString, setDateString] = useState('');

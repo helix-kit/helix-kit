@@ -2,12 +2,7 @@ import * as React from 'react';
 
 import { useCallbackRef } from './use-callback-ref';
 
-/**
- * Returns a stable callback that delays invoking `callback` until `delay`
- * milliseconds have elapsed since the latest call.
- *
- * Pending work is cleared when the component unmounts.
- */
+/** Stable callback that delays invoking `callback` until `delay` ms after the latest call; cleared on unmount. */
 export const useDebouncedCallback = <T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number,

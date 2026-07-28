@@ -26,11 +26,7 @@ export type SessionOptions = Readonly<{
   pingIntervalMs?: number;
 }>;
 
-/**
- * HelixStreamSession multiplexes many HelixStreams over one binary transport.
- * It is the server/browser counterpart to the Go stream.Session and is
- * byte-compatible with it.
- */
+/** Multiplexes many HelixStreams over one binary transport; byte-compatible with Go stream.Session. */
 export class HelixStreamSession implements StreamHost {
   readonly creditThreshold: number;
   readonly maxChunk: number;

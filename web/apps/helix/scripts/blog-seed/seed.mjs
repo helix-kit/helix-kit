@@ -1,15 +1,6 @@
-// Seed / upsert the blog posts described by manifest.mjs into the `post` table.
-// Content is GitHub-flavored MDX, compiled at request time by src/lib/blog-mdx.ts.
-//
-// Reusable + idempotent: keyed on `slug` via ON CONFLICT, so re-running refreshes
-// content in place rather than duplicating. Reading time is derived from the HTML
-// (tags stripped, ~200 wpm) to match the app's blog router.
-//
-// Usage (from web/apps/helix, with a provisioned .env pointing DATABASE_URL at the
-// appliance):
+// Seed / upsert the blog posts from manifest.mjs into the `post` table. Idempotent
+// (keyed on `slug` via ON CONFLICT). Run from web/apps/helix with a provisioned .env:
 //   node scripts/blog-seed/seed.mjs
-//
-// The pg driver is resolved from the workspace root node_modules.
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { dirname, join } from 'node:path';
@@ -20,8 +11,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(here, '..', '..');
 const workspaceRoot = join(appRoot, '..', '..');
 
-// Resolve `pg` from @helix/backend, which depends on it (pnpm does not hoist it
-// to the workspace root).
+// Resolve `pg` from @helix/backend, which depends on it (pnpm does not hoist it).
 const require = createRequire(
   join(workspaceRoot, 'packages', 'core', 'helix-backend', 'noop.js'),
 );
@@ -38,8 +28,7 @@ const loadEnv = () => {
   return env;
 };
 
-// Mirrors readingTimeFor in @helix/backend/src/blog/router.ts — keep in sync so a
-// seeded post reports the same estimate as one saved from the admin editor.
+// Mirrors readingTimeFor in @helix/backend/src/blog/router.ts — keep in sync.
 const WORDS_PER_MINUTE = 200;
 const readingTimeFor = (mdx) => {
   const words = mdx
@@ -64,9 +53,7 @@ const main = async () => {
 
   const pool = new Pool({ connectionString });
 
-  // Author every seeded post as an admin. Prefer a sysadmin (the role that gates
-  // the blog admin surface), but a freshly provisioned appliance seeds its first
-  // user as plain 'admin', so fall back to that rather than refusing to seed.
+  // Author posts as an admin, preferring a sysadmin but falling back to plain 'admin'.
   const authorRes = await pool.query(
     `SELECT id, name, role FROM "user"
       WHERE role IN ('sysadmin', 'admin')

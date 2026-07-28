@@ -13,12 +13,7 @@ interface DataTablePaginationProps<TData> extends React.ComponentProps<'div'> {
 
 const DEFAULT_PAGE_SIZE_OPTIONS = ['10', '20', '30', '40', '50'].map((value) => Number(value));
 
-/**
- * Pagination controls for a TanStack table instance.
- *
- * This component reads and mutates the table's pagination state directly, so it
- * stays compatible with `useDataTable` URL-synchronized state.
- */
+/** Pagination controls for a TanStack table instance. */
 export const DataTablePagination = <TData,>({
   table,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,

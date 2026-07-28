@@ -27,9 +27,7 @@ type RevealProps = DivProps & {
   y?: number;
 };
 
-/** Fades + rises into view. Renders plain and fully visible on the server, at the
- * first client render, and under reduced motion; only hides-then-reveals once
- * animation is enabled after hydration — so content is never stuck hidden. */
+/** Fades + rises into view; renders plain and visible until animation is enabled, so content is never stuck hidden. */
 export const Reveal = ({ children, delay = 0, y = 24, ...props }: RevealProps) => {
   const animate = useAnimate();
   if (!animate) {

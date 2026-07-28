@@ -20,10 +20,7 @@ interface DataTableToolbarProps<TData> extends React.ComponentProps<'div'> {
   viewOptions?: boolean;
 }
 
-/**
- * Toolbar that renders built-in column filters from each column's `meta.variant`
- * and optionally exposes the shared column-visibility menu.
- */
+/** Toolbar that renders built-in column filters from each column's `meta.variant`. */
 export const DataTableToolbar = <TData,>({
   table,
   children,

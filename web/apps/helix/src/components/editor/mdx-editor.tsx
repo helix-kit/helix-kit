@@ -39,10 +39,8 @@ import { onUpload } from './upload';
 
 import '@mdxeditor/editor/style.css';
 
-// Languages offered in the code-block dropdown. CodeMirror support is loaded
-// dynamically via @codemirror/language-data, so this is just the visible list.
-// `mermaid` is here because remarkMdxMermaid renders a ```mermaid fence as a
-// diagram on the public site — in the editor it stays an ordinary code block.
+// Languages offered in the code-block dropdown (the visible list only). `mermaid`
+// is here because the public site renders a ```mermaid fence as a diagram.
 const codeBlockLanguages: Record<string, string> = {
   '': 'Plain text',
   bash: 'Shell',
@@ -68,11 +66,7 @@ type EditorProps = {
   onChange?: (markdown: string) => void;
 };
 
-/**
- * MDX authoring surface for blog posts. Stores GitHub-flavored Markdown/MDX text
- * (post.content), which the public blog compiles through the same fumadocs
- * pipeline the docs use — see src/lib/blog-mdx.ts.
- */
+// MDX authoring surface for blog posts; stores GFM text the public blog compiles.
 const Editor = forwardRef<MDXEditorMethods, EditorProps>(({ markdown, onChange }, ref) => (
   <MDXEditor
     ref={ref}
@@ -118,16 +112,13 @@ const Editor = forwardRef<MDXEditorMethods, EditorProps>(({ markdown, onChange }
       }),
     ]}
     onChange={(value, initialMarkdownNormalize) => {
-      // MDXEditor fires onChange once on mount, while it re-serializes the source
-      // into its own markdown flavour (e.g. `-` bullets become `*`). That is not a
-      // user edit — forwarding it would autosave a rewrite of a post merely
-      // because someone opened it, bumping updatedAt and churning the content.
+      // MDXEditor fires onChange once on mount to re-serialize the source into its own
+      // flavour; that's not a user edit, so forwarding it would churn the post.
       if (initialMarkdownNormalize) return;
       onChange?.(value);
     }}
     onError={(payload) => {
-      // MDX that the editor cannot parse into its model (stray JSX, bad syntax)
-      // would otherwise fail silently and risk saving mangled content.
+      // Surface MDX the editor can't parse, which would otherwise fail silently.
       toast.error(`MDX parse error: ${payload.error}`);
     }}
   />

@@ -3,17 +3,9 @@ import 'server-only';
 import { createCompiler } from '@fumadocs/mdx-remote';
 import { remarkMdxMermaid } from 'fumadocs-core/mdx-plugins';
 
-// Runtime MDX compiler for DB-stored blog posts.
-//
-// Docs MDX is compiled at BUILD time from files under content/docs by
-// fumadocs-mdx (see source.config.ts). Blog posts live in Postgres, so their
-// MDX is compiled per request instead — the route's `revalidate` keeps that off
-// the hot path.
-//
-// The `fumadocs` preset gives the same content processing as /docs: GFM,
-// heading ids + TOC extraction, and shiki code highlighting. remarkMdxMermaid
-// rewrites ```mermaid fences into the <Mermaid /> component, mirroring
-// source.config.ts so a diagram authored in a post behaves like one in the docs.
+// Runtime MDX compiler for DB-stored blog posts (docs MDX is compiled at build time
+// instead). Mirrors source.config.ts's processing so a post behaves like a doc,
+// including remarkMdxMermaid rewriting ```mermaid fences into <Mermaid />.
 const compiler = createCompiler({
   remarkPlugins: (v) => [remarkMdxMermaid, ...v],
 });

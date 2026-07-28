@@ -32,12 +32,7 @@ interface DataTableSliderFilterProps<TData> {
   title?: string;
 }
 
-/**
- * Numeric range filter that combines paired inputs with a slider control.
- *
- * It prefers `column.columnDef.meta.range` as the allowed bounds and falls back
- * to TanStack faceted min/max values when no explicit range is supplied.
- */
+/** Numeric range filter combining paired inputs with a slider control. */
 export const DataTableSliderFilter = <TData,>({
   column,
   title,

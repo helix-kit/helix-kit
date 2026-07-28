@@ -64,8 +64,7 @@ export const FirmwareBuilderForm = ({
   const [knobValues, setKnobValues] = useState<Record<string, string>>({});
   const [overrides, setOverrides] = useState<Override[]>([]);
 
-  // Feature fragments a selected app declares it needs — force-enabled, since the
-  // firmware build pulls them in regardless of the toggles.
+  // Fragments a selected app needs are force-enabled; the build pulls them in regardless of toggles.
   const requiredFeatures = useMemo(() => {
     const required = new Set<string>();
     for (const app of catalog.apps) {

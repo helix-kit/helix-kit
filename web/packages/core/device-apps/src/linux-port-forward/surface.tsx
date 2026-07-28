@@ -49,9 +49,7 @@ const publicUrl = (sessionId: string): string =>
 
 type StreamConfig = { gateway: string; device: string };
 
-// The URLs derive from `window.location`, so they can only be built in the
-// browser. Memoised at module scope: useClientOnly compares snapshots by
-// identity, so this must return the same object every call.
+// Memoised: useClientOnly compares snapshots by identity, so return the same object.
 let cachedConfig: StreamConfig | null = null;
 const getStreamConfig = (): StreamConfig =>
   (cachedConfig ??= { gateway: gatewayWsUrl(), device: deviceStreamUrl() });
@@ -214,10 +212,8 @@ const PortForwardPanel = ({ deviceStream }: { deviceStream: string }) => {
   );
 };
 
-// The Linux port-forward surface: open public tunnels to services reachable from
-// the device and manage every open forward (details + close any). Control rides
-// the gateway; the bytes ride the data plane. Gated on the `linux-port-forward`
-// feature.
+// The Linux port-forward surface: open and manage public tunnels to services on the
+// device. Gated on the `linux-port-forward` feature.
 export const LinuxPortForwardSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
   // null on the server and during hydration, then the browser-derived URLs.
   const config = useClientOnly(getStreamConfig);

@@ -55,13 +55,7 @@ interface DataTableDateFilterProps<TData> {
   multiple?: boolean;
 }
 
-/**
- * Single-date or date-range filter backed by timestamp values in the table
- * filter state.
- *
- * Single mode stores one millisecond timestamp; range mode stores a two-item
- * `[from, to]` tuple where either edge may be undefined.
- */
+/** Single-date or date-range filter backed by timestamp values in the table filter state. */
 export const DataTableDateFilter = <TData,>({
   column,
   title,

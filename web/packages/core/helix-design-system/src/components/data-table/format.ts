@@ -1,9 +1,4 @@
-/**
- * Formats a date-like value for the data-table UI.
- *
- * Invalid or missing values resolve to an empty string so cell renderers can
- * stay defensive without extra guards.
- */
+/** Formats a date-like value for the data-table UI; invalid or missing values become an empty string. */
 export const formatDate = (
   date: Date | string | number | undefined,
   opts: Intl.DateTimeFormatOptions = {},

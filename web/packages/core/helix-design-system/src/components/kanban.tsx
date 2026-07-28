@@ -591,7 +591,6 @@ export {
   KanbanItem,
   KanbanItemHandle,
   KanbanOverlay,
-  // aliases
   KanbanRoot as Root,
   KanbanBoard as Board,
   KanbanColumn as Column,

@@ -22,14 +22,12 @@ export type ThemeContextValue = {
 };
 
 const MEDIA = '(prefers-color-scheme: dark)';
-// Fired on same-tab setTheme so useSyncExternalStore re-reads (the native `storage`
-// event only fires in *other* tabs).
+// Fires on same-tab setTheme so useSyncExternalStore re-reads (native `storage` is cross-tab only).
 const THEME_CHANGE_EVENT = 'helix-theme-change';
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-// Temporarily kill CSS transitions across a theme switch so colors snap instead of
-// animating (parity with next-themes' disableTransitionOnChange).
+// Briefly kill CSS transitions across a theme switch so colors snap (next-themes disableTransitionOnChange parity).
 const suppressTransitions = () => {
   const style = document.createElement('style');
   style.appendChild(document.createTextNode('*,*::before,*::after{transition:none!important}'));
@@ -50,11 +48,10 @@ export type ThemeProviderProps = Readonly<{
   disableTransitionOnChange?: boolean;
 }>;
 
-// Framework-agnostic dark/light provider. Unlike next-themes it renders NO inline
-// <script>, so it never trips React 19's "Encountered a script tag while rendering
-// React component" warning. Preventing the pre-hydration flash is the host app's
-// job — inject a bootstrap that sets the `.light`/`.dark` class before paint (in
-// Next, via useServerInsertedHTML so the script lives in the streamed HTML only).
+/**
+ * Framework-agnostic dark/light provider that renders NO inline <script> (avoids React 19's
+ * script-tag warning); the host must inject a pre-paint bootstrap to prevent the hydration flash.
+ */
 export const ThemeProvider = ({
   children,
   defaultTheme = 'system',
@@ -132,8 +129,7 @@ export const ThemeProvider = ({
       try {
         window.localStorage.setItem(storageKey, next);
       } catch {
-        // Storage unavailable (private mode / blocked) — the event below still
-        // triggers a re-read, so the in-memory theme updates for this session.
+        // Storage unavailable (private mode); the event below still re-reads, updating in-memory theme.
       }
       window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
     },
@@ -154,8 +150,7 @@ export const ThemeProvider = ({
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
-// Lenient like next-themes: returns a no-op shape when read outside a provider
-// rather than throwing, so a stray consumer can't crash the tree.
+// Lenient like next-themes: a no-op shape when read outside a provider instead of throwing.
 const FALLBACK: ThemeContextValue = {
   theme: undefined,
   setTheme: () => {},

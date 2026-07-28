@@ -15,12 +15,7 @@ type PendingWrite = {
   reject: (e: Error) => void;
 };
 
-/**
- * HelixStream is one bidirectional byte stream within a Session. Bytes arrive
- * via the `onData` callback; `write` is flow-controlled by a credit window so a
- * slow stream cannot starve others sharing the connection. `onSignal` carries
- * out-of-band app control (e.g. terminal resize).
- */
+/** One bidirectional byte stream within a Session, flow-controlled by a credit window. */
 export class HelixStream {
   onData?: (chunk: Uint8Array) => void;
   onEnd?: () => void;
@@ -89,8 +84,6 @@ export class HelixStream {
   signal(payload: Uint8Array): void {
     this.host.sendFrame(FrameType.Signal, this.id, payload);
   }
-
-  // --- called by the Session dispatch ---
 
   _onData(payload: Uint8Array): void {
     if (this.closed) {

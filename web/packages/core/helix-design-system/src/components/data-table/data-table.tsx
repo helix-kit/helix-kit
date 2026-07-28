@@ -20,12 +20,7 @@ type DataTableProps<TData extends object> = React.ComponentProps<'div'> & {
   background?: boolean;
 };
 
-/**
- * Renders the shared Fluxery table shell for a TanStack table instance.
- *
- * Rows are wrapped in the sortable primitives, so `getItemValue` must return a
- * stable unique id whenever drag-reordering is enabled.
- */
+/** Shared Fluxery table shell for a TanStack table instance; `getItemValue` must return a stable id when drag-reordering. */
 export const DataTable = <TData extends object>({
   table,
   actionBar,

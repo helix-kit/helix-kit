@@ -103,7 +103,10 @@ const Editor = forwardRef<MDXEditorMethods, EditorProps>(({ markdown, onChange }
             <InsertThematicBreak />
             <ConditionalContents
               options={[
-                { when: (e) => e?.editorType === 'codeblock', contents: () => <ChangeCodeMirrorLanguage /> },
+                {
+                  when: (e) => e?.editorType === 'codeblock',
+                  contents: () => <ChangeCodeMirrorLanguage />,
+                },
                 { fallback: () => <InsertCodeBlock /> },
               ]}
             />

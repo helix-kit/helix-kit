@@ -1,3 +1,5 @@
+import type { ImgHTMLAttributes } from 'react';
+
 import { cn } from '@helix/design-system/lib/utils';
 
 import { CodeBlock } from '@/components/geistdocs/code-block';
@@ -12,6 +14,11 @@ import './post-content.css';
 const components: MDXComponents = {
   pre: CodeBlock,
   Mermaid,
+  // Author-inserted images: lazy + async-decode so they don't block LCP.
+  img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img decoding="async" loading="lazy" {...props} />
+  ),
 };
 
 const prose = cn(

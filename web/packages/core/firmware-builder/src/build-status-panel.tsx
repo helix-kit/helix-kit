@@ -106,12 +106,16 @@ export const BuildStatusPanel = ({
             )}
           </div>
         )}
-        {isFailed && status?.errorSummary != null ? <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">
+        {isFailed && status?.errorSummary != null ? (
+          <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">
             {status.errorSummary}
-          </pre> : null}
-        {isPending ? <p className="text-muted-foreground text-xs">
+          </pre>
+        ) : null}
+        {isPending ? (
+          <p className="text-muted-foreground text-xs">
             The build container is compiling the firmware and will register a release when done.
-          </p> : null}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );

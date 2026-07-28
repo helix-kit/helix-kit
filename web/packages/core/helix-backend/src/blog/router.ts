@@ -126,13 +126,12 @@ export const blogPublicRouter = createRouterFactory<BlogContext>()((t) =>
         return row?.count ?? 0;
       }),
 
-    publishedSlugs: t.procedure.query(async ({ ctx }) => {
-      const rows = await ctx.db
-        .select({ slug: post.slug })
+    publishedSlugs: t.procedure.query(async ({ ctx }) =>
+      ctx.db
+        .select({ slug: post.slug, publishedAt: post.publishedAt, updatedAt: post.updatedAt })
         .from(post)
-        .where(eq(post.published, true));
-      return rows.map((r) => r.slug);
-    }),
+        .where(eq(post.published, true)),
+    ),
 
     getBySlug: t.procedure.input(z.object({ slug: z.string() })).query(async ({ ctx, input }) => {
       const [row] = await ctx.db
@@ -146,6 +145,7 @@ export const blogPublicRouter = createRouterFactory<BlogContext>()((t) =>
           tags: post.tags,
           readingTime: post.readingTime,
           publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
           createdAt: post.createdAt,
           authorName: user.name,
           authorImage: user.image,

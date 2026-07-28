@@ -1,5 +1,8 @@
 export const SiteBackground = () => (
-  <div aria-hidden className="bg-background pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+  <div
+    aria-hidden
+    className="bg-background pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+  >
     <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,var(--color-border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_100%_75%_at_50%_0%,black,transparent_80%)] [background-size:34px_34px] opacity-40" />
 
     <div className="bg-brand/10 absolute -top-48 left-1/2 h-[520px] w-[960px] -translate-x-1/2 rounded-full blur-[130px]" />

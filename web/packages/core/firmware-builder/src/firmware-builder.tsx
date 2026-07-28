@@ -14,10 +14,7 @@ import {
 import { Checkbox } from '@helix/design-system/components/checkbox';
 import { Input } from '@helix/design-system/components/input';
 import { Label } from '@helix/design-system/components/label';
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@helix/design-system/components/native-select';
+import { NativeSelect, NativeSelectOption } from '@helix/design-system/components/native-select';
 import { Separator } from '@helix/design-system/components/separator';
 import { Switch } from '@helix/design-system/components/switch';
 import { cn } from '@helix/design-system/lib/utils';
@@ -148,7 +145,9 @@ export const FirmwareBuilderForm = ({
               id="fw-name"
               placeholder="my-sensor-fw"
               value={name}
-              onChange={(e) => { setName(e.target.value); }}
+              onChange={(e) => {
+                setName(e.target.value);
+              }}
             />
           </div>
           <div className="grid gap-2">
@@ -157,7 +156,9 @@ export const FirmwareBuilderForm = ({
               id="fw-version"
               placeholder="1.0.0"
               value={version}
-              onChange={(e) => { setVersion(e.target.value); }}
+              onChange={(e) => {
+                setVersion(e.target.value);
+              }}
             />
           </div>
           <div className="grid gap-2">
@@ -166,7 +167,9 @@ export const FirmwareBuilderForm = ({
               id="fw-channel"
               placeholder="custom"
               value={channel}
-              onChange={(e) => { setChannel(e.target.value); }}
+              onChange={(e) => {
+                setChannel(e.target.value);
+              }}
             />
           </div>
         </CardContent>
@@ -184,7 +187,9 @@ export const FirmwareBuilderForm = ({
               className="w-full"
               id="fw-chip"
               value={chip}
-              onChange={(e) => { setChip(e.target.value); }}
+              onChange={(e) => {
+                setChip(e.target.value);
+              }}
             >
               {catalog.chips.map((option) => (
                 <NativeSelectOption key={option.value} value={option.value}>
@@ -199,7 +204,9 @@ export const FirmwareBuilderForm = ({
               className="w-full"
               id="fw-flash"
               value={flashSize}
-              onChange={(e) => { setFlashSize(e.target.value); }}
+              onChange={(e) => {
+                setFlashSize(e.target.value);
+              }}
             >
               {catalog.flashSizes.map((option) => (
                 <NativeSelectOption key={option.value} value={option.value}>
@@ -226,7 +233,9 @@ export const FirmwareBuilderForm = ({
               <Checkbox
                 checked={selectedApps.includes(app.name)}
                 id={`app-${app.name}`}
-                onCheckedChange={(checked) => { toggleApp(app.name, checked === true); }}
+                onCheckedChange={(checked) => {
+                  toggleApp(app.name, checked === true);
+                }}
               />
               <div className="grid gap-1">
                 <div className="flex items-center gap-2">
@@ -273,7 +282,9 @@ export const FirmwareBuilderForm = ({
                 <Switch
                   checked={checked}
                   disabled={required || disabled}
-                  onCheckedChange={(value) => { toggleFeature(feature.key, value); }}
+                  onCheckedChange={(value) => {
+                    toggleFeature(feature.key, value);
+                  }}
                 />
               </div>
             );
@@ -295,7 +306,9 @@ export const FirmwareBuilderForm = ({
                   className="w-full"
                   id={`knob-${knob.key}`}
                   value={knobValues[knob.key] ?? ''}
-                  onChange={(e) => { setKnob(knob.key, e.target.value); }}
+                  onChange={(e) => {
+                    setKnob(knob.key, e.target.value);
+                  }}
                 >
                   <NativeSelectOption value="">Default</NativeSelectOption>
                   {knob.options.map((option) => (
@@ -308,7 +321,9 @@ export const FirmwareBuilderForm = ({
                 <Input
                   id={`knob-${knob.key}`}
                   value={knobValues[knob.key] ?? ''}
-                  onChange={(e) => { setKnob(knob.key, e.target.value); }}
+                  onChange={(e) => {
+                    setKnob(knob.key, e.target.value);
+                  }}
                 />
               )}
               {knob.description !== '' && (
@@ -341,20 +356,26 @@ export const FirmwareBuilderForm = ({
                   className="font-mono"
                   placeholder="CONFIG_KEY"
                   value={override.key}
-                  onChange={(e) => { updateOverride(override.id, { key: e.target.value }); }}
+                  onChange={(e) => {
+                    updateOverride(override.id, { key: e.target.value });
+                  }}
                 />
                 <span className="text-muted-foreground">=</span>
                 <Input
                   className="font-mono"
                   placeholder="value"
                   value={override.value}
-                  onChange={(e) => { updateOverride(override.id, { value: e.target.value }); }}
+                  onChange={(e) => {
+                    updateOverride(override.id, { value: e.target.value });
+                  }}
                 />
                 <Button
                   size="icon"
                   type="button"
                   variant="ghost"
-                  onClick={() => { removeOverride(override.id); }}
+                  onClick={() => {
+                    removeOverride(override.id);
+                  }}
                 >
                   <Trash2 className="size-4" />
                 </Button>

@@ -173,7 +173,7 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
         <MotionConfig transition={{ duration: 0.35, type: 'spring', bounce: 0 }}>
           <div className="flex flex-col">
             {contents.map((section, index) => {
-              const {Icon} = section;
+              const { Icon } = section;
               const open = currentOpen === index;
               return (
                 <div key={section.title}>
@@ -199,7 +199,8 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
                     />
                   </button>
                   <AnimatePresence initial={false}>
-                    {open ? <motion.div
+                    {open ? (
+                      <motion.div
                         animate={{ opacity: 1, height: 'auto' }}
                         className="relative overflow-hidden"
                         exit={{ opacity: 0, height: 0 }}
@@ -212,7 +213,8 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
                             onNavigate={onNavigate}
                           />
                         </div>
-                      </motion.div> : null}
+                      </motion.div>
+                    ) : null}
                   </AnimatePresence>
                 </div>
               );
@@ -239,7 +241,7 @@ export const DocsSidebar = () => {
 
   return (
     <>
-      <aside className="bg-background border-foreground/5 fixed bottom-0 left-0 top-(--landing-topbar-height) z-30 hidden w-[22vw] max-w-[300px] flex-col border-r lg:flex">
+      <aside className="bg-background border-foreground/5 fixed top-(--landing-topbar-height) bottom-0 left-0 z-30 hidden w-[22vw] max-w-[300px] flex-col border-r lg:flex">
         <SidebarBody />
       </aside>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>

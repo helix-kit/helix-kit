@@ -54,7 +54,7 @@ const NewBuildPage = async () => {
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 overflow-y-auto p-4 sm:p-6">
       <div className="shrink-0">
-        <Button asChild className="-ml-2.5 mb-2" size="sm" variant="ghost">
+        <Button asChild className="mb-2 -ml-2.5" size="sm" variant="ghost">
           <Link href="/admin/builds">
             <ArrowLeft />
             Builds
@@ -62,8 +62,8 @@ const NewBuildPage = async () => {
         </Button>
         <h1 className="text-2xl font-semibold tracking-tight">New custom firmware</h1>
         <p className="text-muted-foreground text-sm">
-          Pick apps and options; the build service compiles the firmware and registers an
-          OTA-ready release.
+          Pick apps and options; the build service compiles the firmware and registers an OTA-ready
+          release.
         </p>
       </div>
 

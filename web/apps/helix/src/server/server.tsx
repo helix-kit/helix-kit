@@ -27,8 +27,6 @@ const trpc = createTRPCOptionsProxy({
   queryClient: getQueryClient,
 });
 
-
-
 export const fetchQuery = <
   TQueryFnData,
   TError = DefaultError,

@@ -1,12 +1,29 @@
 import { PostCard } from '@/components/blog/post-card';
 import { Section, SectionHeading } from '@/components/marketing/section';
+import { absoluteUrl } from '@/lib/blog-seo';
+import { site } from '@/lib/site';
 import { fetchQuery } from '@/server/server';
 
 import type { Metadata } from 'next';
 
+const BLOG_TITLE = 'Helix Blog';
+const BLOG_DESCRIPTION = 'Product updates, deep dives, and release notes from the Helix project.';
+
 export const metadata: Metadata = {
   title: 'Blog',
-  description: 'Product updates, deep dives, and release notes from the Helix project.',
+  description: BLOG_DESCRIPTION,
+  alternates: {
+    canonical: '/blog',
+    types: { 'application/rss+xml': [{ url: '/blog/feed.xml', title: BLOG_TITLE }] },
+  },
+  openGraph: {
+    type: 'website',
+    title: BLOG_TITLE,
+    description: BLOG_DESCRIPTION,
+    url: '/blog',
+    siteName: site.name,
+  },
+  twitter: { card: 'summary_large_image', title: BLOG_TITLE, description: BLOG_DESCRIPTION },
 };
 
 export const revalidate = 60;
@@ -16,8 +33,30 @@ const BlogPage = async () => {
     trpc.blogPublic.listPublished.queryOptions({ limit: 24, offset: 0 }),
   ).catch(() => []);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: BLOG_TITLE,
+    description: BLOG_DESCRIPTION,
+    url: absoluteUrl('/blog'),
+    blogPost: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.description,
+      url: absoluteUrl(`/blog/${post.slug}`),
+      ...(post.publishedAt !== null
+        ? { datePublished: new Date(post.publishedAt).toISOString() }
+        : {}),
+    })),
+  };
+
   return (
     <Section className="border-b-0">
+      <script
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        type="application/ld+json"
+      />
       <SectionHeading
         description="Product updates, engineering deep dives, and release notes."
         eyebrow="Blog"

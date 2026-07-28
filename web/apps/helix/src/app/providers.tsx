@@ -13,7 +13,7 @@ import ThemeSetter from '@/components/theme-setter';
 import { THEME_COOKIE } from '@/types';
 
 // Sets the theme class on <html> before first paint (no flash); via useServerInsertedHTML to stay out of the client tree (avoids React 19's inline-script warning).
-const THEME_BOOTSTRAP =`(function(){try{var d=document.documentElement,k='${THEME_COOKIE}',s=localStorage.getItem(k)||'system',t=s==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):s;d.classList.remove('light','dark');d.classList.add(t);d.style.colorScheme=t;}catch(e){}})();`;
+const THEME_BOOTSTRAP = `(function(){try{var d=document.documentElement,k='${THEME_COOKIE}',s=localStorage.getItem(k)||'system',t=s==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):s;d.classList.remove('light','dark');d.classList.add(t);d.style.colorScheme=t;}catch(e){}})();`;
 
 const AppProviders = ({
   children,
@@ -40,7 +40,9 @@ const AppProviders = ({
     }
     bootstrapInserted.current = true;
     // eslint-disable-next-line react/no-danger -- static self-authored no-flash bootstrap (no user input); an inline script is the only way to set the theme class before first paint
-    return <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} suppressHydrationWarning />;
+    return (
+      <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} suppressHydrationWarning />
+    );
   });
 
   return (

@@ -177,7 +177,9 @@ const SessionsPopover = ({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 p-0">
         <div className="text-muted-foreground flex items-center justify-between border-b px-3 py-2 text-xs">
-          <span>{label} ({sessions.length})</span>
+          <span>
+            {label} ({sessions.length})
+          </span>
           <button
             aria-label="Refresh sessions"
             className="hover:text-foreground inline-flex items-center"
@@ -516,12 +518,12 @@ export const StreamTerminal = ({
         onData: (data: Uint8Array) => {
           bytesRef.current.outBytes += data.byteLength;
           // The first bytes back after a keystroke are its echo — sample the RTT.
-          const {sentAt} = rttRef.current;
+          const { sentAt } = rttRef.current;
           if (sentAt !== null) {
             rttRef.current.sentAt = null;
             const dt = performance.now() - sentAt;
             if (dt < RTT_STALE_MS) {
-              const {samples} = rttRef.current;
+              const { samples } = rttRef.current;
               samples.push(dt);
               if (samples.length > RTT_WINDOW) {
                 samples.shift();
@@ -655,7 +657,7 @@ export const StreamTerminal = ({
       const dt = prev.at === 0 ? 0 : (now - prev.at) / MS_PER_SECOND;
       const rate = dt > 0 ? Math.max(0, (total - prev.last) / dt) : 0;
       rateRef.current = { last: total, at: now };
-      const {samples} = rttRef.current;
+      const { samples } = rttRef.current;
       setStats({ inBytes, outBytes, rate, rtt: samples.length > 0 ? median(samples) : null });
     }, STATS_INTERVAL_MS);
     return () => {

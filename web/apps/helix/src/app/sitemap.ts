@@ -24,9 +24,10 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const loadBlogRoutes = async (): Promise<MetadataRoute.Sitemap> => {
     try {
       const caller = await api();
-      const slugs = await caller.publishedSlugs();
-      return slugs.map((slug) => ({
-        url: `${base}/blog/${slug}`,
+      const rows = await caller.publishedSlugs();
+      return rows.map((row) => ({
+        url: `${base}/blog/${row.slug}`,
+        lastModified: row.updatedAt,
         changeFrequency: 'monthly' as const,
         priority: 0.6,
       }));

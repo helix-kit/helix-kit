@@ -3,13 +3,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { logger } from '@helix/logger';
-import { ArrowLeft } from 'lucide-react';
 
 import { PostCard } from '@/components/blog/post-card';
 import { PostContent } from '@/components/blog/post-content';
 import { TableOfContents } from '@/components/blog/table-of-contents';
 import { Section } from '@/components/marketing/section';
 import { compilePost } from '@/lib/blog-mdx';
+import { excerpt, postJsonLd } from '@/lib/blog-seo';
+import { site } from '@/lib/site';
 import { fetchQuery } from '@/server/server';
 
 import type { Metadata } from 'next';
@@ -25,15 +26,66 @@ export const generateMetadata = async ({
   try {
     const post = await fetchQuery((trpc) => trpc.blogPublic.getBySlug.queryOptions({ slug }));
     if (post === null) return {};
+
+    const description = post.description !== '' ? post.description : excerpt(post.content);
+    const url = `/blog/${slug}`;
+    const published =
+      post.publishedAt !== null ? new Date(post.publishedAt).toISOString() : undefined;
+    const modified = new Date(post.updatedAt).toISOString();
+    const authors =
+      post.authorName != null && post.authorName !== '' ? [post.authorName] : undefined;
+
     return {
       title: post.title,
-      description: post.description,
-      openGraph: post.coverImage !== '' ? { images: [post.coverImage] } : undefined,
+      description,
+      keywords: post.tags,
+      authors: authors?.map((name) => ({ name })),
+      alternates: { canonical: url },
+      openGraph: {
+        type: 'article',
+        title: post.title,
+        description,
+        url,
+        siteName: site.name,
+        publishedTime: published,
+        modifiedTime: modified,
+        authors,
+        tags: post.tags,
+        // The dynamic opengraph-image.tsx is appended automatically; a cover image (if any) takes precedence.
+        ...(post.coverImage !== '' ? { images: [{ url: post.coverImage }] } : {}),
+      },
+      twitter: { card: 'summary_large_image', title: post.title, description },
     };
   } catch {
     return {};
   }
 };
+
+const Breadcrumb = ({ title }: { title: string }) => (
+  <nav aria-label="Breadcrumb">
+    <ol className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
+      <li>
+        <Link className="hover:text-foreground transition-colors" href="/">
+          Home
+        </Link>
+      </li>
+      <li aria-hidden className="text-muted-foreground/40">
+        /
+      </li>
+      <li>
+        <Link className="hover:text-foreground transition-colors" href="/blog">
+          Blog
+        </Link>
+      </li>
+      <li aria-hidden className="text-muted-foreground/40">
+        /
+      </li>
+      <li aria-current="page" className="text-foreground/70 max-w-[18rem] truncate">
+        {title}
+      </li>
+    </ol>
+  </nav>
+);
 
 const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;
@@ -57,13 +109,7 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
   if (compiled === null) {
     return (
       <Section className="border-b-0">
-        <Link
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-          href="/blog"
-        >
-          <ArrowLeft className="size-4" />
-          All posts
-        </Link>
+        <Breadcrumb title={post.title} />
         <article className="mx-auto mt-8 max-w-3xl">
           <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             {post.title}
@@ -77,6 +123,15 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
   }
 
   const { body, toc } = compiled;
+  const description = post.description !== '' ? post.description : excerpt(post.content);
+  const isoPublished =
+    post.publishedAt !== null ? new Date(post.publishedAt).toISOString() : undefined;
+  const isoModified = new Date(post.updatedAt).toISOString();
+  const jsonLd = postJsonLd(post, {
+    description,
+    published: isoPublished,
+    modified: isoModified,
+  });
   const publishedLabel =
     post.publishedAt !== null
       ? new Date(post.publishedAt).toLocaleDateString('en-US', {
@@ -88,13 +143,12 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
 
   return (
     <Section className="border-b-0">
-      <Link
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-        href="/blog"
-      >
-        <ArrowLeft className="size-4" />
-        All posts
-      </Link>
+      <script
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        type="application/ld+json"
+      />
+      <Breadcrumb title={post.title} />
 
       <article className="mt-8">
         <header className="mx-auto max-w-3xl">
@@ -118,7 +172,7 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
             {publishedLabel !== '' ? (
               <>
                 <span>·</span>
-                <span>{publishedLabel}</span>
+                <time dateTime={isoPublished}>{publishedLabel}</time>
               </>
             ) : null}
             {post.readingTime !== null ? (

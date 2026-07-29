@@ -56,6 +56,11 @@ hx_overlay_pose.so: overlay_pose/hx_overlay_pose.cpp $(HDR)
 hx_comp_grid.so: comp_grid/hx_comp_grid.cpp $(HDR)
 	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV)
 
+# ---- GPU compositor (opt-in: needs OpenCL — PowerVR ICD). Build with `make gpu`. ----
+gpu: hx_comp_grid_gpu.so
+hx_comp_grid_gpu.so: comp_grid_gpu/hx_comp_grid_gpu.cpp $(HDR)
+	$(CXX) $(SO) $(PKG_CV) $< -o $@ $(LCV) -lOpenCL
+
 # ---- infer: awnn/VIPLite. Compile the vendor awnn .c into the .so; bake RPATH so the VIP
 #      libs resolve at runtime without LD_LIBRARY_PATH (RPATH, not RUNPATH — applies to the
 #      transitive libVIPhal deps; see the RUNPATH/RPATH note in the memory/docs). ----

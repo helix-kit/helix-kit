@@ -48,7 +48,7 @@ export const postJsonLd = (
 ): Record<string, unknown>[] => {
   const url = absoluteUrl(`/blog/${post.slug}`);
   const image =
-    post.coverImage !== '' ? absoluteUrl(post.coverImage) : absoluteUrl('/helix-logo.svg');
+    post.coverImage !== '' ? absoluteUrl(post.coverImage) : absoluteUrl('/apple-icon');
 
   const blogPosting: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -67,7 +67,7 @@ export const postJsonLd = (
     publisher: {
       '@type': 'Organization',
       name: site.name,
-      logo: { '@type': 'ImageObject', url: absoluteUrl('/helix-logo.svg') },
+      logo: { '@type': 'ImageObject', url: absoluteUrl('/apple-icon') },
     },
     keywords: post.tags.join(', '),
     wordCount: wordCount(post.content),

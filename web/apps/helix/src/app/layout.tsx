@@ -4,11 +4,11 @@ import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google';
 
 import { CookiesProvider } from 'next-client-cookies/server';
 
-import { publicOrigin } from '@/lib/site';
+import { publicOrigin, site } from '@/lib/site';
 
 import AppProviders from './providers';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 // globals.css maps --font-sans onto --font-geist-sans; without these loaders everything falls back to Arial.
 const geistSans = Geist({
@@ -39,10 +39,20 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Helix',
     url: publicOrigin,
+    locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
+    site: site.twitter,
+    creator: site.twitter,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
 };
 
 const RootLayout = ({

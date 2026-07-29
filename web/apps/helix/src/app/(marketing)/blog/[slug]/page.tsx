@@ -47,14 +47,22 @@ export const generateMetadata = async ({
         description,
         url,
         siteName: site.name,
+        locale: 'en_US',
         publishedTime: published,
         modifiedTime: modified,
         authors,
         tags: post.tags,
-        // The dynamic opengraph-image.tsx is appended automatically; a cover image (if any) takes precedence.
-        ...(post.coverImage !== '' ? { images: [{ url: post.coverImage }] } : {}),
+        // og:image comes from the dynamic opengraph-image.tsx (1200x630, branded) — appended
+        // by Next automatically. We intentionally do NOT use the raw cover here: covers are
+        // full-res photos (multi-MB) that break WhatsApp's 500KB limit and mis-size previews.
       },
-      twitter: { card: 'summary_large_image', title: post.title, description },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description,
+        site: site.twitter,
+        creator: site.twitter,
+      },
     };
   } catch {
     return {};

@@ -34,6 +34,7 @@ export const site = {
   url: publicOrigin,
   appUrl: '/admin',
   sourceUrl: sourceUrl,
+  twitter: '@jainhardik17',
 } as const;
 
 export const nav = [

@@ -7,7 +7,10 @@ const THOUSAND = 1000;
 
 const parseRepo = (url: string): { owner: string; repo: string } | null => {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
-  return match === null ? null : { owner: match[1], repo: match[2] };
+  if (match === null) return null;
+  const [, owner, repo] = match;
+  if (owner === undefined || repo === undefined) return null;
+  return { owner, repo };
 };
 
 /** Format a star count the way GitHub does: exact under 1k, else "1.2k". */

@@ -48,7 +48,7 @@ const GRID_BACKGROUND = {
   backgroundSize: '44px 44px',
 };
 
-export default async function Page(props: Readonly<PageProps<'/auth/[...path]'>>) {
+export default async function Page(props: Readonly<{ params: Promise<{ path: string[] }> }>) {
   const { path } = await props.params;
   if (path.length === 0) {
     return null;

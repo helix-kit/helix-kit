@@ -209,12 +209,15 @@ Every commit message must carry the Linear id of the issue it advances, as
 - **Local (fast feedback):** a `commit-msg` hook (`.githooks/commit-msg`, activated
   with `git config core.hooksPath .githooks`) rejects commits with no `HELIX-<number>`.
 - **Server (the real gate, can't be bypassed):** the **Commit tracking** GitHub
-  Action (`.github/workflows/commit-tracking.yml` → `scripts/check-linear-id.sh`)
-  checks the PR title and every commit, and is a required status check on `main`.
+  Action (`.github/workflows/commit-tracking.yml` → `scripts/check-linear-id.sh`) is
+  a required status check on `main`. The repo is **squash-merge only** and requires a
+  PR, so the **PR title** becomes the single commit that lands on `main` — the check
+  validates the **PR title** carries a `HELIX-<number>`.
 
-Merge and autosquash (`fixup!`/`squash!`/`amend!`) commits are exempt. Agents still
-don't commit unless asked (see AGENTS.md §9.2) — but when you are asked to commit,
-put the issue id in the message so both layers pass.
+So: **put the id in the PR title** (that's what lands and what's enforced); the local
+hook additionally wants it on each commit but exempts merge/autosquash
+(`fixup!`/`squash!`/`amend!`). Agents still don't commit unless asked (see AGENTS.md
+§9.2) — but when you open a PR, title it `HELIX-<id>: …`.
 
 ## Don't
 

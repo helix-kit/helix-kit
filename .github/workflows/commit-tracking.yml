@@ -2,13 +2,12 @@ name: Commit tracking
 
 # Enforce that every change references its Linear tracking issue (HELIX-<number>).
 # On github.com there are no server-side git hooks, so this Action is the
-# enforcement point — make it a REQUIRED status check (with "require a pull
-# request before merging") in the branch ruleset for `main` so it actually blocks.
+# enforcement point — it is a REQUIRED status check (with "require a pull request
+# before merging") in the branch ruleset for `main`. The repo squash-merges, so
+# the PR title is what lands on `main`; the check validates the PR title.
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -18,11 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Require Linear tracking id
         env:
-          LINEAR_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
-          LINEAR_HEAD_REF: ${{ github.event.pull_request.head.sha || github.event.after }}
           LINEAR_PR_TITLE: ${{ github.event.pull_request.title }}
         run: bash scripts/check-linear-id.sh

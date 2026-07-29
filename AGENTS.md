@@ -337,23 +337,39 @@ drops an individual check.
 
 ## 9. Working discipline (git, commits, memory)
 
-### 9.1 Stay on `main`; don't touch unrelated files
+### 9.1 One worktree + branch per change; `~/code/helix` stays on `main`
 
-- **Do not create branches or worktrees.** Keep your work on `main`. The user
-  creates branches and worktrees manually when they want them.
-- **Assume other agents are working in the same worktree in parallel.** Only edit
-  files that are part of *your* change. Do not reformat, refactor, or "clean up"
-  files you weren't asked to touch — you may clobber another agent's in-flight
-  work.
+- **`~/code/helix` is the canonical checkout and must always stay on `main`.** Never
+  commit, branch, or do work directly in it — treat it as read-only. If you find it on
+  another branch, return it with `git checkout main` (after preserving any work).
+- **Every change gets its own git worktree**, created off `main`:
+  ```sh
+  git worktree add ~/code/helix-worktrees/HELIX-<id> -b HELIX-<id> main
+  ```
+  The worktree directory **and** the branch are both named `HELIX-<id>` — the Linear
+  issue the change is tracked under (§9.4). Do all the work for that change there.
+- **One worktree per change.** Parallel changes get parallel worktrees, so they never
+  collide; still only edit files that are part of *your* change. When the change's PR
+  is merged, remove it: `git worktree remove ~/code/helix-worktrees/HELIX-<id>`.
 
-### 9.2 Never commit on your own; never ask
+### 9.2 Commit signed off as Hardik Jain; open a PR for every change
 
-- **Do not commit.** The user commits when they judge the work is ready, or
-  explicitly asks you to.
-- **Do not ask whether to commit** ("should I commit this?"). Just leave the work
-  in the tree and let the user decide.
-- When the user *does* ask you to commit, sign off under the Developer Certificate
-  of Origin with `git commit -s` (see `CONTRIBUTING.md`).
+- **Never push to `main`.** It is protected (PR required, squash-merge only, required
+  `linear-id` check, no bypass). Every change lands through a pull request.
+- **Sign off every commit as Hardik Jain** with `git commit -s` (the repo git identity
+  is `Hardik Jain <jainhardik120@gmail.com>`). Commits are the user's work — **do not
+  attribute them to Claude, Codex, or any agent**: no agent `Co-Authored-By` and no
+  agent sign-off trailer.
+- **Put the `HELIX-<id>` in every commit message and in the PR title** — the commit-msg
+  hook and the required check enforce it, and on squash-merge the PR title becomes the
+  commit on `main`.
+- **Raise a PR for every change** from the worktree branch:
+  ```sh
+  git push -u origin HELIX-<id>
+  gh pr create --base main --title "HELIX-<id>: <summary>" --body "…"
+  ```
+  Squash-merge is the only method and merged branches auto-delete. The user reviews and
+  merges unless they explicitly ask you to merge.
 
 ### 9.3 Maintain your memory files
 
@@ -376,6 +392,11 @@ issue first (urgent prod fixes are precisely the work that most needs a trail). 
 find yourself thinking "I'll log it after I fix this," that is the failure mode — log
 it now. Skipping preflight on one task means the follow-on tasks have no in-progress
 issue to update, so a whole session goes untracked.
+
+Track each change **end to end (0 → 100)**: `In Progress` before the first edit, an
+activity-log comment at every meaningful step, `In Review` when the PR is open, and
+`Done` only once it is merged and verified. The worktree, branch, and PR are all named
+for the issue (§9.1–9.2), so the trail is unbroken from start to finish.
 
 Follow the **`linear-tracking` skill** (`.claude/skills/linear-tracking/`) **before**
 starting any task and **after** every accomplishment. It tells you how to confirm

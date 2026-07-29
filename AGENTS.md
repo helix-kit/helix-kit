@@ -366,10 +366,19 @@ work, not an afterthought.
 ### 9.4 Track all work in Linear
 
 Helix progress is tracked in **Linear** (the `linear` MCP server) so nothing is
-half-done-and-forgotten. This is not optional: **before** starting any task, and
-**after** every accomplishment, follow the **`linear-tracking` skill**
-(`.claude/skills/linear-tracking/`). It tells you how to confirm tracking is live,
-find or open the right issue under the correct epic (find before create), keep
-status honest (`In Progress` → `In Review` → `Done`-only-when-verified), and append
-a per-issue activity-log comment on every status change or meaningful step. Read and
-act on it at the start of work, not after.
+half-done-and-forgotten. This is a **hard gate, not optional**: opening (or locating)
+the issue and moving it to `In Progress` is the **first action of every substantive
+task** — you may not write/edit code, run a fix, provision infra, change prod, or
+deploy until it exists. Then you record progress **as you go**, in the same turn as
+the work — never batched at the end, never "later". **There is no urgency or size
+exemption:** an urgent breakage, a "quick hotfix", or a one-line fix all require the
+issue first (urgent prod fixes are precisely the work that most needs a trail). If you
+find yourself thinking "I'll log it after I fix this," that is the failure mode — log
+it now. Skipping preflight on one task means the follow-on tasks have no in-progress
+issue to update, so a whole session goes untracked.
+
+Follow the **`linear-tracking` skill** (`.claude/skills/linear-tracking/`) **before**
+starting any task and **after** every accomplishment. It tells you how to confirm
+tracking is live, find or open the right issue under the correct epic (find before
+create), keep status honest (`In Progress` → `In Review` → `Done`-only-when-verified),
+and append a per-issue activity-log comment on every status change or meaningful step.

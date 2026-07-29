@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# This repo points core.hooksPath at .githooks, which replaces (does not add to)
+# the user's global hooks dir. Re-run the global pre-commit so machine-wide checks
+# (e.g. the blocked-words / secret scanner) still apply to Helix commits.
+set -uo pipefail
+
+global_dir="$(git config --global --get core.hooksPath 2>/dev/null || true)"
+if [[ -n "$global_dir" && -x "$global_dir/pre-commit" ]]; then
+    exec "$global_dir/pre-commit" "$@"
+fi
+
+exit 0

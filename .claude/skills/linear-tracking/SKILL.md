@@ -20,18 +20,39 @@ Linear (the `linear` MCP server) so nothing is half-done-and-forgotten. Every un
 of work maps to an issue; every accomplishment leaves a trail. This is not
 optional bookkeeping — do it as part of the work, in the same turn.
 
+> **HARD GATE — this is mandatory, not advisory.** You may **not** begin substantive
+> work (write/edit code, run a fix, provision infra, change prod, deploy) until an
+> issue for it exists and is `In Progress`. Tracking is the *first* action of the
+> task and it runs *in the same turn as the work* — you record progress **as you go**,
+> not batched at the end and not "later".
+>
+> **No exceptions for urgency or size.** "It's an urgent breakage", "it's a quick
+> hotfix", "it's a one-line fix", "the site is down, no time to track" — none of
+> these excuse skipping it. Urgent production fixes are *exactly* the work that most
+> needs a trail. Opening/locating an issue costs one tool call; do it first, then
+> fix. If you catch yourself thinking "I'll log it after I fix this," stop and log it
+> now — that thought is the failure mode this rule exists to prevent.
+>
+> **Skipping compounds.** If you skip preflight on task 1, there's no in-progress
+> issue to update on tasks 2, 3, 4 — so a whole session of fixes goes untracked. One
+> skipped preflight silently poisons everything after it.
+
 If the `mcp__linear__*` tools are not loaded, load them first with
 `ToolSearch` (e.g. `select:mcp__linear__list_issues,mcp__linear__save_issue,mcp__linear__save_comment,mcp__linear__list_projects,mcp__linear__get_issue`).
 
 ## The five rules
 
-1. **Preflight before you touch anything.** At the start of a task, confirm tracking
-   is live and locate (or create) the issue you're about to work on. Never start
-   real work with no issue open for it.
+1. **Preflight is a blocking gate — before you touch anything.** At the start of a
+   task, confirm tracking is live and locate (or create) the issue you're about to
+   work on, and move it to `In Progress`. Never start real work with no issue open
+   for it. This gate applies to *every* substantive task equally — bug fixes, urgent
+   breakages, hotfixes, infra/prod changes, and investigations that lead to a change
+   — with no urgency or size exemption (see the HARD GATE above).
 2. **Find before you create.** Search existing issues first. If the work extends or
    continues something already tracked, update that issue — do not open a duplicate.
-3. **One issue per unit of work, filed under the right epic.** New work = a sub-issue
-   under the matching epic (JAI-5…JAI-30), carrying the epic's subsystem label.
+3. **One issue per unit of work, filed under the right epic, with a subsystem + a type
+   label.** New work = a sub-issue under the matching epic (HELIX-5…HELIX-30), carrying the
+   epic's subsystem label **and exactly one `Type` label** (`FEAT`/`Bug`/`DOC`/`BLOG`/`MKT`).
 4. **Status reflects reality, always.** Move the issue to `In Progress` when you start,
    `In Review` when it's up for review, `Done` only when verified end-to-end. Reflect
    blockers and cancellations too.
@@ -43,7 +64,7 @@ If the `mcp__linear__*` tools are not loaded, load them first with
 
 ## The tracking model (memorize this)
 
-- **Team:** `Jainhardik120` (key `JAI`).
+- **Team:** `Jainhardik120` (key `HELIX`).
 - **Project:** `Helix` (id `78051107-b9cd-4b08-b574-ce8722472dc4`).
 - **Epics** are parent issues labeled `epic`; concrete work are **sub-issues** with
   `parentId` set to the epic. Completed work is `Done`, live work `In Progress`,
@@ -51,40 +72,55 @@ If the `mcp__linear__*` tools are not loaded, load them first with
 - **Subsystem labels** (put the matching one on every sub-issue): `embedded-esp32`,
   `embedded-arduino`, `linux-device`, `linux-platform-os`, `device-ui`, `web`,
   `android`, `cloud`, `tooling`, `protocol`, `experimental`, `docs`.
-- **Cross-cutting labels:** `epic` (parents only), `deploy-blocker` (security/robustness
-  gates for production — also file under the **Pre-deploy blockers** epic and
-  `relatedTo` the home epic).
+- **Type labels** (the `Type` group — put **exactly one** on every non-epic issue):
+  - `FEAT` — new feature / capability / enhancement in code.
+  - `Bug` — defect / regression fix in code. *(This is the workspace's pre-existing
+    `Bug` label; it sits outside the `Type` group but is the bug type. Don't create a
+    second one.)*
+  - `DOC` — code/design documentation (docs/, READMEs, technical writeups).
+  - `BLOG` — a published blog post on the website (one issue per post).
+  - `MKT` — website marketing update (landing/marketing pages, SEO, copy, campaigns).
+  - Code work is `FEAT`/`Bug`/`DOC`. `BLOG` and `MKT` are website/content tracking, not
+    code — they usually carry the `web` subsystem label too.
+- **Cross-cutting labels:** `epic` (parents only — epics take no type label),
+  `deploy-blocker` (security/robustness gates for production — also file under the
+  **Pre-deploy blockers** epic and `relatedTo` the home epic).
 
 ### Epic map — pick the parent for new sub-issues
 
 | Epic | Area |
 | --- | --- |
-| JAI-5 | ESP32 protocol core & transports |
-| JAI-6 | ESP32 platform services (file, db, events, OTA, provisioning) |
-| JAI-7 | ESP32 build / flash / QEMU tooling |
-| JAI-8 | ESP32 console bridge |
-| JAI-9 | Device UI (LVGL) + display seam |
-| JAI-10 | Arduino / AVR firmware |
-| JAI-11 | Linux device runtime (helixd + Go/Python SDKs) |
-| JAI-12 | Device data plane & P2P / WebRTC transport |
-| JAI-13 | Helix Linux platform OS |
-| JAI-14 | Web app (Next.js console, marketing, docs, blog) |
-| JAI-15 | @helix/backend core (auth, tRPC, storage, PKI, releases/OTA, events) |
-| JAI-16 | Cloud appliance & AMI |
-| JAI-17 | Custom firmware build service |
-| JAI-18 | Load testing & scaling |
-| JAI-19 | CI/CD & deploy pipeline |
-| JAI-20 | Android SDK & app |
-| JAI-21 | Protocol contract codegen |
-| JAI-22 | helix CLI & lint gate |
-| JAI-23 | Radxa edge video & NPU inference |
-| JAI-24 | x86 / GPU cross-platform inference pipeline |
-| JAI-25 | Chat bot (Slack / Teams) |
-| JAI-26 | Networking & display experiments (P2P, bandwidth, port-forward, remote shell, kiosk) |
-| JAI-27 | Documentation |
-| JAI-28 | Pre-deploy blockers |
-| JAI-29 | On-device LLM fine-tuning |
-| JAI-30 | Build-time page gating experiment |
+| HELIX-5 | ESP32 protocol core & transports |
+| HELIX-6 | ESP32 platform services (file, db, events, OTA, provisioning) |
+| HELIX-7 | ESP32 build / flash / QEMU tooling |
+| HELIX-8 | ESP32 console bridge |
+| HELIX-9 | Device UI (LVGL) + display seam |
+| HELIX-10 | Arduino / AVR firmware |
+| HELIX-11 | Linux device runtime (helixd + Go/Python SDKs) |
+| HELIX-12 | Device data plane & P2P / WebRTC transport |
+| HELIX-13 | Helix Linux platform OS |
+| HELIX-14 | Web app (Next.js console, marketing, docs, blog) |
+| HELIX-15 | @helix/backend core (auth, tRPC, storage, PKI, releases/OTA, events) |
+| HELIX-16 | Cloud appliance & AMI |
+| HELIX-17 | Custom firmware build service |
+| HELIX-18 | Load testing & scaling |
+| HELIX-19 | CI/CD & deploy pipeline |
+| HELIX-20 | Android SDK & app |
+| HELIX-21 | Protocol contract codegen |
+| HELIX-22 | helix CLI & lint gate |
+| HELIX-23 | Radxa edge video & NPU inference |
+| HELIX-24 | x86 / GPU cross-platform inference pipeline |
+| HELIX-25 | Chat bot (Slack / Teams) |
+| HELIX-26 | Networking & display experiments (P2P, bandwidth, port-forward, remote shell, kiosk) |
+| HELIX-27 | Documentation |
+| HELIX-28 | Pre-deploy blockers |
+| HELIX-29 | On-device LLM fine-tuning |
+| HELIX-30 | Build-time page gating experiment |
+| HELIX-134 | Blog — published posts (parent for `BLOG` issues) |
+| HELIX-135 | Website marketing & SEO (parent for `MKT` issues) |
+
+Published blog posts → `BLOG` sub-issues under **HELIX-134**; marketing/SEO/landing changes →
+`MKT` sub-issues under **HELIX-135** (both also carry the `web` subsystem label).
 
 If the work genuinely fits no epic, create a **new epic** (labeled `epic` + subsystem,
 in the `Helix` project) before adding its sub-issues — don't hang orphans off the
@@ -114,7 +150,7 @@ project root. If a new subsystem appears, create its label too.
 subsystem `labels`, a clear `title`, and a `description` that states the goal and
 references the concrete files/paths (`path:line`) involved. Set `state` to `In Progress`
 if you're starting now, else `Backlog`/`Todo`. Set `priority` for blockers/urgent work
-(1=Urgent, 2=High). For security gates, add `deploy-blocker`, parent it to JAI-28, and
+(1=Urgent, 2=High). For security gates, add `deploy-blocker`, parent it to HELIX-28, and
 `relatedTo` the home epic.
 
 ## Updating an existing issue
@@ -126,7 +162,7 @@ if you're starting now, else `Backlog`/`Todo`. Set `priority` for blockers/urgen
 
 ## The activity log — comment on every meaningful change
 
-Use `save_comment` with `issueId: "JAI-N"`. Add a comment when you: finish a step, flip a
+Use `save_comment` with `issueId: "HELIX-N"`. Add a comment when you: finish a step, flip a
 status, hit or clear a blocker, make a design decision, change scope, or record a
 verification result. Keep it factual and skimmable:
 
@@ -148,7 +184,7 @@ One comment per accomplishment beats one giant end-of-task dump. When you set an
 - **Start of task:** preflight (find/create issue → `In Progress` → starting comment).
 - **After each accomplishment:** update status if it changed + activity-log comment.
 - **On blocker:** comment the obstacle and options; if it gates production, apply
-  `deploy-blocker` and file under JAI-28. Surface it to the user too (don't just log it).
+  `deploy-blocker` and file under HELIX-28. Surface it to the user too (don't just log it).
 - **End of task:** final status (`Done` only if verified) + closing comment.
 
 ## The dashboard & views
@@ -165,11 +201,32 @@ Recently completed, Backlog, Experiments) live in the Linear UI and can't be cre
 the API — the recipes are listed at the bottom of the dashboard doc. If the user asks for a
 new view, add its recipe there rather than trying to create it programmatically.
 
+## Commits reference the issue
+
+Every commit message must carry the Linear id of the issue it advances, as
+`HELIX-<number>` — e.g. `HELIX-125: validate gateway session token`, or a
+`Refs: HELIX-125` trailer. Two layers enforce this:
+- **Local (fast feedback):** a `commit-msg` hook (`.githooks/commit-msg`, activated
+  with `git config core.hooksPath .githooks`) rejects commits with no `HELIX-<number>`.
+- **Server (the real gate, can't be bypassed):** the **Commit tracking** GitHub
+  Action (`.github/workflows/commit-tracking.yml` → `scripts/check-linear-id.sh`)
+  checks the PR title and every commit, and is a required status check on `main`.
+
+Merge and autosquash (`fixup!`/`squash!`/`amend!`) commits are exempt. Agents still
+don't commit unless asked (see AGENTS.md §9.2) — but when you are asked to commit,
+put the issue id in the message so both layers pass.
+
 ## Don't
 
 - Don't start substantive work with no issue open for it.
+- Don't rationalize skipping preflight because the task feels urgent, small, or "just a
+  quick fix" — there is no urgency/size exemption. Log first, then fix.
+- Don't batch tracking to the end of a session ("I'll update Linear after") — update as
+  you go, in the same turn as each accomplishment.
 - Don't create a second issue for something already tracked — search first.
 - Don't flip a status without an accompanying comment.
 - Don't mark `Done` on unverified work.
 - Don't hang sub-issues off the project with no epic parent.
-- Don't touch the JAI-1…JAI-4 default Linear onboarding cards — they aren't Helix work.
+- Don't leave a non-epic issue with no `Type` label, and don't put more than one.
+- Don't create a new "BUG"/"bug" label — the `Bug` type label already exists.
+- Don't touch the HELIX-1…HELIX-4 default Linear onboarding cards — they aren't Helix work.

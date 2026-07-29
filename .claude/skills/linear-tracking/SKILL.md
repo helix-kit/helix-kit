@@ -62,6 +62,24 @@ If the `mcp__linear__*` tools are not loaded, load them first with
 
 ---
 
+## Change workflow — worktree → branch → signed-off PR
+
+Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
+
+1. **Worktree per change.** `~/code/helix` stays on `main`; never work in it. For the
+   issue, `git worktree add ~/code/helix-worktrees/HELIX-<id> -b HELIX-<id> main` and
+   work there. One worktree per change; `git worktree remove` it once the PR merges.
+2. **Commit as Hardik Jain.** `git commit -s` (identity `Hardik Jain
+   <jainhardik120@gmail.com>`). **No agent attribution** — no Claude/agent
+   `Co-Authored-By` or sign-off trailer. Put `HELIX-<id>` in every commit message.
+3. **PR for every change.** Push the branch, then `gh pr create --base main --title
+   "HELIX-<id>: …"`. Squash-merge only; the required `linear-id` check reads the PR
+   title; merged branches auto-delete. The user merges unless they ask you to.
+4. **Track 0 → 100.** `In Progress` before the first edit → activity-log comment at each
+   step → `In Review` when the PR opens → `Done` only when merged and verified.
+
+---
+
 ## The tracking model (memorize this)
 
 - **Team:** `Jainhardik120` (key `HELIX`).

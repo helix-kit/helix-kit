@@ -31,14 +31,12 @@ runs:
           [format]="pnpm run format:check"
           [exports]="pnpm run exports:check"
           [typecheck-scripts]="pnpm run typecheck:scripts"
-        )
-        # ADVISORY: reported as a Check Run, but does NOT fail the pipeline.
-        # `unused` (knip + unused-tRPC-procedure scan) currently reports ~48 unused
-        # exports that predate this pipeline — gating on it would make every build
-        # red on day one. Clean that up, then move `unused` into CHECKS above.
-        declare -A ADVISORY=(
           [unused]="pnpm run unused"
         )
+        # ADVISORY: reported as a Check Run, but does NOT fail the pipeline.
+        # (none — `unused` (knip + unused-tRPC-procedure scan) was promoted to CHECKS
+        # once the pre-existing unused-export backlog was cleared.)
+        declare -A ADVISORY=()
         pids=()
         for slug in "${!CHECKS[@]}" "${!ADVISORY[@]}"; do
           cmd="${CHECKS[$slug]:-${ADVISORY[$slug]:-}}"
@@ -67,7 +65,7 @@ runs:
         RESULTS: |
           turbo|Lint & Typecheck
           format|Format
-          unused|Unused exports (advisory)
+          unused|Unused exports
           exports|Package exports
           typecheck-scripts|Script typecheck
       with:

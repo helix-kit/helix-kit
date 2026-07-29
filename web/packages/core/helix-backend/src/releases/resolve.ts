@@ -52,7 +52,7 @@ export type TrackResolution = Readonly<{
 }>;
 
 // Resolve one track: pinned release or channel head → release → matching ready variant (GIN `@>` containment) → artifacts.
-export const resolveTrack = async (db: DatabaseClient, track: Track): Promise<TrackResolution> => {
+const resolveTrack = async (db: DatabaseClient, track: Track): Promise<TrackResolution> => {
   let releaseId: string | null = track.pinnedReleaseId;
   let source: 'pinned' | 'channel' | null = track.pinnedReleaseId === null ? null : 'pinned';
   if (releaseId === null && track.channel !== null) {

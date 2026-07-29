@@ -3,7 +3,7 @@ import { BookOpen, Boxes, Cable, Network, Rocket } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Hand-authored docs navigation; keep in sync with content/docs/meta.json.
-export interface DocsListItem {
+interface DocsListItem {
   title: string;
   href: string;
   icon: LucideIcon;

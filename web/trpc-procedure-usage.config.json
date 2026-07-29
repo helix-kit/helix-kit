@@ -1,5 +1,13 @@
 {
-  "ignoreProcedures": [],
+  "ignoreProcedures": [
+    { "path": "blogPublic.countPublished", "reason": "Public blog API; server/RSS-consumed, not a frontend hook." },
+    { "path": "blogPublic.publishedSlugs", "reason": "Public blog API; sitemap/RSS-consumed, not a frontend hook." },
+    { "path": "devices.events", "reason": "Device events API; reusable backend surface, UI not yet wired." },
+    { "path": "espFlasher.getFirmwares", "reason": "ESP32 firmware-list API; reusable backend surface." },
+    { "path": "features.catalog", "reason": "Feature catalog API; reusable backend surface." },
+    { "path": "features.deviceOverrides", "reason": "Per-device feature overrides API; reusable backend surface." },
+    { "path": "ice.config", "reason": "ICE server config API; consumed by device/browser P2P clients, not a frontend hook." }
+  ],
   "ignoreUsagePaths": ["reports/**"],
   "manualUsages": [],
   "reportJsonPath": "../reports/trpc-procedure-usage.json",

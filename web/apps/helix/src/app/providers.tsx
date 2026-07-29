@@ -39,8 +39,8 @@ const AppProviders = ({
       return null;
     }
     bootstrapInserted.current = true;
-    // eslint-disable-next-line react/no-danger -- static self-authored no-flash bootstrap (no user input); an inline script is the only way to set the theme class before first paint
     return (
+      // eslint-disable-next-line react/no-danger -- static self-authored no-flash bootstrap (no user input); an inline script is the only way to set the theme class before first paint
       <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} suppressHydrationWarning />
     );
   });

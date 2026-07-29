@@ -47,8 +47,7 @@ export const postJsonLd = (
   opts: { description: string; published?: string; modified?: string },
 ): Record<string, unknown>[] => {
   const url = absoluteUrl(`/blog/${post.slug}`);
-  const image =
-    post.coverImage !== '' ? absoluteUrl(post.coverImage) : absoluteUrl('/apple-icon');
+  const image = post.coverImage !== '' ? absoluteUrl(post.coverImage) : absoluteUrl('/apple-icon');
 
   const blogPosting: Record<string, unknown> = {
     '@context': 'https://schema.org',

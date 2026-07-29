@@ -11,7 +11,7 @@ import { source } from '@/lib/source';
 
 import type { Metadata } from 'next';
 
-const Page = async ({ params }: PageProps<'/docs/[[...slug]]'>) => {
+const Page = async ({ params }: { params: Promise<{ slug?: string[] }> }) => {
   const { slug } = await params;
   const page = source.getPage(slug);
 
@@ -54,7 +54,9 @@ export const generateStaticParams = () => source.generateParams();
 
 export const generateMetadata = async ({
   params,
-}: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> => {
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> => {
   const { slug } = await params;
   const page = source.getPage(slug);
 

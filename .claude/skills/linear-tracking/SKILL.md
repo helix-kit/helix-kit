@@ -50,9 +50,9 @@ If the `mcp__linear__*` tools are not loaded, load them first with
    — with no urgency or size exemption (see the HARD GATE above).
 2. **Find before you create.** Search existing issues first. If the work extends or
    continues something already tracked, update that issue — do not open a duplicate.
-3. **One issue per unit of work, filed under the right epic, with a subsystem + a type
-   label.** New work = a sub-issue under the matching epic (HELIX-5…HELIX-30), carrying the
-   epic's subsystem label **and exactly one `Type` label** (`FEAT`/`Bug`/`DOC`/`BLOG`/`MKT`).
+3. **One issue per unit of work, filed under the right epic, with exactly two labels.**
+   New work = a sub-issue under the matching epic, carrying **exactly one `TYPE` label and
+   exactly one `SUBSYSTEM` label** — never more, never fewer (epics included).
 4. **Status reflects reality, always.** Move the issue to `In Progress` when you start,
    `In Review` when it's up for review, `Done` only when verified end-to-end. Reflect
    blockers and cancellations too.
@@ -84,25 +84,30 @@ Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
 
 - **Team:** `Jainhardik120` (key `HELIX`).
 - **Project:** `Helix` (id `78051107-b9cd-4b08-b574-ce8722472dc4`).
-- **Epics** are parent issues labeled `epic`; concrete work are **sub-issues** with
+- **Epics** are parent issues (TYPE `EPIC`); concrete work are **sub-issues** with
   `parentId` set to the epic. Completed work is `Done`, live work `In Progress`,
   pending work `Backlog`/`Todo`.
-- **Subsystem labels** (put the matching one on every sub-issue): `embedded-esp32`,
-  `embedded-arduino`, `linux-device`, `linux-platform-os`, `device-ui`, `web`,
-  `android`, `cloud`, `tooling`, `protocol`, `experimental`, `docs`.
-- **Type labels** (the `Type` group — put **exactly one** on every non-epic issue):
+- **Every issue carries exactly one `TYPE` + one `SUBSYSTEM` label** — two label groups,
+  epics included, all names UPPERCASE.
+- **`TYPE` group** — the nature of the work (**one only**):
   - `FEAT` — new feature / capability / enhancement in code.
-  - `Bug` — defect / regression fix in code. *(This is the workspace's pre-existing
-    `Bug` label; it sits outside the `Type` group but is the bug type. Don't create a
-    second one.)*
-  - `DOC` — code/design documentation (docs/, READMEs, technical writeups).
+  - `BUG` — defect / regression fix in code.
+  - `DOC` — code/design documentation (docs/, READMEs, design writeups).
   - `BLOG` — a published blog post on the website (one issue per post).
-  - `MKT` — website marketing update (landing/marketing pages, SEO, copy, campaigns).
-  - Code work is `FEAT`/`Bug`/`DOC`. `BLOG` and `MKT` are website/content tracking, not
-    code — they usually carry the `web` subsystem label too.
-- **Cross-cutting labels:** `epic` (parents only — epics take no type label),
-  `deploy-blocker` (security/robustness gates for production — also file under the
-  **Pre-deploy blockers** epic and `relatedTo` the home epic).
+  - `MKT` — website marketing update (landing/SEO/copy/campaigns).
+  - `EPIC` — a parent tracking issue.
+  - `BLOCKER` — a pre-deploy security/robustness gate (also file under the Pre-deploy
+    blockers epic **HELIX-28**, `relatedTo` the home epic).
+  - `EXPERIMENTAL` — prototype/lab work under `experimental/`.
+  - **Precedence when several apply (one wins):** `EXPERIMENTAL` > `EPIC` (an experimental
+    epic is typed `EXPERIMENTAL`, not `EPIC`) > `BLOCKER` > `FEAT`/`BUG`/`DOC`/`BLOG`/`MKT`.
+- **`SUBSYSTEM` group** — which part of the stack (**one only**): `EMBEDDED-ESP32`,
+  `EMBEDDED-ARDUINO`, `LINUX-DEVICE`, `LINUX-PLATFORM-OS`, `DEVICE-UI`, `WEB`, `ANDROID`,
+  `CLOUD`, `TOOLING`, `PROTOCOL`, `EDGE-AI`. `EDGE-AI` = radxa edge-video/NPU + x86/GPU
+  pipeline + on-device LLM. Experimental mapping: radxa/x86/LLM → `EDGE-AI`, chatbot →
+  `WEB`, networking experiments → `CLOUD`, page-gating → `WEB`; documentation → usually
+  `TOOLING`. There is **no `docs` subsystem** (retired — docs work is TYPE `DOC` + a
+  subsystem).
 
 ### Epic map — pick the parent for new sub-issues
 
@@ -197,12 +202,39 @@ One comment per accomplishment beats one giant end-of-task dump. When you set an
 
 ---
 
+## Session handoff — capture everything for the next session
+
+Work spans multiple sessions, and the next session (often a different agent) starts cold.
+So **at the end of every work session — and whenever you pause a task mid-flight — append a
+detailed handoff comment to the issue** capturing *everything* that happened, enough to
+resume with zero re-discovery:
+
+- **What was done, step by step** — the actual commands run and their **raw output/logs**
+  (paste in fenced code blocks; attach full logs as files when long).
+- **Evidence / artifacts** — screenshots, before/after captures, benchmark numbers, test
+  output, `helix lint` / e2e results, URLs, PR links, commit SHAs.
+- **State right now** — what works, what's half-done, what's broken, and exactly where you
+  stopped (file:line, branch, worktree path).
+- **Decisions & why** — choices made and the reasoning, so they aren't relitigated.
+- **Next steps** — the concrete first action for the next session, plus any blockers.
+
+Attach binary evidence (screenshots, log files, captures) to the issue as **Linear
+attachments** (`prepare_attachment_upload` → PUT the bytes → `create_attachment_from_upload`,
+or `create_attachment` for tiny files); keep short logs inline in the comment. Rule of
+thumb: **a fresh agent should be able to read the issue's comments and continue the work
+without you re-explaining anything.** Nothing done during the session may live only in the
+chat transcript — it goes on the issue.
+
+---
+
 ## Cadence
 
 - **Start of task:** preflight (find/create issue → `In Progress` → starting comment).
 - **After each accomplishment:** update status if it changed + activity-log comment.
-- **On blocker:** comment the obstacle and options; if it gates production, apply
-  `deploy-blocker` and file under HELIX-28. Surface it to the user too (don't just log it).
+- **On blocker:** comment the obstacle and options; if it gates production, type it
+  `BLOCKER` and file under HELIX-28. Surface it to the user too (don't just log it).
+- **End of session (even mid-task):** a **handoff comment** — raw logs, screenshots,
+  evidence, current state, decisions, next steps (see *Session handoff* above).
 - **End of task:** final status (`Done` only if verified) + closing comment.
 
 ## The dashboard & views

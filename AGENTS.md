@@ -398,6 +398,13 @@ activity-log comment at every meaningful step, `In Review` when the PR is open, 
 `Done` only once it is merged and verified. The worktree, branch, and PR are all named
 for the issue (§9.1–9.2), so the trail is unbroken from start to finish.
 
+**Capture every session for the next one.** At the end of each work session — and whenever
+you pause a task mid-flight — append a handoff comment to the issue with the raw command
+logs, screenshots, evidence/artifacts, current state, decisions, and next steps, attaching
+screenshots/log files as Linear attachments. A later session (often a different agent) must
+be able to resume from the issue alone; nothing done in the session may live only in the
+chat transcript.
+
 Follow the **`linear-tracking` skill** (`.claude/skills/linear-tracking/`) **before**
 starting any task and **after** every accomplishment. It tells you how to confirm
 tracking is live, find or open the right issue under the correct epic (find before

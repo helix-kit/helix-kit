@@ -18,7 +18,7 @@ import { nav, site } from '@/lib/site';
 import { GithubIcon } from './icons';
 import { Logo } from './logo';
 
-export const SiteHeader = () => {
+export const SiteHeader = ({ stars }: { stars?: string | null }) => {
   const pathname = usePathname();
 
   return (
@@ -61,7 +61,9 @@ export const SiteHeader = () => {
           >
             <Star className="text-brand size-3.5" />
             Star
-            <span className="text-muted-foreground">12.4k</span>
+            {stars != null && stars !== '' ? (
+              <span className="text-muted-foreground">{stars}</span>
+            ) : null}
           </a>
           <Button
             asChild

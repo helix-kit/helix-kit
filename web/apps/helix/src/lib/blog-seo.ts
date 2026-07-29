@@ -18,7 +18,7 @@ export const excerpt = (mdx: string, max = EXCERPT_MAX): string => {
   return `${text.slice(0, max).trimEnd()}…`;
 };
 
-export const wordCount = (mdx: string): number =>
+const wordCount = (mdx: string): number =>
   mdx
     .replace(/```[\s\S]*?```/g, ' ')
     .split(/\s+/)

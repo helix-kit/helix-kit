@@ -52,7 +52,7 @@ const turnSettings: TurnSettings | null =
       }
     : null;
 
-export const { router: appRouter, trpc } = createRootRouter({
+export const { router: appRouter } = createRootRouter({
   blog: blogAdminRouter,
   blogPublic: blogPublicRouter,
   releases: releasesAdminRouter,

@@ -1,14 +1,42 @@
 {
-  "diagnostics": [],
+  "diagnostics": [
+    {
+      "level": "warning",
+      "message": "Could not resolve identifier \"appRouter\" to a router definition.",
+      "location": {
+        "file": "apps/helix/src/app/api/trpc/[trpc]/route.ts",
+        "line": 20,
+        "column": 13
+      }
+    },
+    {
+      "level": "warning",
+      "message": "Could not resolve router expression of kind PropertyAccessExpression.",
+      "location": {
+        "file": "apps/helix-server/src/roles/gateway.ts",
+        "line": 84,
+        "column": 13
+      }
+    },
+    {
+      "level": "warning",
+      "message": "Could not resolve identifier \"apiRouter\" to a router definition.",
+      "location": {
+        "file": "apps/helix-server/src/roles/gateway.ts",
+        "line": 111,
+        "column": 13
+      }
+    }
+  ],
   "procedures": [
     {
       "kind": "mutation",
       "openapi": null,
       "path": "blog.create",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 267,
+        "line": 265,
         "column": 5
       },
       "ignoreReason": null,
@@ -18,7 +46,7 @@
         {
           "kind": "mutationOptions",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/create-post-button.tsx",
+            "file": "apps/helix/src/app/admin/(dashboard)/post/create-post-button.tsx",
             "line": 14,
             "column": 5
           }
@@ -29,10 +57,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "blog.delete",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 315,
+        "line": 313,
         "column": 5
       },
       "ignoreReason": null,
@@ -43,14 +71,14 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 53,
+            "line": 52,
             "column": 5
           }
         },
         {
           "kind": "mutationOptions",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/posts-table.tsx",
+            "file": "apps/helix/src/app/admin/(dashboard)/post/posts-table.tsx",
             "line": 31,
             "column": 5
           }
@@ -61,10 +89,10 @@
       "kind": "query",
       "openapi": null,
       "path": "blog.getById",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 262,
+        "line": 260,
         "column": 5
       },
       "ignoreReason": null,
@@ -75,7 +103,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 49,
+            "line": 48,
             "column": 5
           }
         }
@@ -85,10 +113,10 @@
       "kind": "query",
       "openapi": null,
       "path": "blog.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 210,
+        "line": 208,
         "column": 5
       },
       "ignoreReason": null,
@@ -98,7 +126,7 @@
         {
           "kind": "queryOptions",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/page.tsx",
+            "file": "apps/helix/src/app/admin/(dashboard)/post/page.tsx",
             "line": 13,
             "column": 58
           }
@@ -109,10 +137,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "blog.update",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 287,
+        "line": 285,
         "column": 5
       },
       "ignoreReason": null,
@@ -123,7 +151,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 51,
+            "line": 50,
             "column": 43
           }
         }
@@ -132,15 +160,110 @@
     {
       "kind": "query",
       "openapi": null,
-      "path": "countPublished",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
+      "path": "blogPublic.countPublished",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/blog/router.ts",
         "line": 115,
         "column": 5
       },
+      "ignoreReason": "Public blog API; server/RSS-consumed, not a frontend hook.",
+      "status": "ignored",
+      "usageCount": 0,
+      "usages": []
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "blogPublic.getBySlug",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/blog/router.ts",
+        "line": 136,
+        "column": 5
+      },
       "ignoreReason": null,
-      "status": "unused",
+      "status": "used",
+      "usageCount": 2,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
+            "line": 27,
+            "column": 45
+          }
+        },
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
+            "line": 101,
+            "column": 43
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "blogPublic.getRelated",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/blog/router.ts",
+        "line": 160,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
+            "line": 105,
+            "column": 5
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "blogPublic.listPublished",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/blog/router.ts",
+        "line": 92,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/page.tsx",
+            "line": 40,
+            "column": 5
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "blogPublic.publishedSlugs",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/blog/router.ts",
+        "line": 129,
+        "column": 5
+      },
+      "ignoreReason": "Public blog API; sitemap/RSS-consumed, not a frontend hook.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
     },
@@ -148,10 +271,10 @@
       "kind": "query",
       "openapi": null,
       "path": "deviceCertificates.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/pki/admin-router.ts",
-        "line": 51,
+        "line": 45,
         "column": 5
       },
       "ignoreReason": null,
@@ -162,7 +285,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-certificates.tsx",
-            "line": 46,
+            "line": 42,
             "column": 8
           }
         }
@@ -172,10 +295,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "deviceCertificates.revoke",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/pki/admin-router.ts",
-        "line": 81,
+        "line": 73,
         "column": 5
       },
       "ignoreReason": null,
@@ -186,7 +309,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-certificates.tsx",
-            "line": 50,
+            "line": 46,
             "column": 5
           }
         }
@@ -196,10 +319,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "devices.create",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 162,
+        "line": 152,
         "column": 5
       },
       "ignoreReason": null,
@@ -210,7 +333,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx",
-            "line": 102,
+            "line": 100,
             "column": 43
           }
         }
@@ -220,10 +343,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "devices.delete",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 208,
+        "line": 198,
         "column": 5
       },
       "ignoreReason": null,
@@ -234,7 +357,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx",
-            "line": 159,
+            "line": 157,
             "column": 5
           }
         },
@@ -242,7 +365,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-actions.tsx",
-            "line": 44,
+            "line": 43,
             "column": 5
           }
         }
@@ -252,14 +375,14 @@
       "kind": "query",
       "openapi": null,
       "path": "devices.events",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 216,
+        "line": 206,
         "column": 5
       },
-      "ignoreReason": null,
-      "status": "unused",
+      "ignoreReason": "Device events API; reusable backend surface, UI not yet wired.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
     },
@@ -267,10 +390,10 @@
       "kind": "query",
       "openapi": null,
       "path": "devices.get",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 134,
+        "line": 127,
         "column": 5
       },
       "ignoreReason": null,
@@ -281,7 +404,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/[app]/page.tsx",
-            "line": 22,
+            "line": 18,
             "column": 45
           }
         },
@@ -299,10 +422,10 @@
       "kind": "query",
       "openapi": null,
       "path": "devices.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 59,
+        "line": 54,
         "column": 5
       },
       "ignoreReason": null,
@@ -323,10 +446,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "devices.rotateToken",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 193,
+        "line": 183,
         "column": 5
       },
       "ignoreReason": null,
@@ -337,7 +460,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx",
-            "line": 150,
+            "line": 148,
             "column": 5
           }
         }
@@ -347,10 +470,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "devices.setActive",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 182,
+        "line": 172,
         "column": 5
       },
       "ignoreReason": null,
@@ -361,7 +484,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx",
-            "line": 141,
+            "line": 139,
             "column": 5
           }
         },
@@ -369,7 +492,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-actions.tsx",
-            "line": 35,
+            "line": 34,
             "column": 5
           }
         }
@@ -379,14 +502,14 @@
       "kind": "query",
       "openapi": null,
       "path": "espFlasher.getFirmwares",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/device-apps/src/esp32-flasher/router.ts",
-        "line": 22,
+        "line": 18,
         "column": 5
       },
-      "ignoreReason": null,
-      "status": "unused",
+      "ignoreReason": "ESP32 firmware-list API; reusable backend surface.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
     },
@@ -394,14 +517,14 @@
       "kind": "query",
       "openapi": null,
       "path": "features.catalog",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 33,
+        "line": 30,
         "column": 5
       },
-      "ignoreReason": null,
-      "status": "unused",
+      "ignoreReason": "Feature catalog API; reusable backend surface.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
     },
@@ -409,14 +532,14 @@
       "kind": "query",
       "openapi": null,
       "path": "features.deviceOverrides",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 76,
+        "line": 73,
         "column": 5
       },
-      "ignoreReason": null,
-      "status": "unused",
+      "ignoreReason": "Per-device feature overrides API; reusable backend surface.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
     },
@@ -424,10 +547,10 @@
       "kind": "query",
       "openapi": null,
       "path": "features.profileFeatures",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 38,
+        "line": 35,
         "column": 5
       },
       "ignoreReason": null,
@@ -438,7 +561,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/profiles/[id]/features-panel.tsx",
-            "line": 18,
+            "line": 17,
             "column": 42
           }
         }
@@ -448,10 +571,10 @@
       "kind": "query",
       "openapi": null,
       "path": "features.resolveDevice",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 127,
+        "line": 124,
         "column": 5
       },
       "ignoreReason": null,
@@ -462,7 +585,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-feature-overrides.tsx",
-            "line": 36,
+            "line": 33,
             "column": 8
           }
         }
@@ -472,10 +595,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "features.setDeviceOverride",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 91,
+        "line": 88,
         "column": 5
       },
       "ignoreReason": null,
@@ -486,7 +609,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-feature-overrides.tsx",
-            "line": 40,
+            "line": 37,
             "column": 5
           }
         }
@@ -496,10 +619,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "features.setProfileFeature",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 54,
+        "line": 51,
         "column": 5
       },
       "ignoreReason": null,
@@ -510,7 +633,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/profiles/[id]/features-panel.tsx",
-            "line": 20,
+            "line": 19,
             "column": 5
           }
         }
@@ -634,7 +757,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tests/e2e/_events.py",
-            "line": 68,
+            "line": 64,
             "column": 72
           }
         },
@@ -650,64 +773,8 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/loadtest/remote_harness.py",
-            "line": 15,
-            "column": 54
-          }
-        }
-      ]
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "getBySlug",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 137,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "used",
-      "usageCount": 2,
-      "usages": [
-        {
-          "kind": "direct-call",
-          "location": {
-            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 26,
-            "column": 24
-          }
-        },
-        {
-          "kind": "direct-call",
-          "location": {
-            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 42,
-            "column": 22
-          }
-        }
-      ]
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "getRelated",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 160,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "used",
-      "usageCount": 1,
-      "usages": [
-        {
-          "kind": "direct-call",
-          "location": {
-            "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 45,
-            "column": 26
+            "line": 222,
+            "column": 35
           }
         }
       ]
@@ -716,40 +783,16 @@
       "kind": "query",
       "openapi": null,
       "path": "ice.config",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/ice/index.ts",
-        "line": 76,
+        "line": 51,
         "column": 5
       },
-      "ignoreReason": null,
-      "status": "unused",
+      "ignoreReason": "ICE server config API; consumed by device/browser P2P clients, not a frontend hook.",
+      "status": "ignored",
       "usageCount": 0,
       "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "listPublished",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 92,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "used",
-      "usageCount": 1,
-      "usages": [
-        {
-          "kind": "direct-call",
-          "location": {
-            "file": "apps/helix/src/app/(marketing)/blog/page.tsx",
-            "line": 17,
-            "column": 19
-          }
-        }
-      ]
     },
     {
       "kind": "mutation",
@@ -758,7 +801,7 @@
         "path": "/api/certificates/device"
       },
       "path": "pki.issueDeviceCertificate",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/pki/router.ts",
         "line": 42,
@@ -766,7 +809,7 @@
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 5,
+      "usageCount": 6,
       "usages": [
         {
           "kind": "openapi-path",
@@ -780,7 +823,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tests/e2e/conftest.py",
-            "line": 106,
+            "line": 104,
             "column": 21
           }
         },
@@ -795,6 +838,14 @@
         {
           "kind": "openapi-path",
           "location": {
+            "file": "../tooling/device/provision.py",
+            "line": 64,
+            "column": 25
+          }
+        },
+        {
+          "kind": "openapi-path",
+          "location": {
             "file": "../tooling/loadtest/certs.py",
             "line": 23,
             "column": 21
@@ -804,8 +855,8 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/loadtest/provision_remote.py",
-            "line": 7,
-            "column": 22
+            "line": 76,
+            "column": 10
           }
         }
       ]
@@ -814,10 +865,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.addTrack",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 189,
+        "line": 184,
         "column": 5
       },
       "ignoreReason": null,
@@ -838,10 +889,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.assignDevice",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 284,
+        "line": 277,
         "column": 5
       },
       "ignoreReason": null,
@@ -870,10 +921,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.create",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 144,
+        "line": 140,
         "column": 5
       },
       "ignoreReason": null,
@@ -894,10 +945,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.delete",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 181,
+        "line": 177,
         "column": 5
       },
       "ignoreReason": null,
@@ -926,10 +977,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.deviceProfiles",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 333,
+        "line": 325,
         "column": 5
       },
       "ignoreReason": null,
@@ -940,7 +991,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-profiles.tsx",
-            "line": 127,
+            "line": 126,
             "column": 8
           }
         }
@@ -950,10 +1001,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.deviceSearch",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 310,
+        "line": 302,
         "column": 5
       },
       "ignoreReason": null,
@@ -974,10 +1025,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.get",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 124,
+        "line": 120,
         "column": 5
       },
       "ignoreReason": null,
@@ -998,10 +1049,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 57,
+        "line": 54,
         "column": 5
       },
       "ignoreReason": null,
@@ -1022,10 +1073,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.profileSearch",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 349,
+        "line": 341,
         "column": 5
       },
       "ignoreReason": null,
@@ -1046,10 +1097,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.removeTrack",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 238,
+        "line": 233,
         "column": 5
       },
       "ignoreReason": null,
@@ -1070,10 +1121,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.resolveDevice",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 373,
+        "line": 364,
         "column": 5
       },
       "ignoreReason": null,
@@ -1084,7 +1135,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-profiles.tsx",
-            "line": 131,
+            "line": 130,
             "column": 8
           }
         }
@@ -1094,10 +1145,10 @@
       "kind": "query",
       "openapi": null,
       "path": "profiles.trackOptions",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 247,
+        "line": 241,
         "column": 5
       },
       "ignoreReason": null,
@@ -1118,10 +1169,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.unassignDevice",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 294,
+        "line": 287,
         "column": 5
       },
       "ignoreReason": null,
@@ -1140,7 +1191,7 @@
           "kind": "mutationOptions",
           "location": {
             "file": "apps/helix/src/app/device/[id]/device-profiles.tsx",
-            "line": 135,
+            "line": 134,
             "column": 5
           }
         }
@@ -1150,10 +1201,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.update",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 162,
+        "line": 158,
         "column": 5
       },
       "ignoreReason": null,
@@ -1174,10 +1225,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "profiles.updateTrack",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/profiles/admin-router.ts",
-        "line": 217,
+        "line": 212,
         "column": 5
       },
       "ignoreReason": null,
@@ -1195,51 +1246,27 @@
       ]
     },
     {
-      "kind": "query",
-      "openapi": null,
-      "path": "publishedSlugs",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 129,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "used",
-      "usageCount": 1,
-      "usages": [
-        {
-          "kind": "direct-call",
-          "location": {
-            "file": "apps/helix/src/app/sitemap.ts",
-            "line": 28,
-            "column": 27
-          }
-        }
-      ]
-    },
-    {
       "kind": "mutation",
       "openapi": {
         "method": "POST",
         "path": "/api/build/artifact-url"
       },
       "path": "releases.buildArtifactUrl",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 253,
+        "line": 198,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 2,
+      "usageCount": 3,
       "usages": [
         {
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 254,
+            "line": 199,
             "column": 49
           }
         },
@@ -1247,8 +1274,16 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 171,
+            "line": 170,
             "column": 14
+          }
+        },
+        {
+          "kind": "openapi-path",
+          "location": {
+            "file": "../cloud/build-service/mock_backend.py",
+            "line": 86,
+            "column": 23
           }
         }
       ]
@@ -1260,21 +1295,21 @@
         "path": "/api/build/complete"
       },
       "path": "releases.buildComplete",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 269,
+        "line": 214,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 2,
+      "usageCount": 3,
       "usages": [
         {
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 270,
+            "line": 215,
             "column": 49
           }
         },
@@ -1282,8 +1317,40 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 185,
-            "column": 14
+            "line": 196,
+            "column": 28
+          }
+        },
+        {
+          "kind": "openapi-path",
+          "location": {
+            "file": "../cloud/build-service/mock_backend.py",
+            "line": 88,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "releases.builds.catalog",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/releases/admin-router.ts",
+        "line": 465,
+        "column": 7
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/admin/(dashboard)/builds/new/page.tsx",
+            "line": 28,
+            "column": 44
           }
         }
       ]
@@ -1292,10 +1359,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.builds.filterOptions",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 448,
+        "line": 451,
         "column": 7
       },
       "ignoreReason": null,
@@ -1306,7 +1373,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/builds/page.tsx",
-            "line": 14,
+            "line": 18,
             "column": 26
           }
         }
@@ -1315,11 +1382,35 @@
     {
       "kind": "query",
       "openapi": null,
-      "path": "releases.builds.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "path": "releases.builds.get",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 397,
+        "line": 513,
+        "column": 7
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/admin/(dashboard)/builds/new/_components/build-wizard.tsx",
+            "line": 44,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "releases.builds.list",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/releases/admin-router.ts",
+        "line": 400,
         "column": 7
       },
       "ignoreReason": null,
@@ -1330,8 +1421,56 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/builds/page.tsx",
-            "line": 13,
+            "line": 17,
             "column": 26
+          }
+        }
+      ]
+    },
+    {
+      "kind": "mutation",
+      "openapi": null,
+      "path": "releases.builds.request",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/releases/admin-router.ts",
+        "line": 476,
+        "column": 7
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "mutationOptions",
+          "location": {
+            "file": "apps/helix/src/app/admin/(dashboard)/builds/new/_components/build-wizard.tsx",
+            "line": 28,
+            "column": 5
+          }
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "releases.builds.serviceStatus",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/releases/admin-router.ts",
+        "line": 460,
+        "column": 7
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/admin/(dashboard)/builds/new/page.tsx",
+            "line": 22,
+            "column": 46
           }
         }
       ]
@@ -1343,10 +1482,10 @@
         "path": "/api/builds/request"
       },
       "path": "releases.buildsRequest",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 181,
+        "line": 174,
         "column": 5
       },
       "ignoreReason": null,
@@ -1357,7 +1496,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 182,
+            "line": 175,
             "column": 49
           }
         },
@@ -1365,7 +1504,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 158,
+            "line": 157,
             "column": 14
           }
         }
@@ -1378,10 +1517,10 @@
         "path": "/api/ci/artifacts/upload-url"
       },
       "path": "releases.ciArtifactUploadUrl",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 148,
+        "line": 142,
         "column": 5
       },
       "ignoreReason": null,
@@ -1392,7 +1531,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 149,
+            "line": 143,
             "column": 49
           }
         },
@@ -1400,7 +1539,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 201,
+            "line": 213,
             "column": 18
           }
         }
@@ -1413,10 +1552,10 @@
         "path": "/api/ci/releases"
       },
       "path": "releases.ciRegisterRelease",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 164,
+        "line": 158,
         "column": 5
       },
       "ignoreReason": null,
@@ -1427,7 +1566,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 165,
+            "line": 159,
             "column": 49
           }
         },
@@ -1435,7 +1574,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 226,
+            "line": 236,
             "column": 14
           }
         }
@@ -1445,10 +1584,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.filterOptions",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 169,
+        "line": 179,
         "column": 5
       },
       "ignoreReason": null,
@@ -1477,10 +1616,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.getById",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 183,
+        "line": 192,
         "column": 5
       },
       "ignoreReason": null,
@@ -1491,7 +1630,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/releases/[id]/page.tsx",
-            "line": 127,
+            "line": 126,
             "column": 45
           }
         }
@@ -1501,10 +1640,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 140,
+        "line": 151,
         "column": 5
       },
       "ignoreReason": null,
@@ -1528,10 +1667,10 @@
         "path": "/api/ota/trigger"
       },
       "path": "releases.otaTrigger",
-      "surface": "apps/helix-server/src/roles/gateway.ts:109:21",
+      "surface": "apps/helix-server/src/roles/gateway.ts:109:33",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/api-router.ts",
-        "line": 319,
+        "line": 263,
         "column": 5
       },
       "ignoreReason": null,
@@ -1542,7 +1681,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/core/helix-backend/src/releases/api-router.ts",
-            "line": 320,
+            "line": 264,
             "column": 49
           }
         },
@@ -1550,7 +1689,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "../tooling/release/sim.py",
-            "line": 374,
+            "line": 382,
             "column": 28
           }
         }
@@ -1560,10 +1699,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.products.get",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 313,
+        "line": 317,
         "column": 7
       },
       "ignoreReason": null,
@@ -1584,10 +1723,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.products.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 239,
+        "line": 246,
         "column": 7
       },
       "ignoreReason": null,
@@ -1608,10 +1747,10 @@
       "kind": "query",
       "openapi": null,
       "path": "releases.products.releases",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/releases/admin-router.ts",
-        "line": 373,
+        "line": 376,
         "column": 7
       },
       "ignoreReason": null,
@@ -1632,10 +1771,10 @@
       "kind": "query",
       "openapi": null,
       "path": "users.filterOptions",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/users/admin-router.ts",
-        "line": 127,
+        "line": 124,
         "column": 5
       },
       "ignoreReason": null,
@@ -1656,10 +1795,10 @@
       "kind": "query",
       "openapi": null,
       "path": "users.list",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/users/admin-router.ts",
-        "line": 47,
+        "line": 44,
         "column": 5
       },
       "ignoreReason": null,
@@ -1680,10 +1819,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "users.remove",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/users/admin-router.ts",
-        "line": 174,
+        "line": 170,
         "column": 5
       },
       "ignoreReason": null,
@@ -1704,10 +1843,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "users.setBan",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/users/admin-router.ts",
-        "line": 146,
+        "line": 142,
         "column": 5
       },
       "ignoreReason": null,
@@ -1728,10 +1867,10 @@
       "kind": "mutation",
       "openapi": null,
       "path": "users.setRole",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
+      "surface": "apps/helix/src/server/trpc.ts:55:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/users/admin-router.ts",
-        "line": 138,
+        "line": 134,
         "column": 5
       },
       "ignoreReason": null,
@@ -1749,96 +1888,5 @@
       ]
     }
   ],
-  "unusedProcedures": [
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "countPublished",
-      "surface": "apps/helix/src/server/trpc.ts:124:32",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/blog/router.ts",
-        "line": 115,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "devices.events",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/devices/admin-router.ts",
-        "line": 216,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "espFlasher.getFirmwares",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
-      "definedAt": {
-        "file": "packages/core/device-apps/src/esp32-flasher/router.ts",
-        "line": 22,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "features.catalog",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 33,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "features.deviceOverrides",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/features/admin-router.ts",
-        "line": 76,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    },
-    {
-      "kind": "query",
-      "openapi": null,
-      "path": "ice.config",
-      "surface": "apps/helix/src/server/trpc.ts:66:26",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/ice/index.ts",
-        "line": 76,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    }
-  ]
+  "unusedProcedures": []
 }

@@ -60,7 +60,7 @@ export const sendEmail = async (to: string[], subject: string, emailBody: React.
   return sendRawEmail({ html: emailHtml, subject, text: emailText, to });
 };
 
-export const sendRawEmail = async ({
+const sendRawEmail = async ({
   to,
   subject,
   html,

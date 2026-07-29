@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { cn } from '@helix/design-system/lib/utils';
 
-export const sections = [
+const sections = [
   { id: 'home', label: 'Home' },
   { id: 'protocol', label: 'Protocol' },
   { id: 'layers', label: 'Layers' },

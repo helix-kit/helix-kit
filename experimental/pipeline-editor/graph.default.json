@@ -1,0 +1,16 @@
+{
+  "name": "4cam-yolo11s-webrtc",
+  "host": "192.168.1.35",
+  "streams": [
+    "rtsp://${HOST}:8554/stream1", "rtsp://${HOST}:8554/stream2",
+    "rtsp://${HOST}:8554/stream3", "rtsp://${HOST}:8554/stream4"
+  ],
+  "nodes": [
+    {"id": "src",   "role": "source",  "params": {"streams": 4}},
+    {"id": "det",   "role": "detect",  "params": {"model": "yolo11s", "conf": 0.35, "nms": 0.45, "fps": 15}},
+    {"id": "ovl",   "role": "overlay", "params": {"color": "orange"}},
+    {"id": "tile",  "role": "tile",    "params": {"cols": 2, "rows": 2, "width": 1280, "height": 720}},
+    {"id": "sink",  "role": "sink",    "params": {"kind": "webrtc", "name": "detgrid", "bitrate": 1500}}
+  ],
+  "edges": [["src","det"],["det","ovl"],["ovl","tile"],["tile","sink"]]
+}

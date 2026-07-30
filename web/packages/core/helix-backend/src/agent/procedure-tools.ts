@@ -6,11 +6,12 @@ import type { AnyRouter } from '@trpc/server';
 export type ProcedureKind = 'query' | 'mutation' | 'subscription';
 
 /**
- * A provider-neutral tool descriptor derived from a single tRPC procedure. Both
- * the site AI agent (ai-sdk) and the external MCP server wrap these into their
- * own tool shapes, so the enumeration/schema/execution logic lives here once.
+ * A provider-neutral description of one exposed tRPC procedure as a tool, with no
+ * caller bound. The site AI agent binds a per-request caller (`collectProcedureTools`);
+ * the MCP server keeps these static and builds a caller per tool call from the
+ * request's auth. Both consume the same enumeration/schema logic here.
  */
-export type ProcedureTool = {
+export type ProcedureDescriptor = {
   /** Model-safe tool name, unique across the router. */
   name: string;
   /** Dotted tRPC path, e.g. `users.list`. */
@@ -19,9 +20,15 @@ export type ProcedureTool = {
   description: string;
   readOnly: boolean;
   destructive: boolean;
-  /** JSON Schema for the tool input. */
+  /** Raw zod input schema (for MCP, whose SDK validates with zod). */
+  inputSchema: z.ZodType;
+  /** JSON Schema for the tool input (for ai-sdk). */
   inputJsonSchema: Record<string, unknown>;
-  /** Run the procedure through the caller this descriptor was built with. */
+};
+
+/** A descriptor bound to a caller for execution. */
+export type ProcedureTool = ProcedureDescriptor & {
+  /** Run the procedure through the caller this tool was built with. */
   execute: (input: unknown) => Promise<unknown>;
 };
 
@@ -100,21 +107,36 @@ const resolveCallable = (
 };
 
 /**
- * Enumerate every procedure on `router` into a provider-neutral tool descriptor,
- * bound to `caller` for execution. Procedures are exposed by default; a procedure
- * opts out with `.meta({ tool: { expose: false } })`.
- *
- * Because `caller` is built from a request context, every procedure's own
- * authorization runs on execute — a call the identity isn't allowed to make simply
- * throws, which the model receives as a tool error. That is why exposing the whole
- * surface (including mutations) is safe: authz is enforced once, in tRPC.
+ * Invoke a procedure by dotted path through a tRPC caller, normalizing the result
+ * to plain JSON. Every procedure's own authorization runs (the caller carries the
+ * request identity), so a forbidden call simply throws.
  */
-export const collectProcedureTools = (router: AnyRouter, caller: unknown): ProcedureTool[] => {
+export const invokeProcedure = async (
+  caller: unknown,
+  path: string,
+  input: unknown,
+): Promise<unknown> => {
+  const callable = resolveCallable(caller, path);
+  if (callable === null) {
+    throw new Error(`Procedure ${path} is not callable.`);
+  }
+  const result = await callable(input);
+  // tRPC returns rich JS values (Date, class instances); model/MCP payloads must be
+  // plain JSON, so round-trip to normalize.
+  return result === undefined ? null : (JSON.parse(JSON.stringify(result)) as unknown);
+};
+
+/**
+ * Enumerate every exposed procedure on `router` into a caller-free descriptor.
+ * Procedures are exposed by default; a procedure opts out with
+ * `.meta({ tool: { expose: false } })`.
+ */
+export const collectProcedureDescriptors = (router: AnyRouter): ProcedureDescriptor[] => {
   const { procedures } = (
     router as unknown as { _def: { procedures: Record<string, ProcedureDef> } }
   )._def;
 
-  const tools: ProcedureTool[] = [];
+  const descriptors: ProcedureDescriptor[] = [];
   const seen = new Set<string>();
 
   for (const [path, proc] of Object.entries(procedures)) {
@@ -132,27 +154,31 @@ export const collectProcedureTools = (router: AnyRouter, caller: unknown): Proce
     seen.add(name);
 
     const kind: ProcedureKind = proc._def.type ?? 'query';
+    const inputSchema = inputSchemaOf(proc);
 
-    tools.push({
+    descriptors.push({
       name,
       path,
       kind,
       description: descriptionFor(path, meta),
       readOnly: meta?.tool?.readOnly ?? kind === 'query',
       destructive: meta?.tool?.destructive ?? false,
-      inputJsonSchema: toInputJsonSchema(inputSchemaOf(proc)),
-      execute: async (input: unknown) => {
-        const callable = resolveCallable(caller, path);
-        if (callable === null) {
-          throw new Error(`Procedure ${path} is not callable.`);
-        }
-        const result = await callable(input);
-        // tRPC returns rich JS values (Date, class instances); model/MCP payloads
-        // must be plain JSON, so round-trip to normalize.
-        return result === undefined ? null : (JSON.parse(JSON.stringify(result)) as unknown);
-      },
+      inputSchema,
+      inputJsonSchema: toInputJsonSchema(inputSchema),
     });
   }
 
-  return tools;
+  return descriptors;
 };
+
+/**
+ * Enumerate the exposed procedures and bind each to `caller` for execution — the
+ * form the site AI agent consumes (one caller per request). Because `caller` is
+ * built from a request context, exposing the whole surface (including mutations) is
+ * safe: authz is enforced once, in tRPC.
+ */
+export const collectProcedureTools = (router: AnyRouter, caller: unknown): ProcedureTool[] =>
+  collectProcedureDescriptors(router).map((descriptor) => ({
+    ...descriptor,
+    execute: (input: unknown) => invokeProcedure(caller, descriptor.path, input),
+  }));

@@ -1,12 +1,12 @@
 import 'server-only';
 
+import { agentRouter, findAgentUser } from '@helix/backend/agent';
 import {
   blogAdminRouter,
   blogPublicRouter,
   type BlogContext,
   type BlogSessionUser,
 } from '@helix/backend/blog';
-import { agentRouter } from '@helix/backend/agent';
 import { devicesAdminRouter } from '@helix/backend/devices';
 import { featuresAdminRouter } from '@helix/backend/features';
 import { iceRouter, type TurnSettings } from '@helix/backend/ice';
@@ -73,6 +73,29 @@ type CreateTRPCContextOptions = {
   setHeader: (key: string, value: string) => Promise<void>;
 };
 
+// One place assembles the full request context so both the cookie-session path
+// (createTRPCContext) and the token path (createTRPCContextForUser, used by the
+// external MCP server) produce an identical context shape.
+const buildContext = (user: BlogSessionUser | null) =>
+  ({
+    db,
+    adminRoles: ADMIN_ROLES,
+    user,
+    storage,
+    stepCaSettings,
+    stunUrls: urlList(env.STUN_SERVER_URL),
+    turn: turnSettings,
+    buildWorkerUrl: env.HELIX_BUILD_WORKER_URL ?? null,
+    buildCallbackBaseUrl: env.HELIX_BUILD_CALLBACK_BASE_URL ?? null,
+  }) satisfies BlogContext & {
+    storage: typeof storage;
+    stepCaSettings: StepCaSettings | null;
+    stunUrls: readonly string[];
+    turn: TurnSettings | null;
+    buildWorkerUrl: string | null;
+    buildCallbackBaseUrl: string | null;
+  };
+
 export const createTRPCContext = async ({ headers }: CreateTRPCContextOptions) => {
   const session = await auth.api.getSession({ headers });
   const sessionUser = session?.user;
@@ -85,22 +108,15 @@ export const createTRPCContext = async ({ headers }: CreateTRPCContextOptions) =
           role: (sessionUser as { role?: string | null }).role ?? null,
         };
 
-  return {
-    db,
-    adminRoles: ADMIN_ROLES,
-    user,
-    storage,
-    stepCaSettings,
-    stunUrls: urlList(env.STUN_SERVER_URL),
-    turn: turnSettings,
-    buildWorkerUrl: env.HELIX_BUILD_WORKER_URL ?? null,
-    buildCallbackBaseUrl: env.HELIX_BUILD_CALLBACK_BASE_URL ?? null,
-  } satisfies BlogContext & {
-    storage: typeof storage;
-    stepCaSettings: StepCaSettings | null;
-    stunUrls: readonly string[];
-    turn: TurnSettings | null;
-    buildWorkerUrl: string | null;
-    buildCallbackBaseUrl: string | null;
-  };
+  return buildContext(user);
+};
+
+/**
+ * Build a request context for an already-authenticated user id (no cookie session)
+ * — used by the external MCP server, which authenticates via OAuth bearer token or
+ * an API key and then needs the same context so each procedure's own authz runs.
+ */
+export const createTRPCContextForUser = async (userId: string) => {
+  const user = await findAgentUser(db, userId);
+  return buildContext(user);
 };

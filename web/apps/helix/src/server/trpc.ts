@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { accountRouter } from '@helix/backend/account';
 import { agentRouter, findAgentUser } from '@helix/backend/agent';
 import {
   blogAdminRouter,
@@ -65,6 +66,7 @@ export const { router: appRouter } = createRootRouter({
   deviceCertificates: deviceCertificatesAdminRouter,
   ice: iceRouter,
   agent: agentRouter,
+  account: accountRouter,
 });
 export type AppRouter = typeof appRouter;
 

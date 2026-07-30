@@ -22,6 +22,10 @@
       "import": "./src/index.ts",
       "types": "./src/index.ts"
     },
+    "./account": {
+      "import": "./src/account/index.ts",
+      "types": "./src/account/index.ts"
+    },
     "./agent": {
       "import": "./src/agent/index.ts",
       "types": "./src/agent/index.ts"
@@ -137,6 +141,10 @@
       ".": {
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./account": {
+        "import": "./dist/account/index.js",
+        "types": "./dist/account/index.d.ts"
       },
       "./agent": {
         "import": "./dist/agent/index.js",

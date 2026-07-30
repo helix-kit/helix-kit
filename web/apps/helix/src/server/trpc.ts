@@ -6,6 +6,7 @@ import {
   type BlogContext,
   type BlogSessionUser,
 } from '@helix/backend/blog';
+import { agentRouter } from '@helix/backend/agent';
 import { devicesAdminRouter } from '@helix/backend/devices';
 import { featuresAdminRouter } from '@helix/backend/features';
 import { iceRouter, type TurnSettings } from '@helix/backend/ice';
@@ -63,6 +64,7 @@ export const { router: appRouter } = createRootRouter({
   espFlasher: espFlasherRouter,
   deviceCertificates: deviceCertificatesAdminRouter,
   ice: iceRouter,
+  agent: agentRouter,
 });
 export type AppRouter = typeof appRouter;
 

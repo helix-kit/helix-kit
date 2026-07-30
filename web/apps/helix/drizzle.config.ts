@@ -10,6 +10,7 @@ export default defineConfig({
     '../../packages/core/helix-backend/src/db/release-schema.ts',
     '../../packages/core/helix-backend/src/db/blog-schema.ts',
     '../../packages/core/helix-backend/src/db/feature-schema.ts',
+    '../../packages/core/helix-backend/src/db/agent-schema.ts',
   ],
   dialect: 'postgresql',
   dbCredentials: {

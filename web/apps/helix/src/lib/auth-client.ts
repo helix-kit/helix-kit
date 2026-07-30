@@ -1,5 +1,6 @@
 'use client';
 
+import { apiKeyClient } from '@better-auth/api-key/client';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { adminClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
@@ -10,7 +11,7 @@ import { getBaseUrl } from '@/lib/getBaseUrl';
 // baked-in NEXT_PUBLIC_BASE_URL), mirroring the tRPC client — see getBaseUrl.
 export const authClient = createAuthClient({
   baseURL: getBaseUrl(),
-  plugins: [adminClient(), passkeyClient()],
+  plugins: [adminClient(), passkeyClient(), apiKeyClient()],
 });
 
 export const { signIn, signOut, signUp, useSession } = authClient;

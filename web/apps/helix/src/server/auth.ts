@@ -1,10 +1,11 @@
 import 'server-only';
 
+import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
 import * as schema from '@helix/backend/db/auth-schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin } from 'better-auth/plugins';
+import { admin, mcp } from 'better-auth/plugins';
 
 import AuthEmail from '@/emails/auth-email';
 import { env } from '@/lib/env';
@@ -43,6 +44,13 @@ const createHelixAuth = () =>
       passkey({
         rpID: env.NODE_ENV === 'development' ? 'localhost' : undefined,
       }),
+      // Programmatic access for the external MCP server (x-api-key), scoped to the
+      // minting user so each tool call still passes that user's own tRPC authz.
+      apiKey(),
+      // OAuth 2.1 authorization server for MCP clients (Claude Desktop, Cursor, …):
+      // publishes the .well-known discovery docs and guards the MCP route via
+      // withMcpAuth. Reuses the login page users already have.
+      mcp({ loginPage: '/auth/login' }),
     ],
     session: {
       cookieCache: {

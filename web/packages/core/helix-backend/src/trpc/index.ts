@@ -4,11 +4,31 @@ import { treeifyError, ZodError } from 'zod';
 
 import type { OpenApiMeta } from 'trpc-to-openapi';
 
+/**
+ * Agent/MCP tool metadata attached to a procedure's `.meta()`. Every procedure is
+ * auto-exposed as a tool; this refines or hides it. See `@helix/backend/agent`.
+ */
+export type ToolMeta = {
+  /** Set `false` to hide this procedure from the agent/MCP tool surface. Default: exposed. */
+  expose?: boolean;
+  /** Override the generated tool name (default: dotted path with `.` → `_`). */
+  name?: string;
+  /** LLM-facing description (default: the OpenAPI summary, else the procedure path). */
+  description?: string;
+  /** Hint that the tool has no side effects (default: true for queries). */
+  readOnly?: boolean;
+  /** Hint that the tool performs a destructive or irreversible action. */
+  destructive?: boolean;
+};
+
+/** tRPC meta for Helix procedures: OpenAPI (REST ingress) + agent/MCP tool metadata. */
+export type HelixMeta = OpenApiMeta & { tool?: ToolMeta };
+
 /** Create a typed tRPC builder for a specific context. */
 export const createTRPCForContext = <TContext extends object>() =>
   initTRPC
     .context<Readonly<TContext>>()
-    .meta<OpenApiMeta>()
+    .meta<HelixMeta>()
     .create({
       transformer: superjson,
 

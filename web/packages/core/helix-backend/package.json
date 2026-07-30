@@ -14,12 +14,17 @@
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "exports": {
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./agent": {
+      "import": "./src/agent/index.ts",
+      "types": "./src/agent/index.ts"
     },
     "./blog": {
       "import": "./src/blog/index.ts",
@@ -132,6 +137,10 @@
       ".": {
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./agent": {
+        "import": "./dist/agent/index.js",
+        "types": "./dist/agent/index.d.ts"
       },
       "./blog": {
         "import": "./dist/blog/index.js",
@@ -268,6 +277,7 @@
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^10.6.0",
     "tsdown": "^0.22.4",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

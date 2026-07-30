@@ -75,8 +75,8 @@ describe('collectProcedureTools', () => {
   });
 
   it('coerces string date input back through the procedure', async () => {
-    await expect(byName.get('reports')?.execute({ since: '2026-01-02T03:04:05.000Z' })).resolves.toEqual(
-      { since: '2026-01-02T03:04:05.000Z' },
-    );
+    await expect(
+      byName.get('reports')?.execute({ since: '2026-01-02T03:04:05.000Z' }),
+    ).resolves.toEqual({ since: '2026-01-02T03:04:05.000Z' });
   });
 });

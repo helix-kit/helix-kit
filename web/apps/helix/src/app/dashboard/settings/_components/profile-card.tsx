@@ -46,7 +46,9 @@ export const ProfileCard = ({ name, email }: { name: string; email: string }) =>
           <Input
             id="settings-name"
             value={value}
-            onChange={(event) => { setValue(event.target.value); }}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
           />
         </div>
         <div className="space-y-2">

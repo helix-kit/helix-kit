@@ -73,7 +73,9 @@ export const ConnectedAppsCard = ({ initialApps }: { initialApps: ConnectedApps 
                     Revoke
                   </Button>
                 }
-                onConfirm={() => { revoke.mutate({ clientId: app.clientId }); }}
+                onConfirm={() => {
+                  revoke.mutate({ clientId: app.clientId });
+                }}
               />
             </div>
           ))

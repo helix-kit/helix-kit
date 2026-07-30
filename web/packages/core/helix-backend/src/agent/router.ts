@@ -58,9 +58,7 @@ export const agentRouter = createRouterFactory<AgentContext>()((t) => {
         const [conversation] = await ctx.db
           .select()
           .from(agentConversation)
-          .where(
-            and(eq(agentConversation.id, input.id), eq(agentConversation.userId, ctx.user.id)),
-          )
+          .where(and(eq(agentConversation.id, input.id), eq(agentConversation.userId, ctx.user.id)))
           .limit(1);
         if (conversation === undefined) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversation not found' });
@@ -86,9 +84,7 @@ export const agentRouter = createRouterFactory<AgentContext>()((t) => {
         const updated = await ctx.db
           .update(agentConversation)
           .set({ title: input.title })
-          .where(
-            and(eq(agentConversation.id, input.id), eq(agentConversation.userId, ctx.user.id)),
-          )
+          .where(and(eq(agentConversation.id, input.id), eq(agentConversation.userId, ctx.user.id)))
           .returning({ id: agentConversation.id });
         if (updated.length === 0) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversation not found' });

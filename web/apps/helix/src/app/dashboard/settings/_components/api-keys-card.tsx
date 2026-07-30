@@ -44,7 +44,7 @@ export const ApiKeysCard = () => {
       if (result.error != null) {
         throw new Error(result.error.message ?? 'Failed to load API keys');
       }
-      const {data} = result;
+      const { data } = result;
       const list = Array.isArray(data) ? data : ((data as { apiKeys?: unknown[] }).apiKeys ?? []);
       return list as ApiKeyRow[];
     },
@@ -138,7 +138,9 @@ export const ApiKeysCard = () => {
             aria-label="New API key name"
             placeholder="Key name (e.g. Claude Desktop)"
             value={name}
-            onChange={(event) => { setName(event.target.value); }}
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
           />
           <Button disabled={creating} onClick={create}>
             {creating ? 'Creating…' : 'Create key'}
@@ -166,7 +168,13 @@ export const ApiKeysCard = () => {
           </Button>
         </div>
         <DialogFooter>
-          <Button onClick={() => { setRevealed(null); }}>Done</Button>
+          <Button
+            onClick={() => {
+              setRevealed(null);
+            }}
+          >
+            Done
+          </Button>
         </DialogFooter>
       </ResponsiveModal>
     </Card>

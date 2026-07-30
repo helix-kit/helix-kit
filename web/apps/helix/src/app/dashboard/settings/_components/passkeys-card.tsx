@@ -119,7 +119,9 @@ export const PasskeysCard = () => {
             aria-label="New passkey name"
             placeholder="Passkey name (optional)"
             value={name}
-            onChange={(event) => { setName(event.target.value); }}
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
           />
           <Button disabled={adding} onClick={add}>
             {adding ? 'Waiting…' : 'Add passkey'}

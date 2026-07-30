@@ -165,9 +165,7 @@ export const oauthAccessToken = pgTable(
   {
     id: text('id').primaryKey(),
     accessToken: text('access_token').notNull().unique('oauth_access_token_access_token_unique'),
-    refreshToken: text('refresh_token')
-      .notNull()
-      .unique('oauth_access_token_refresh_token_unique'),
+    refreshToken: text('refresh_token').notNull().unique('oauth_access_token_refresh_token_unique'),
     accessTokenExpiresAt: timestamp('access_token_expires_at').notNull(),
     refreshTokenExpiresAt: timestamp('refresh_token_expires_at').notNull(),
     clientId: text('client_id')

@@ -6,7 +6,7 @@ import type { DatabaseClient } from '../db';
 import { oauthAccessToken, oauthApplication, oauthConsent } from '../db/auth-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
-export type AccountSessionUser = Readonly<{
+type AccountSessionUser = Readonly<{
   id: string;
   name: string;
   role: string | null;

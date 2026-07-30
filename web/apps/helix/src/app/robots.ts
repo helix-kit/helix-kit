@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const robots = (): MetadataRoute.Robots => {
   const base = runtimeOrigin();
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api'] }],
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/dashboard', '/api'] }],
     sitemap: `${base}/sitemap.xml`,
   };
 };

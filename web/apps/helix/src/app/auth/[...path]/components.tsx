@@ -18,6 +18,9 @@ import { authClient, signIn, signUp } from '@/lib/auth-client';
 
 import type { Route } from 'next';
 
+// Where auth flows send the user by default: the shared post-login landing.
+const DEFAULT_REDIRECT = '/dashboard';
+
 export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -25,7 +28,7 @@ export const LoginForm = () => {
   const [remember, setRemember] = useState(false);
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [searchParams] = useQueryStates({
-    redirect: parseAsString.withDefault('/'),
+    redirect: parseAsString.withDefault(DEFAULT_REDIRECT),
   });
   const router = useRouter();
 
@@ -169,7 +172,7 @@ export const RegisterForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [searchParams] = useQueryStates({
-    redirect: parseAsString.withDefault('/'),
+    redirect: parseAsString.withDefault(DEFAULT_REDIRECT),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -253,7 +256,7 @@ export const ForgotPasswordForm = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [searchParams] = useQueryStates({
-    redirect: parseAsString.withDefault('/'),
+    redirect: parseAsString.withDefault(DEFAULT_REDIRECT),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -309,7 +312,7 @@ export const ResetPasswordForm = () => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [searchParams] = useQueryStates({
-    redirect: parseAsString.withDefault('/'),
+    redirect: parseAsString.withDefault(DEFAULT_REDIRECT),
     token: parseAsString,
     error: parseAsString,
   });

@@ -32,7 +32,7 @@ export const site = {
   description:
     'An open-source IoT platform assembled from reusable, independently adoptable components: embedded firmware, a minimal edge Linux OS, a cloud control plane, and clients — all speaking one transport-neutral protocol.',
   url: publicOrigin,
-  appUrl: '/admin',
+  appUrl: '/dashboard',
   sourceUrl: sourceUrl,
   twitter: '@jainhardik17',
 } as const;

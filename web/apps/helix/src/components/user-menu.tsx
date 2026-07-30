@@ -29,7 +29,7 @@ const initialsOf = (name: string): string => {
   return initials === '' ? '?' : initials;
 };
 
-export const AdminUserMenu = ({ name, email }: { name: string; email: string }) => {
+export const SidebarUserMenu = ({ name, email }: { name: string; email: string }) => {
   const router = useRouter();
   return (
     <SidebarMenu>

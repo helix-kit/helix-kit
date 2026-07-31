@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { selectedCandidatePair } from '@helix/protocol-peer';
 import { useTypedDeviceService, useTypedDeviceServiceQuery } from '@helix/protocol-service/react';
 import { useMqttGatewayTransport } from '@helix/transport-mqtt/react';
 import { ChevronUp, Download, File as FileIcon, Folder, RefreshCw, Upload } from 'lucide-react';
@@ -10,13 +9,9 @@ import { ChevronUp, Download, File as FileIcon, Folder, RefreshCw, Upload } from
 import { filesControlContract, type FileEntry } from './contract';
 import { downloadFile, uploadFile, type TransferContext } from './transfer';
 
-import type { HelixStreamSession } from '@helix/protocol-stream';
-
 import {
-  openFailureMessage,
-  openSession,
-  useIceServers,
-  type DataPlaneTransport,
+  TransportPicker,
+  useDataPlaneSession,
   type SessionService,
 } from '../data-plane';
 import { HeaderPortal } from '../header-portal';
@@ -88,20 +83,26 @@ export const FileBrowser = ({
   const mqtt = useMqttGatewayTransport();
   const files = useTypedDeviceService(filesControlContract, { timeoutMs: OPEN_TIMEOUT_MS });
 
-  const [transport, setTransport] = useState<DataPlaneTransport>('p2p');
-  // ICE servers must be in hand before opening: a device that gathers no candidates
-  // can only fail to connect.
-  const { iceServers, isLoading: iceLoading } = useIceServers(transport === 'p2p');
-  const [ready, setReady] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
-  const [icePath, setIcePath] = useState<string | null>(null);
   const [path, setPath] = useState<string>('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
 
-  const sessionRef = useRef<string | null>(null);
-  const peerSessionRef = useRef<HelixStreamSession | null>(null);
-  const closeRef = useRef<(() => void) | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  const session = useDataPlaneSession({
+    service: files as unknown as SessionService,
+    isConnected: files.isConnected,
+    deviceStreamUrl,
+    failureTag: 'helix-files',
+    initialTransport: 'p2p',
+    onOpen: () => {
+      setDetail(null);
+    },
+    onError: setDetail,
+    onTeardown: () => {
+      setDetail(null);
+    },
+  });
 
   // Derived, not stored: storing it meant setting state from an effect and showing
   // "connecting" for the whole 20s open.
@@ -109,7 +110,7 @@ export const FileBrowser = ({
     if (detail !== null) {
       return 'error';
     }
-    if (ready) {
+    if (session.isOpen) {
       return 'ready';
     }
     return files.isConnected ? 'opening' : 'connecting';
@@ -130,76 +131,15 @@ export const FileBrowser = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const reportIcePath = useCallback((connection: RTCPeerConnection | null) => {
-    if (connection === null) {
-      setIcePath(null);
-      return;
-    }
-    void selectedCandidatePair(connection).then((pair) => {
-      setIcePath(pair === null ? null : `${pair.local}/${pair.remote}`);
-      return undefined;
-    });
-  }, []);
-
-  // Open the data-plane session; p2p is the default since bulk file bytes are why it exists.
-  useEffect(() => {
-    if (!files.isConnected || sessionRef.current !== null) {
-      return;
-    }
-    // Opening without the ICE config is a guaranteed failure, not a degraded connection.
-    if (transport === 'p2p' && iceLoading) {
-      return;
-    }
-    const sessionId = crypto.randomUUID();
-    sessionRef.current = sessionId;
-
-    void openSession({
-      service: files as unknown as SessionService,
-      sessionId,
-      transport,
-      deviceStreamUrl,
-      iceServers,
-    })
-      .then((session) => {
-        if (sessionRef.current !== sessionId) {
-          session.close();
-          return undefined;
-        }
-        peerSessionRef.current = session.peerSession;
-        closeRef.current = session.close;
-        setDetail(null);
-        setReady(true);
-        reportIcePath(session.connection);
-        return undefined;
-      })
-      .catch((error: unknown) => {
-        if (sessionRef.current !== sessionId) {
-          return;
-        }
-        setDetail(openFailureMessage(error, 'helix-files'));
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files.isConnected, transport, deviceStreamUrl, reportIcePath, iceLoading, iceServers]);
-
-  const switchTransport = useCallback((next: DataPlaneTransport) => {
-    closeRef.current?.();
-    closeRef.current = null;
-    peerSessionRef.current = null;
-    sessionRef.current = null;
-    setIcePath(null);
-    setReady(false);
-    setDetail(null);
-    setTransport(next);
-  }, []);
-
-  const context = useCallback(
-    (): TransferContext => ({
-      peerSession: peerSessionRef.current,
-      sessionId: sessionRef.current ?? '',
+  const { current } = session;
+  const context = useCallback((): TransferContext => {
+    const live = current();
+    return {
+      peerSession: live.peerSession,
+      sessionId: live.sessionId ?? '',
       clientStreamUrl,
-    }),
-    [clientStreamUrl],
-  );
+    };
+  }, [current, clientStreamUrl]);
 
   const nextId = useRef(0);
 
@@ -272,36 +212,11 @@ export const FileBrowser = ({
     <>
       <HeaderPortal>
         <div className="text-muted-foreground flex items-center gap-3 text-xs">
-          <span className="border-border/60 hidden items-center rounded-md border lg:inline-flex">
-            <button
-              className={`px-2 py-1 ${transport === 'relay' ? 'text-foreground' : 'hover:text-foreground'}`}
-              title="Bytes are relayed through the cloud gateway."
-              type="button"
-              onClick={() => {
-                switchTransport('relay');
-              }}
-            >
-              relay
-            </button>
-            <button
-              className={`px-2 py-1 ${transport === 'p2p' ? 'text-foreground' : 'hover:text-foreground'}`}
-              title="Bytes go browser-to-device directly. No cloud bandwidth."
-              type="button"
-              onClick={() => {
-                switchTransport('p2p');
-              }}
-            >
-              p2p
-            </button>
-            {icePath === null ? null : (
-              <span
-                className="border-border/60 border-l px-2 py-1 font-mono"
-                title="The ICE candidate pair in use"
-              >
-                {icePath}
-              </span>
-            )}
-          </span>
+          <TransportPicker
+            path={session.icePath}
+            setTransport={session.setTransport}
+            transport={session.transport}
+          />
           <span>{status}</span>
         </div>
       </HeaderPortal>

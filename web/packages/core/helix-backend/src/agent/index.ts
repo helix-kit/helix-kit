@@ -10,6 +10,7 @@ export {
   agentRouter,
   saveConversation,
   recordToolCall,
+  recordUsage,
   findAgentUser,
   type AgentRouter,
   type AgentContext,
@@ -19,8 +20,11 @@ export {
 export {
   agentConversation,
   agentToolCall,
+  agentUsage,
   type AgentConversation,
   type NewAgentConversation,
   type AgentToolCall,
   type NewAgentToolCall,
+  type AgentUsage,
+  type NewAgentUsage,
 } from '../db/agent-schema';

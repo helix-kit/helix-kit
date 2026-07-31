@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@helix/design-system/components/sidebar';
-import { Boxes, Cpu, FileText, Hammer, Layers, Package, Users } from 'lucide-react';
+import { Boxes, Cpu, FileText, Hammer, Layers, Package, Sparkles, Users } from 'lucide-react';
 
 import { HelixMark } from '@/components/logo';
 import { SidebarUserMenu } from '@/components/user-menu';
@@ -28,6 +28,7 @@ const NAV = [
   { href: '/admin/devices', label: 'Devices', icon: Cpu, exact: false },
   { href: '/admin/profiles', label: 'Profiles', icon: Layers, exact: false },
   { href: '/admin/users', label: 'Users', icon: Users, exact: false },
+  { href: '/admin/ai-usage', label: 'AI usage', icon: Sparkles, exact: false },
 ] as const;
 
 export const AdminSidebar = ({ name, email }: { name: string; email: string }) => {

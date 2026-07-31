@@ -92,31 +92,7 @@
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/agent/router.ts",
-        "line": 69,
-        "column": 5
-      },
-      "ignoreReason": null,
-      "status": "used",
-      "usageCount": 1,
-      "usages": [
-        {
-          "kind": "mutationOptions",
-          "location": {
-            "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
-            "line": 36,
-            "column": 5
-          }
-        }
-      ]
-    },
-    {
-      "kind": "mutation",
-      "openapi": null,
-      "path": "agent.deleteConversation",
-      "surface": "apps/helix/src/server/trpc.ts:57:38",
-      "definedAt": {
-        "file": "packages/core/helix-backend/src/agent/router.ts",
-        "line": 95,
+        "line": 177,
         "column": 5
       },
       "ignoreReason": null,
@@ -134,13 +110,37 @@
       ]
     },
     {
+      "kind": "mutation",
+      "openapi": null,
+      "path": "agent.deleteConversation",
+      "surface": "apps/helix/src/server/trpc.ts:57:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/agent/router.ts",
+        "line": 203,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "mutationOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
+            "line": 42,
+            "column": 5
+          }
+        }
+      ]
+    },
+    {
       "kind": "query",
       "openapi": null,
       "path": "agent.getConversation",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/agent/router.ts",
-        "line": 54,
+        "line": 162,
         "column": 5
       },
       "ignoreReason": null,
@@ -164,7 +164,7 @@
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/agent/router.ts",
-        "line": 40,
+        "line": 148,
         "column": 5
       },
       "ignoreReason": null,
@@ -175,7 +175,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
-            "line": 30,
+            "line": 33,
             "column": 8
           }
         },
@@ -190,19 +190,67 @@
       ]
     },
     {
+      "kind": "query",
+      "openapi": null,
+      "path": "agent.myUsage",
+      "surface": "apps/helix/src/server/trpc.ts:57:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/agent/router.ts",
+        "line": 62,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/settings/_components/usage-card.tsx",
+            "line": 27,
+            "column": 44
+          }
+        }
+      ]
+    },
+    {
       "kind": "mutation",
       "openapi": null,
       "path": "agent.renameConversation",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
         "file": "packages/core/helix-backend/src/agent/router.ts",
-        "line": 80,
+        "line": 188,
         "column": 5
       },
       "ignoreReason": "Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI).",
       "status": "ignored",
       "usageCount": 0,
       "usages": []
+    },
+    {
+      "kind": "query",
+      "openapi": null,
+      "path": "agent.usageOverview",
+      "surface": "apps/helix/src/server/trpc.ts:57:38",
+      "definedAt": {
+        "file": "packages/core/helix-backend/src/agent/router.ts",
+        "line": 108,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/admin/(dashboard)/ai-usage/page.tsx",
+            "line": 37,
+            "column": 47
+          }
+        }
+      ]
     },
     {
       "kind": "mutation",

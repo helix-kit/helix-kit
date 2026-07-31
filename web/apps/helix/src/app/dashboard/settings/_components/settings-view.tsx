@@ -9,6 +9,7 @@ import { ConnectedAppsCard } from './connected-apps-card';
 import { PasskeysCard } from './passkeys-card';
 import { ProfileCard } from './profile-card';
 import { SessionsCard } from './sessions-card';
+import { UsageCard } from './usage-card';
 
 import type { inferRouterOutputs } from '@trpc/server';
 
@@ -28,6 +29,7 @@ export const SettingsView = ({ name, email, initialConnectedApps }: SettingsView
       <TabsTrigger value="api-keys">API keys</TabsTrigger>
       <TabsTrigger value="connected">Connected apps</TabsTrigger>
       <TabsTrigger value="passkeys">Passkeys</TabsTrigger>
+      <TabsTrigger value="usage">Usage</TabsTrigger>
     </TabsList>
     <TabsContent value="profile">
       <ProfileCard email={email} name={name} />
@@ -43,6 +45,9 @@ export const SettingsView = ({ name, email, initialConnectedApps }: SettingsView
     </TabsContent>
     <TabsContent value="passkeys">
       <PasskeysCard />
+    </TabsContent>
+    <TabsContent value="usage">
+      <UsageCard />
     </TabsContent>
   </Tabs>
 );

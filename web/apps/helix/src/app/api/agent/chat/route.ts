@@ -1,4 +1,4 @@
-import { saveConversation } from '@helix/backend/agent';
+import { recordUsage, saveConversation } from '@helix/backend/agent';
 import {
   convertToModelMessages,
   createIdGenerator,
@@ -66,12 +66,38 @@ export const POST = async (req: Request): Promise<Response> => {
     return json({ error: 'Conversation not found.' }, STATUS.notFound);
   }
 
+  const startedAt = Date.now();
   const result = streamText({
     model: gateway(env.AGENT_MODEL),
     system: buildSystemPrompt(user),
     messages: await convertToModelMessages(messages),
     tools: buildAgentTools({ db, caller, conversationId, userId: user.id }),
     stopWhen: stepCountIs(MAX_STEPS),
+    // Capture first-class usage metrics for this turn. Never let a metrics write
+    // break the chat response.
+    onFinish: async ({ totalUsage, finishReason, steps }) => {
+      try {
+        const toolCalls = steps.reduce((count, step) => count + step.toolCalls.length, 0);
+        // reasoning/cached token counts are provider-dependent and not on the base type.
+        const extra = totalUsage as { reasoningTokens?: number; cachedInputTokens?: number };
+        await recordUsage(db, {
+          userId: user.id,
+          conversationId,
+          model: env.AGENT_MODEL,
+          inputTokens: totalUsage.inputTokens ?? 0,
+          outputTokens: totalUsage.outputTokens ?? 0,
+          totalTokens: totalUsage.totalTokens ?? 0,
+          reasoningTokens: extra.reasoningTokens ?? null,
+          cachedInputTokens: extra.cachedInputTokens ?? null,
+          toolCalls,
+          steps: steps.length,
+          durationMs: Date.now() - startedAt,
+          finishReason,
+        });
+      } catch {
+        // Usage metrics are best-effort.
+      }
+    },
   });
 
   // Keep streaming to completion even if the client disconnects, so the turn is

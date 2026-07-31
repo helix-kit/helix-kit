@@ -54,11 +54,11 @@ Design tenets, learned from a prior-system post-mortem (§9 of doc 05 research):
 - MQTT↔WS gateway — commands already flow to `helix/device/{id}/in`
   (`gateway/mqtt-bridge.ts:87`).
 - **Browser esptool-js flasher — complete but unwired** —
-  `@helix/esp32-flasher`: `flashEsp32`, `useEsp32Flasher`, `Esp32FirmwareManifest`
+  `@helix/device-apps/esp32-flasher`: `flashEsp32`, `useEsp32Flasher`, `Esp32FirmwareManifest`
   ({artifacts:{offset,url,sha256,size}} + chip/flash params + profile), sha256+size
   verify, ESP32 USB port filters.
 - Browser transport stack — serial/BLE/MQTT/WS, all `HelixTransport`, typed
-  contracts + React/Query hooks (`@helix/protocol-*`).
+  contracts + React/Query hooks (`@helix/protocol`).
 - Design system — full shadcn kit: `data-table`, `dynamic-form`, `progress`,
   `mutation-modal`, `sidebar`, `app-header`.
 - Idle-but-ready — TS OTA contract `apps/helix/src/generated/contracts/ota.ts`.
@@ -292,7 +292,7 @@ after (esptool needs its own raw Transport). Widen manifest `chip` validation fo
 
 **8c. Provisioning UI** — none exists. A `dynamic-form` (WiFi creds, deviceId,
 apiUrl, mqttHost, tokens, profileId) written post-flash over
-`@helix/transport-serial` (NVS_SET JSON) or BLE, via a new provisioning contract
+`@helix/protocol/serial` (NVS_SET JSON) or BLE, via a new provisioning contract
 analogous to `gpio_control.ts`.
 
 **8d. Management UI** (design-system `sidebar` + `data-table` + `mutation-modal`):
@@ -396,7 +396,7 @@ produced a 995,344-byte app, 7 artifacts stored with **integrity=ok**, in ~44 s.
    the OTA sha256) is stable per config; then blob dedup also covers the app.
 
 2. **The worker already emits the browser flasher's manifest verbatim.** The
-   `flasherManifest` in the callback matches `@helix/esp32-flasher`'s
+   `flasherManifest` in the callback matches `@helix/device-apps/esp32-flasher`'s
    `Esp32FirmwareManifest` 1:1 (chip, baudRate, flashMode/Freq/Size, profile,
    `artifacts[{id,name,offset,sha256,size,url}]`) — only `url` is filled by the
    backend at flash/OTA time from the artifact's `storage_key`. → Store it as

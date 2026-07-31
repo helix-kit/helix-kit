@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
-import { WebSocketProvider, useWebSocketTransport } from '@helix/transport-websocket/react';
+import { WebSocketProvider, useWebSocketTransport } from '@helix/protocol/websocket/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
 
 import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';

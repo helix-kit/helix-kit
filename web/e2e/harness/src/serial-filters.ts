@@ -1,4 +1,4 @@
-import type { SerialPortFilter } from '@helix/transport-serial';
+import type { SerialPortFilter } from '@helix/protocol/serial';
 
 // ESP32 USB-UART bridges: CP210x, CH34x, FTDI, Espressif native, Microchip.
 export const ESP32_SERIAL_FILTERS: readonly SerialPortFilter[] = [

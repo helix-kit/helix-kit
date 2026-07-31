@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
-import { MqttGatewayProvider, useMqttGatewayTransport } from '@helix/transport-mqtt/react';
+import { MqttGatewayProvider, useMqttGatewayTransport } from '@helix/protocol/mqtt/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
 
 import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';

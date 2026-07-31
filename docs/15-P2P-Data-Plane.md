@@ -131,10 +131,10 @@ flow, which reads like a WebRTC bug rather than a firewall one.
 | Device peer (pion): DataChannel → `stream.Transport`, media tracks | `linux/device/go/internal/peer/` |
 | Transport-agnostic session open (relay **or** p2p) | `linux/device/go/internal/shared/dataplane/` |
 | Shared signaling contract fragment | `linux/device/go/internal/peer/contracts/peer.fragment.json` |
-| Browser peer + DataChannel transport | `web/packages/protocol/protocol-peer/` |
-| Browser channel abstraction (one API, two transports) | `web/packages/core/device-apps/src/data-plane/` |
-| ICE servers + ephemeral TURN credentials | `web/packages/core/helix-backend/src/ice/` |
-| Gateway session affinity | `web/packages/core/helix-backend/src/gateway/router.ts` |
+| Browser peer + DataChannel transport | `web/packages/protocol/src/peer/` |
+| Browser channel abstraction (one API, two transports) | `web/packages/device-apps/src/data-plane/` |
+| ICE servers + ephemeral TURN credentials | `web/packages/helix-backend/src/ice/` |
+| Gateway session affinity | `web/packages/helix-backend/src/gateway/router.ts` |
 | TURN relay | `cloud/coturn/`, `cloud/appliance/bin/coturn-prepare.sh` |
 
 ## Gotchas worth keeping

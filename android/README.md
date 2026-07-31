@@ -10,21 +10,21 @@ web workspace's "installable package + main app" split.
 
 | Module  | Kind                | Mirrors (web)                          | Purpose |
 | ------- | ------------------- | -------------------------------------- | ------- |
-| `helix` | Android library     | `@helix/protocol-*` + `@helix/transport-*` | The Helix Android SDK — one module, four packages (below) |
+| `helix` | Android library     | `@helix/protocol` | The Helix Android SDK — one module, four packages (below) |
 | `app`   | Android application | `web/apps/helix`                       | Compose app: home chooser → BLE / MQTT GPIO screens, wiring transport → typed service client → UI |
 
 The `:helix` SDK is a single module (published as `dev.helix:helix`) containing:
 
 | Package                       | Mirrors (web)             | Purpose |
 | ----------------------------- | ------------------------- | ------- |
-| `dev.helix.protocol.core`     | `@helix/protocol-core`    | `HelixPacket`, JSON codec, request registry + timeouts, request-id factory, transport interface |
-| `dev.helix.protocol.service`  | `@helix/protocol-service` | `HelixMessage`, contract DSL (`method`/`message`/`schema`), `HelixServiceClient` |
-| `dev.helix.transport.ble`     | `@helix/transport-ble`    | Android BLE (GATT) transport to a Helix ESP32, matching the same service/characteristic UUIDs |
-| `dev.helix.transport.mqtt`    | `@helix/transport-mqtt`   | WebSocket→MQTT-gateway transport (OkHttp) to `ws://host/ws?deviceId=…`; the gateway bridges to the broker on `helix/device/<id>/in\|out` |
+| `dev.helix.protocol.core`     | `@helix/protocol`    | `HelixPacket`, JSON codec, request registry + timeouts, request-id factory, transport interface |
+| `dev.helix.protocol.service`  | `@helix/protocol/service` | `HelixMessage`, contract DSL (`method`/`message`/`schema`), `HelixServiceClient` |
+| `dev.helix.transport.ble`     | `@helix/protocol/ble`    | Android BLE (GATT) transport to a Helix ESP32, matching the same service/characteristic UUIDs |
+| `dev.helix.transport.mqtt`    | `@helix/protocol/mqtt`   | WebSocket→MQTT-gateway transport (OkHttp) to `ws://host/ws?deviceId=…`; the gateway bridges to the broker on `helix/device/<id>/in\|out` |
 
 The protocol and MQTT code is plain Kotlin (it runs on the JVM in local unit
 tests); BLE needs the Android platform, so the whole SDK ships as one Android
-library. The plan is to collapse the web `@helix/protocol-*` + `@helix/transport-*`
+library. The plan is to collapse the web `@helix/protocol`
 packages into a single package the same way.
 
 ## Protocol parity with the web client
@@ -33,7 +33,7 @@ packages into a single package the same way.
   JSON-encoded — identical to the web `jsonPacketCodec`.
 - Requests correlate by `requestId`; async device messages carry no `requestId`.
 - BLE service/characteristic UUIDs and the `Helix ESP32` name prefix match
-  `HELIX_ESP32_BLE_*` in `@helix/transport-ble`, so the same firmware works with
+  `HELIX_ESP32_BLE_*` in `@helix/protocol/ble`, so the same firmware works with
   either client.
 
 ## Build
@@ -61,7 +61,7 @@ cd android
 
 The `dev.helix.transport.mqtt` package connects over a WebSocket to the Helix
 gateway, which bridges Helix packets to/from the MQTT broker — the same model as
-the web `@helix/transport-mqtt`. The app's **home screen offers both BLE GPIO and MQTT
+the web `@helix/protocol/mqtt`. The app's **home screen offers both BLE GPIO and MQTT
 GPIO**; the MQTT screen mirrors the web mqtt-gpio-test page (gateway URL +
 device ID, connect, toggle pins, packet log).
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@helix/design-system/components/button';
-import { HelixEsp32BleProvider, useBleTransport } from '@helix/transport-ble';
+import { HelixEsp32BleProvider, useBleTransport } from '@helix/protocol/ble';
 import { Bluetooth, Unplug } from 'lucide-react';
 
 import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';

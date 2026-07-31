@@ -44,6 +44,8 @@ TUNNELS: tuple[Tunnel, ...] = (
     Tunnel(4001, "helix-server (device mTLS)"),
 )
 
+HELIX_SERVER_HTTP_PORT = 4000
+
 # Cert/key files referenced by *_PATH vars. Copied down; the vars are rewritten.
 PATH_SUFFIX = "_PATH"
 
@@ -134,7 +136,7 @@ def _retarget_ports(env: dict[str, str], offset: int) -> dict[str, str]:
 
 
 def _local_overrides(
-    env: dict[str, str], certs: dict[str, str], storage: Path, port: int
+    env: dict[str, str], certs: dict[str, str], storage: Path, port: int, offset: int
 ) -> dict[str, str]:
     """The values that MUST differ locally. Everything else is used verbatim."""
     # Must be the origin the dev server actually serves on (better-auth baseURL / CSRF check).
@@ -147,7 +149,11 @@ def _local_overrides(
         "NODE_ENV": "development",
         "FS_STORAGE_ROOT": str(storage),
     }
-    # The device data plane is NOT tunnelled: the browser must reach devices on the real box.
+
+    server = f"ws://localhost:{HELIX_SERVER_HTTP_PORT + offset}"
+    overrides["NEXT_PUBLIC_HELIX_GATEWAY_WS_URL"] = f"{server}/ws"
+    overrides["NEXT_PUBLIC_HELIX_CLIENT_STREAM_URL"] = f"{server}/stream/client"
+
     domain = env.get("APP_DOMAIN")
     if domain:
         overrides["NEXT_PUBLIC_HELIX_DEVICE_STREAM_URL"] = f"wss://{domain}:4001/stream/device"
@@ -242,7 +248,7 @@ def run_remote_dev(
         storage.mkdir(parents=True, exist_ok=True)
         overrides = {
             **_retarget_ports(env, port_offset),
-            **_local_overrides(env, certs, storage, port),
+            **_local_overrides(env, certs, storage, port, port_offset),
         }
 
         target = WEB_APPS / app / ".env"

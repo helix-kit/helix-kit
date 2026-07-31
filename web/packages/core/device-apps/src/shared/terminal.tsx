@@ -3,26 +3,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@helix/design-system/components/popover';
-import { selectedCandidatePair } from '@helix/protocol-peer';
 import { method, type ServiceContract } from '@helix/protocol-service';
 import { useTypedDeviceService, useTypedDeviceServiceQuery } from '@helix/protocol-service/react';
 import { useMqttGatewayTransport } from '@helix/transport-mqtt/react';
 import { Minus, Monitor, Plus, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { z } from 'zod';
 
-import type { HelixStreamSession } from '@helix/protocol-stream';
 import type { FitAddon as XFitAddon } from '@xterm/addon-fit';
 import type { ITheme, Terminal as XTerminal } from '@xterm/xterm';
 
 import {
-  openFailureMessage,
   openPeerChannel,
   openRelayChannel,
-  openSession,
-  useIceServers,
-  type DataPlaneTransport,
+  TransportPicker,
+  useDataPlaneSession,
   type DeviceChannel,
   type SessionService,
+  type TransportPickerProps,
 } from '../data-plane';
 import { HeaderPortal } from '../header-portal';
 import { formatAge, shortId, useNow } from '../session-format';
@@ -231,74 +228,6 @@ const SessionsPopover = ({
   );
 };
 
-type TransportProps = {
-  transport: DataPlaneTransport;
-  setTransport: (value: DataPlaneTransport) => void;
-  forceRelay: boolean;
-  setForceRelay: (value: boolean) => void;
-  /** The negotiated ICE path — 'host'/'srflx' is direct, 'relay' is TURN. */
-  path: string | null;
-};
-
-const PICKER_BUTTON = 'px-2 py-1';
-const PICKER_ACTIVE = 'text-foreground';
-const PICKER_IDLE = 'hover:text-foreground';
-
-const TransportPicker = ({
-  transport,
-  setTransport,
-  forceRelay,
-  setForceRelay,
-  path,
-}: TransportProps) => (
-  <span className="border-border/60 hidden items-center rounded-md border lg:inline-flex">
-    <button
-      className={`${PICKER_BUTTON} ${transport === 'relay' ? PICKER_ACTIVE : PICKER_IDLE}`}
-      title="Bytes are relayed through the cloud gateway. Always works."
-      type="button"
-      onClick={() => {
-        setTransport('relay');
-      }}
-    >
-      relay
-    </button>
-    <button
-      className={`${PICKER_BUTTON} ${transport === 'p2p' ? PICKER_ACTIVE : PICKER_IDLE}`}
-      title="Bytes go browser-to-device directly over WebRTC. No cloud bandwidth."
-      type="button"
-      onClick={() => {
-        setTransport('p2p');
-      }}
-    >
-      p2p
-    </button>
-    {transport === 'p2p' ? (
-      <>
-        <button
-          className={`border-border/60 border-l ${PICKER_BUTTON} ${
-            forceRelay ? PICKER_ACTIVE : PICKER_IDLE
-          }`}
-          title="Force the peer through the TURN relay, even when a direct path exists."
-          type="button"
-          onClick={() => {
-            setForceRelay(!forceRelay);
-          }}
-        >
-          turn
-        </button>
-        {path === null ? null : (
-          <span
-            className={`border-border/60 border-l font-mono ${PICKER_BUTTON}`}
-            title="The ICE candidate pair in use"
-          >
-            {path}
-          </span>
-        )}
-      </>
-    ) : null}
-  </span>
-);
-
 type ControlsProps = {
   status: Status;
   detail: string | null;
@@ -310,7 +239,7 @@ type ControlsProps = {
   reset: () => void;
   reconnect: () => void;
   sessions: SessionsProps;
-  transport: TransportProps;
+  transport: TransportPickerProps;
   p2pEnabled: boolean;
 };
 
@@ -435,10 +364,7 @@ export const StreamTerminal = ({
   const termRef = useRef<XTerminal | null>(null);
   const fitRef = useRef<XFitAddon | null>(null);
   const channelRef = useRef<DeviceChannel | null>(null);
-  const peerSessionRef = useRef<HelixStreamSession | null>(null);
-  const closeSessionRef = useRef<(() => void) | null>(null);
   const attachRef = useRef<((sessionId: string, attempt: number) => void) | null>(null);
-  const sessionRef = useRef<string | null>(null);
   const bytesRef = useRef({ inBytes: 0, outBytes: 0 });
   const rateRef = useRef({ last: 0, at: 0 });
   const rttRef = useRef<{ sentAt: number | null; samples: number[] }>({
@@ -475,23 +401,32 @@ export const StreamTerminal = ({
     rtt: number | null;
   }>({ inBytes: 0, outBytes: 0, rate: 0, rtt: null });
 
-  const [transport, setTransport] = useState<DataPlaneTransport>('relay');
-  const [icePath, setIcePath] = useState<string | null>(null);
+  const session = useDataPlaneSession({
+    service: shell as unknown as SessionService,
+    isConnected: shell.isConnected,
+    deviceStreamUrl,
+    failureTag,
+    ready: termReady && termRef.current !== null,
+    onOpen: (opened) => {
+      setCurrentSessionId(opened.sessionId);
+      attachRef.current?.(opened.sessionId, 0);
+      void shell.invalidateQueries('list', {});
+    },
+    onError: (message) => {
+      setStatus('error');
+      setDetail(message);
+    },
+    onTeardown: () => {
+      channelRef.current?.close();
+      channelRef.current = null;
+      setCurrentSessionId(null);
+      setStatus('connecting');
+      setDetail(null);
+      setNonce((value) => value + 1);
+    },
+  });
 
-  const reportIcePath = useCallback((connection: RTCPeerConnection | null) => {
-    if (connection === null) {
-      setIcePath(null);
-      return;
-    }
-    void selectedCandidatePair(connection).then((pair) => {
-      setIcePath(pair === null ? null : `${pair.local}/${pair.remote}`);
-      return undefined;
-    });
-  }, []);
-  const [forceRelay, setForceRelay] = useState(false);
-  // ICE servers must be in hand before opening: they are passed to the device in the
-  // `open` command, and a device that gathers no candidates can only fail to connect.
-  const { iceServers, isLoading: iceLoading } = useIceServers(transport === 'p2p');
+  const { current: currentSession, reconnect } = session;
 
   // Attach the terminal to the session's data plane; identical for both transports,
   // which is the point of DeviceChannel.
@@ -533,7 +468,7 @@ export const StreamTerminal = ({
           term.write(data);
         },
         onClose: () => {
-          if (sessionRef.current !== sessionId) {
+          if (currentSession().sessionId !== sessionId) {
             return;
           }
           if (!opened && attempt < CLIENT_MAX_ATTEMPTS) {
@@ -548,13 +483,13 @@ export const StreamTerminal = ({
         },
       };
 
-      const peerSession = peerSessionRef.current;
+      const { peerSession } = currentSession();
       channelRef.current =
         peerSession === null
           ? openRelayChannel(clientStreamUrl, sessionId, meta, handlers)
           : openPeerChannel(peerSession, meta, handlers);
     },
-    [clientStreamUrl],
+    [clientStreamUrl, currentSession],
   );
 
   useEffect(() => {
@@ -673,79 +608,11 @@ export const StreamTerminal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nonce]);
 
-  useEffect(() => {
-    if (
-      !shell.isConnected ||
-      !termReady ||
-      sessionRef.current !== null ||
-      termRef.current === null
-    ) {
-      return;
-    }
-    if (transport === 'p2p' && iceLoading) {
-      return; // opening without ICE servers is a guaranteed failure
-    }
-    const sessionId = crypto.randomUUID();
-    sessionRef.current = sessionId;
-    void openSession({
-      service: shell as unknown as SessionService,
-      sessionId,
-      transport,
-      deviceStreamUrl,
-      iceServers,
-      ...(transport === 'p2p' && forceRelay ? { iceTransportPolicy: 'relay' as const } : {}),
-    })
-      .then((session) => {
-        // Bail if the user reconnected or switched transport while we negotiated.
-        if (sessionRef.current !== sessionId) {
-          session.close();
-          return undefined;
-        }
-        peerSessionRef.current = session.peerSession;
-        closeSessionRef.current = session.close;
-        setCurrentSessionId(sessionId);
-        attachClient(sessionId, 0);
-        reportIcePath(session.connection);
-        return shell.invalidateQueries('list', {});
-      })
-      .catch((error: unknown) => {
-        if (sessionRef.current !== sessionId) {
-          return;
-        }
-        setStatus('error');
-        setDetail(openFailureMessage(error, failureTag));
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    shell.isConnected,
-    termReady,
-    deviceStreamUrl,
-    nonce,
-    transport,
-    forceRelay,
-    iceServers,
-    iceLoading,
-  ]);
-
-  const reconnect = useCallback(() => {
-    channelRef.current?.close();
-    channelRef.current = null;
-    closeSessionRef.current?.();
-    closeSessionRef.current = null;
-    peerSessionRef.current = null;
-    sessionRef.current = null;
-    setIcePath(null);
-    setCurrentSessionId(null);
-    setStatus('connecting');
-    setDetail(null);
-    setNonce((value) => value + 1);
-  }, []);
-
   const closeSession = useCallback(
     (sessionId: string) => {
       // Closing our own session: drop the terminal too, so the UI doesn't sit
       // "connected" against a stream the device just tore down.
-      if (sessionId === sessionRef.current) {
+      if (sessionId === currentSession().sessionId) {
         reconnect();
       }
       void shell
@@ -755,7 +622,7 @@ export const StreamTerminal = ({
         })
         .finally(() => void shell.invalidateQueries('list', {}));
     },
-    [shell, reconnect],
+    [shell, reconnect, currentSession],
   );
 
   const reset = useCallback(() => {
@@ -786,17 +653,12 @@ export const StreamTerminal = ({
           status={status}
           themeName={themeName}
           transport={{
-            transport,
-            setTransport: (value) => {
-              setTransport(value);
-              reconnect();
-            },
-            forceRelay,
-            setForceRelay: (value) => {
-              setForceRelay(value);
-              reconnect();
-            },
-            path: icePath,
+            transport: session.transport,
+            setTransport: session.setTransport,
+            forceRelay: session.forceRelay,
+            setForceRelay: session.setForceRelay,
+            showForceRelay: true,
+            path: session.icePath,
           }}
         />
       </HeaderPortal>

@@ -21,38 +21,15 @@ import { portForwardControlContract } from './contract';
 
 import type { DeviceAppSurfaceProps } from '../types';
 
+import { getStreamConfig } from '../data-plane';
 import { formatAge, useNow } from '../session-format';
 import { useClientOnly } from '../use-client-only';
 
 const OPEN_TIMEOUT_MS = 30_000;
 const LIST_POLL_MS = 3000;
 
-const gatewayWsUrl = (): string => {
-  const configured = process.env.NEXT_PUBLIC_HELIX_GATEWAY_WS_URL;
-  if (configured !== undefined && configured !== '') {
-    return configured;
-  }
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${window.location.host}/ws`;
-};
-
-const deviceStreamUrl = (): string => {
-  const configured = process.env.NEXT_PUBLIC_HELIX_DEVICE_STREAM_URL;
-  if (configured !== undefined && configured !== '') {
-    return configured;
-  }
-  return `wss://${window.location.hostname}:4001/stream/device`;
-};
-
 const publicUrl = (sessionId: string): string =>
   `https://${sessionId}.port.${window.location.hostname}`;
-
-type StreamConfig = { gateway: string; device: string };
-
-// Memoised: useClientOnly compares snapshots by identity, so return the same object.
-let cachedConfig: StreamConfig | null = null;
-const getStreamConfig = (): StreamConfig =>
-  (cachedConfig ??= { gateway: gatewayWsUrl(), device: deviceStreamUrl() });
 
 const PortForwardPanel = ({ deviceStream }: { deviceStream: string }) => {
   const pf = useTypedDeviceService(portForwardControlContract, { timeoutMs: OPEN_TIMEOUT_MS });

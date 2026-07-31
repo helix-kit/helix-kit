@@ -7,6 +7,7 @@ import { Button } from '@helix/design-system/components/button';
 import { DefaultChatTransport, getToolName, isToolUIPart, type UIMessage } from 'ai';
 import { ArrowUp, Bot, User } from 'lucide-react';
 
+import { ChatMarkdown } from './chat-markdown';
 import { ToolCard } from './tool-card';
 
 type ChatThreadProps = {
@@ -95,10 +96,12 @@ export const ChatThread = ({
                   {message.parts.map((part, index) => {
                     const partKey = `${message.id}-${index}`;
                     if (part.type === 'text') {
-                      return (
+                      return message.role === 'user' ? (
                         <p key={partKey} className="text-sm whitespace-pre-wrap">
                           {part.text}
                         </p>
+                      ) : (
+                        <ChatMarkdown key={partKey}>{part.text}</ChatMarkdown>
                       );
                     }
                     if (part.type === 'reasoning') {

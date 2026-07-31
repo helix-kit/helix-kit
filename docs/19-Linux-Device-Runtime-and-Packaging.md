@@ -212,7 +212,7 @@ plane rather than a new repository — a new artifact `typeKey`
 (dedup by sha256); a device pulls a package via the existing
 `POST /api/storage/packages/download-session` over mTLS, authorized by the same
 profile-track resolution used for ESP32 OTA. See doc 06 (Releases & OTA) and
-`web/packages/core/helix-backend/src/{releases,device-mtls}`.
+`web/packages/helix-backend/src/{releases,device-mtls}`.
 
 ## 7. Provisioning and the `helix` CLI
 

@@ -12,9 +12,9 @@ The tests do **not** run against the product Next app (those pages are
 throwaway). They run against a **minimal Vite + React harness** in `harness/`
 that imports only the shared packages under test:
 
-- `@helix/transport-serial/react` — connect / disconnect / status
-- `@helix/protocol-service/react` — `useHelixTransport()` (raw transport handle)
-- `@helix/protocol-core` — `createRequestId` + packet types
+- `@helix/protocol/serial/react` — connect / disconnect / status
+- `@helix/protocol/service/react` — `useHelixTransport()` (raw transport handle)
+- `@helix/protocol` — `createRequestId` + packet types
 
 The harness is **contract-agnostic**: `RawMessagePanel` has one input (request
 message JSON) and one output (received packets, verbatim). It wraps the injected

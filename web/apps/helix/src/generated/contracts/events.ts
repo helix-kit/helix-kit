@@ -1,4 +1,4 @@
-import { defineServiceContract, method, message } from '@helix/protocol-service';
+import { defineServiceContract, method, message } from '@helix/protocol/service';
 import { z } from 'zod';
 
 export const emptyRequestSchema = z.object({});

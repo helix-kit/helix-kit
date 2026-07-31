@@ -341,20 +341,12 @@ def _discover_buckets(files: list[str]) -> list[Bucket]:
     b.append(
         Bucket("web/apps/helix — content (*.mdx)", "docs", r"^web/apps/helix/content/.*\.mdx$")
     )
-    for pkg in _subdirs(files, "web/packages/core"):
+    for pkg in _subdirs(files, "web/packages"):
         b.append(
             Bucket(
-                f"web/packages/core/{pkg} (ts/tsx)",
+                f"web/packages/{pkg} (ts/tsx)",
                 "logic",
-                rf"^web/packages/core/{re.escape(pkg)}/.*\.(ts|tsx)$",
-            )
-        )
-    for pkg in _subdirs(files, "web/packages/protocol"):
-        b.append(
-            Bucket(
-                f"web/packages/protocol/{pkg} (ts/tsx)",
-                "logic",
-                rf"^web/packages/protocol/{re.escape(pkg)}/.*\.(ts|tsx)$",
+                rf"^web/packages/{re.escape(pkg)}/.*\.(ts|tsx)$",
             )
         )
     b.append(
@@ -377,7 +369,7 @@ def _discover_buckets(files: list[str]) -> list[Bucket]:
             "web — tooling scripts & build config (js/ts/mjs)",
             "build",
             r"^web/(scripts/.*\.(ts|cjs)$|apps/[^/]+/scripts/.*\.mjs$"
-            r"|packages/core/eslint-config/.*\.js$|.*\.(mjs|cjs)$|knip\.config\.ts$)",
+            r"|packages/eslint-config/.*\.js$|.*\.(mjs|cjs)$|knip\.config\.ts$)",
         )
     )
 

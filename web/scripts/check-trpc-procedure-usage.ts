@@ -473,7 +473,7 @@ const findExistingFile = async (candidates: string[]): Promise<string | null> =>
 // resolve to source files.
 const buildPackageIndex = async (): Promise<Map<string, PackageInfo>> => {
   const index = new Map<string, PackageInfo>();
-  for (const packagesRoot of ['packages/core', 'packages/protocol']) {
+  for (const packagesRoot of ['packages']) {
     const rootDir = path.join(WEB_DIR, packagesRoot);
     let entries: import('node:fs').Dirent[];
     try {

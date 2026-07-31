@@ -59,7 +59,7 @@ The codebase already models this split; follow the same pattern:
   seam; new services register with the dispatcher.
 - **Web** — all backend capability (DB, tRPC routers, storage providers, PKI,
   event queue, MQTT bridge, releases/OTA) lives in the `@helix/backend` package
-  (`web/packages/core/helix-backend`). The apps (`web/apps/helix`,
+  (`web/packages/helix-backend`). The apps (`web/apps/helix`,
   `web/apps/helix-server`) are thin wiring that imports and composes it.
 - **Android** — protocol/service/transport concerns are separated by package
   (`dev.helix.protocol.core`, `.protocol.service`, `.transport.ble`,
@@ -110,7 +110,7 @@ let the user choose.
 | `linux/platform_os/` | Minimal Helix Linux OS image build (debootstrap → rootfs → disk/ISO → QEMU). |
 | `linux/device/` | Linux device runtime (adapted from a prior production cloud-comm model). `go/` — the single `helixd` core (`cmd/helixd`: MQTT⇄IPC bridge, app-agnostic), the Go app SDK (`internal/ipc` client, `internal/shared/{servicemain,ipcutil,config}`), apps (`cmd/helix-*`), and the bytestream data-plane package. `python/helix_service_runtime` — the thin Python IPC SDK (contracts only, no core reimplementation). |
 | `ui/` | Common device UI (LVGL). Screens are pure LVGL and portable; a display seam (`helix_ui_display_t`) decides where pixels go — today a streaming driver that ships them to a host viewer (`helix ui sim`), tomorrow an SPI panel or a Linux framebuffer. Ships the ESP32 port and the `ui` service (`info`/`refresh`/`pointer`). Opt-in: only a build carrying the `ui` feature compiles it, so no other firmware pays for LVGL. |
-| `web/` | pnpm + Turborepo monorepo. `packages/core/helix-backend` (`@helix/backend`, the backend core), `packages/protocol/*` (protocol + transport packages), `packages/core/helix-design-system`, `apps/helix` (ONE Next.js app: marketing site, fumadocs `/docs`, blog, and the `/admin` + `/device` console), `apps/helix-server` (headless backend), `e2e/` (Playwright hardware-in-the-loop). |
+| `web/` | pnpm + Turborepo monorepo. `packages/helix-backend` (`@helix/backend`, the backend core), `packages/protocol` (`@helix/protocol` — packet core, service contracts, HelixStream, WebRTC peer, and the BLE/MQTT/serial/WebSocket transports), `packages/helix-design-system`, `apps/helix` (ONE Next.js app: marketing site, fumadocs `/docs`, blog, and the `/admin` + `/device` console), `apps/helix-server` (headless backend), `e2e/` (Playwright hardware-in-the-loop). |
 | `android/` | Native Kotlin/Compose. `:helix` SDK module (protocol/service/transport packages) + `:app`. BLE-first. |
 | `cloud/` | Cloud infra: `appliance/` (single-image stack), `build-service/` (on-demand firmware builds), `mosquitto/`, `coturn/`, `observability/`, and the multi-container `docker-compose.yml`. |
 | `tooling/` | The `helix` Python CLI (see §4): `device`, `protocol`, `appliance`, `e2e`, `loadtest`, `release`, `common`. |

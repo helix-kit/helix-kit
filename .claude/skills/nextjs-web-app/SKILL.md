@@ -17,7 +17,7 @@ description: >-
 
 The Helix core app is `web/apps/helix` (Next.js 16 App Router, React 19, Turbopack,
 tRPC v11, TanStack Query v5 + Table v8, nuqs v2, Drizzle/Postgres). Backend logic
-lives in `@helix/backend` (`web/packages/core/helix-backend`); shared UI lives in
+lives in `@helix/backend` (`web/packages/helix-backend`); shared UI lives in
 `@helix/design-system`. Apps are thin; capability lives in the packages.
 
 The **admin blog list** is the in-repo reference that uses every pattern below
@@ -52,14 +52,14 @@ app are still placeholders — copy the admin blog list, not them.
 
 ## 1. tRPC routers — always via the factory
 
-The factory lives in `web/packages/core/helix-backend/src/trpc/index.ts`
+The factory lives in `web/packages/helix-backend/src/trpc/index.ts`
 (`@helix/backend/trpc`). Each router **declares the minimum context it needs** as a
 plain type; `createRootRouter` intersects the contexts of every mounted router.
 There is **no global `publicProcedure`/`protectedProcedure`** — public is plain
 `t.procedure`, and auth is a context-narrowing middleware built with
 `t.procedure.use(...)` inside the factory.
 
-Create a router at `web/packages/core/helix-backend/src/<feature>/router.ts`:
+Create a router at `web/packages/helix-backend/src/<feature>/router.ts`:
 
 ```ts
 import { and, desc, eq, sql } from 'drizzle-orm';
@@ -464,7 +464,7 @@ The admin blog post list implements this whole skill end to end — copy it:
 
 | File | Shows |
 | --- | --- |
-| `web/packages/core/helix-backend/src/blog/router.ts` (`list`) | Server-side paginated/filtered/sorted query returning `{ rows, pageCount }`; `ilike` title filter, `published` facet, sort mapped to allow-listed columns. |
+| `web/packages/helix-backend/src/blog/router.ts` (`list`) | Server-side paginated/filtered/sorted query returning `{ rows, pageCount }`; `ilike` title filter, `published` facet, sort mapped to allow-listed columns. |
 | `web/apps/helix/src/app/admin/(dashboard)/search-params.ts` | nuqs parser object (`page`/`perPage`/`title`/`status`/`sort`) whose keys match the table column ids. |
 | `web/apps/helix/src/app/admin/(dashboard)/page.tsx` | Async Server Component: `createLoader(...)` → `fetchQuery(trpc => trpc.blog.list.queryOptions(params))` → props. |
 | `web/apps/helix/src/app/admin/(dashboard)/posts-table.tsx` | `"use client"` leaf: `useDataTable({ data, columns, pageCount, shallow: false })` + `DataTable`/`DataTableToolbar`, column `meta` filters, and a `useTRPCMutation` delete wrapped in `DeleteConfirmDialog`. |

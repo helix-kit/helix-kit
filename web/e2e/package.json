@@ -17,10 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@helix/protocol-core": "workspace:*",
-    "@helix/protocol-service": "workspace:*",
-    "@helix/transport-ble": "workspace:*",
-    "@helix/transport-serial": "workspace:*",
+    "@helix/protocol": "workspace:*",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

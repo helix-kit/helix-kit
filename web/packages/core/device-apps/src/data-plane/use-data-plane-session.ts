@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { selectedCandidatePair } from '@helix/protocol-peer';
 
-
 import {
   openFailureMessage,
   openSession,

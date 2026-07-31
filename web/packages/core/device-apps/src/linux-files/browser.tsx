@@ -9,11 +9,7 @@ import { ChevronUp, Download, File as FileIcon, Folder, RefreshCw, Upload } from
 import { filesControlContract, type FileEntry } from './contract';
 import { downloadFile, uploadFile, type TransferContext } from './transfer';
 
-import {
-  TransportPicker,
-  useDataPlaneSession,
-  type SessionService,
-} from '../data-plane';
+import { TransportPicker, useDataPlaneSession, type SessionService } from '../data-plane';
 import { HeaderPortal } from '../header-portal';
 
 const OPEN_TIMEOUT_MS = 30_000;

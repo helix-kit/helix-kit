@@ -24,7 +24,7 @@ import type { DeviceAppSurfaceProps } from '../types';
 import { formatAge, useNow } from '../session-format';
 import { useClientOnly } from '../use-client-only';
 
-const OPEN_TIMEOUT_MS = 15_000;
+const OPEN_TIMEOUT_MS = 30_000;
 const LIST_POLL_MS = 3000;
 
 const gatewayWsUrl = (): string => {

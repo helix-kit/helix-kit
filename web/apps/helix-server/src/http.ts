@@ -2,7 +2,7 @@ import { type IncomingHttpHeaders, type Server } from 'node:http';
 
 export const listen = (server: Server, port: number): Promise<void> =>
   new Promise((resolve) => {
-    server.listen(port, '0.0.0.0', resolve);
+    server.listen(port, resolve);
   });
 
 export const closeServer = (server: Server): Promise<void> =>

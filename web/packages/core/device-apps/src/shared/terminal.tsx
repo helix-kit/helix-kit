@@ -30,7 +30,7 @@ import { formatAge, shortId, useNow } from '../session-format';
 import '@xterm/xterm/css/xterm.css';
 import './terminal.css';
 
-const OPEN_TIMEOUT_MS = 15_000;
+const OPEN_TIMEOUT_MS = 30_000;
 // Generous client-attach window (~12s): a slow ESP32 bridge's mTLS dial races the
 // attach and lands in "closed" if the retry budget is too tight.
 const CLIENT_RETRY_MS = 600;

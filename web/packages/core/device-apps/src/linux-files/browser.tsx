@@ -21,7 +21,7 @@ import {
 } from '../data-plane';
 import { HeaderPortal } from '../header-portal';
 
-const OPEN_TIMEOUT_MS = 20_000;
+const OPEN_TIMEOUT_MS = 30_000;
 const BYTES_PER_KB = 1024;
 const PERCENT = 100;
 

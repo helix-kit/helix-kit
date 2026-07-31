@@ -24,7 +24,11 @@ import type { DeviceAppSurfaceProps } from '../types';
 import { formatAge, useNow } from '../session-format';
 import { useClientOnly } from '../use-client-only';
 
-const OPEN_TIMEOUT_MS = 15_000;
+// The device has its own 15s budget to dial the data plane (dataplane.dialTimeout),
+// so a browser timeout at 15s can expire while the device is still succeeding —
+// which surfaced as "No response from the device" against a log line saying
+// `session opened`. Stay clear of the device's own budget plus a round trip.
+const OPEN_TIMEOUT_MS = 30_000;
 const LIST_POLL_MS = 3000;
 
 const gatewayWsUrl = (): string => {

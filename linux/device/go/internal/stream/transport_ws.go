@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/helix-kit/helix-device/internal/shared/netutil"
 )
 
 // wsTransport adapts a gorilla WebSocket to the Transport interface; the Session's single reader and serialized writes are what gorilla requires.
@@ -36,7 +38,10 @@ func (w *wsTransport) Close() error { return w.conn.Close() }
 // DialWebSocket opens an outbound WebSocket (optionally mTLS) and returns it as a Transport.
 func DialWebSocket(ctx context.Context, url string, tlsConfig *tls.Config, header http.Header) (Transport, error) {
 	dialer := websocket.Dialer{
-		TLSClientConfig:  tlsConfig,
+		TLSClientConfig: tlsConfig,
+		// Resolution is the slow part of this dial on a site with a bad resolver, and
+		// a session opens one of these each time, so share the cache.
+		NetDialContext:   netutil.Shared().DialContext,
 		HandshakeTimeout: 15 * time.Second,
 	}
 	conn, _, err := dialer.DialContext(ctx, url, header)

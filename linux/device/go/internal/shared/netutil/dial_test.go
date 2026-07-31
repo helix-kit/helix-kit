@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// testDialer builds a Dialer whose resolver is scripted per family.
 func testDialer(t *testing.T, lookup lookupFunc) *Dialer {
 	t.Helper()
 	d := New()
@@ -36,8 +35,6 @@ func families(v6, v4 []net.IP, v6Delay, v4Delay time.Duration, v6Err, v4Err erro
 	}
 }
 
-// The measured failure: IPv4 answers immediately, IPv6 takes seconds. The dial must
-// not wait for IPv6.
 func TestAddrsDoesNotBlockOnSlowIPv6(t *testing.T) {
 	d := testDialer(t, families(
 		[]net.IP{net.ParseIP("2001:db8::1")}, []net.IP{net.ParseIP("1.2.3.4")},
@@ -60,8 +57,6 @@ func TestAddrsDoesNotBlockOnSlowIPv6(t *testing.T) {
 	}
 }
 
-// A resolver that never answers AAAA at all (the site router drops it) must behave the
-// same way rather than failing the dial.
 func TestAddrsToleratesIPv6Failure(t *testing.T) {
 	d := testDialer(t, families(
 		nil, []net.IP{net.ParseIP("1.2.3.4")},
@@ -78,7 +73,6 @@ func TestAddrsToleratesIPv6Failure(t *testing.T) {
 	}
 }
 
-// A healthy dual-stack network must still get IPv6, and it must come first.
 func TestAddrsPrefersIPv6WhenItIsFast(t *testing.T) {
 	d := testDialer(t, families(
 		[]net.IP{net.ParseIP("2001:db8::1")}, []net.IP{net.ParseIP("1.2.3.4")},
@@ -98,7 +92,6 @@ func TestAddrsPrefersIPv6WhenItIsFast(t *testing.T) {
 	}
 }
 
-// Both families failing is a real error, not an empty success.
 func TestAddrsFailsWhenBothFamiliesFail(t *testing.T) {
 	d := testDialer(t, families(
 		nil, nil,
@@ -111,7 +104,6 @@ func TestAddrsFailsWhenBothFamiliesFail(t *testing.T) {
 	}
 }
 
-// The per-session dials that made this hurt must resolve once, not every time.
 func TestAddrsCachesWithinTTL(t *testing.T) {
 	var calls atomic.Int32
 	d := testDialer(t, func(ctx context.Context, network, host string) ([]net.IP, error) {
@@ -127,7 +119,6 @@ func TestAddrsCachesWithinTTL(t *testing.T) {
 			t.Fatalf("Addrs: %v", err)
 		}
 	}
-	// One lookup per family, once.
 	if got := calls.Load(); got != 2 {
 		t.Fatalf("lookups = %d, want 2 (cached after the first resolution)", got)
 	}
@@ -141,7 +132,6 @@ func TestAddrsCachesWithinTTL(t *testing.T) {
 	}
 }
 
-// An expired entry must not be served.
 func TestAddrsReresolvesAfterTTL(t *testing.T) {
 	var calls atomic.Int32
 	d := testDialer(t, func(ctx context.Context, network, host string) ([]net.IP, error) {
@@ -166,7 +156,6 @@ func TestAddrsReresolvesAfterTTL(t *testing.T) {
 	}
 }
 
-// An IP literal must not be resolved at all.
 func TestAddrsPassesThroughIPLiterals(t *testing.T) {
 	d := testDialer(t, func(context.Context, string, string) ([]net.IP, error) {
 		t.Fatal("resolved an IP literal")
@@ -182,9 +171,6 @@ func TestAddrsPassesThroughIPLiterals(t *testing.T) {
 	}
 }
 
-// The published-but-unreachable case: an address that refuses must not sink the dial
-// when another family works. This is exactly IPv6 being published before the listener
-// is dual-stack.
 func TestDialContextFallsBackToTheNextAddress(t *testing.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -197,7 +183,6 @@ func TestDialContextFallsBackToTheNextAddress(t *testing.T) {
 		t.Fatalf("SplitHostPort: %v", err)
 	}
 
-	// ::1 on this port has nothing listening, so it refuses; 127.0.0.1 accepts.
 	d := testDialer(t, families(
 		[]net.IP{net.ParseIP("::1")}, []net.IP{net.ParseIP("127.0.0.1")},
 		time.Millisecond, time.Millisecond,

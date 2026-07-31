@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Package netutil dials the cloud without letting a slow resolver stall the device.
+// Package netutil dials the cloud with a bounded tolerance for a slow resolver.
 package netutil
 
 import (
@@ -15,25 +15,12 @@ import (
 	"time"
 )
 
-// A fleet device sits on a network we do not control, and a resolver that is slow to
-// answer AAAA is common: measured on a Radxa A733, the site's router answered A in
-// 0.15s but took 5.1s to say "no AAAA record", and Go's resolver (helixd is CGO_ENABLED=0)
-// retries, so every dial cost ~10s while TCP+TLS together cost 0.09s. Waiting on both
-// families is the whole bug, so resolve them concurrently and stop waiting for IPv6
-// once IPv4 has an answer.
-
 const (
-	// How long a successful resolution is reused. Long enough that a burst of sessions
-	// resolves once; short enough to follow a cloud IP change without a restart.
-	defaultTTL = 5 * time.Minute
-	// How long IPv4 waits for IPv6 after answering. Enough for a healthy dual-stack
-	// resolver to win the race, far below a broken one's multi-second timeout.
-	defaultGrace = 150 * time.Millisecond
-	// Per-address connect budget, so one black-holed address cannot consume the dial.
+	defaultTTL     = 5 * time.Minute
+	defaultGrace   = 150 * time.Millisecond
 	defaultAttempt = 10 * time.Second
 )
 
-// ErrNoAddresses reports that a host resolved to nothing usable.
 var ErrNoAddresses = errors.New("host resolved to no addresses")
 
 type lookupFunc func(ctx context.Context, network, host string) ([]net.IP, error)
@@ -43,8 +30,6 @@ type entry struct {
 	expires time.Time
 }
 
-// Dialer resolves and connects with a bounded tolerance for a slow resolver, caching
-// what it learns. The zero value is not usable; call New.
 type Dialer struct {
 	ttl     time.Duration
 	grace   time.Duration
@@ -56,7 +41,6 @@ type Dialer struct {
 	cache map[string]entry
 }
 
-// New builds a Dialer backed by the system resolver.
 func New() *Dialer {
 	resolver := &net.Resolver{}
 	return &Dialer{
@@ -77,8 +61,6 @@ var (
 	sharedOnce sync.Once
 )
 
-// Shared is the process-wide Dialer, so every connection a service opens reuses one
-// resolution cache.
 func Shared() *Dialer {
 	sharedOnce.Do(func() { shared = New() })
 	return shared
@@ -89,7 +71,6 @@ type result struct {
 	err   error
 }
 
-// Addrs resolves host, IPv6 first, without blocking on IPv6 once IPv4 has answered.
 func (d *Dialer) Addrs(ctx context.Context, host string) ([]net.IP, error) {
 	if ip := net.ParseIP(host); ip != nil {
 		return []net.IP{ip}, nil
@@ -119,15 +100,12 @@ func (d *Dialer) Addrs(ctx context.Context, host string) ([]net.IP, error) {
 	return addrs, nil
 }
 
-// race collects both families, giving up on the slower one after the grace period.
 func (d *Dialer) race(ctx context.Context, v6, v4 <-chan result) ([]net.IP, error) {
 	var got6, got4 result
 	var have6, have4 bool
 
 	for !have6 || !have4 {
 		var timeout <-chan time.Time
-		// Only start the clock once one family is in hand: before that there is
-		// nothing to fall back to and we must wait for a real answer.
 		if have4 && len(got4.addrs) > 0 || have6 && len(got6.addrs) > 0 {
 			timer := time.NewTimer(d.grace)
 			defer timer.Stop()
@@ -145,7 +123,6 @@ func (d *Dialer) race(ctx context.Context, v6, v4 <-chan result) ([]net.IP, erro
 		}
 	}
 
-	// Both families failed: surface whichever error we have.
 	if len(got6.addrs) == 0 && len(got4.addrs) == 0 {
 		if got4.err != nil {
 			return nil, got4.err
@@ -171,15 +148,12 @@ func (d *Dialer) store(host string, addrs []net.IP) {
 	d.cache[host] = entry{addrs: addrs, expires: d.now().Add(d.ttl)}
 }
 
-// Forget drops any cached resolution for host, so the next dial resolves afresh.
 func (d *Dialer) Forget(host string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	delete(d.cache, host)
 }
 
-// DialContext resolves addr and connects to the first address that accepts, so a
-// published-but-unreachable family costs one attempt rather than the whole dial.
 func (d *Dialer) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -206,20 +180,15 @@ func (d *Dialer) DialContext(ctx context.Context, network, addr string) (net.Con
 	if last == nil {
 		last = fmt.Errorf("%w: %s", ErrNoAddresses, host)
 	}
-	// The cached set just failed end to end; re-resolve next time rather than pinning
-	// the device to an address the cloud has moved off.
 	d.Forget(host)
 	return nil, last
 }
 
-// brokerPorts is the default port per MQTT scheme, used when the URL omits one.
 var brokerPorts = map[string]string{
 	"tcp": "1883", "mqtt": "1883", "ws": "80",
 	"tls": "8883", "ssl": "8883", "mqtts": "8883", "wss": "443",
 }
 
-// DialBroker opens an MQTT broker connection through the shared resolver, wrapping it
-// in TLS when the scheme calls for it. It satisfies paho's custom-open-connection hook.
 func (d *Dialer) DialBroker(ctx context.Context, uri *url.URL, tlsConfig *tls.Config) (net.Conn, error) {
 	if uri == nil {
 		return nil, errors.New("nil broker url")
@@ -241,7 +210,6 @@ func (d *Dialer) DialBroker(ctx context.Context, uri *url.URL, tlsConfig *tls.Co
 		return conn, nil
 	}
 
-	// ServerName must survive dialing by IP, or verification fails against the SANs.
 	cfg := tlsConfig.Clone()
 	if cfg.ServerName == "" {
 		cfg.ServerName = host
@@ -254,7 +222,6 @@ func (d *Dialer) DialBroker(ctx context.Context, uri *url.URL, tlsConfig *tls.Co
 	return tlsConn, nil
 }
 
-// sortedStrings renders addresses for logging and tests, order-independent.
 func sortedStrings(addrs []net.IP) []string {
 	out := make([]string, 0, len(addrs))
 	for _, ip := range addrs {

@@ -1,9 +1,5 @@
 import { type IncomingHttpHeaders, type Server } from 'node:http';
 
-// Omitting the host binds `::` dual-stack where IPv6 exists and 0.0.0.0 where it does
-// not, so a device may reach the gateway and the mTLS data plane over either family.
-// Pinning 0.0.0.0 made an AAAA record actively harmful: the device would try IPv6,
-// find nothing listening, and only reach us after the Happy-Eyeballs fallback.
 export const listen = (server: Server, port: number): Promise<void> =>
   new Promise((resolve) => {
     server.listen(port, resolve);

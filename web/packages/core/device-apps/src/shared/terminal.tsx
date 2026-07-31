@@ -30,10 +30,6 @@ import { formatAge, shortId, useNow } from '../session-format';
 import '@xterm/xterm/css/xterm.css';
 import './terminal.css';
 
-// The device has its own 15s budget to dial the data plane (dataplane.dialTimeout),
-// so a browser timeout at 15s can expire while the device is still succeeding —
-// which surfaced as "No response from the device" against a log line saying
-// `session opened`. Stay clear of the device's own budget plus a round trip.
 const OPEN_TIMEOUT_MS = 30_000;
 // Generous client-attach window (~12s): a slow ESP32 bridge's mTLS dial races the
 // attach and lands in "closed" if the retry budget is too tight.

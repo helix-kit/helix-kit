@@ -63,9 +63,6 @@ func newMQTT(cfg config.MQTT, deviceID string, log *slog.Logger, inbound inbound
 		brokerTLS = tlsCfg
 		opts.SetTLSConfig(tlsCfg)
 	}
-	// paho's SetDialer only takes a *net.Dialer, which cannot carry a resolution
-	// strategy, so open the connection ourselves. Auto-reconnect re-enters here, which
-	// is where a slow resolver hurts most: it would add its stall to every retry.
 	opts.SetCustomOpenConnectionFn(func(uri *url.URL, _ mqtt.ClientOptions) (net.Conn, error) {
 		return netutil.Shared().DialBroker(context.Background(), uri, brokerTLS)
 	})

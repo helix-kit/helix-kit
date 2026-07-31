@@ -38,9 +38,7 @@ func (w *wsTransport) Close() error { return w.conn.Close() }
 // DialWebSocket opens an outbound WebSocket (optionally mTLS) and returns it as a Transport.
 func DialWebSocket(ctx context.Context, url string, tlsConfig *tls.Config, header http.Header) (Transport, error) {
 	dialer := websocket.Dialer{
-		TLSClientConfig: tlsConfig,
-		// Resolution is the slow part of this dial on a site with a bad resolver, and
-		// a session opens one of these each time, so share the cache.
+		TLSClientConfig:  tlsConfig,
 		NetDialContext:   netutil.Shared().DialContext,
 		HandshakeTimeout: 15 * time.Second,
 	}

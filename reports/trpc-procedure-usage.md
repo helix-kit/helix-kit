@@ -1,8 +1,8 @@
 # TRPC Procedure Usage
 
 Total procedures: 77
-Used procedures: 65
-Ignored procedures: 12
+Used procedures: 69
+Ignored procedures: 8
 Unused procedures: 0
 
 ## Analyzer Diagnostics
@@ -19,11 +19,11 @@ Unused procedures: 0
 | --- | --- | --- | --- | ---: | --- | --- | --- |
 | account.listConnectedApps | query |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/account/router.ts:34:5 | apps/helix/src/app/dashboard/settings/_components/connected-apps-card.tsx:24:8 (queryOptions)<br>apps/helix/src/app/dashboard/settings/page.tsx:23:52 (queryOptions) |
 | account.revokeConnectedApp | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/account/router.ts:54:5 | apps/helix/src/app/dashboard/settings/_components/connected-apps-card.tsx:28:5 (mutationOptions) |
-| agent.createConversation | mutation |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:69:5 | Agent thread store; consumed by the agent chat UI (HELIX-157). |
-| agent.deleteConversation | mutation |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:95:5 | Agent thread store; consumed by the agent chat UI (HELIX-157). |
-| agent.getConversation | query |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:54:5 | Agent thread store; consumed server-side by the chat route caller + the agent chat UI (HELIX-157). |
-| agent.listConversations | query |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:40:5 | Agent thread store; consumed by the agent chat UI (HELIX-157). |
-| agent.renameConversation | mutation |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:80:5 | Agent thread store; consumed by the agent chat UI (HELIX-157). |
+| agent.createConversation | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:69:5 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:36:5 (mutationOptions) |
+| agent.deleteConversation | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:95:5 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:39:5 (mutationOptions) |
+| agent.getConversation | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:54:5 | apps/helix/src/app/dashboard/agent/page.tsx:35:9 (queryOptions) |
+| agent.listConversations | query |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:40:5 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:30:8 (queryOptions)<br>apps/helix/src/app/dashboard/agent/page.tsx:28:52 (queryOptions) |
+| agent.renameConversation | mutation |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/agent/router.ts:80:5 | Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI). |
 | blog.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/blog/router.ts:265:5 | apps/helix/src/app/admin/(dashboard)/post/create-post-button.tsx:14:5 (mutationOptions) |
 | blog.delete | mutation |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/blog/router.ts:313:5 | apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx:52:5 (mutationOptions)<br>apps/helix/src/app/admin/(dashboard)/post/posts-table.tsx:31:5 (mutationOptions) |
 | blog.getById | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/core/helix-backend/src/blog/router.ts:260:5 | apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx:48:5 (queryOptions) |

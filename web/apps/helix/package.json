@@ -15,6 +15,7 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.47",
     "@better-auth/api-key": "1.6.23",
     "@better-auth/passkey": "^1.6.23",
     "@fumadocs/mdx-remote": "^1.5.1",

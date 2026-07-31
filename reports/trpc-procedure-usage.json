@@ -95,10 +95,19 @@
         "line": 69,
         "column": 5
       },
-      "ignoreReason": "Agent thread store; consumed by the agent chat UI (HELIX-157).",
-      "status": "ignored",
-      "usageCount": 0,
-      "usages": []
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "mutationOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
+            "line": 36,
+            "column": 5
+          }
+        }
+      ]
     },
     {
       "kind": "mutation",
@@ -110,10 +119,19 @@
         "line": 95,
         "column": 5
       },
-      "ignoreReason": "Agent thread store; consumed by the agent chat UI (HELIX-157).",
-      "status": "ignored",
-      "usageCount": 0,
-      "usages": []
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "mutationOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
+            "line": 39,
+            "column": 5
+          }
+        }
+      ]
     },
     {
       "kind": "query",
@@ -125,10 +143,19 @@
         "line": 54,
         "column": 5
       },
-      "ignoreReason": "Agent thread store; consumed server-side by the chat route caller + the agent chat UI (HELIX-157).",
-      "status": "ignored",
-      "usageCount": 0,
-      "usages": []
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/page.tsx",
+            "line": 35,
+            "column": 9
+          }
+        }
+      ]
     },
     {
       "kind": "query",
@@ -140,10 +167,27 @@
         "line": 40,
         "column": 5
       },
-      "ignoreReason": "Agent thread store; consumed by the agent chat UI (HELIX-157).",
-      "status": "ignored",
-      "usageCount": 0,
-      "usages": []
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 2,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/_components/agent-app.tsx",
+            "line": 30,
+            "column": 8
+          }
+        },
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/dashboard/agent/page.tsx",
+            "line": 28,
+            "column": 52
+          }
+        }
+      ]
     },
     {
       "kind": "mutation",
@@ -155,7 +199,7 @@
         "line": 80,
         "column": 5
       },
-      "ignoreReason": "Agent thread store; consumed by the agent chat UI (HELIX-157).",
+      "ignoreReason": "Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI).",
       "status": "ignored",
       "usageCount": 0,
       "usages": []

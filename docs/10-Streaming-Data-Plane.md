@@ -53,7 +53,7 @@ authorizes a session; the data plane carries its bytes.
 
 ```
               ┌──────────────────────────── Browser / Web app ────────────────────────────┐
-              │  control: @helix/protocol-service client        data: @helix/protocol-stream │
+              │  control: @helix/protocol/service client        data: @helix/protocol/stream │
               └────────┬──────────────────────────────────────────────────┬────────────────┘
         control: WS /ws?deviceId  (HelixPacket JSON)          data: WSS binary stream frames
                        │  {requestId, message:{service,method,payload}}     │  [type][streamId][bytes]
@@ -263,10 +263,10 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 
 | Path | What |
 | --- | --- |
-| `web/packages/protocol/helix-stream` (`@helix/protocol-stream`) | Layer-1 mux (browser + gateway) + flow control |
-| `web/packages/protocol/transport-ws-binary` | binary-WS transport for the mux (distinct from JSON `@helix/transport-websocket`) |
-| `web/packages/core/helix-backend/src/streams/` | gateway HelixStream server, session broker, subdomain router |
-| `web/packages/core/helix-backend/src/streams/apps/{port-forward,shell}` | gateway-side app logic |
+| `web/packages/protocol/helix-stream` (`@helix/protocol/stream`) | Layer-1 mux (browser + gateway) + flow control |
+| `web/packages/protocol/transport-ws-binary` | binary-WS transport for the mux (distinct from JSON `@helix/protocol/websocket`) |
+| `web/packages/helix-backend/src/streams/` | gateway HelixStream server, session broker, subdomain router |
+| `web/packages/helix-backend/src/streams/apps/{port-forward,shell}` | gateway-side app logic |
 | `linux/protocol/go/stream/` | device Layer-1 mux (promote experimental framing) |
 | `linux/protocol/go/wsstream/` | outbound mTLS binary-WS transport |
 | `linux/protocol/go/apps/{portforward,shell}/` | device apps: `stream`-service handler + stream handler |
@@ -277,7 +277,7 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 
 ## Rollout phases
 
-1. **Extract the substrate.** Build `@helix/protocol-stream` (TS) and
+1. **Extract the substrate.** Build `@helix/protocol/stream` (TS) and
    `linux/protocol/go/stream` (Go) from the experimental framing, add
    `CREDIT` flow control, and re-implement *both* experimental agents/gateways on
    it — still standalone — to prove one substrate serves both apps.
@@ -323,7 +323,7 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 | step-ca PKI + device mTLS on MQTT | ✅ exists |
 | Multiplexed byte-stream framing | ⚠️ prototyped in `experimental/*/agent/protocol.go`; not a lib, no flow control |
 | Outbound WS binary transport (Go) | ⚠️ prototyped in the experimental agent; needs mTLS + generalizing |
-| `@helix/protocol-stream` + `linux/protocol/go/stream` (Layer-1 mux) | ⛔ to build |
+| `@helix/protocol/stream` + `linux/protocol/go/stream` (Layer-1 mux) | ⛔ to build |
 | `stream` service contract + device handlers + allowlist | ⛔ to build |
 | Go/Python full contract codegen | ✅ implemented — typed structs + `Dispatch`/`Handler` from co-located contract JSON |
 | HelixStream server in `@helix/backend` + subdomain routing | ⛔ to build (fold experiment) |
@@ -334,9 +334,9 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 ## Key files
 
 Existing (reuse / extend):
-- `web/packages/protocol/protocol-core/src/index.ts` — `HelixTransport`, `HelixPacket`, `HelixRequestRegistry`.
-- `web/packages/protocol/protocol-service/src/index.ts` — `HelixMessage{service,method,payload}`, `defineServiceContract`, `HelixServiceClient`.
-- `web/packages/core/helix-backend/src/gateway/{mqtt-bridge.ts,router.ts}` — WS⇄MQTT bridge (`helix/device/<id>/in|out`, `/ws?deviceId=`).
+- `web/packages/protocol/src/index.ts` — `HelixTransport`, `HelixPacket`, `HelixRequestRegistry`.
+- `web/packages/protocol/src/service/index.ts` — `HelixMessage{service,method,payload}`, `defineServiceContract`, `HelixServiceClient`.
+- `web/packages/helix-backend/src/gateway/{mqtt-bridge.ts,router.ts}` — WS⇄MQTT bridge (`helix/device/<id>/in|out`, `/ws?deviceId=`).
 - `web/apps/helix-server/src/roles/gateway.ts` — gateway role wiring.
 - `linux/protocol/go/{core,service,mqtt,cloudcomm}` — device control core + example service.
 - `embedded/protocol/src/{helix_transport.h,service_dispatcher.h,helix_binary_channel.h}` — the transport seam, dispatcher, and the control-plane-plus-out-of-band-binary precedent (doc 08).
@@ -344,7 +344,7 @@ Existing (reuse / extend):
 
 To create:
 - `web/packages/protocol/helix-stream`, `.../transport-ws-binary`.
-- `web/packages/core/helix-backend/src/streams/**`.
+- `web/packages/helix-backend/src/streams/**`.
 - `linux/protocol/go/{stream,wsstream,apps/portforward,apps/shell,cmd/helix-agent}`.
 - `docs`/contracts for the `stream` service.
 

@@ -79,7 +79,7 @@
         },
         {
           "target": "typescript",
-          "out": "web/packages/core/device-apps/src/linux-shell/generated"
+          "out": "web/packages/device-apps/src/linux-shell/generated"
         }
       ]
     },
@@ -92,7 +92,7 @@
         },
         {
           "target": "typescript",
-          "out": "web/packages/core/device-apps/src/linux-port-forward/generated"
+          "out": "web/packages/device-apps/src/linux-port-forward/generated"
         }
       ]
     },
@@ -105,7 +105,7 @@
         },
         {
           "target": "typescript",
-          "out": "web/packages/core/device-apps/src/linux-files/generated"
+          "out": "web/packages/device-apps/src/linux-files/generated"
         }
       ]
     },
@@ -127,7 +127,7 @@
         },
         {
           "target": "typescript",
-          "out": "web/packages/core/device-apps/src/uart-console/generated"
+          "out": "web/packages/device-apps/src/uart-console/generated"
         }
       ]
     }

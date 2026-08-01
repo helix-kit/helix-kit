@@ -12,16 +12,7 @@ const nextConfig: NextConfig = {
     // Public assets (blog images) are served from the CloudFront-fronted CDN host.
     remotePatterns: [{ protocol: 'https', hostname: 'assets.helix-kit.com' }],
   },
-  transpilePackages: [
-    '@helix/design-system',
-    '@helix/device-apps',
-    '@helix/esp32-flasher',
-    '@helix/protocol-core',
-    '@helix/protocol-service',
-    '@helix/transport-mqtt',
-    '@helix/transport-ble',
-    '@helix/transport-serial',
-  ],
+  transpilePackages: ['@helix/design-system', '@helix/device-apps', '@helix/protocol'],
 };
 
 export default withMDX(nextConfig);

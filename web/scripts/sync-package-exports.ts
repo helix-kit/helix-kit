@@ -25,19 +25,13 @@ type TargetPackage = {
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WRITE = process.argv.includes('--write');
-const TARGET_ROOTS = ['packages/core', 'packages/protocol'] as const;
+const TARGET_ROOTS = ['packages'] as const;
 const SCAN_ROOTS = ['apps', 'packages'] as const;
 const SYNC_ENABLED_PACKAGES = new Set([
   '@helix/backend',
   '@helix/design-system',
-  '@helix/esp32-flasher',
   '@helix/logger',
-  '@helix/protocol-core',
-  '@helix/protocol-service',
-  '@helix/transport-ble',
-  '@helix/transport-mqtt',
-  '@helix/transport-serial',
-  '@helix/transport-websocket',
+  '@helix/protocol',
 ]);
 const SCAN_EXTENSIONS = new Set([
   '.css',
@@ -84,9 +78,7 @@ const ALWAYS_INCLUDE_EXPORTS: Record<string, string[]> = {
     './globals.css',
     './postcss.config',
   ],
-  '@helix/esp32-flasher': ['./react'],
-  '@helix/transport-mqtt': ['.'],
-  '@helix/transport-websocket': ['.'],
+  '@helix/protocol': ['./mqtt', './websocket'],
 };
 const FORCED_SOURCE_PATHS: Record<string, Record<string, string>> = {
   '@helix/design-system': {

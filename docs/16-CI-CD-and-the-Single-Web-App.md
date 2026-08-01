@@ -145,7 +145,7 @@ opens the tunnels (Postgres, OpenFGA, step-ca, Redpanda, both Mosquitto listener
 helix-server), reads the box's `internal/secrets/site.env`, and writes
 `web/apps/helix/.env`.
 
-Four things cannot survive the trip, and the command fixes each:
+Five things cannot survive the trip, and the command fixes each:
 
 | | Why | What it does |
 | --- | --- | --- |
@@ -153,11 +153,38 @@ Four things cannot survive the trip, and the command fixes each:
 | origin URLs | they are better-auth's `baseURL`: the Origin/CSRF check, the redirect + verification links, and the cookie's `Secure`/`__Secure-` flags are all derived from it (see below) | pins them to `http://localhost:<port>` |
 | `FS_STORAGE_ROOT` | a directory on the box | a local dir — prod uploads 404 locally and vice versa; nothing is corrupted, the DB rows just point at files you don't have |
 | `NODE_ENV` | production disables the dev-only trusted origins | `development` |
+| the gateway + client data-plane URLs | they default to `window.location.host`, which in production is Caddy fronting **both** the Next app and helix-server; locally that is the Next dev server, which serves neither `/ws` nor `/stream/client` (see below) | points them at the tunnelled helix-server, `ws://localhost:4000` |
 
 Everything else — the database, the auth secret, OpenFGA, the event queue, the TURN
 secret — is the real thing. **That is the point and the danger: `pnpm dev` writes to
 production, and `pnpm db:migrate` would migrate production.** The command says so on
 every run.
+
+### Why the device-app URLs have to be overridden
+
+A device app (shell, files, port-forward) uses three endpoints, and only one of them
+belongs to the Next app:
+
+| Endpoint | Served by | Dialled by |
+| --- | --- | --- |
+| `/ws` — the control plane (HelixPacket ⇄ MQTT) | helix-server | the browser |
+| `/stream/client` — the browser's data-plane attach | helix-server | the browser |
+| `:4001/stream/device` — the device's data-plane attach (mTLS) | helix-server | the **device** |
+
+In production Caddy fronts the Next app and helix-server on one origin, so the browser's
+default of `window.location.host` reaches all of them. Locally that origin is the Next
+dev server, which serves neither `/ws` nor `/stream/client` — the app sits at
+"Connecting" forever with only a bare `WebSocket … failed` in the console. So the
+command pins both at the tunnelled helix-server.
+
+The **device** stream URL is the exception and stays pointed at the real box: the device
+dials it, not your browser, and the origin must be a SAN on the mTLS cert.
+
+> The device dial is not instant. Measured from a Radxa A733 on WiFi, the TLS connect to
+> `helix-kit.com:4001` took **~18 s cold and ~5 s warm**, and the app's `open` reply only
+> comes back once it lands. With `OPEN_TIMEOUT_MS` at 15 s a cold session can therefore
+> fail with "No response from the device. Is helix-shell running on it?" while the device
+> log shows `session opened` — retry and it connects.
 
 ### Why the origin has to be overridden
 

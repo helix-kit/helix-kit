@@ -6,7 +6,7 @@
     "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
-      "@helix/design-system/*": ["../../packages/core/helix-design-system/src/*"]
+      "@helix/design-system/*": ["../../packages/helix-design-system/src/*"]
     },
     "plugins": [
       {

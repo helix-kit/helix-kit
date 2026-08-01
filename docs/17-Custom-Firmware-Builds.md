@@ -59,7 +59,7 @@ The backend proxies the catalog (`releases.builds.catalog` →
 
 ## Packages and files
 
-- **`@helix/firmware-builder`** (`web/packages/core/firmware-builder`) — the UI.
+- **`@helix/firmware-builder`** (`web/packages/firmware-builder`) — the UI.
   `FirmwareBuilderForm` (apps, feature toggles that auto-enable app-required
   fragments, chip/flash-size, sdkconfig overrides, name/version/channel) and
   `BuildStatusPanel` (live queued → success/failed). Presentational only: the app

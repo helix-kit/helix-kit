@@ -1,0 +1,289 @@
+{
+  "name": "@helix/backend",
+  "version": "0.0.1",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "dev": "tsdown --watch",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./account": {
+      "import": "./src/account/index.ts",
+      "types": "./src/account/index.ts"
+    },
+    "./agent": {
+      "import": "./src/agent/index.ts",
+      "types": "./src/agent/index.ts"
+    },
+    "./blog": {
+      "import": "./src/blog/index.ts",
+      "types": "./src/blog/index.ts"
+    },
+    "./db": {
+      "import": "./src/db/index.ts",
+      "types": "./src/db/index.ts"
+    },
+    "./db/auth-schema": {
+      "import": "./src/db/auth-schema.ts",
+      "types": "./src/db/auth-schema.ts"
+    },
+    "./device-mtls/fileRouter": {
+      "import": "./src/device-mtls/fileRouter.ts",
+      "types": "./src/device-mtls/fileRouter.ts"
+    },
+    "./device-mtls/tls": {
+      "import": "./src/device-mtls/tls.ts",
+      "types": "./src/device-mtls/tls.ts"
+    },
+    "./devices": {
+      "import": "./src/devices/index.ts",
+      "types": "./src/devices/index.ts"
+    },
+    "./events": {
+      "import": "./src/events/index.ts",
+      "types": "./src/events/index.ts"
+    },
+    "./features": {
+      "import": "./src/features/index.ts",
+      "types": "./src/features/index.ts"
+    },
+    "./gateway/mqtt-bridge": {
+      "import": "./src/gateway/mqtt-bridge.ts",
+      "types": "./src/gateway/mqtt-bridge.ts"
+    },
+    "./gateway/router": {
+      "import": "./src/gateway/router.ts",
+      "types": "./src/gateway/router.ts"
+    },
+    "./ice": {
+      "import": "./src/ice/index.ts",
+      "types": "./src/ice/index.ts"
+    },
+    "./pki/admin-router": {
+      "import": "./src/pki/admin-router.ts",
+      "types": "./src/pki/admin-router.ts"
+    },
+    "./pki/router": {
+      "import": "./src/pki/router.ts",
+      "types": "./src/pki/router.ts"
+    },
+    "./pki/step-ca": {
+      "import": "./src/pki/step-ca.ts",
+      "types": "./src/pki/step-ca.ts"
+    },
+    "./profiles": {
+      "import": "./src/profiles/index.ts",
+      "types": "./src/profiles/index.ts"
+    },
+    "./releases": {
+      "import": "./src/releases/index.ts",
+      "types": "./src/releases/index.ts"
+    },
+    "./storage/azure-provider": {
+      "import": "./src/storage/azure-provider.ts",
+      "types": "./src/storage/azure-provider.ts"
+    },
+    "./storage/factory": {
+      "import": "./src/storage/factory.ts",
+      "types": "./src/storage/factory.ts"
+    },
+    "./storage/filesystem-http": {
+      "import": "./src/storage/filesystem-http.ts",
+      "types": "./src/storage/filesystem-http.ts"
+    },
+    "./storage/filesystem-provider": {
+      "import": "./src/storage/filesystem-provider.ts",
+      "types": "./src/storage/filesystem-provider.ts"
+    },
+    "./storage/filesystem-shared": {
+      "import": "./src/storage/filesystem-shared.ts",
+      "types": "./src/storage/filesystem-shared.ts"
+    },
+    "./storage/interface": {
+      "import": "./src/storage/interface.ts",
+      "types": "./src/storage/interface.ts"
+    },
+    "./storage/object-keys": {
+      "import": "./src/storage/object-keys.ts",
+      "types": "./src/storage/object-keys.ts"
+    },
+    "./storage/s3-compatible-provider": {
+      "import": "./src/storage/s3-compatible-provider.ts",
+      "types": "./src/storage/s3-compatible-provider.ts"
+    },
+    "./trpc": {
+      "import": "./src/trpc/index.ts",
+      "types": "./src/trpc/index.ts"
+    },
+    "./users": {
+      "import": "./src/users/index.ts",
+      "types": "./src/users/index.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "./account": {
+        "import": "./dist/account/index.js",
+        "types": "./dist/account/index.d.ts"
+      },
+      "./agent": {
+        "import": "./dist/agent/index.js",
+        "types": "./dist/agent/index.d.ts"
+      },
+      "./blog": {
+        "import": "./dist/blog/index.js",
+        "types": "./dist/blog/index.d.ts"
+      },
+      "./db": {
+        "import": "./dist/db/index.js",
+        "types": "./dist/db/index.d.ts"
+      },
+      "./db/auth-schema": {
+        "import": "./dist/db/auth-schema.js",
+        "types": "./dist/db/auth-schema.d.ts"
+      },
+      "./device-mtls/fileRouter": {
+        "import": "./dist/device-mtls/fileRouter.js",
+        "types": "./dist/device-mtls/fileRouter.d.ts"
+      },
+      "./device-mtls/tls": {
+        "import": "./dist/device-mtls/tls.js",
+        "types": "./dist/device-mtls/tls.d.ts"
+      },
+      "./devices": {
+        "import": "./dist/devices/index.js",
+        "types": "./dist/devices/index.d.ts"
+      },
+      "./events": {
+        "import": "./dist/events/index.js",
+        "types": "./dist/events/index.d.ts"
+      },
+      "./features": {
+        "import": "./dist/features/index.js",
+        "types": "./dist/features/index.d.ts"
+      },
+      "./gateway/mqtt-bridge": {
+        "import": "./dist/gateway/mqtt-bridge.js",
+        "types": "./dist/gateway/mqtt-bridge.d.ts"
+      },
+      "./gateway/router": {
+        "import": "./dist/gateway/router.js",
+        "types": "./dist/gateway/router.d.ts"
+      },
+      "./ice": {
+        "import": "./dist/ice/index.js",
+        "types": "./dist/ice/index.d.ts"
+      },
+      "./pki/admin-router": {
+        "import": "./dist/pki/admin-router.js",
+        "types": "./dist/pki/admin-router.d.ts"
+      },
+      "./pki/router": {
+        "import": "./dist/pki/router.js",
+        "types": "./dist/pki/router.d.ts"
+      },
+      "./pki/step-ca": {
+        "import": "./dist/pki/step-ca.js",
+        "types": "./dist/pki/step-ca.d.ts"
+      },
+      "./profiles": {
+        "import": "./dist/profiles/index.js",
+        "types": "./dist/profiles/index.d.ts"
+      },
+      "./releases": {
+        "import": "./dist/releases/index.js",
+        "types": "./dist/releases/index.d.ts"
+      },
+      "./storage/azure-provider": {
+        "import": "./dist/storage/azure-provider.js",
+        "types": "./dist/storage/azure-provider.d.ts"
+      },
+      "./storage/factory": {
+        "import": "./dist/storage/factory.js",
+        "types": "./dist/storage/factory.d.ts"
+      },
+      "./storage/filesystem-http": {
+        "import": "./dist/storage/filesystem-http.js",
+        "types": "./dist/storage/filesystem-http.d.ts"
+      },
+      "./storage/filesystem-provider": {
+        "import": "./dist/storage/filesystem-provider.js",
+        "types": "./dist/storage/filesystem-provider.d.ts"
+      },
+      "./storage/filesystem-shared": {
+        "import": "./dist/storage/filesystem-shared.js",
+        "types": "./dist/storage/filesystem-shared.d.ts"
+      },
+      "./storage/interface": {
+        "import": "./dist/storage/interface.js",
+        "types": "./dist/storage/interface.d.ts"
+      },
+      "./storage/object-keys": {
+        "import": "./dist/storage/object-keys.js",
+        "types": "./dist/storage/object-keys.d.ts"
+      },
+      "./storage/s3-compatible-provider": {
+        "import": "./dist/storage/s3-compatible-provider.js",
+        "types": "./dist/storage/s3-compatible-provider.d.ts"
+      },
+      "./trpc": {
+        "import": "./dist/trpc/index.js",
+        "types": "./dist/trpc/index.d.ts"
+      },
+      "./users": {
+        "import": "./dist/users/index.js",
+        "types": "./dist/users/index.d.ts"
+      }
+    }
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1083.0",
+    "@aws-sdk/s3-request-presigner": "^3.1083.0",
+    "@azure/storage-blob": "^12.33.0",
+    "@dbos-inc/dbos-sdk": "^4.23.6",
+    "@helix/logger": "workspace:*",
+    "@helix/protocol": "workspace:*",
+    "@trpc/server": "^11.18.0",
+    "drizzle-orm": "1.0.0-beta.15-859cf75",
+    "inngest": "^4.12.0",
+    "jose": "^6.2.3",
+    "kafkajs": "^2.2.4",
+    "mqtt": "^5.15.2",
+    "pg": "^8.22.0",
+    "superjson": "^2.2.6",
+    "trpc-to-openapi": "^3.3.0",
+    "ws": "^8.21.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
+    "@types/ws": "^8.18.1",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "tsdown": "^0.22.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

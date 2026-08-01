@@ -83,9 +83,9 @@ type Enrollment struct {
 // Metrics configures runtime-manager's metrics sampler.
 type Metrics struct {
 	// Providers is an allow-list of provider basenames; empty runs all discovered.
-	Providers []string `json:"providers,omitempty"`
-	PluginDir string `json:"pluginDir,omitempty"`
-	IntervalSec int `json:"intervalSec,omitempty"` // default 5
+	Providers   []string `json:"providers,omitempty"`
+	PluginDir   string   `json:"pluginDir,omitempty"`
+	IntervalSec int      `json:"intervalSec,omitempty"` // default 5
 }
 
 // Config is the shared device document plus the resolved per-service section.
@@ -100,7 +100,7 @@ type Config struct {
 	Metrics       Metrics    `json:"metrics,omitempty"`
 
 	service string
-	app json.RawMessage
+	app     json.RawMessage
 	secrets map[string]string
 }
 

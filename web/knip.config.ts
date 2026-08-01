@@ -35,17 +35,17 @@ const config: KnipConfig = {
       entry: ['tests/**/*.ts'],
       project: ['harness/**/*.{ts,tsx}', 'serial/**/*.{ts,tsx}', 'tests/**/*.ts', '*.ts'],
     },
-    'packages/core/device-apps': {
+    'packages/device-apps': {
       project: ['src/**/*.{ts,tsx}'],
       // Reusable device-app contracts + SDK: exports are the package's public API
       // (consumed by the web app and external SDK consumers), and src/**/generated/**
       // is contract-codegen output — neither is dead code even when unused in-repo.
       ignore: ['src/**/*.{ts,tsx}'],
     },
-    'packages/core/helix-backend': {
+    'packages/helix-backend': {
       project: ['src/**/*.{ts,tsx}'],
     },
-    'packages/core/helix-design-system': {
+    'packages/helix-design-system': {
       project: ['src/**/*.{ts,tsx}'],
       ignore: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
@@ -59,33 +59,15 @@ const config: KnipConfig = {
         'recharts',
       ],
     },
-    'packages/core/eslint-config': {
+    'packages/eslint-config': {
       entry: ['*.js'],
       project: ['**/*.js'],
     },
-    'packages/core/typescript-config': {
+    'packages/typescript-config': {
       entry: ['*.json'],
       ignoreDependencies: ['next'],
     },
-    'packages/protocol/protocol-core': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/protocol-service': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/transport-ble': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/transport-mqtt': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/transport-serial': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/transport-websocket': {
-      project: ['src/**/*.{ts,tsx}'],
-    },
-    'packages/protocol/esp32-flasher': {
+    'packages/protocol': {
       project: ['src/**/*.{ts,tsx}'],
     },
   },

@@ -26,7 +26,7 @@ importers:
         version: 26.1.1
       '@workspace/typescript-config':
         specifier: workspace:*
-        version: link:packages/core/typescript-config
+        version: link:packages/typescript-config
       knip:
         specifier: ^6.25.0
         version: 6.26.0
@@ -53,7 +53,7 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: ^4.0.47
-        version: 4.0.47(react@19.2.7)(zod@4.4.3)
+        version: 4.0.50(react@19.2.7)(zod@4.4.3)
       '@better-auth/api-key':
         specifier: 1.6.23
         version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))
@@ -65,40 +65,22 @@ importers:
         version: 1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)
       '@helix/backend':
         specifier: workspace:*
-        version: link:../../packages/core/helix-backend
+        version: link:../../packages/helix-backend
       '@helix/design-system':
         specifier: workspace:*
-        version: link:../../packages/core/helix-design-system
+        version: link:../../packages/helix-design-system
       '@helix/device-apps':
         specifier: workspace:*
-        version: link:../../packages/core/device-apps
-      '@helix/esp32-flasher':
-        specifier: workspace:*
-        version: link:../../packages/protocol/esp32-flasher
+        version: link:../../packages/device-apps
       '@helix/firmware-builder':
         specifier: workspace:*
-        version: link:../../packages/core/firmware-builder
+        version: link:../../packages/firmware-builder
       '@helix/logger':
         specifier: workspace:*
-        version: link:../../packages/core/logger
-      '@helix/protocol-core':
+        version: link:../../packages/logger
+      '@helix/protocol':
         specifier: workspace:*
-        version: link:../../packages/protocol/protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../../packages/protocol/protocol-service
-      '@helix/transport-ble':
-        specifier: workspace:*
-        version: link:../../packages/protocol/transport-ble
-      '@helix/transport-mqtt':
-        specifier: workspace:*
-        version: link:../../packages/protocol/transport-mqtt
-      '@helix/transport-serial':
-        specifier: workspace:*
-        version: link:../../packages/protocol/transport-serial
-      '@helix/transport-websocket':
-        specifier: workspace:*
-        version: link:../../packages/protocol/transport-websocket
+        version: link:../../packages/protocol
       '@mdxeditor/editor':
         specifier: ^4.0.4
         version: 4.0.4(@codemirror/language@6.12.4)(@lezer/highlight@1.2.3)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(yjs@13.6.31)
@@ -125,7 +107,7 @@ importers:
         version: 11.18.0(@tanstack/react-query@5.101.2(react@19.2.7))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.18.0(typescript@7.0.2))(react@19.2.7)(typescript@7.0.2)
       ai:
         specifier: ^7.0.42
-        version: 7.0.42(zod@4.4.3)
+        version: 7.0.47(zod@4.4.3)
       better-auth:
         specifier: ^1.6.23
         version: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
@@ -143,7 +125,7 @@ importers:
         version: 1.24.0(react@19.2.7)
       mcp-handler:
         specifier: ^2.0.1
-        version: 2.0.1(@modelcontextprotocol/server@2.0.0)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+        version: 2.1.0(@modelcontextprotocol/server@2.0.0)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       mermaid:
         specifier: ^11.16.0
         version: 11.16.0
@@ -222,10 +204,10 @@ importers:
         version: 7.0.0-dev.20260707.2
       '@workspace/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/core/eslint-config
+        version: link:../../packages/eslint-config
       '@workspace/typescript-config':
         specifier: workspace:*
-        version: link:../../packages/core/typescript-config
+        version: link:../../packages/typescript-config
       drizzle-kit:
         specifier: 1.0.0-beta.15-90d1d1a
         version: 1.0.0-beta.15-90d1d1a
@@ -246,10 +228,10 @@ importers:
     dependencies:
       '@helix/backend':
         specifier: workspace:*
-        version: link:../../packages/core/helix-backend
+        version: link:../../packages/helix-backend
       '@helix/logger':
         specifier: workspace:*
-        version: link:../../packages/core/logger
+        version: link:../../packages/logger
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@7.0.2)(zod@4.4.3)
@@ -274,7 +256,7 @@ importers:
         version: 26.1.1
       '@workspace/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/core/eslint-config
+        version: link:../../packages/eslint-config
       eslint:
         specifier: ^10.6.0
         version: 10.6.0(jiti@2.7.0)
@@ -290,18 +272,9 @@ importers:
 
   e2e:
     dependencies:
-      '@helix/protocol-core':
+      '@helix/protocol':
         specifier: workspace:*
-        version: link:../packages/protocol/protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../packages/protocol/protocol-service
-      '@helix/transport-ble':
-        specifier: workspace:*
-        version: link:../packages/protocol/transport-ble
-      '@helix/transport-serial':
-        specifier: workspace:*
-        version: link:../packages/protocol/transport-serial
+        version: link:../packages/protocol
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -326,7 +299,7 @@ importers:
         version: 6.0.3(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@workspace/eslint-config':
         specifier: workspace:*
-        version: link:../packages/core/eslint-config
+        version: link:../packages/eslint-config
       eslint:
         specifier: ^10.6.0
         version: 10.6.0(jiti@2.7.0)
@@ -337,7 +310,7 @@ importers:
         specifier: ^8.1.3
         version: 8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
-  packages/core/device-apps:
+  packages/device-apps:
     dependencies:
       '@helix/backend':
         specifier: workspace:*
@@ -345,21 +318,9 @@ importers:
       '@helix/design-system':
         specifier: workspace:*
         version: link:../helix-design-system
-      '@helix/esp32-flasher':
+      '@helix/protocol':
         specifier: workspace:*
-        version: link:../../protocol/esp32-flasher
-      '@helix/protocol-peer':
-        specifier: workspace:*
-        version: link:../../protocol/protocol-peer
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../../protocol/protocol-service
-      '@helix/protocol-stream':
-        specifier: workspace:*
-        version: link:../../protocol/protocol-stream
-      '@helix/transport-mqtt':
-        specifier: workspace:*
-        version: link:../../protocol/transport-mqtt
+        version: link:../protocol
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
@@ -378,6 +339,9 @@ importers:
       '@xterm/xterm':
         specifier: ^5.5.0
         version: 5.5.0
+      esptool-js:
+        specifier: ^0.6.0
+        version: 0.6.0
       lucide-react:
         specifier: ^1.23.0
         version: 1.24.0(react@19.2.7)
@@ -419,7 +383,7 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/core/eslint-config:
+  packages/eslint-config:
     devDependencies:
       '@eslint/compat':
         specifier: ^2.1.0
@@ -491,7 +455,7 @@ importers:
         specifier: ^8.63.0
         version: 8.63.0(eslint@10.6.0(jiti@2.7.0))(typescript@6.0.3)
 
-  packages/core/firmware-builder:
+  packages/firmware-builder:
     dependencies:
       '@helix/backend':
         specifier: workspace:*
@@ -534,7 +498,7 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/core/helix-backend:
+  packages/helix-backend:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.1083.0
@@ -551,15 +515,9 @@ importers:
       '@helix/logger':
         specifier: workspace:*
         version: link:../logger
-      '@helix/protocol-core':
+      '@helix/protocol':
         specifier: workspace:*
-        version: link:../../protocol/protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../../protocol/protocol-service
-      '@helix/protocol-stream':
-        specifier: workspace:*
-        version: link:../../protocol/protocol-stream
+        version: link:../protocol
       '@trpc/server':
         specifier: ^11.18.0
         version: 11.18.0(typescript@7.0.2)
@@ -622,7 +580,7 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
-  packages/core/helix-design-system:
+  packages/helix-design-system:
     dependencies:
       '@base-ui/react':
         specifier: ^1.6.0
@@ -704,7 +662,7 @@ importers:
         version: 4.12.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       recharts:
         specifier: 3.8.0
-        version: 3.8.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)
+        version: 3.8.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1)
       shadcn:
         specifier: ^4.13.0
         version: 4.13.0(typescript@7.0.2)
@@ -761,7 +719,7 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/core/logger:
+  packages/logger:
     dependencies:
       winston:
         specifier: ^3.19.0
@@ -786,93 +744,11 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/core/typescript-config: {}
-
-  packages/protocol/esp32-flasher:
+  packages/protocol:
     dependencies:
-      '@helix/transport-serial':
-        specifier: workspace:*
-        version: link:../transport-serial
-      esptool-js:
-        specifier: ^0.6.0
-        version: 0.6.0
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@types/react':
-        specifier: ^19.2.10
-        version: 19.2.17
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      react:
+      react-dom:
         specifier: 19.2.7
-        version: 19.2.7
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/protocol-core:
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/protocol-peer:
-    dependencies:
-      '@helix/protocol-stream':
-        specifier: workspace:*
-        version: link:../protocol-stream
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/protocol-service:
-    dependencies:
-      '@helix/protocol-core':
-        specifier: workspace:*
-        version: link:../protocol-core
+        version: 19.2.7(react@19.2.7)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -888,10 +764,10 @@ importers:
         version: 19.2.17
       '@workspace/eslint-config':
         specifier: workspace:*
-        version: link:../../core/eslint-config
+        version: link:../eslint-config
       '@workspace/typescript-config':
         specifier: workspace:*
-        version: link:../../core/typescript-config
+        version: link:../typescript-config
       eslint:
         specifier: ^10.6.0
         version: 10.6.0(jiti@2.7.0)
@@ -905,203 +781,24 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/protocol/protocol-stream:
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/transport-ble:
-    dependencies:
-      '@helix/protocol-core':
-        specifier: workspace:*
-        version: link:../protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../protocol-service
-      react-dom:
-        specifier: 19.2.7
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@types/react':
-        specifier: ^19.2.10
-        version: 19.2.17
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      react:
-        specifier: 19.2.7
-        version: 19.2.7
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/transport-mqtt:
-    dependencies:
-      '@helix/protocol-core':
-        specifier: workspace:*
-        version: link:../protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../protocol-service
-      react-dom:
-        specifier: 19.2.7
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@types/react':
-        specifier: ^19.2.10
-        version: 19.2.17
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      react:
-        specifier: 19.2.7
-        version: 19.2.7
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/transport-serial:
-    dependencies:
-      '@helix/protocol-core':
-        specifier: workspace:*
-        version: link:../protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../protocol-service
-      react-dom:
-        specifier: 19.2.7
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@types/react':
-        specifier: ^19.2.10
-        version: 19.2.17
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      react:
-        specifier: 19.2.7
-        version: 19.2.7
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/protocol/transport-websocket:
-    dependencies:
-      '@helix/protocol-core':
-        specifier: workspace:*
-        version: link:../protocol-core
-      '@helix/protocol-service':
-        specifier: workspace:*
-        version: link:../protocol-service
-      react-dom:
-        specifier: 19.2.7
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^26.1.1
-        version: 26.1.1
-      '@types/react':
-        specifier: ^19.2.10
-        version: 19.2.17
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../core/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../core/typescript-config
-      eslint:
-        specifier: ^10.6.0
-        version: 10.6.0(jiti@2.7.0)
-      react:
-        specifier: 19.2.7
-        version: 19.2.7
-      tsdown:
-        specifier: ^0.22.4
-        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
+  packages/typescript-config: {}
 
 packages:
 
-  '@ai-sdk/gateway@4.0.32':
-    resolution: {integrity: sha512-U82ZbFEQY80YTyzOEI0jrCjV4Q52uN7/ln/KyI1AvSNR/IX3XwePOfsQWOfDhvmqXkb3TcYbVzWr4p85msKgOw==}
+  '@ai-sdk/gateway@4.0.36':
+    resolution: {integrity: sha512-N1P6bdW/aC5rxLeuGYgx3X4el3DoZy8UWlky+g+AeIZSmxaEi/AToHJL4cmZ6nCPHk1byqJWwC+PaOZG0hK0dw==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: 4.4.3
 
-  '@ai-sdk/gateway@4.0.33':
-    resolution: {integrity: sha512-YFkZhWH1ksIoSO2b0S/nAboiYBYRhkrmbC/6vOBsKZz6Y0FfBBaIjWBu3lW2n2x7cXEH776RUKGOiEzJYmu+Pw==}
+  '@ai-sdk/mcp@2.0.22':
+    resolution: {integrity: sha512-j3jPwKFTffZCJzYGpN69yKu/y646uu2gWoEwh1jgVyYVpzfu6ErFU+YAd/+xTPxsUTx8FEIEUHTlEsDuOe+ytQ==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: 4.4.3
 
-  '@ai-sdk/mcp@2.0.20':
-    resolution: {integrity: sha512-YFDIEFjbP271My1dZmsSf+VYR2YlKdnk2E28ccNvpCw3ohF0eTvCCzm9n1ueOr48H+T4Agyad07H4IETl2avHA==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      zod: 4.4.3
-
-  '@ai-sdk/provider-utils@5.0.15':
-    resolution: {integrity: sha512-dnDM4/fS17qO+D7LxVU4003V1+8ZDEWgG7rPhvcDNNFs269qLx+Jnm2mTf72ejyjdzu+f0J+rKNSLXWjZWzxwA==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      zod: 4.4.3
-
-  '@ai-sdk/provider-utils@5.0.16':
-    resolution: {integrity: sha512-LWDrmYWkZoAJwMbToUglpR6AmgvtnNtCCGeU9MKlXiSV3Yiu4u73/pVA18sQAAe3kZtCRBY9P31lAfnPekWWyg==}
+  '@ai-sdk/provider-utils@5.0.18':
+    resolution: {integrity: sha512-UBNCrkxS5llgN2/RXLBRkjCFTIuL6YB1Goq5c+yRecnznhtX4XPjTwLHz2hrsTltTVZ0rqVegtnwFXdPBkjDHA==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: 4.4.3
@@ -1110,8 +807,8 @@ packages:
     resolution: {integrity: sha512-tbHKNLirllUNF3ZlkCsXnwab2ZV1Sl4b1H/Cp9ruCce15IBmskE8Gwkk0yo9xDWY+jho2of7lVXtwSsyrq7cwQ==}
     engines: {node: '>=22'}
 
-  '@ai-sdk/react@4.0.47':
-    resolution: {integrity: sha512-Wwg1ghPbZhQAQXOg3RO5k88nQWaHdBi/HIe91BaUO1CG/SgtnbjB+P9l8Wq4U5WLWJ2Zu7fk3SwpqhLNDQv6Cg==}
+  '@ai-sdk/react@4.0.50':
+    resolution: {integrity: sha512-fbC0V2WdCwZaioSJ0CGT/YnrhzpNbiDFqoBlrJ7HL0OY95sIUQrPDVlGYz489/hj4Lze4tr7RfPc8ghgc/5wcQ==}
     engines: {node: '>=22'}
     peerDependencies:
       react: 19.2.7
@@ -2085,14 +1782,8 @@ packages:
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@floating-ui/core@1.7.5':
-    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
-
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
-
-  '@floating-ui/dom@1.7.6':
-    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
 
   '@floating-ui/dom@1.8.0':
     resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
@@ -2114,9 +1805,6 @@ packages:
     peerDependencies:
       react: 19.2.7
       react-dom: 19.2.7
-
-  '@floating-ui/utils@0.2.11':
-    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
@@ -5678,14 +5366,8 @@ packages:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
 
-  ai@7.0.42:
-    resolution: {integrity: sha512-61AEmo8DynuQmfxt1yOJHLJRonCnzK5baFvN6bsDiuOTt/qYk9ZexpbG4aRv3F6rx418BV6Eyblj6fA7UcH5vQ==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      zod: 4.4.3
-
-  ai@7.0.44:
-    resolution: {integrity: sha512-OMJ8v3ZzMIt90wIZRluD8c/VgvmX8SvAajGNYEbCeCAiCbr62yhCgXC7MvZRrQ0pOTfLZRohztUVrt5A08gKNg==}
+  ai@7.0.47:
+    resolution: {integrity: sha512-e0MpNtufu6JmcmwMUTgM1smCRkP5z014iPaKgnCm7kmMsTSIZbOJN2vglhPq0WIj/6x7ewVi6W0FyIR0pjaE3Q==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: 4.4.3
@@ -6560,6 +6242,7 @@ packages:
 
   drizzle-orm@1.0.0-beta.15-859cf75:
     resolution: {integrity: sha512-dGVb2Q70H2AV6513hkOXR3Ud0FeGXLdugVq3YehoqkGIVTJrkuo0gRnCcW/dfI00O07t3T4HSh4clF/D/o/IsQ==}
+    deprecated: The 1.0.0-beta line is superseded by the 1.0 release candidate. Install drizzle-orm@rc instead.
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -8273,8 +7956,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  mcp-handler@2.0.1:
-    resolution: {integrity: sha512-EWyUyirxbatYh48D7u6o5TwAufGy97jk4+7Zjxul7HpUvO/uhDpAm7XbroeNCOGpMjXcc4Mh1OkYWvzdSAvxJw==}
+  mcp-handler@2.1.0:
+    resolution: {integrity: sha512-mhnUpkgWrXMwwhdbJ5Uq43uUV23Emxfq3fRfsFwt8Kjc35cGUiKuYeX9wjwnvsdTiKsmjXnQ4tO4awWa3ZM4LQ==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
@@ -10462,37 +10145,21 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/gateway@4.0.32(zod@4.4.3)':
+  '@ai-sdk/gateway@4.0.36(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.15(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.18(zod@4.4.3)
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
-  '@ai-sdk/gateway@4.0.33(zod@4.4.3)':
+  '@ai-sdk/mcp@2.0.22(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.16(zod@4.4.3)
-      '@vercel/oidc': 3.2.0
-      zod: 4.4.3
-
-  '@ai-sdk/mcp@2.0.20(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.16(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.18(zod@4.4.3)
       pkce-challenge: 5.0.1
       zod: 4.4.3
 
-  '@ai-sdk/provider-utils@5.0.15(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.4
-      '@standard-schema/spec': 1.1.0
-      '@workflow/serde': 4.1.0
-      eventsource-parser: 3.1.0
-      undici: 7.28.0
-      zod: 4.4.3
-
-  '@ai-sdk/provider-utils@5.0.16(zod@4.4.3)':
+  '@ai-sdk/provider-utils@5.0.18(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.4
       '@standard-schema/spec': 1.1.0
@@ -10505,12 +10172,12 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@4.0.47(react@19.2.7)(zod@4.4.3)':
+  '@ai-sdk/react@4.0.50(react@19.2.7)(zod@4.4.3)':
     dependencies:
-      '@ai-sdk/mcp': 2.0.20(zod@4.4.3)
+      '@ai-sdk/mcp': 2.0.22(zod@4.4.3)
       '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.16(zod@4.4.3)
-      ai: 7.0.44(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.18(zod@4.4.3)
+      ai: 7.0.47(zod@4.4.3)
       react: 19.2.7
       swr: 2.4.2(react@19.2.7)
       throttleit: 2.1.0
@@ -11070,8 +10737,8 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       '@base-ui/utils': 0.3.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@floating-ui/utils': 0.2.11
+      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@floating-ui/utils': 0.2.12
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       use-sync-external-store: 1.6.0(react@19.2.7)
@@ -11083,7 +10750,7 @@ snapshots:
   '@base-ui/utils@0.3.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@babel/runtime': 7.29.7
-      '@floating-ui/utils': 0.2.11
+      '@floating-ui/utils': 0.2.12
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       reselect: 5.2.0
@@ -11765,18 +11432,9 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@floating-ui/core@1.7.5':
-    dependencies:
-      '@floating-ui/utils': 0.2.11
-
   '@floating-ui/core@1.8.0':
     dependencies:
       '@floating-ui/utils': 0.2.12
-
-  '@floating-ui/dom@1.7.6':
-    dependencies:
-      '@floating-ui/core': 1.7.5
-      '@floating-ui/utils': 0.2.11
 
   '@floating-ui/dom@1.8.0':
     dependencies:
@@ -11785,7 +11443,7 @@ snapshots:
 
   '@floating-ui/react-dom@2.1.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@floating-ui/dom': 1.7.6
+      '@floating-ui/dom': 1.8.0
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
@@ -11802,8 +11460,6 @@ snapshots:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       tabbable: 6.5.0
-
-  '@floating-ui/utils@0.2.11': {}
 
   '@floating-ui/utils@0.2.12': {}
 
@@ -14429,7 +14085,7 @@ snapshots:
       immer: 11.1.11
       redux: 5.0.1
       redux-thunk: 3.1.0(redux@5.0.1)
-      reselect: 5.1.1
+      reselect: 5.2.0
     optionalDependencies:
       react: 19.2.7
       react-redux: 9.3.0(@types/react@19.2.17)(react@19.2.7)(redux@5.0.1)
@@ -15444,18 +15100,11 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai@7.0.42(zod@4.4.3):
+  ai@7.0.47(zod@4.4.3):
     dependencies:
-      '@ai-sdk/gateway': 4.0.32(zod@4.4.3)
+      '@ai-sdk/gateway': 4.0.36(zod@4.4.3)
       '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.15(zod@4.4.3)
-      zod: 4.4.3
-
-  ai@7.0.44(zod@4.4.3):
-    dependencies:
-      '@ai-sdk/gateway': 4.0.33(zod@4.4.3)
-      '@ai-sdk/provider': 4.0.4
-      '@ai-sdk/provider-utils': 5.0.16(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.18(zod@4.4.3)
       zod: 4.4.3
 
   ajv-formats@2.1.1(ajv@8.20.0):
@@ -18162,7 +17811,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-handler@2.0.1(@modelcontextprotocol/server@2.0.0)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
+  mcp-handler@2.1.0(@modelcontextprotocol/server@2.0.0)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
     dependencies:
       '@modelcontextprotocol/server': 2.0.0
       chalk: 5.6.2
@@ -19538,7 +19187,7 @@ snapshots:
       tiny-invariant: 1.3.3
       tslib: 2.8.1
 
-  recharts@3.8.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1):
+  recharts@3.8.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1):
     dependencies:
       '@reduxjs/toolkit': 2.12.0(react-redux@9.3.0(@types/react@19.2.17)(react@19.2.7)(redux@5.0.1))(react@19.2.7)
       clsx: 2.1.1
@@ -19548,7 +19197,7 @@ snapshots:
       immer: 10.2.0
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
-      react-is: 16.13.1
+      react-is: 17.0.2
       react-redux: 9.3.0(@types/react@19.2.17)(react@19.2.7)(redux@5.0.1)
       reselect: 5.1.1
       tiny-invariant: 1.3.3

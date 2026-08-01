@@ -3,11 +3,14 @@
 package core
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +19,7 @@ import (
 
 	"github.com/helix-kit/helix-device/internal/ipc"
 	"github.com/helix-kit/helix-device/internal/shared/config"
+	"github.com/helix-kit/helix-device/internal/shared/netutil"
 )
 
 type inboundFunc func(packet ipc.HelixPacket)
@@ -49,14 +53,19 @@ func newMQTT(cfg config.MQTT, deviceID string, log *slog.Logger, inbound inbound
 			log.Warn("mqtt connection lost", "err", err)
 		})
 
+	var brokerTLS *tls.Config
 	if strings.HasPrefix(cfg.BrokerURL, "tls://") || strings.HasPrefix(cfg.BrokerURL, "ssl://") ||
 		strings.HasPrefix(cfg.BrokerURL, "mqtts://") {
 		tlsCfg, err := buildTLS(cfg)
 		if err != nil {
 			return nil, err
 		}
+		brokerTLS = tlsCfg
 		opts.SetTLSConfig(tlsCfg)
 	}
+	opts.SetCustomOpenConnectionFn(func(uri *url.URL, _ mqtt.ClientOptions) (net.Conn, error) {
+		return netutil.Shared().DialBroker(context.Background(), uri, brokerTLS)
+	})
 
 	t.client = mqtt.NewClient(opts)
 	return t, nil

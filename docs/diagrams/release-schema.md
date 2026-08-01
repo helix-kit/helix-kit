@@ -3,7 +3,7 @@
 # Release / Upgrade Database Schema
 
 The tables behind the release / OTA "upgrades" control plane
-(`web/packages/core/helix-backend/src/db/release-schema.ts`). Three planes:
+(`web/packages/helix-backend/src/db/release-schema.ts`). Three planes:
 **Catalog** (what exists), **Build** (how it was made), **Distribution** (who gets it).
 
 ## Schema map

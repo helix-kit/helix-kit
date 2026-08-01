@@ -1,0 +1,29 @@
+Reproduction run, 2026-08-01 — everything in this lab rebuilt from scratch and re-measured
+on the board after it was reimaged. Fresh llama.cpp (a7a6d0d, ~6 weeks newer than the
+original 91d2fc3), fresh cross-build via build-aarch64.sh, models re-fetched.
+
+Differs from the 2026-07-20 runs in one way: the desktop was left running (sddm at the
+greeter, board otherwise idle) rather than stopped, so these are "quiet but not quiesced".
+
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CPU        |       6 |            pp64 |         41.89 ± 0.16 |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CPU        |       6 |            tg64 |         18.02 ± 0.07 |
+| qwen2 1B Q4_0                  | 330.95 MiB |   494.03 M | CPU        |       6 |            pp64 |        128.95 ± 3.65 |
+| qwen2 1B Q4_0                  | 330.95 MiB |   494.03 M | CPU        |       6 |            tg64 |         22.75 ± 0.39 |
+
+vs bench-05-quant-sweep-clean.log (2026-07-20, fully quiesced):
+
+              pp64            tg64
+  Q4_K_M      40.75 -> 41.89   17.66 -> 18.02
+  Q4_0       148.94 -> 128.95  23.77 -> 22.75
+
+Q4_K_M lands within 3%. Q4_0 prompt processing is 13% below the quiesced number — the
+cost of leaving the desktop up, and consistent with prefill being the compute-bound half.
+The finding is unchanged: Q4_0 is 3.1x prompt and +26% generation over Q4_K_M here.
+
+--- live single-turn, Q4_0, 6 threads, 12k ctx ---
+> In two sentences, what is a single-board computer?
+A single-board computer, or SBC, is a computer system designed and assembled to be the smallest unit possible, containing only the CPU and other necessary components.
+
+[ Prompt: 135.8 t/s | Generation: 23.7 t/s ]

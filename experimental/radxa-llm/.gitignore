@@ -1,8 +1,9 @@
-# Lab artifacts — reproducible from the scripts, never committed.
-.venv/
-data/
-adapters/
-results/
-models/
+# Fine-tune lab artifacts — reproducible from the scripts, never committed.
+# Root-anchored: runtime/results/ holds captured measurements and IS committed.
+/.venv/
+/data/
+/adapters/
+/results/
+/models/
 __pycache__/
 *.pyc

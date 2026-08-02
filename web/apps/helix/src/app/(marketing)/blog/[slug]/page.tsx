@@ -7,7 +7,7 @@ import { logger } from '@helix/logger';
 
 import { Section } from '@/components/marketing/section';
 import { blogMdxComponents, blogSeo } from '@/lib/blog';
-import { site } from '@/lib/site';
+import { publicOrigin, site } from '@/lib/site';
 import { fetchQuery } from '@/server/server';
 
 import type { Metadata } from 'next';
@@ -114,6 +114,7 @@ const BlogPostPage = async ({ params }: { params: Promise<{ slug: string }> }) =
         body={compiled.body}
         components={blogMdxComponents}
         post={post}
+        shareUrl={`${publicOrigin}/blog/${slug}`}
         toc={compiled.toc}
       />
 

@@ -1,11 +1,26 @@
-import type { ImgHTMLAttributes } from 'react';
+import type { ComponentPropsWithoutRef, ImgHTMLAttributes } from 'react';
 
 import { cn } from '@helix/design-system/lib/utils';
+
+import { HeadingAnchor } from './heading-anchor';
 
 import type { CompiledPost } from '../server/mdx';
 import type { MDXComponents } from 'mdx/types';
 
 import './post-content.css';
+
+// The MDX compiler slugs every heading (that is what the TOC links to), so each one can carry
+// a permalink anchor.
+const anchoredHeading = (Tag: 'h2' | 'h3' | 'h4') => {
+  const Heading = ({ id, children, className, ...props }: ComponentPropsWithoutRef<'h2'>) => (
+    <Tag className={cn('group', className)} id={id} {...props}>
+      {children}
+      {id != null && id !== '' ? <HeadingAnchor id={id} /> : null}
+    </Tag>
+  );
+  Heading.displayName = `Anchored${Tag}`;
+  return Heading;
+};
 
 // The host supplies the renderers for `pre`, `Mermaid` and friends; the package only insists
 // that author-inserted images are lazy + async-decode so they don't block LCP.
@@ -14,6 +29,9 @@ const baseComponents: MDXComponents = {
     // eslint-disable-next-line jsx-a11y/alt-text
     <img decoding="async" loading="lazy" {...props} />
   ),
+  h2: anchoredHeading('h2'),
+  h3: anchoredHeading('h3'),
+  h4: anchoredHeading('h4'),
 };
 
 const prose = cn(

@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { PostContent } from './post-content';
+import { PostShare } from './post-share';
 import { TableOfContents } from './table-of-contents';
 
 import type { CompiledPost } from '../server/mdx';
@@ -61,17 +62,23 @@ export const PostUnavailable = ({ title }: { title: string }) => (
   </article>
 );
 
-/** The full rendered post: title block, cover, MDX body, and a sticky table of contents. */
+/**
+ * The full rendered post: title block, cover, MDX body, and the two sticky rails — the discuss
+ * links on the left, the table of contents on the right. Passing `shareUrl` (the post's canonical
+ * absolute URL) enables the left rail.
+ */
 export const PostArticle = ({
   post,
   body,
   toc,
   components,
+  shareUrl,
 }: {
   post: PostArticleData;
   body: CompiledPost['body'];
   toc: TOCItemType[];
   components?: MDXComponents;
+  shareUrl?: string;
 }) => {
   const isoPublished =
     post.publishedAt !== null ? new Date(post.publishedAt).toISOString() : undefined;
@@ -85,8 +92,10 @@ export const PostArticle = ({
       : '';
 
   return (
-    <article className="mt-8">
-      <header className="mx-auto max-w-3xl">
+    // One grid for the whole post so the title, body and both rails share a left edge. Only the
+    // columns are placed; rows fall out of auto-placement, so a post with no cover leaves no hole.
+    <article className="mx-auto mt-8 grid max-w-6xl gap-x-8 gap-y-10 lg:grid-cols-[3rem_minmax(0,44rem)_minmax(0,1fr)]">
+      <header className="lg:col-start-2">
         <div className="flex flex-wrap gap-1.5">
           {post.tags.map((tag) => (
             <span
@@ -120,7 +129,7 @@ export const PostArticle = ({
       </header>
 
       {post.coverImage !== '' ? (
-        <div className="border-border/60 relative mx-auto mt-8 aspect-[21/9] max-w-4xl overflow-hidden rounded-xl border">
+        <div className="border-border/60 relative aspect-[21/9] overflow-hidden rounded-xl border lg:col-start-2 lg:col-end-4">
           <Image
             alt={post.title}
             className="object-cover"
@@ -132,16 +141,21 @@ export const PostArticle = ({
         </div>
       ) : null}
 
-      <div className="mx-auto mt-10 grid max-w-5xl gap-10 lg:grid-cols-[1fr_16rem]">
-        <div className="min-w-0 lg:order-1">
-          <PostContent body={body} components={components} />
-        </div>
-        <aside className="lg:order-2">
+      {shareUrl !== undefined ? (
+        <div className="lg:col-start-1">
           <div className="sticky top-24">
-            <TableOfContents toc={toc} />
+            <PostShare title={post.title} url={shareUrl} />
           </div>
-        </aside>
+        </div>
+      ) : null}
+      <div className="min-w-0 lg:col-start-2">
+        <PostContent body={body} components={components} />
       </div>
+      <aside className="lg:col-start-3">
+        <div className="sticky top-24">
+          <TableOfContents toc={toc} />
+        </div>
+      </aside>
     </article>
   );
 };

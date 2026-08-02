@@ -1,10 +1,8 @@
+import { CreatePostButton, PostsTable } from '@helix/blog/ui/admin';
+import { postsSearchParsers } from '@helix/blog/ui/admin/search-params';
 import { createLoader, type SearchParams } from 'nuqs/server';
 
 import { fetchQuery } from '@/server/server';
-
-import { CreatePostButton } from './create-post-button';
-import { PostsTable } from './posts-table';
-import { postsSearchParsers } from './search-params';
 
 const loadSearch = createLoader(postsSearchParsers);
 

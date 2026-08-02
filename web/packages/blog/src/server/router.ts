@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
+import { user } from '@helix/backend/db/auth-schema';
+import { createRouterFactory, TRPCError } from '@helix/backend/trpc';
 import { and, arrayOverlaps, asc, desc, eq, ilike, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import type { DatabaseClient } from '../db';
+import { post } from './schema';
 
-import { user } from '../db/auth-schema';
-import { post } from '../db/blog-schema';
-import { createRouterFactory, TRPCError } from '../trpc';
+import type { DatabaseClient } from '@helix/backend/db';
 
 /** Context for the blog control-plane API: public procedures read published posts, admin procedures require `adminRoles`. */
 export type BlogSessionUser = Readonly<{
@@ -185,7 +185,7 @@ export const blogPublicRouter = createRouterFactory<BlogContext>()((t) =>
   }),
 );
 
-export type BlogPublicRouter = typeof blogPublicRouter;
+export type BlogPublicRouter = ReturnType<typeof blogPublicRouter>;
 
 /** Admin (sysadmin) surface: post authoring/management. */
 export const blogAdminRouter = createRouterFactory<BlogContext>()((t) => {
@@ -317,4 +317,4 @@ export const blogAdminRouter = createRouterFactory<BlogContext>()((t) => {
   });
 });
 
-export type BlogAdminRouter = typeof blogAdminRouter;
+export type BlogAdminRouter = ReturnType<typeof blogAdminRouter>;

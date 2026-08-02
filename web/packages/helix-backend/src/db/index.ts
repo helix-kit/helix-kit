@@ -3,7 +3,6 @@ import { Pool } from 'pg';
 
 import * as agentSchema from './agent-schema';
 import * as authSchema from './auth-schema';
-import * as blogSchema from './blog-schema';
 import * as featureSchema from './feature-schema';
 import * as releaseSchema from './release-schema';
 import * as appSchema from './schema';
@@ -12,7 +11,6 @@ const databaseSchema = {
   ...authSchema,
   ...appSchema,
   ...releaseSchema,
-  ...blogSchema,
   ...featureSchema,
   ...agentSchema,
 };
@@ -43,7 +41,13 @@ export const createDatabasePool = ({
 export const createDb = (options: {
   pool: Pool;
   logQuery?: (query: string, params: unknown[]) => void;
-}) =>
+  /**
+   * Tables contributed by optional feature packages (e.g. `@helix/blog`). Core stays
+   * unaware of them; they are registered so drizzle's relational API and migrations see
+   * them, while `DatabaseClient` keeps describing the core schema.
+   */
+  extraSchema?: Record<string, unknown>;
+}): DatabaseClient =>
   drizzle({
     client: options.pool,
     logger:
@@ -54,5 +58,5 @@ export const createDb = (options: {
               options.logQuery?.(query, params);
             },
           },
-    schema: databaseSchema,
-  });
+    schema: { ...databaseSchema, ...options.extraSchema },
+  }) as DatabaseClient;

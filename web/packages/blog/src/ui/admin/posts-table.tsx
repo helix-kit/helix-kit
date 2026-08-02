@@ -12,23 +12,27 @@ import { DataTableToolbar } from '@helix/design-system/components/data-table/dat
 import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
 import { TableActions } from '@helix/design-system/components/table-actions';
 import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+import { useMutation } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useTRPCMutation } from '@/server/react';
-import type { AppRouter } from '@/server/trpc';
+import { useBlogAdminApi } from './api';
 
+import type { BlogAdminRouter } from '../../server/router';
 import type { inferRouterOutputs } from '@trpc/server';
 
-type PostRow = inferRouterOutputs<AppRouter>['blog']['list']['rows'][number];
+type PostRow = inferRouterOutputs<BlogAdminRouter>['list']['rows'][number];
+
+const DEFAULT_BASE_PATH = '/admin/post';
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
 
-const RowActions = ({ post }: { post: PostRow }) => {
+const RowActions = ({ post, basePath }: { post: PostRow; basePath: string }) => {
   const router = useRouter();
-  const del = useTRPCMutation((api) =>
-    api.blog.delete.mutationOptions({
+  const api = useBlogAdminApi();
+  const del = useMutation(
+    api.delete.mutationOptions({
       onSuccess: () => {
         toast.success('Post deleted');
         router.refresh();
@@ -42,7 +46,7 @@ const RowActions = ({ post }: { post: PostRow }) => {
   return (
     <TableActions>
       <Button asChild className="size-8" size="icon" variant="ghost">
-        <Link aria-label="Edit post" href={`/admin/post/${post.id}`}>
+        <Link aria-label="Edit post" href={`${basePath}/${post.id}`}>
           <Pencil />
         </Link>
       </Button>
@@ -63,7 +67,15 @@ const RowActions = ({ post }: { post: PostRow }) => {
   );
 };
 
-export const PostsTable = ({ rows, pageCount }: { rows: PostRow[]; pageCount: number }) => {
+export const PostsTable = ({
+  rows,
+  pageCount,
+  basePath = DEFAULT_BASE_PATH,
+}: {
+  rows: PostRow[];
+  pageCount: number;
+  basePath?: string;
+}) => {
   const columns = useMemo<ColumnDef<PostRow>[]>(
     () => [
       {
@@ -83,7 +95,7 @@ export const PostsTable = ({ rows, pageCount }: { rows: PostRow[]; pageCount: nu
           </Button>
         ),
         cell: ({ row }) => (
-          <Link className="font-medium hover:underline" href={`/admin/post/${row.original.id}`}>
+          <Link className="font-medium hover:underline" href={`${basePath}/${row.original.id}`}>
             {row.original.title}
           </Link>
         ),
@@ -144,12 +156,12 @@ export const PostsTable = ({ rows, pageCount }: { rows: PostRow[]; pageCount: nu
       {
         id: 'actions',
         header: '',
-        cell: ({ row }) => <RowActions post={row.original} />,
+        cell: ({ row }) => <RowActions basePath={basePath} post={row.original} />,
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [],
+    [basePath],
   );
 
   // shallow:false re-runs the Server Component so rows + pageCount come from a fresh query.

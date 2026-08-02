@@ -1,0 +1,120 @@
+{
+  "name": "@helix/blog",
+  "version": "0.0.1",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "dev": "tsdown --watch",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    "./seo": {
+      "import": "./src/seo.ts",
+      "types": "./src/seo.ts"
+    },
+    "./server": {
+      "import": "./src/server/index.ts",
+      "types": "./src/server/index.ts"
+    },
+    "./server/mdx": {
+      "import": "./src/server/mdx.ts",
+      "types": "./src/server/mdx.ts"
+    },
+    "./server/schema": {
+      "import": "./src/server/schema.ts",
+      "types": "./src/server/schema.ts"
+    },
+    "./ui": {
+      "import": "./src/ui/index.ts",
+      "types": "./src/ui/index.ts"
+    },
+    "./ui/admin": {
+      "import": "./src/ui/admin/index.ts",
+      "types": "./src/ui/admin/index.ts"
+    },
+    "./ui/admin/search-params": {
+      "import": "./src/ui/admin/search-params.ts",
+      "types": "./src/ui/admin/search-params.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      "./seo": {
+        "import": "./dist/seo.js",
+        "types": "./dist/seo.d.ts"
+      },
+      "./server": {
+        "import": "./dist/server/index.js",
+        "types": "./dist/server/index.d.ts"
+      },
+      "./server/mdx": {
+        "import": "./dist/server/mdx.js",
+        "types": "./dist/server/mdx.d.ts"
+      },
+      "./server/schema": {
+        "import": "./dist/server/schema.js",
+        "types": "./dist/server/schema.d.ts"
+      },
+      "./ui": {
+        "import": "./dist/ui/index.js",
+        "types": "./dist/ui/index.d.ts"
+      },
+      "./ui/admin": {
+        "import": "./dist/ui/admin/index.js",
+        "types": "./dist/ui/admin/index.d.ts"
+      },
+      "./ui/admin/search-params": {
+        "import": "./dist/ui/admin/search-params.js",
+        "types": "./dist/ui/admin/search-params.d.ts"
+      }
+    }
+  },
+  "dependencies": {
+    "@fumadocs/mdx-remote": "^1.5.1",
+    "@helix/backend": "workspace:*",
+    "@helix/design-system": "workspace:*",
+    "@helix/web-core": "workspace:*",
+    "@mdxeditor/editor": "^4.0.4",
+    "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-table": "^8.21.3",
+    "@trpc/server": "^11.18.0",
+    "drizzle-orm": "1.0.0-beta.15-859cf75",
+    "fumadocs-core": "16.11.1",
+    "lucide-react": "^1.23.0",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.7",
+    "use-debounce": "^10.1.1",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "nuqs": "^2.8.9",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "next": "16.2.10",
+    "nuqs": "^2.9.0",
+    "tsdown": "^0.22.4",
+    "typescript": "^7.0.2"
+  }
+}

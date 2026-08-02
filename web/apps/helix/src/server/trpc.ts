@@ -2,12 +2,6 @@ import 'server-only';
 
 import { accountRouter } from '@helix/backend/account';
 import { agentRouter, findAgentUser } from '@helix/backend/agent';
-import {
-  blogAdminRouter,
-  blogPublicRouter,
-  type BlogContext,
-  type BlogSessionUser,
-} from '@helix/backend/blog';
 import { devicesAdminRouter } from '@helix/backend/devices';
 import { featuresAdminRouter } from '@helix/backend/features';
 import { iceRouter, type TurnSettings } from '@helix/backend/ice';
@@ -16,6 +10,12 @@ import { profilesAdminRouter } from '@helix/backend/profiles';
 import { releasesAdminRouter } from '@helix/backend/releases';
 import { createRootRouter } from '@helix/backend/trpc';
 import { usersAdminRouter } from '@helix/backend/users';
+import {
+  blogAdminRouter,
+  blogPublicRouter,
+  type BlogContext,
+  type BlogSessionUser,
+} from '@helix/blog/server';
 import { espFlasherRouter } from '@helix/device-apps/esp32-flasher/router';
 
 import { env } from '@/lib/env';
@@ -55,6 +55,10 @@ const turnSettings: TurnSettings | null =
     : null;
 
 export const { router: appRouter } = createRootRouter({
+  // Feature packages declare the keys their own client components resolve them by
+  // (`BLOG_ADMIN_ROUTER_KEY` / `BLOG_PUBLIC_ROUTER_KEY` in @helix/blog). Spelled as
+  // literals here, not as those constants: the tRPC usage analyzer skips routers with
+  // computed property names, which would drop every blog procedure from the report.
   blog: blogAdminRouter,
   blogPublic: blogPublicRouter,
   releases: releasesAdminRouter,

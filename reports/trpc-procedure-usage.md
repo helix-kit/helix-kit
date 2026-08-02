@@ -1,8 +1,8 @@
 # TRPC Procedure Usage
 
 Total procedures: 79
-Used procedures: 71
-Ignored procedures: 8
+Used procedures: 72
+Ignored procedures: 7
 Unused procedures: 0
 
 ## Analyzer Diagnostics
@@ -26,16 +26,16 @@ Unused procedures: 0
 | agent.myUsage | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/agent/router.ts:62:5 | apps/helix/src/app/dashboard/settings/_components/usage-card.tsx:27:44 (queryOptions) |
 | agent.renameConversation | mutation |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/agent/router.ts:188:5 | Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI). |
 | agent.usageOverview | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/agent/router.ts:108:5 | apps/helix/src/app/admin/(dashboard)/ai-usage/page.tsx:37:47 (queryOptions) |
-| blog.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:265:5 | apps/helix/src/app/admin/(dashboard)/post/create-post-button.tsx:14:5 (mutationOptions) |
-| blog.delete | mutation |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:313:5 | apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx:52:5 (mutationOptions)<br>apps/helix/src/app/admin/(dashboard)/post/posts-table.tsx:31:5 (mutationOptions) |
-| blog.getById | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:260:5 | apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx:48:5 (queryOptions) |
-| blog.list | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:208:5 | apps/helix/src/app/admin/(dashboard)/post/page.tsx:13:58 (queryOptions) |
-| blog.update | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:285:5 | apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx:50:43 (mutationOptions) |
-| blogPublic.countPublished | query |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:115:5 | Public blog API; server/RSS-consumed, not a frontend hook. |
-| blogPublic.getBySlug | query |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:136:5 | apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:101:43 (queryOptions)<br>apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:27:45 (queryOptions) |
-| blogPublic.getRelated | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:160:5 | apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:105:5 (queryOptions) |
-| blogPublic.listPublished | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:92:5 | apps/helix/src/app/(marketing)/blog/page.tsx:40:5 (queryOptions) |
-| blogPublic.publishedSlugs | query |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/blog/router.ts:129:5 | Public blog API; sitemap/RSS-consumed, not a frontend hook. |
+| blog.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:265:5 | trpc-procedure-usage.config.json:1:1 (manual: Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call.) |
+| blog.delete | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:313:5 | trpc-procedure-usage.config.json:1:1 (manual: Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call.) |
+| blog.getById | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:260:5 | trpc-procedure-usage.config.json:1:1 (manual: Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call.) |
+| blog.list | query |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:208:5 | apps/helix/src/app/admin/(dashboard)/post/page.tsx:11:58 (queryOptions)<br>trpc-procedure-usage.config.json:1:1 (manual: Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call.) |
+| blog.update | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:285:5 | trpc-procedure-usage.config.json:1:1 (manual: Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call.) |
+| blogPublic.countPublished | query |  | ignored | 0 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:115:5 | Public blog API; server/RSS-consumed, not a frontend hook. |
+| blogPublic.getBySlug | query |  | used | 3 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:136:5 | apps/helix/src/app/(marketing)/blog/[slug]/opengraph-image.tsx:14:42 (queryOptions)<br>apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:24:45 (queryOptions)<br>apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:72:43 (queryOptions) |
+| blogPublic.getRelated | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:160:5 | apps/helix/src/app/(marketing)/blog/[slug]/page.tsx:76:5 (queryOptions) |
+| blogPublic.listPublished | query |  | used | 2 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:92:5 | apps/helix/src/app/(marketing)/blog/feed.xml/route.tsx:18:7 (queryOptions)<br>apps/helix/src/app/(marketing)/blog/page.tsx:41:5 (queryOptions) |
+| blogPublic.publishedSlugs | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/blog/src/server/router.ts:129:5 | apps/helix/src/app/sitemap.ts:25:46 (queryOptions) |
 | deviceCertificates.list | query |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/pki/admin-router.ts:45:5 | apps/helix/src/app/device/[id]/device-certificates.tsx:42:8 (queryOptions) |
 | deviceCertificates.revoke | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/pki/admin-router.ts:73:5 | apps/helix/src/app/device/[id]/device-certificates.tsx:46:5 (mutationOptions) |
 | devices.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:57:38 | packages/helix-backend/src/devices/admin-router.ts:152:5 | apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx:100:43 (mutationOptions) |

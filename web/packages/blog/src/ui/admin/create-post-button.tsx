@@ -3,17 +3,19 @@
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@helix/design-system/components/button';
+import { useMutation } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useTRPCMutation } from '@/server/react';
+import { useBlogAdminApi } from './api';
 
-export const CreatePostButton = () => {
+export const CreatePostButton = ({ basePath = '/admin/post' }: { basePath?: string }) => {
   const router = useRouter();
-  const create = useTRPCMutation((api) =>
-    api.blog.create.mutationOptions({
+  const api = useBlogAdminApi();
+  const create = useMutation(
+    api.create.mutationOptions({
       onSuccess: (post) => {
-        if (post != null) router.push(`/admin/post/${post.id}`);
+        if (post != null) router.push(`${basePath}/${post.id}`);
       },
       onError: (error) => {
         toast.error(error.message);

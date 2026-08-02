@@ -10,7 +10,12 @@
     { "path": "agent.renameConversation", "reason": "Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI)." }
   ],
   "ignoreUsagePaths": ["reports/**"],
-  "manualUsages": [],
+  "manualUsages": [
+    {
+      "path": "blog.*",
+      "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
+    }
+  ],
   "reportJsonPath": "../reports/trpc-procedure-usage.json",
   "reportMarkdownPath": "../reports/trpc-procedure-usage.md",
   "rootScanRoots": ["apps"],

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 import { site } from '@/lib/site';
-import { api } from '@/server/caller';
+import { fetchQuery } from '@/server/server';
 
 export const runtime = 'nodejs';
 export const alt = 'Helix blog post';
@@ -11,10 +11,9 @@ export const contentType = 'image/png';
 const OgImage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;
 
-  // Fall back to the site defaults if the post can't be loaded.
-  const post = await api()
-    .getBySlug({ slug })
-    .catch(() => null);
+  const post = await fetchQuery((api) => api.blogPublic.getBySlug.queryOptions({ slug })).catch(
+    () => null,
+  );
   const title = post?.title ?? site.name;
   const description = post === null ? site.tagline : post.description;
   const tags = post?.tags.slice(0, 3) ?? [];

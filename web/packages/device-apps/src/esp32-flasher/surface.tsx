@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@helix/design-system/components/card';
 import { Progress } from '@helix/design-system/components/progress';
+import { useFeatureApi } from '@helix/web-core/trpc/feature';
 import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, RefreshCw, Usb } from 'lucide-react';
 
@@ -21,11 +22,9 @@ import { useEsp32Flasher } from './use-flasher';
 import type { EspFlasherRouter } from './router';
 import type { DeviceAppSurfaceProps } from '../types';
 
-import { useDeviceAppApi } from '../trpc';
-
 // ESP32 flashing surface: resolves the device's entitled firmware, lets the user pick one, and flashes it over Web Serial.
 export const Esp32FlasherSurface = ({ deviceId }: DeviceAppSurfaceProps) => {
-  const api = useDeviceAppApi<EspFlasherRouter>('espFlasher');
+  const api = useFeatureApi<EspFlasherRouter>('espFlasher');
   const firmwaresQuery = useQuery(api.getFirmwares.queryOptions({ deviceId }));
   const firmwares = useMemo(() => firmwaresQuery.data ?? [], [firmwaresQuery.data]);
 

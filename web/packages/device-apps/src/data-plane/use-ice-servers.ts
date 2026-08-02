@@ -1,11 +1,10 @@
 'use client';
 
+import { useFeatureApi } from '@helix/web-core/trpc/feature';
 import { useQuery } from '@tanstack/react-query';
 
 import type { iceRouter } from '@helix/backend/ice';
 import type { IceServer } from '@helix/protocol/peer';
-
-import { useDeviceAppApi } from '../trpc';
 
 type IceRouter = ReturnType<typeof iceRouter>;
 
@@ -20,7 +19,7 @@ const ICE_STALE_MS = ICE_STALE_MINUTES * SECONDS_PER_MINUTE * MS_PER_SECOND;
 export const useIceServers = (
   enabled: boolean,
 ): { iceServers: readonly IceServer[]; isLoading: boolean } => {
-  const api = useDeviceAppApi<IceRouter>('ice');
+  const api = useFeatureApi<IceRouter>('ice');
   const query = useQuery({
     ...api.config.queryOptions(),
     enabled,

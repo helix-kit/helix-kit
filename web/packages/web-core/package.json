@@ -1,0 +1,86 @@
+{
+  "name": "@helix/web-core",
+  "version": "0.0.1",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "dev": "tsdown --watch",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    "./trpc/client": {
+      "import": "./src/trpc/client.tsx",
+      "types": "./src/trpc/client.tsx"
+    },
+    "./trpc/feature": {
+      "import": "./src/trpc/feature.tsx",
+      "types": "./src/trpc/feature.tsx"
+    },
+    "./trpc/links": {
+      "import": "./src/trpc/links.ts",
+      "types": "./src/trpc/links.ts"
+    },
+    "./trpc/query-client": {
+      "import": "./src/trpc/query-client.ts",
+      "types": "./src/trpc/query-client.ts"
+    },
+    "./trpc/server": {
+      "import": "./src/trpc/server.ts",
+      "types": "./src/trpc/server.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      "./trpc/client": {
+        "import": "./dist/trpc/client.js",
+        "types": "./dist/trpc/client.d.ts"
+      },
+      "./trpc/feature": {
+        "import": "./dist/trpc/feature.js",
+        "types": "./dist/trpc/feature.d.ts"
+      },
+      "./trpc/links": {
+        "import": "./dist/trpc/links.js",
+        "types": "./dist/trpc/links.d.ts"
+      },
+      "./trpc/query-client": {
+        "import": "./dist/trpc/query-client.js",
+        "types": "./dist/trpc/query-client.d.ts"
+      },
+      "./trpc/server": {
+        "import": "./dist/trpc/server.js",
+        "types": "./dist/trpc/server.d.ts"
+      }
+    }
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.2",
+    "@trpc/client": "^11.18.0",
+    "@trpc/server": "^11.18.0",
+    "@trpc/tanstack-react-query": "^11.18.0",
+    "superjson": "^2.2.6"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.6.0",
+    "tsdown": "^0.22.4",
+    "typescript": "^7.0.2"
+  }
+}

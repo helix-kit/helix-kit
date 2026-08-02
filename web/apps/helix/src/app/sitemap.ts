@@ -1,9 +1,8 @@
 import { pillars, runtimeOrigin } from '@/lib/site';
-import { api } from '@/server/caller';
+import { fetchQuery } from '@/server/server';
 
 import type { MetadataRoute } from 'next';
 
-// Rendered per request so the origin comes from runtimeOrigin, not baked in at build time.
 export const dynamic = 'force-dynamic';
 
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
@@ -23,8 +22,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 
   const loadBlogRoutes = async (): Promise<MetadataRoute.Sitemap> => {
     try {
-      const caller = await api();
-      const rows = await caller.publishedSlugs();
+      const rows = await fetchQuery((api) => api.blogPublic.publishedSlugs.queryOptions());
       return rows.map((row) => ({
         url: `${base}/blog/${row.slug}`,
         lastModified: row.updatedAt,

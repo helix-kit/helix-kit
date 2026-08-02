@@ -78,12 +78,12 @@ const postInput = z.object({
     .regex(/^[a-z0-9-]+$/)
     .max(SLUG_MAX_LENGTH)
     .optional(),
-  content: z.string().default(''),
-  description: z.string().max(DESCRIPTION_MAX_LENGTH).default(''),
-  coverImage: z.string().default(''),
-  tags: z.array(z.string()).default([]),
-  keywords: z.array(z.string()).default([]),
-  published: z.boolean().default(false),
+  content: z.string(),
+  description: z.string().max(DESCRIPTION_MAX_LENGTH),
+  coverImage: z.string(),
+  tags: z.array(z.string()),
+  keywords: z.array(z.string()),
+  published: z.boolean(),
 });
 
 /** Public, read-only surface — only published posts are read; user/adminRoles unused. */

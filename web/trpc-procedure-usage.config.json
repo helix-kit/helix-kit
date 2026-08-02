@@ -6,7 +6,8 @@
     { "path": "espFlasher.getFirmwares", "reason": "ESP32 firmware-list API; reusable backend surface." },
     { "path": "features.catalog", "reason": "Feature catalog API; reusable backend surface." },
     { "path": "features.deviceOverrides", "reason": "Per-device feature overrides API; reusable backend surface." },
-    { "path": "ice.config", "reason": "ICE server config API; consumed by device/browser P2P clients, not a frontend hook." }
+    { "path": "ice.config", "reason": "ICE server config API; consumed by device/browser P2P clients, not a frontend hook." },
+    { "path": "agent.renameConversation", "reason": "Agent thread store; rename UI not yet wired (the other agent.* CRUD is consumed by the chat UI)." }
   ],
   "ignoreUsagePaths": ["reports/**"],
   "manualUsages": [],

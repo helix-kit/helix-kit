@@ -20,6 +20,10 @@ overrides:
   "react": "19.2.7"
   "react-dom": "19.2.7"
   "zod": "4.4.3"
+  # Force a single nuqs instance across the app and design-system. Without this,
+  # peer-context drift split it into two copies, giving two NuqsAdapter contexts
+  # ("Multiple adapter contexts detected", NUQS-303) and 500ing DataTable pages.
+  "nuqs": "2.9.0"
   # typescript-eslint + sonarjs need the classic TypeScript JS API (ts.SyntaxKind,
   # ts.createProgram), which typescript@7 (native Go compiler) no longer ships. Pin the
   # lint toolchain's typescript to the last classic line while the rest of the repo

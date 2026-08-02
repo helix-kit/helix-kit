@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -15,7 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@helix/design-system/components/sidebar';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 
 import { signOut } from '@/lib/auth-client';
 
@@ -60,6 +61,12 @@ export const SidebarUserMenu = ({ name, email }: { name: string; email: string }
               <span className="text-muted-foreground text-xs font-normal">{email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">
+                <Settings />
+                Settings
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={async () => {
                 await signOut();

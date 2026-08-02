@@ -42,6 +42,12 @@ export const env = createEnv({
     HELIX_BUILD_WORKER_URL: z.string().optional(),
     HELIX_BUILD_CALLBACK_BASE_URL: z.string().optional(),
 
+    // Vercel AI Gateway credentials for the site AI agent + MCP server. Without a
+    // key the agent route returns a clear "not configured" error rather than 500ing.
+    // AGENT_MODEL is a gateway model id (provider/model).
+    AI_GATEWAY_API_KEY: z.string().optional(),
+    AGENT_MODEL: z.string().default('deepseek/deepseek-v4-pro'),
+
     // Public CDN base for publicly-served assets (blog images). Objects under the
     // `public/` key prefix are fronted by CloudFront at this host; when set, uploads
     // return a stable `${STORAGE_PUBLIC_ASSET_URL}/<key-without-public/>` URL instead
@@ -77,6 +83,8 @@ export const env = createEnv({
     HELIX_BUILD_WORKER_URL: process.env['HELIX_BUILD_WORKER_URL'],
     HELIX_BUILD_CALLBACK_BASE_URL: process.env['HELIX_BUILD_CALLBACK_BASE_URL'],
     STORAGE_PUBLIC_ASSET_URL: process.env['STORAGE_PUBLIC_ASSET_URL'],
+    AI_GATEWAY_API_KEY: process.env['AI_GATEWAY_API_KEY'],
+    AGENT_MODEL: process.env['AGENT_MODEL'],
     NODE_ENV: process.env['NODE_ENV'],
     NEXT_PUBLIC_BASE_URL: process.env['NEXT_PUBLIC_BASE_URL'],
     NEXT_PUBLIC_HELIX_SOURCE_URL: process.env['NEXT_PUBLIC_HELIX_SOURCE_URL'],

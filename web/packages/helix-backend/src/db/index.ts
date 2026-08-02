@@ -1,6 +1,7 @@
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
+import * as agentSchema from './agent-schema';
 import * as authSchema from './auth-schema';
 import * as blogSchema from './blog-schema';
 import * as featureSchema from './feature-schema';
@@ -13,6 +14,7 @@ const databaseSchema = {
   ...releaseSchema,
   ...blogSchema,
   ...featureSchema,
+  ...agentSchema,
 };
 
 type DatabaseSchema = typeof databaseSchema;

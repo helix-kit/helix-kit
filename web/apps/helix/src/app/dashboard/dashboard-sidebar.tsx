@@ -15,12 +15,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@helix/design-system/components/sidebar';
-import { LayoutDashboard, Shield } from 'lucide-react';
+import { Bot, LayoutDashboard, Settings, Shield } from 'lucide-react';
 
 import { HelixMark } from '@/components/logo';
 import { SidebarUserMenu } from '@/components/user-menu';
 
-const NAV = [{ href: '/dashboard', label: 'Overview', icon: LayoutDashboard }] as const;
+const NAV = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/agent', label: 'Assistant', icon: Bot },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+] as const;
 
 export const DashboardSidebar = ({
   name,

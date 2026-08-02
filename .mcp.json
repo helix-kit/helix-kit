@@ -11,11 +11,11 @@
     "linear": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.linear.app/mcp"
-      ]
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+    },
+    "helix": {
+      "type": "http",
+      "url": "https://helix-kit.com/api/mcp"
     }
   }
 }

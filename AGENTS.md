@@ -347,39 +347,60 @@ drops an individual check.
 
 ## 9. Working discipline (git, commits, memory)
 
-### 9.1 One worktree + branch per change; `~/code/helix` stays on `main`
+### 9.1 Work directly on `main` in `~/code/helix`
 
-- **`~/code/helix` is the canonical checkout and must always stay on `main`.** Never
-  commit, branch, or do work directly in it — treat it as read-only. If you find it on
-  another branch, return it with `git checkout main` (after preserving any work).
-- **Every change gets its own git worktree**, created off `main`:
-  ```sh
-  git worktree add ~/code/helix-worktrees/HELIX-<id> -b HELIX-<id> main
-  ```
-  The worktree directory **and** the branch are both named `HELIX-<id>` — the Linear
-  issue the change is tracked under (§9.4). Do all the work for that change there.
-- **One worktree per change.** Parallel changes get parallel worktrees, so they never
-  collide; still only edit files that are part of *your* change. When the change's PR
-  is merged, remove it: `git worktree remove ~/code/helix-worktrees/HELIX-<id>`.
+We own this repo, so we do not pay the cost of a contribution workflow designed for
+strangers. There is **one checkout — `~/code/helix` — and it stays on `main`.**
 
-### 9.2 Commit signed off as Hardik Jain; open a PR for every change
+- **No feature branches. No worktrees. No pull requests.** Edit `main` in place and
+  push. Branch-per-change, PR-per-change, and the review/merge round-trip were dropped
+  deliberately: the mechanics (conflict resolution, waiting on merges, worktree
+  bookkeeping) cost more than they returned for the repo owner.
+- **Do not create worktrees or branches** unless the user explicitly asks. If you think
+  a change genuinely needs isolation — a risky migration you may want to abandon, or
+  two conflicting changes in flight at once — raise it with the user (§2.5) rather than
+  branching unilaterally.
+- **One change at a time.** With everything on one branch there is no isolation to fall
+  back on, so keep the working tree focused: finish and push a change before starting
+  the next, and only edit files that belong to the change you are on.
 
-- **Never push to `main`.** It is protected (PR required, squash-merge only, required
-  `linear-id` check, no bypass). Every change lands through a pull request.
+The PR flow still exists — for **external contributors**. They fork, open a PR, and the
+`linear-id` check runs on the PR title. That path is enforced for everyone except the
+owner's admin account (§9.2), so leave it in place.
+
+### 9.2 Commit signed off as Hardik Jain; push straight to `main`
+
+- **Push directly to `main`.** `git push origin main`. Two GitHub rulesets remain on
+  `helix-kit/helix-kit`, and neither slows down normal work:
+  - **`main: no force-push`** — `non_fast_forward`, no bypass actors, so a stray
+    `push --force` cannot rewrite shared history. This one applies to everybody.
+  - **`main: PR required for non-owners`** — the `pull_request` rule plus the `linear-id`
+    required check, with the repo `admin` role as a bypass actor. Hardik's account pushes
+    straight through; outside contributors still open PRs.
 - **Sign off every commit as Hardik Jain** with `git commit -s` (the repo git identity
   is `Hardik Jain <jainhardik120@gmail.com>`). Commits are the user's work — **do not
   attribute them to Claude, Codex, or any agent**: no agent `Co-Authored-By` and no
   agent sign-off trailer.
-- **Put the `HELIX-<id>` in every commit message and in the PR title** — the commit-msg
-  hook and the required check enforce it, and on squash-merge the PR title becomes the
-  commit on `main`.
-- **Raise a PR for every change** from the worktree branch:
-  ```sh
-  git push -u origin HELIX-<id>
-  gh pr create --base main --title "HELIX-<id>: <summary>" --body "…"
-  ```
-  Squash-merge is the only method and merged branches auto-delete. The user reviews and
-  merges unless they explicitly ask you to merge.
+- **Put the `HELIX-<id>` in every commit message.** `HELIX-123: <summary>` as the subject
+  is the convention; a `Refs: HELIX-123` trailer also works.
+
+  ⚠️ **On direct pushes this is enforced only by the local `commit-msg` hook**
+  (`.githooks/commit-msg`, activated per clone with
+  `git config core.hooksPath .githooks`). It is preventive but *bypassable* — a
+  `--no-verify`, or a clone that never set `core.hooksPath`, sails past it. GitHub cannot
+  close that gap here: `commit_message_pattern` rules are silently inert on the org's free
+  plan (verified — the API accepts the rule and reports it active, but it never
+  evaluates, while `non_fast_forward` on the same repo rejects correctly), and there are
+  no pre-receive hooks outside Enterprise Server. So **treat the id as your discipline,
+  not the server's** — the only path with a real server-side gate is the contributor PR
+  flow, where the `linear-id` check reads the PR title.
+- **Ask before committing.** Agents do not commit or push on their own. Leave the change
+  in the working tree, tell the user what is ready, and commit only when they say so.
+  Direct-to-`main` removes the PR gate, which makes this rule *more* important, not
+  less: nothing reviews what you push except the user.
+- **Pushing `main` deploys.** `.github/workflows/build-deploy.yml` runs on every push to
+  `main` and ships the web bundles to the live box. Treat a push as a release: the
+  change should be verified (§8) before it goes out.
 
 ### 9.3 Maintain your memory files
 
@@ -404,9 +425,10 @@ it now. Skipping preflight on one task means the follow-on tasks have no in-prog
 issue to update, so a whole session goes untracked.
 
 Track each change **end to end (0 → 100)**: `In Progress` before the first edit, an
-activity-log comment at every meaningful step, `In Review` when the PR is open, and
-`Done` only once it is merged and verified. The worktree, branch, and PR are all named
-for the issue (§9.1–9.2), so the trail is unbroken from start to finish.
+activity-log comment at every meaningful step, and `Done` only once it is pushed and
+verified. Every commit carries the issue id (§9.2) — with no branch or PR named for the
+issue, **the commit trail and the activity log are the only record**, so keep both
+honest. (`In Review` now means only what it says: work parked for the user to look at.)
 
 **Capture every session for the next one.** At the end of each work session — and whenever
 you pause a task mid-flight — append a handoff comment to the issue with the raw command
@@ -418,5 +440,5 @@ chat transcript.
 Follow the **`linear-tracking` skill** (`.claude/skills/linear-tracking/`) **before**
 starting any task and **after** every accomplishment. It tells you how to confirm
 tracking is live, find or open the right issue under the correct epic (find before
-create), keep status honest (`In Progress` → `In Review` → `Done`-only-when-verified),
-and append a per-issue activity-log comment on every status change or meaningful step.
+create), keep status honest (`In Progress` → `Done`-only-when-verified), and append a
+per-issue activity-log comment on every status change or meaningful step.

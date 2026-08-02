@@ -53,36 +53,47 @@ If the `mcp__linear__*` tools are not loaded, load them first with
 3. **One issue per unit of work, filed under the right epic, with exactly two labels.**
    New work = a sub-issue under the matching epic, carrying **exactly one `TYPE` label and
    exactly one `SUBSYSTEM` label** — never more, never fewer (epics included).
-4. **Status reflects reality, always.** Move the issue to `In Progress` when you start,
-   `In Review` when it's up for review, `Done` only when verified end-to-end. Reflect
-   blockers and cancellations too.
+4. **Status reflects reality, always.** Move the issue to `In Progress` when you start
+   and `Done` only when verified end-to-end. `In Review` no longer means "a PR is open"
+   (there are none) — use it for work parked for the user to look at. Reflect blockers
+   and cancellations too.
 5. **Every change gets an activity-log comment.** On any status change or meaningful
    progress, add a comment to the issue saying what you did, what changed, how it was
    verified, and what's next. Linear's auto-history is not enough — write the narrative.
 
 ---
 
-## Change workflow — worktree → branch → signed-off PR
+## Change workflow — work on `main`, commit, push
 
 Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
 
-1. **Worktree per change.** `~/code/helix` stays on `main`; never work in it. For the
-   issue, `git worktree add ~/code/helix-worktrees/HELIX-<id> -b HELIX-<id> main` and
-   work there. One worktree per change; `git worktree remove` it once the PR merges.
+1. **Work directly on `main` in `~/code/helix`.** No feature branch, no worktree, no PR
+   — that flow was dropped for the owner because the PR mechanics cost more than they
+   returned. Don't create a branch or worktree unless the user explicitly asks; if a
+   change seems to need isolation, raise it instead. One change at a time.
 2. **Commit as Hardik Jain.** `git commit -s` (identity `Hardik Jain
    <jainhardik120@gmail.com>`). **No agent attribution** — no Claude/agent
    `Co-Authored-By` or sign-off trailer. Put `HELIX-<id>` in every commit message.
-3. **PR for every change.** Push the branch, then `gh pr create --base main --title
-   "HELIX-<id>: …"`. Squash-merge only; the required `linear-id` check reads the PR
-   title; merged branches auto-delete. The user merges unless they ask you to.
+3. **Ask before committing.** Agents don't commit or push on their own; leave the work
+   in the tree and let the user decide. When they say go, `git push origin main` — and
+   remember that pushing `main` triggers the deploy, so the change should be verified
+   first.
 4. **Track 0 → 100.** `In Progress` before the first edit → activity-log comment at each
-   step → `In Review` when the PR opens → `Done` only when merged and verified.
+   step → `Done` only when pushed and verified. With no branch or PR carrying the issue
+   id, the commit trail and the activity log are the whole record.
+
+External contributors still use the PR flow — it's enforced for every account except the
+owner's admin account. Leave it in place.
 
 ---
 
 ## The tracking model (memorize this)
 
-- **Team:** `Jainhardik120` (key `HELIX`).
+- **Workspace:** `helix-kit` (issue URLs are `linear.app/helix-kit/issue/HELIX-N/…`).
+- **Team:** `Helix`, key `HELIX`, id `e5ee9371-9d08-4b2f-8f7a-548bce42eb73`. **Pass the
+  id, not the name** — `save_issue` requires a UUID for `team` and rejects the name with
+  a bare `Argument Validation Error`. (The team was renamed from `Jainhardik120`; there
+  is only one team in the workspace.)
 - **Project:** `Helix` (id `78051107-b9cd-4b08-b574-ce8722472dc4`).
 - **Epics** are parent issues (TYPE `EPIC`); concrete work are **sub-issues** with
   `parentId` set to the epic. Completed work is `Done`, live work `In Progress`,
@@ -97,13 +108,15 @@ Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
   - `MKT` — website marketing update (landing/SEO/copy/campaigns).
   - `EPIC` — a parent tracking issue.
   - `BLOCKER` — a pre-deploy security/robustness gate (also file under the Pre-deploy
-    blockers epic **HELIX-28**, `relatedTo` the home epic).
+    blockers epic **HELIX-28**, `relatedTo` the home epic). `BLOCKER` *is* the label —
+    there is no separate `deploy-blocker`.
   - `EXPERIMENTAL` — prototype/lab work under `experimental/`.
   - **Precedence when several apply (one wins):** `EXPERIMENTAL` > `EPIC` (an experimental
     epic is typed `EXPERIMENTAL`, not `EPIC`) > `BLOCKER` > `FEAT`/`BUG`/`DOC`/`BLOG`/`MKT`.
 - **`SUBSYSTEM` group** — which part of the stack (**one only**): `EMBEDDED-ESP32`,
-  `EMBEDDED-ARDUINO`, `LINUX-DEVICE`, `LINUX-PLATFORM-OS`, `DEVICE-UI`, `WEB`, `ANDROID`,
-  `CLOUD`, `TOOLING`, `PROTOCOL`, `EDGE-AI`. `EDGE-AI` = radxa edge-video/NPU + x86/GPU
+  `EMBEDDED-ARDUINO`, `EMBEDDED-STM32`, `LINUX-DEVICE`, `LINUX-PLATFORM-OS`, `DEVICE-UI`,
+  `WEB`, `ANDROID`, `CLOUD`, `TOOLING`, `PROTOCOL`, `EDGE-AI`.
+  `EDGE-AI` = radxa edge-video/NPU + x86/GPU
   pipeline + on-device LLM. Experimental mapping: radxa/x86/LLM → `EDGE-AI`, chatbot →
   `WEB`, networking experiments → `CLOUD`, page-gating → `WEB`; documentation → usually
   `TOOLING`. There is **no `docs` subsystem** (retired — docs work is TYPE `DOC` + a
@@ -116,13 +129,13 @@ Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
 | HELIX-5 | ESP32 protocol core & transports |
 | HELIX-6 | ESP32 platform services (file, db, events, OTA, provisioning) |
 | HELIX-7 | ESP32 build / flash / QEMU tooling |
-| HELIX-8 | ESP32 console bridge |
+| HELIX-8 | ESP32 console bridge (serial-over-MQTT) |
 | HELIX-9 | Device UI (LVGL) + display seam |
 | HELIX-10 | Arduino / AVR firmware |
-| HELIX-11 | Linux device runtime (helixd + Go/Python SDKs) |
+| HELIX-11 | Linux device runtime (helixd core + Go/Python SDKs) |
 | HELIX-12 | Device data plane & P2P / WebRTC transport |
 | HELIX-13 | Helix Linux platform OS |
-| HELIX-14 | Web app (Next.js console, marketing, docs, blog) |
+| HELIX-14 | Web app — Next.js console, marketing, docs, blog |
 | HELIX-15 | @helix/backend core (auth, tRPC, storage, PKI, releases/OTA, events) |
 | HELIX-16 | Cloud appliance & AMI |
 | HELIX-17 | Custom firmware build service |
@@ -137,10 +150,12 @@ Do all Helix work through this flow (authoritative in AGENTS.md §9.1–9.2):
 | HELIX-26 | Networking & display experiments (P2P, bandwidth, port-forward, remote shell, kiosk) |
 | HELIX-27 | Documentation |
 | HELIX-28 | Pre-deploy blockers |
-| HELIX-29 | On-device LLM fine-tuning |
+| HELIX-29 | On-device LLM fine-tuning (tool-calling) |
 | HELIX-30 | Build-time page gating experiment |
 | HELIX-134 | Blog — published posts (parent for `BLOG` issues) |
 | HELIX-135 | Website marketing & SEO (parent for `MKT` issues) |
+| HELIX-153 | Site-wide AI agent + external MCP server over the tRPC surface |
+| HELIX-165 | STM32 bare-metal firmware |
 
 Published blog posts → `BLOG` sub-issues under **HELIX-134**; marketing/SEO/landing changes →
 `MKT` sub-issues under **HELIX-135** (both also carry the `web` subsystem label).
@@ -169,12 +184,12 @@ project root. If a new subsystem appears, create its label too.
 
 ## New work — creating an issue
 
-`save_issue` with: `team: "Jainhardik120"`, `project: "Helix"`, `parentId: <epic>`, the
-subsystem `labels`, a clear `title`, and a `description` that states the goal and
-references the concrete files/paths (`path:line`) involved. Set `state` to `In Progress`
-if you're starting now, else `Backlog`/`Todo`. Set `priority` for blockers/urgent work
-(1=Urgent, 2=High). For security gates, add `deploy-blocker`, parent it to HELIX-28, and
-`relatedTo` the home epic.
+`save_issue` with: `team: "e5ee9371-9d08-4b2f-8f7a-548bce42eb73"` (the **UUID** — the team
+name is rejected), `project: "Helix"`, `parentId: <epic>`, the TYPE + SUBSYSTEM `labels`,
+a clear `title`, and a `description` that states the goal and references the concrete
+files/paths (`path:line`) involved. Set `state` to `In Progress` if you're starting now,
+else `Backlog`/`Todo`. Set `priority` for blockers/urgent work (1=Urgent, 2=High). For
+security gates, label it `BLOCKER`, parent it to HELIX-28, and `relatedTo` the home epic.
 
 ## Updating an existing issue
 
@@ -212,9 +227,10 @@ resume with zero re-discovery:
 - **What was done, step by step** — the actual commands run and their **raw output/logs**
   (paste in fenced code blocks; attach full logs as files when long).
 - **Evidence / artifacts** — screenshots, before/after captures, benchmark numbers, test
-  output, `helix lint` / e2e results, URLs, PR links, commit SHAs.
+  output, `helix lint` / e2e results, URLs, and the commit SHAs on `main`.
 - **State right now** — what works, what's half-done, what's broken, and exactly where you
-  stopped (file:line, branch, worktree path).
+  stopped (file:line), and whether it is committed/pushed or still sitting in the working
+  tree on `main`.
 - **Decisions & why** — choices made and the reasoning, so they aren't relitigated.
 - **Next steps** — the concrete first action for the next session, plus any blockers.
 
@@ -255,19 +271,23 @@ new view, add its recipe there rather than trying to create it programmatically.
 
 Every commit message must carry the Linear id of the issue it advances, as
 `HELIX-<number>` — e.g. `HELIX-125: validate gateway session token`, or a
-`Refs: HELIX-125` trailer. Two layers enforce this:
-- **Local (fast feedback):** a `commit-msg` hook (`.githooks/commit-msg`, activated
-  with `git config core.hooksPath .githooks`) rejects commits with no `HELIX-<number>`.
-- **Server (the real gate, can't be bypassed):** the **Commit tracking** GitHub
-  Action (`.github/workflows/commit-tracking.yml` → `scripts/check-linear-id.sh`) is
-  a required status check on `main`. The repo is **squash-merge only** and requires a
-  PR, so the **PR title** becomes the single commit that lands on `main` — the check
-  validates the **PR title** carries a `HELIX-<number>`.
+`Refs: HELIX-125` trailer. Since work goes **straight onto `main`**, the commit message
+*is* what lands, and it is checked at two layers:
+- **Direct pushes (the owner's path) — the local `commit-msg` hook, and nothing else.**
+  `.githooks/commit-msg` (activated per clone with `git config core.hooksPath .githooks`)
+  rejects commits with no `HELIX-<number>`, exempting merge and autosquash
+  (`fixup!`/`squash!`/`amend!`) commits. It is **bypassable** (`--no-verify`, or a clone
+  that never set `core.hooksPath`), and there is no server-side backstop: GitHub's
+  `commit_message_pattern` ruleset rule is silently inert on the org's free plan
+  (verified — accepted by the API, reported active, never evaluated), and pre-receive
+  hooks don't exist outside Enterprise Server. **So the id is your discipline, not the
+  server's — put it in every commit message.**
+- **External contributors — the `linear-id` required check.** The **Commit tracking**
+  Action (`.github/workflows/commit-tracking.yml` → `scripts/check-linear-id.sh`) is a
+  required status check on the PR ruleset and validates the PR title. This is the only
+  path with a genuine server-side gate.
 
-So: **put the id in the PR title** (that's what lands and what's enforced); the local
-hook additionally wants it on each commit but exempts merge/autosquash
-(`fixup!`/`squash!`/`amend!`). Agents still don't commit unless asked (see AGENTS.md
-§9.2) — but when you open a PR, title it `HELIX-<id>: …`.
+Agents still don't commit or push unless asked (see AGENTS.md §9.2).
 
 ## Don't
 
@@ -280,6 +300,10 @@ hook additionally wants it on each commit but exempts merge/autosquash
 - Don't flip a status without an accompanying comment.
 - Don't mark `Done` on unverified work.
 - Don't hang sub-issues off the project with no epic parent.
-- Don't leave a non-epic issue with no `Type` label, and don't put more than one.
-- Don't create a new "BUG"/"bug" label — the `Bug` type label already exists.
+- Don't leave a non-epic issue with no `TYPE` label, and don't put more than one.
+- Don't create a duplicate of a label that exists — every `TYPE` and `SUBSYSTEM` label is
+  listed above (e.g. `BUG` already exists; don't add "Bug"/"bug").
+- Don't pass the team *name* to `save_issue` — it needs the team UUID.
+- Don't create a branch, worktree, or PR for your own work — that flow is gone (AGENTS.md
+  §9.1). Ask the user if you think a change needs isolation.
 - Don't touch the HELIX-1…HELIX-4 default Linear onboarding cards — they aren't Helix work.

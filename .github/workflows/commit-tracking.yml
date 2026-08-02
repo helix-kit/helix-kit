@@ -1,10 +1,17 @@
 name: Commit tracking
 
-# Enforce that every change references its Linear tracking issue (HELIX-<number>).
-# On github.com there are no server-side git hooks, so this Action is the
-# enforcement point — it is a REQUIRED status check (with "require a pull request
-# before merging") in the branch ruleset for `main`. The repo squash-merges, so
-# the PR title is what lands on `main`; the check validates the PR title.
+# Enforce that every change references its Linear tracking issue (HELIX-<number>)
+# on the EXTERNAL-CONTRIBUTOR path.
+#
+# The owner pushes straight to `main`, where the id is enforced only by the local
+# `.githooks/commit-msg` hook — GitHub's `commit_message_pattern` ruleset rule is
+# silently inert on a free-plan org, and an Action on `push` would run after the
+# commit already landed, so it could detect but not prevent.
+#
+# Contributors without the repo `admin` role still have to open a PR (the
+# "main: PR required for non-owners" ruleset). This Action is the `linear-id`
+# REQUIRED status check on that path. The repo squash-merges, so the PR title is
+# what lands on `main` — the check validates the PR title.
 
 on:
   pull_request:

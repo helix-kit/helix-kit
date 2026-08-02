@@ -30,10 +30,6 @@
       "import": "./src/agent/index.ts",
       "types": "./src/agent/index.ts"
     },
-    "./blog": {
-      "import": "./src/blog/index.ts",
-      "types": "./src/blog/index.ts"
-    },
     "./db": {
       "import": "./src/db/index.ts",
       "types": "./src/db/index.ts"
@@ -149,10 +145,6 @@
       "./agent": {
         "import": "./dist/agent/index.js",
         "types": "./dist/agent/index.d.ts"
-      },
-      "./blog": {
-        "import": "./dist/blog/index.js",
-        "types": "./dist/blog/index.d.ts"
       },
       "./db": {
         "import": "./dist/db/index.js",

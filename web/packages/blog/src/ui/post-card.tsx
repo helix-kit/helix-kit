@@ -21,10 +21,16 @@ const formatDate = (value: string | Date | null): string => {
   });
 };
 
-export const PostCard = ({ post }: { post: PostSummary }) => (
+export const PostCard = ({
+  post,
+  basePath = '/blog',
+}: {
+  post: PostSummary;
+  basePath?: string;
+}) => (
   <Link
     className="group border-border/70 bg-card/40 hover:border-brand/50 hover:bg-card flex flex-col overflow-hidden rounded-xl border transition-colors"
-    href={`/blog/${post.slug}`}
+    href={`${basePath}/${post.slug}`}
   >
     <div className="bg-muted relative aspect-[16/9] overflow-hidden">
       {post.coverImage !== '' ? (

@@ -2,21 +2,16 @@ import type { ImgHTMLAttributes } from 'react';
 
 import { cn } from '@helix/design-system/lib/utils';
 
-import { CodeBlock } from '@/components/geistdocs/code-block';
-import { Mermaid } from '@/components/geistdocs/mermaid';
-import type { CompiledPost } from '@/lib/blog-mdx';
-
+import type { CompiledPost } from '../server/mdx';
 import type { MDXComponents } from 'mdx/types';
 
 import './post-content.css';
 
-// Blog MDX map reuses only app-local components; the fumadocs docs map is confined to /docs so its theme never leaks here.
-const components: MDXComponents = {
-  pre: CodeBlock,
-  Mermaid,
-  // Author-inserted images: lazy + async-decode so they don't block LCP.
+// The host supplies the renderers for `pre`, `Mermaid` and friends; the package only insists
+// that author-inserted images are lazy + async-decode so they don't block LCP.
+const baseComponents: MDXComponents = {
   img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    // eslint-disable-next-line jsx-a11y/alt-text
     <img decoding="async" loading="lazy" {...props} />
   ),
 };
@@ -33,8 +28,14 @@ const prose = cn(
   'prose-blockquote:border-brand prose-blockquote:font-normal prose-blockquote:not-italic prose-blockquote:text-muted-foreground',
 );
 
-export const PostContent = ({ body: Body }: { body: CompiledPost['body'] }) => (
+export const PostContent = ({
+  body: Body,
+  components,
+}: {
+  body: CompiledPost['body'];
+  components?: MDXComponents;
+}) => (
   <div className={prose}>
-    <Body components={components} />
+    <Body components={{ ...baseComponents, ...components }} />
   </div>
 );

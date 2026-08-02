@@ -1,6 +1,7 @@
-import { PostCard } from '@/components/blog/post-card';
+import { PostGrid } from '@helix/blog/ui';
+
 import { Section, SectionHeading } from '@/components/marketing/section';
-import { absoluteUrl } from '@/lib/blog-seo';
+import { blogSeo } from '@/lib/blog';
 import { site } from '@/lib/site';
 import { fetchQuery } from '@/server/server';
 
@@ -40,22 +41,7 @@ const BlogPage = async () => {
     trpc.blogPublic.listPublished.queryOptions({ limit: 24, offset: 0 }),
   ).catch(() => []);
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Blog',
-    name: BLOG_TITLE,
-    description: BLOG_DESCRIPTION,
-    url: absoluteUrl('/blog'),
-    blogPost: posts.map((post) => ({
-      '@type': 'BlogPosting',
-      headline: post.title,
-      description: post.description,
-      url: absoluteUrl(`/blog/${post.slug}`),
-      ...(post.publishedAt !== null
-        ? { datePublished: new Date(post.publishedAt).toISOString() }
-        : {}),
-    })),
-  };
+  const jsonLd = blogSeo.blogJsonLd(posts, { name: BLOG_TITLE, description: BLOG_DESCRIPTION });
 
   return (
     <Section className="border-b-0">
@@ -70,17 +56,7 @@ const BlogPage = async () => {
         title="From the Helix project"
       />
 
-      {posts.length === 0 ? (
-        <div className="border-border/70 bg-card/30 mt-12 rounded-xl border border-dashed p-12 text-center">
-          <p className="text-muted-foreground text-sm">No posts published yet. Check back soon.</p>
-        </div>
-      ) : (
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <PostCard key={post.slug} post={post} />
-          ))}
-        </div>
-      )}
+      <PostGrid posts={posts} />
     </Section>
   );
 };

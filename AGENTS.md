@@ -57,10 +57,20 @@ The codebase already models this split; follow the same pattern:
   (`file`, `db`, OTA, provisioning, storage sinks) are layered on top in
   `embedded/esp32/platform`. New transports implement the `helix_transport`
   seam; new services register with the dispatcher.
-- **Web** — all backend capability (DB, tRPC routers, storage providers, PKI,
-  event queue, MQTT bridge, releases/OTA) lives in the `@helix/backend` package
-  (`web/packages/helix-backend`). The apps (`web/apps/helix`,
+- **Web** — all *core* backend capability (DB, tRPC routers, storage providers,
+  PKI, event queue, MQTT bridge, releases/OTA) lives in the `@helix/backend`
+  package (`web/packages/helix-backend`). The apps (`web/apps/helix`,
   `web/apps/helix-server`) are thin wiring that imports and composes it.
+  **Non-core features live in their own package**, holding both their backend
+  (drizzle schema + tRPC routers) and their frontend, so an adopter who does not
+  want a feature simply does not install it — `@helix/blog` (`web/packages/blog`)
+  is the reference shape. Such a package never imports the host's `AppRouter`:
+  it declares the mount keys its routers must be composed under, and its client
+  components resolve them back out through the shared feature context in
+  `@helix/web-core` (`web/packages/web-core`), which also owns the router-agnostic
+  React/tRPC scaffolding (query client, links, RSC `fetchQuery`). Feature tables
+  reach the database through `createDb`'s `extraSchema` option rather than core's
+  own schema. See `web/packages/blog/README.md` for the wiring contract.
 - **Android** — protocol/service/transport concerns are separated by package
   (`dev.helix.protocol.core`, `.protocol.service`, `.transport.ble`,
   `.transport.mqtt`) inside the reusable `:helix` SDK module, mirroring the web
@@ -110,7 +120,7 @@ let the user choose.
 | `linux/platform_os/` | Minimal Helix Linux OS image build (debootstrap → rootfs → disk/ISO → QEMU). |
 | `linux/device/` | Linux device runtime (adapted from a prior production cloud-comm model). `go/` — the single `helixd` core (`cmd/helixd`: MQTT⇄IPC bridge, app-agnostic), the Go app SDK (`internal/ipc` client, `internal/shared/{servicemain,ipcutil,config}`), apps (`cmd/helix-*`), and the bytestream data-plane package. `python/helix_service_runtime` — the thin Python IPC SDK (contracts only, no core reimplementation). |
 | `ui/` | Common device UI (LVGL). Screens are pure LVGL and portable; a display seam (`helix_ui_display_t`) decides where pixels go — today a streaming driver that ships them to a host viewer (`helix ui sim`), tomorrow an SPI panel or a Linux framebuffer. Ships the ESP32 port and the `ui` service (`info`/`refresh`/`pointer`). Opt-in: only a build carrying the `ui` feature compiles it, so no other firmware pays for LVGL. |
-| `web/` | pnpm + Turborepo monorepo. `packages/helix-backend` (`@helix/backend`, the backend core), `packages/protocol` (`@helix/protocol` — packet core, service contracts, HelixStream, WebRTC peer, and the BLE/MQTT/serial/WebSocket transports), `packages/helix-design-system`, `apps/helix` (ONE Next.js app: marketing site, fumadocs `/docs`, blog, and the `/admin` + `/device` console), `apps/helix-server` (headless backend), `e2e/` (Playwright hardware-in-the-loop). |
+| `web/` | pnpm + Turborepo monorepo. `packages/helix-backend` (`@helix/backend`, the backend core), `packages/protocol` (`@helix/protocol` — packet core, service contracts, HelixStream, WebRTC peer, and the BLE/MQTT/serial/WebSocket transports), `packages/web-core` (`@helix/web-core` — router-agnostic React/tRPC scaffolding shared by the app and every feature package), `packages/blog` (`@helix/blog` — an optional feature package owning its own schema, routers, and UI), `packages/helix-design-system`, `apps/helix` (ONE Next.js app: marketing site, fumadocs `/docs`, blog, and the `/admin` + `/device` console), `apps/helix-server` (headless backend), `e2e/` (Playwright hardware-in-the-loop). |
 | `android/` | Native Kotlin/Compose. `:helix` SDK module (protocol/service/transport packages) + `:app`. BLE-first. |
 | `cloud/` | Cloud infra: `appliance/` (single-image stack), `build-service/` (on-demand firmware builds), `mosquitto/`, `coturn/`, `observability/`, and the multi-container `docker-compose.yml`. |
 | `tooling/` | The `helix` Python CLI (see §4): `device`, `protocol`, `appliance`, `e2e`, `loadtest`, `release`, `common`. |

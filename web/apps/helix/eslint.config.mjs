@@ -29,7 +29,6 @@ const eslintConfig = [
       'src/app/(marketing)/**',
       'src/app/docs/**',
       'src/components/marketing/**',
-      'src/components/blog/**',
       'src/components/site-header.tsx',
       'src/components/site-footer.tsx',
       'src/components/icons.tsx',
@@ -42,12 +41,7 @@ const eslintConfig = [
     },
   },
   {
-    files: [
-      'src/components/editor/**',
-      'src/components/geistdocs/**',
-      'src/hooks/**',
-      'src/lib/source.ts',
-    ],
+    files: ['src/components/geistdocs/**', 'src/hooks/**', 'src/lib/source.ts'],
     rules: {
       'no-duplicate-imports': 'off',
       'no-empty': 'off',

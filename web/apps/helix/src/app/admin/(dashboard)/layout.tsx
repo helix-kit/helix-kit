@@ -30,7 +30,6 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
             <ThemeToggleButton />
           </div>
         </header>
-        {/* Fixed-height region: the page never scrolls; each page scrolls internally. */}
         <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </SidebarInset>
     </SidebarProvider>

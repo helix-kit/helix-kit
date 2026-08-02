@@ -1,5 +1,5 @@
 import { runtimeOrigin, site } from '@/lib/site';
-import { api } from '@/server/caller';
+import { fetchQuery } from '@/server/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,9 @@ const escapeXml = (value: string): string =>
 
 const loadItems = async (base: string): Promise<string> => {
   try {
-    const posts = await api().listPublished({ limit: 50, offset: 0 });
+    const posts = await fetchQuery((api) =>
+      api.blogPublic.listPublished.queryOptions({ limit: 50, offset: 0 }),
+    );
     return posts
       .map((post) => {
         const url = `${base}/blog/${post.slug}`;

@@ -60,12 +60,12 @@ importers:
       '@better-auth/passkey':
         specifier: ^1.6.23
         version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
-      '@fumadocs/mdx-remote':
-        specifier: ^1.5.1
-        version: 1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)
       '@helix/backend':
         specifier: workspace:*
         version: link:../../packages/helix-backend
+      '@helix/blog':
+        specifier: workspace:*
+        version: link:../../packages/blog
       '@helix/design-system':
         specifier: workspace:*
         version: link:../../packages/helix-design-system
@@ -81,9 +81,9 @@ importers:
       '@helix/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
-      '@mdxeditor/editor':
-        specifier: ^4.0.4
-        version: 4.0.4(@codemirror/language@6.12.4)(@lezer/highlight@1.2.3)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(yjs@13.6.31)
+      '@helix/web-core':
+        specifier: workspace:*
+        version: link:../../packages/web-core
       '@react-email/components':
         specifier: ^1.0.12
         version: 1.0.12(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -102,9 +102,6 @@ importers:
       '@trpc/server':
         specifier: ^11.18.0
         version: 11.18.0(typescript@7.0.2)
-      '@trpc/tanstack-react-query':
-        specifier: ^11.18.0
-        version: 11.18.0(@tanstack/react-query@5.101.2(react@19.2.7))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.18.0(typescript@7.0.2))(react@19.2.7)(typescript@7.0.2)
       ai:
         specifier: ^7.0.42
         version: 7.0.47(zod@4.4.3)
@@ -113,7 +110,7 @@ importers:
         version: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
       fumadocs-core:
         specifier: 16.11.1
-        version: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
+        version: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       fumadocs-mdx:
         specifier: 15.1.0
         version: 15.1.0(@types/mdast@4.0.4)(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(mdast-util-directive@3.1.0)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -143,7 +140,7 @@ importers:
         version: 9.0.3
       nuqs:
         specifier: 2.9.0
-        version: 2.9.0(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 2.9.0(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -168,9 +165,6 @@ importers:
       superjson:
         specifier: ^2.2.6
         version: 2.2.6
-      use-debounce:
-        specifier: ^10.1.1
-        version: 10.1.1(react@19.2.7)
       winston:
         specifier: ^3.19.0
         version: 3.19.0
@@ -310,6 +304,94 @@ importers:
         specifier: ^8.1.3
         version: 8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
+  packages/blog:
+    dependencies:
+      '@fumadocs/mdx-remote':
+        specifier: ^1.5.1
+        version: 1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)
+      '@helix/backend':
+        specifier: workspace:*
+        version: link:../helix-backend
+      '@helix/design-system':
+        specifier: workspace:*
+        version: link:../helix-design-system
+      '@helix/web-core':
+        specifier: workspace:*
+        version: link:../web-core
+      '@mdxeditor/editor':
+        specifier: ^4.0.4
+        version: 4.0.4(@codemirror/language@6.12.4)(@lezer/highlight@1.2.3)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(yjs@13.6.31)
+      '@tanstack/react-query':
+        specifier: ^5.101.2
+        version: 5.101.2(react@19.2.7)
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@trpc/server':
+        specifier: ^11.18.0
+        version: 11.18.0(typescript@7.0.2)
+      drizzle-orm:
+        specifier: 1.0.0-beta.15-859cf75
+        version: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
+      fumadocs-core:
+        specifier: 16.11.1
+        version: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
+      lucide-react:
+        specifier: ^1.23.0
+        version: 1.24.0(react@19.2.7)
+      react:
+        specifier: 19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: 19.2.7
+        version: 19.2.7(react@19.2.7)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      use-debounce:
+        specifier: ^10.1.1
+        version: 10.1.1(react@19.2.7)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/mdx':
+        specifier: ^2.0.14
+        version: 2.0.14
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
+      '@types/react':
+        specifier: ^19.2.10
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^10.6.0
+        version: 10.6.0(jiti@2.7.0)
+      next:
+        specifier: 16.2.10
+        version: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      nuqs:
+        specifier: 2.9.0
+        version: 2.9.0(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      tsdown:
+        specifier: ^0.22.4
+        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   packages/device-apps:
     dependencies:
       '@helix/backend':
@@ -321,18 +403,12 @@ importers:
       '@helix/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@helix/web-core':
+        specifier: workspace:*
+        version: link:../web-core
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
-      '@trpc/client':
-        specifier: ^11.18.0
-        version: 11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2)
-      '@trpc/server':
-        specifier: ^11.18.0
-        version: 11.18.0(typescript@7.0.2)
-      '@trpc/tanstack-react-query':
-        specifier: ^11.18.0
-        version: 11.18.0(@tanstack/react-query@5.101.2(react@19.2.7))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.18.0(typescript@7.0.2))(react@19.2.7)(typescript@7.0.2)
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)
@@ -638,7 +714,7 @@ importers:
         version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       nuqs:
         specifier: 2.9.0
-        version: 2.9.0(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 2.9.0(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       radix-ui:
         specifier: ^1.6.2
         version: 1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -782,6 +858,52 @@ importers:
         version: 7.0.2
 
   packages/typescript-config: {}
+
+  packages/web-core:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.101.2
+        version: 5.101.2(react@19.2.7)
+      '@trpc/client':
+        specifier: ^11.18.0
+        version: 11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2)
+      '@trpc/server':
+        specifier: ^11.18.0
+        version: 11.18.0(typescript@7.0.2)
+      '@trpc/tanstack-react-query':
+        specifier: ^11.18.0
+        version: 11.18.0(@tanstack/react-query@5.101.2(react@19.2.7))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.18.0(typescript@7.0.2))(react@19.2.7)(typescript@7.0.2)
+      react:
+        specifier: 19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: 19.2.7
+        version: 19.2.7(react@19.2.7)
+      superjson:
+        specifier: ^2.2.6
+        version: 2.2.6
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
+      '@types/react':
+        specifier: ^19.2.10
+        version: 19.2.17
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^10.6.0
+        version: 10.6.0(jiti@2.7.0)
+      tsdown:
+        specifier: ^0.22.4
+        version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
 
 packages:
 
@@ -1787,12 +1909,6 @@ packages:
 
   '@floating-ui/dom@1.8.0':
     resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
-
-  '@floating-ui/react-dom@2.1.8':
-    resolution: {integrity: sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A==}
-    peerDependencies:
-      react: 19.2.7
-      react-dom: 19.2.7
 
   '@floating-ui/react-dom@2.1.9':
     resolution: {integrity: sha512-JDjEFGCpImxDCA7JJKviA0M9+RtmJdj0m/NVU5IMgBK+AmZouAQQ7/+2GLH0GXXY0YMw9oXPB8hKdbPYg5QLYg==}
@@ -11441,12 +11557,6 @@ snapshots:
       '@floating-ui/core': 1.8.0
       '@floating-ui/utils': 0.2.12
 
-  '@floating-ui/react-dom@2.1.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@floating-ui/dom': 1.8.0
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-
   '@floating-ui/react-dom@2.1.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@floating-ui/dom': 1.8.0
@@ -11470,10 +11580,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
 
-  '@fumadocs/mdx-remote@1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)':
+  '@fumadocs/mdx-remote@1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)':
     dependencies:
       '@mdx-js/mdx': 3.1.1
-      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
+      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       react: 19.2.7
       unified: 11.0.5
       vfile: 6.0.3
@@ -13598,7 +13708,7 @@ snapshots:
 
   '@radix-ui/react-popper@1.3.3(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-arrow': 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-compose-refs': 1.1.3(@types/react@19.2.17)(react@19.2.7)
       '@radix-ui/react-context': 1.2.0(@types/react@19.2.17)(react@19.2.7)
@@ -16763,7 +16873,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3):
+  fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3):
     dependencies:
       '@orama/orama': 3.1.18
       estree-util-value-to-estree: 3.5.0
@@ -16803,7 +16913,7 @@ snapshots:
       chokidar: 5.0.0
       esbuild: 0.28.1
       estree-util-value-to-estree: 3.5.0
-      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
+      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       github-slugger: 2.0.0
       js-yaml: 5.2.1
       mdast-util-mdx: 3.0.0
@@ -16844,7 +16954,7 @@ snapshots:
       '@radix-ui/react-tabs': 1.1.17(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       class-variance-authority: 0.7.1
       cnfast: 0.0.8
-      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
+      fumadocs-core: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       lucide-react: 1.24.0(react@19.2.7)
       motion: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-themes: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -18534,7 +18644,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  nuqs@2.9.0(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7):
+  nuqs@2.9.0(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7):
     dependencies:
       '@standard-schema/spec': 1.0.0
       react: 19.2.7

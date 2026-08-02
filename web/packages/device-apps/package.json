@@ -32,10 +32,6 @@
     "./header-portal": {
       "import": "./src/header-portal.tsx",
       "types": "./src/header-portal.tsx"
-    },
-    "./trpc": {
-      "import": "./src/trpc.tsx",
-      "types": "./src/trpc.tsx"
     }
   },
   "publishConfig": {
@@ -44,10 +40,6 @@
       ".": {
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts"
-      },
-      "./trpc": {
-        "import": "./dist/trpc.js",
-        "types": "./dist/trpc.d.ts"
       },
       "./header-portal": {
         "import": "./dist/header-portal.js",
@@ -63,10 +55,8 @@
     "@helix/backend": "workspace:*",
     "@helix/design-system": "workspace:*",
     "@helix/protocol": "workspace:*",
+    "@helix/web-core": "workspace:*",
     "@tanstack/react-query": "^5.101.2",
-    "@trpc/client": "^11.18.0",
-    "@trpc/server": "^11.18.0",
-    "@trpc/tanstack-react-query": "^11.18.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "esptool-js": "^0.6.0",

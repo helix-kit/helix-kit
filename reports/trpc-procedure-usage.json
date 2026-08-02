@@ -258,7 +258,7 @@
       "path": "blog.create",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 265,
         "column": 5
       },
@@ -267,12 +267,13 @@
       "usageCount": 1,
       "usages": [
         {
-          "kind": "mutationOptions",
+          "kind": "manual",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/post/create-post-button.tsx",
-            "line": 14,
-            "column": 5
-          }
+            "file": "trpc-procedure-usage.config.json",
+            "line": 1,
+            "column": 1
+          },
+          "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
         }
       ]
     },
@@ -282,29 +283,22 @@
       "path": "blog.delete",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 313,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 2,
+      "usageCount": 1,
       "usages": [
         {
-          "kind": "mutationOptions",
+          "kind": "manual",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 52,
-            "column": 5
-          }
-        },
-        {
-          "kind": "mutationOptions",
-          "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/post/posts-table.tsx",
-            "line": 31,
-            "column": 5
-          }
+            "file": "trpc-procedure-usage.config.json",
+            "line": 1,
+            "column": 1
+          },
+          "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
         }
       ]
     },
@@ -314,7 +308,7 @@
       "path": "blog.getById",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 260,
         "column": 5
       },
@@ -323,12 +317,13 @@
       "usageCount": 1,
       "usages": [
         {
-          "kind": "queryOptions",
+          "kind": "manual",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 48,
-            "column": 5
-          }
+            "file": "trpc-procedure-usage.config.json",
+            "line": 1,
+            "column": 1
+          },
+          "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
         }
       ]
     },
@@ -338,21 +333,30 @@
       "path": "blog.list",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 208,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 1,
+      "usageCount": 2,
       "usages": [
         {
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/admin/(dashboard)/post/page.tsx",
-            "line": 13,
+            "line": 11,
             "column": 58
           }
+        },
+        {
+          "kind": "manual",
+          "location": {
+            "file": "trpc-procedure-usage.config.json",
+            "line": 1,
+            "column": 1
+          },
+          "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
         }
       ]
     },
@@ -362,7 +366,7 @@
       "path": "blog.update",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 285,
         "column": 5
       },
@@ -371,12 +375,13 @@
       "usageCount": 1,
       "usages": [
         {
-          "kind": "mutationOptions",
+          "kind": "manual",
           "location": {
-            "file": "apps/helix/src/app/admin/(dashboard)/post/[id]/page.tsx",
-            "line": 50,
-            "column": 43
-          }
+            "file": "trpc-procedure-usage.config.json",
+            "line": 1,
+            "column": 1
+          },
+          "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
         }
       ]
     },
@@ -386,7 +391,7 @@
       "path": "blogPublic.countPublished",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 115,
         "column": 5
       },
@@ -401,19 +406,27 @@
       "path": "blogPublic.getBySlug",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 136,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 2,
+      "usageCount": 3,
       "usages": [
         {
           "kind": "queryOptions",
           "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/[slug]/opengraph-image.tsx",
+            "line": 14,
+            "column": 42
+          }
+        },
+        {
+          "kind": "queryOptions",
+          "location": {
             "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 27,
+            "line": 24,
             "column": 45
           }
         },
@@ -421,7 +434,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 101,
+            "line": 72,
             "column": 43
           }
         }
@@ -433,7 +446,7 @@
       "path": "blogPublic.getRelated",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 160,
         "column": 5
       },
@@ -445,7 +458,7 @@
           "kind": "queryOptions",
           "location": {
             "file": "apps/helix/src/app/(marketing)/blog/[slug]/page.tsx",
-            "line": 105,
+            "line": 76,
             "column": 5
           }
         }
@@ -457,19 +470,27 @@
       "path": "blogPublic.listPublished",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 92,
         "column": 5
       },
       "ignoreReason": null,
       "status": "used",
-      "usageCount": 1,
+      "usageCount": 2,
       "usages": [
         {
           "kind": "queryOptions",
           "location": {
+            "file": "apps/helix/src/app/(marketing)/blog/feed.xml/route.tsx",
+            "line": 18,
+            "column": 7
+          }
+        },
+        {
+          "kind": "queryOptions",
+          "location": {
             "file": "apps/helix/src/app/(marketing)/blog/page.tsx",
-            "line": 40,
+            "line": 41,
             "column": 5
           }
         }
@@ -481,14 +502,23 @@
       "path": "blogPublic.publishedSlugs",
       "surface": "apps/helix/src/server/trpc.ts:57:38",
       "definedAt": {
-        "file": "packages/helix-backend/src/blog/router.ts",
+        "file": "packages/blog/src/server/router.ts",
         "line": 129,
         "column": 5
       },
       "ignoreReason": "Public blog API; sitemap/RSS-consumed, not a frontend hook.",
-      "status": "ignored",
-      "usageCount": 0,
-      "usages": []
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "queryOptions",
+          "location": {
+            "file": "apps/helix/src/app/sitemap.ts",
+            "line": 25,
+            "column": 46
+          }
+        }
+      ]
     },
     {
       "kind": "query",

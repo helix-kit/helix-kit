@@ -11,6 +11,7 @@ from tooling.device.mqtt import mqtt
 from tooling.device.package import config_push, metrics, package, status, test_host
 from tooling.device.provision import provision
 from tooling.device.serial import serial
+from tooling.nrf24.commands import nrf24
 
 
 @click.group()
@@ -26,6 +27,7 @@ device.add_command(eyes)
 device.add_command(latency)
 device.add_command(metrics)
 device.add_command(mqtt)
+device.add_command(nrf24)
 device.add_command(package)
 device.add_command(provision)
 device.add_command(serial)

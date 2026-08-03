@@ -73,6 +73,17 @@
       ],
       "label": "nRF24L01 Smoke Test",
       "description": "Bring-up test for an nRF24L01(+) radio on SPI. Checks power-on register defaults, a 5-byte TX_ADDR round-trip that a floating bus cannot fake, the chip variant, and a MAX_RT transmit that exercises the CE and IRQ lines."
+    },
+    {
+      "name": "nrf24_link",
+      "component": "nrf24_link",
+      "header": "nrf24_link.h",
+      "start": "nrf24_link_start",
+      "features": [
+        "no-storage"
+      ],
+      "label": "nRF24L01 Link Test",
+      "description": "Over-the-air link test: acts as PTX, sending a numbered payload once a second to a listening peer and logging whether each was acknowledged (TX_DS) or lost (MAX_RT). Pairs with `helix device nrf24 receive` on a Linux board."
     }
   ]
 }

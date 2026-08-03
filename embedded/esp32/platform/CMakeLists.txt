@@ -8,6 +8,7 @@ idf_component_register(
         "src/helix_storage.c"
         "src/helix_xfer_sink.c"
         "src/helix_fs_sink.c"
+        "src/helix_nrf24.c"
         "src/helix_file_service.c"
         "src/helix_db.c"
         "src/helix_db_service.c"
@@ -25,6 +26,8 @@ idf_component_register(
     INCLUDE_DIRS "include" "generated/contracts"
     REQUIRES
         app_update
+        esp_driver_gpio
+        esp_driver_spi
         esp_event
         esp_http_client
         esp_netif

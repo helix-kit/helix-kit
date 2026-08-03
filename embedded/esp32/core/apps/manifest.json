@@ -62,6 +62,17 @@
       ],
       "label": "SD Smoke Test",
       "description": "Bring-up test for an SPI SD card sharing a GPT-partitioned card with a Radxa board. Probes the card, sanity-reads the GPT and the Helix partition, then writes/reads back a file clamped to that partition only."
+    },
+    {
+      "name": "nrf24_smoke",
+      "component": "nrf24_smoke",
+      "header": "nrf24_smoke.h",
+      "start": "nrf24_smoke_start",
+      "features": [
+        "no-storage"
+      ],
+      "label": "nRF24L01 Smoke Test",
+      "description": "Bring-up test for an nRF24L01(+) radio on SPI. Checks power-on register defaults, a 5-byte TX_ADDR round-trip that a floating bus cannot fake, the chip variant, and a MAX_RT transmit that exercises the CE and IRQ lines."
     }
   ]
 }

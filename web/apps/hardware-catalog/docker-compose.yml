@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# The catalog's own Postgres, deliberately independent of the Helix appliance: catalog data
+# accumulates over time and must survive, whereas `helix appliance up` purges its volume by
+# default. Port 25433 avoids the appliance's 25432.
+#
+#   docker compose up -d      # start (data persists in the named volume)
+#   docker compose down       # stop, keep the data
+#   docker compose down -v    # stop AND destroy the data
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: helix-catalog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
+      POSTGRES_DB: hardware_catalog
+    ports:
+      - '25433:5432'
+    volumes:
+      # Postgres 18 wants the whole directory mounted, not `.../data`: it stores the cluster in
+      # a version-named subdirectory so `pg_upgrade --link` can work across a single mount.
+      - helix-catalog-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U catalog -d hardware_catalog']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  helix-catalog-data:
+    name: helix-catalog-data

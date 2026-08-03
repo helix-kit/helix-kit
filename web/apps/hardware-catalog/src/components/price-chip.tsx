@@ -1,0 +1,30 @@
+import type { CheapestPrice } from '@/lib/country';
+import { formatMoney } from '@/lib/format';
+
+/**
+ * The entry price for a listing card. Says "from" because it is the cheapest of several SKUs,
+ * and names the SKU so the number is not mistaken for the price of the configuration on screen.
+ */
+export const PriceChip = ({
+  price,
+  suffix,
+}: {
+  readonly price: CheapestPrice | null | undefined;
+  readonly suffix?: string;
+}) => {
+  if (price == null) {
+    return <span className="text-muted-foreground text-xs whitespace-nowrap">no price</span>;
+  }
+
+  const detail = [price.variantName, suffix].filter((part) => part != null && part !== '');
+
+  return (
+    <span className="border-border bg-muted/50 inline-flex items-baseline gap-1 rounded-full border px-2 py-0.5 text-xs whitespace-nowrap">
+      <span className="text-muted-foreground">from</span>
+      <span className="font-medium">{formatMoney(price.amountMinor, price.currencyCode)}</span>
+      {detail.length === 0 ? null : (
+        <span className="text-muted-foreground">· {detail.join(' · ')}</span>
+      )}
+    </span>
+  );
+};

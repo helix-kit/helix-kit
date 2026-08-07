@@ -44,6 +44,7 @@ mapfile -d '' package_files < <(
     -not -path '*/.next/*' \
     -not -path '*/dist/*' \
     -not -path '*/.stage/*' \
+    -not -path '*/.venv/*' \
     -print0
 )
 

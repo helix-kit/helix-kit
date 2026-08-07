@@ -45,6 +45,10 @@ embedded = [
 ]
 
 [dependency-groups]
+catalog = [
+    "playwright>=1.62.0",
+    "psycopg[binary]>=3.3.4",
+]
 dev = [
     "black>=26.5.1",
     "mypy>=2.1.0",

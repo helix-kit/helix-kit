@@ -540,3 +540,40 @@ export const researchTaskStatusEnum = pgEnum('research_task_status', [
   'failed',
   'cancelled',
 ]);
+
+/**
+ * The e-commerce platform a retailer runs. This is not trivia: it selects the adapter used to
+ * read live price and stock. Shopify exposes `/products.json`, while BigCommerce and OpenCart
+ * are read through the schema.org JSON-LD their product pages already emit for SEO — both are
+ * exact, so no language model is involved in reading a price.
+ */
+export const vendorPlatformEnum = pgEnum('vendor_platform', [
+  'shopify',
+  'bigcommerce',
+  'opencart',
+  'woocommerce',
+  'magento',
+  'custom',
+]);
+
+/** How an adapter reaches a vendor, when the platform alone does not decide it. */
+export const vendorFetchStrategyEnum = pgEnum('vendor_fetch_strategy', [
+  /** Shopify's product JSON endpoint. */
+  'shopify_json',
+  /** schema.org Product/Offer JSON-LD, fetched over plain HTTP. */
+  'jsonld',
+  /** The same JSON-LD, but the site rejects scripted requests so a real browser renders it. */
+  'browser_jsonld',
+  /** Last resort: parse the rendered HTML. Fragile, so it is recorded as such. */
+  'html',
+]);
+
+/** Availability, normalised across platforms that each spell it differently. */
+export const stockStatusEnum = pgEnum('stock_status', [
+  'in_stock',
+  'out_of_stock',
+  'preorder',
+  'backorder',
+  'discontinued',
+  'unknown',
+]);

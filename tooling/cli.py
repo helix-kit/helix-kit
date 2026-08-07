@@ -27,6 +27,7 @@ _OPTIONAL_GROUPS: tuple[tuple[str, str, str | None], ...] = (
     ("tooling.e2e.commands", "e2e", None),
     ("tooling.loadtest.commands", "loadtest", None),
     ("tooling.release.commands", "release", None),
+    ("tooling.catalog.commands", "catalog", None),
     ("tooling.reports.commands", "reports", None),
     ("tooling.lint.commands", "lint", None),
 )

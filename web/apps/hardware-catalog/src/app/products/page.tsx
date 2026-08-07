@@ -4,9 +4,10 @@ import { Badge } from '@helix/design-system/components/badge';
 import { createLoader, type SearchParams } from 'nuqs/server';
 
 import { Pagination } from '@/components/pagination';
-import { PriceChip } from '@/components/price-chip';
+import { LivePriceChip, PriceChip } from '@/components/price-chip';
 import { ProductThumbnail } from '@/components/product-media';
 import { humanize, orDash } from '@/lib/format';
+import { cheapestLiveByProduct } from '@/server/offers';
 import { cheapestByProduct, selectedCountry } from '@/server/pricing';
 import { productTierEnum } from '@/server/schema/_shared';
 import { fetchQuery } from '@/server/server';
@@ -27,6 +28,7 @@ const ProductsPage = async ({ searchParams }: { readonly searchParams: Promise<S
     }),
   );
   const country = await selectedCountry();
+  const live = await cheapestLiveByProduct(results.items.map((item) => item.id));
   const prices = await cheapestByProduct(
     results.items.map((item) => item.id),
     country,
@@ -84,7 +86,15 @@ const ProductsPage = async ({ searchParams }: { readonly searchParams: Promise<S
                 {entry.familyName === '' ? '' : ` · ${entry.familyName}`}
               </div>
               <div className="mt-2">
-                <PriceChip price={prices.get(entry.id)} />
+                {/* A live vendor offer beats the estimate: it is buyable, and it names the shop. */}
+                {(() => {
+                  const livePrice = live.get(entry.id);
+                  return livePrice == null ? (
+                    <PriceChip price={prices.get(entry.id)} />
+                  ) : (
+                    <LivePriceChip price={livePrice} />
+                  );
+                })()}
               </div>
             </div>
           </li>

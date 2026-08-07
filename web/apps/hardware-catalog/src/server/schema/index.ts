@@ -8,3 +8,4 @@ export * from './taxonomy';
 export * from './silicon';
 export * from './product';
 export * from './relationships';
+export * from './vendor';

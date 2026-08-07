@@ -5,6 +5,7 @@ import { Badge } from '@helix/design-system/components/badge';
 
 import { ProductGallery, ProductLinks } from '@/components/product-media';
 import { SpecSection, SpecTable } from '@/components/spec-section';
+import { VendorOffers } from '@/components/vendor-offers';
 import {
   countryName,
   formatMb,
@@ -14,6 +15,7 @@ import {
   orDash,
   yesNo,
 } from '@/lib/format';
+import { offersForProduct } from '@/server/offers';
 import { fetchQuery } from '@/server/server';
 
 import type { Metadata } from 'next';
@@ -36,6 +38,8 @@ const ProductDetailPage = async ({ params }: PageProps) => {
     notFound();
   }
 
+  const offers = await offersForProduct(entry.id);
+
   return (
     <div className="space-y-10">
       <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
@@ -56,6 +60,13 @@ const ProductDetailPage = async ({ params }: PageProps) => {
         </header>
         <ProductGallery images={entry.images} />
       </div>
+
+      <SpecSection
+        hint="Live prices and availability from tracked Indian vendors, cheapest buyable first. Read directly from each shop's own product feed rather than estimated."
+        title="Where to buy (India)"
+      >
+        <VendorOffers offers={offers} />
+      </SpecSection>
 
       <SpecSection
         hint="A board is rarely one chip. The role decides which one answers a given question."

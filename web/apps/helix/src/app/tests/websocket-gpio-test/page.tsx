@@ -3,10 +3,9 @@
 import { useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
+import { GpioControls } from '@helix/device-apps';
 import { WebSocketProvider, useWebSocketTransport } from '@helix/protocol/websocket/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
-
-import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';
 
 const DEFAULT_WEBSOCKET_URL = 'ws://192.168.1.39/helix';
 const ICON_CLASS_NAME = 'h-4 w-4';
@@ -71,7 +70,7 @@ const WebSocketTransportShell = () => {
           </section>
         ) : null}
 
-        <GpioControlSurface />
+        <GpioControls />
       </div>
     </main>
   );

@@ -2,7 +2,17 @@
 
 import { useCallback, useState } from 'react';
 
+import { Badge } from '@helix/design-system/components/badge';
 import { Button } from '@helix/design-system/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@helix/design-system/components/card';
+import { Input } from '@helix/design-system/components/input';
+import { Label } from '@helix/design-system/components/label';
 import {
   useTypedDeviceService,
   useTypedDeviceServiceMutation,
@@ -21,9 +31,10 @@ const BUILTIN_LED_PIN = 2;
 const GPIO_PIN_16 = 16;
 const GPIO_PIN_17 = 17;
 const GPIO_PIN_23 = 23;
-const TEST_PINS = [BUILTIN_LED_PIN, GPIO_PIN_16, GPIO_PIN_17, GPIO_PIN_23] as const;
+const PRESET_PINS = [BUILTIN_LED_PIN, GPIO_PIN_16, GPIO_PIN_17, GPIO_PIN_23] as const;
 const DEFAULT_CUSTOM_PIN = 16;
-const ICON_CLASS_NAME = 'h-4 w-4';
+const ICON_CLASS_NAME = 'size-4';
+const CUSTOM_PIN_INPUT_ID = 'helix-gpio-custom-pin';
 
 type PacketLogEntry = Readonly<{
   id: number;
@@ -48,12 +59,12 @@ const levelLabel = (level: number | null): string => {
 
 const levelIndicatorClassName = (level: number | null): string => {
   if (level === 1) {
-    return 'bg-emerald-400';
+    return 'bg-emerald-500';
   }
   if (level === 0) {
-    return 'bg-zinc-500';
+    return 'bg-muted-foreground/40';
   }
-  return 'bg-zinc-700';
+  return 'bg-muted-foreground/20';
 };
 
 const applyGpioPayload = (
@@ -67,7 +78,8 @@ const applyGpioPayload = (
   return nextLevels;
 };
 
-const GpioControlSurface = () => {
+// Read/drive a device's GPIO pins over whatever Helix transport the surrounding provider supplies (MQTT gateway on the device page; BLE/serial/WebSocket on the transport test pages).
+export const GpioControls = () => {
   const gpioControl = useTypedDeviceService(gpioControlContract, { timeoutMs: REQUEST_TIMEOUT_MS });
   const readGpioMutation = useTypedDeviceServiceMutation(gpioControl, 'readGpio');
   const setGpioMutation = useTypedDeviceServiceMutation(gpioControl, 'setGpio');
@@ -100,7 +112,7 @@ const GpioControlSurface = () => {
     setRequestError(null);
     try {
       const responses = await Promise.all(
-        TEST_PINS.map((pin) => readGpioMutation.mutateAsync({ pin })),
+        PRESET_PINS.map((pin) => readGpioMutation.mutateAsync({ pin })),
       );
       for (const response of responses) {
         applyPayload(response);
@@ -129,6 +141,8 @@ const GpioControlSurface = () => {
     [applyPayload, setGpioMutation],
   );
 
+  const pinDisabled = !connected || busyAction !== null;
+
   const renderPinControl = (pin: number) => {
     const level = pinLevels.get(pin) ?? null;
     const highAction = `${pin}:high`;
@@ -136,19 +150,17 @@ const GpioControlSurface = () => {
     return (
       <div
         key={pin}
-        className="grid gap-3 border border-zinc-800 bg-zinc-950/70 p-4 md:grid-cols-[1fr_auto]"
+        className="border-border/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2"
       >
-        <div>
-          <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${levelIndicatorClassName(level)}`} />
-            <h2 className="text-base font-semibold text-zinc-100">GPIO {pin}</h2>
-          </div>
-          <div className="mt-1 text-sm text-zinc-400">{levelLabel(level)}</div>
+        <span className={`size-2.5 rounded-full ${levelIndicatorClassName(level)}`} />
+        <div className="grid gap-0.5">
+          <span className="text-sm font-medium">GPIO {pin}</span>
+          <span className="text-muted-foreground text-xs">{levelLabel(level)}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="ml-auto flex gap-2">
           <Button
-            className="min-w-24"
-            disabled={!connected || busyAction !== null}
+            disabled={pinDisabled}
+            size="sm"
             type="button"
             variant="outline"
             onClick={() => void setPinLevel(pin, false)}
@@ -161,8 +173,8 @@ const GpioControlSurface = () => {
             Low
           </Button>
           <Button
-            className="min-w-24"
-            disabled={!connected || busyAction !== null}
+            disabled={pinDisabled}
+            size="sm"
             type="button"
             onClick={() => void setPinLevel(pin, true)}
           >
@@ -179,89 +191,109 @@ const GpioControlSurface = () => {
   };
 
   return (
-    <>
-      <section className="flex flex-wrap items-center justify-between gap-3 border border-zinc-800 bg-zinc-950/70 p-4">
-        <div>
-          <div className="text-sm font-medium">GPIO state</div>
-          <div className="mt-1 text-xs text-zinc-500">
-            {knownPins.length > 0 ? `Known pins: ${knownPins.join(', ')}` : 'No GPIO response yet'}
+    <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Pins</CardTitle>
+          <CardDescription>
+            {knownPins.length > 0 ? `Known pins: ${knownPins.join(', ')}` : 'No GPIO response yet.'}
+          </CardDescription>
+          <div className="flex items-center gap-2">
+            <Badge variant={connected ? 'default' : 'secondary'}>
+              {connected ? 'Connected' : 'Disconnected'}
+            </Badge>
+            <Button
+              disabled={pinDisabled}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => void refreshPins()}
+            >
+              <RefreshCw
+                className={
+                  busyAction === 'refresh' ? `${ICON_CLASS_NAME} animate-spin` : ICON_CLASS_NAME
+                }
+              />
+              Refresh
+            </Button>
           </div>
-        </div>
-        <Button
-          disabled={!connected || busyAction !== null}
-          type="button"
-          variant="outline"
-          onClick={() => void refreshPins()}
-        >
-          <RefreshCw
-            className={
-              busyAction === 'refresh' ? `${ICON_CLASS_NAME} animate-spin` : ICON_CLASS_NAME
-            }
-          />
-          Refresh
-        </Button>
-      </section>
+        </CardHeader>
+        <CardContent className="grid gap-2">{PRESET_PINS.map(renderPinControl)}</CardContent>
+      </Card>
 
-      <section className="grid gap-3">{TEST_PINS.map(renderPinControl)}</section>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Any pin</CardTitle>
+          <CardDescription>
+            Drive a pin outside the presets. GPIO {MIN_GPIO_PIN}–{MAX_GPIO_PIN}; the firmware
+            rejects the flash-connected pins 6–11.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-2 text-sm">
+            <Label className="text-muted-foreground" htmlFor={CUSTOM_PIN_INPUT_ID}>
+              Pin
+            </Label>
+            <Input
+              className="w-28"
+              id={CUSTOM_PIN_INPUT_ID}
+              max={MAX_GPIO_PIN}
+              min={MIN_GPIO_PIN}
+              type="number"
+              value={customPin}
+              onChange={(event) => {
+                setCustomPin(Number(event.target.value));
+              }}
+            />
+          </div>
+          <Button
+            disabled={pinDisabled || !Number.isInteger(customPin)}
+            type="button"
+            variant="outline"
+            onClick={() => void setPinLevel(customPin, false)}
+          >
+            <Power className={ICON_CLASS_NAME} />
+            Low
+          </Button>
+          <Button
+            disabled={pinDisabled || !Number.isInteger(customPin)}
+            type="button"
+            onClick={() => void setPinLevel(customPin, true)}
+          >
+            <Power className={ICON_CLASS_NAME} />
+            High
+          </Button>
+        </CardContent>
+      </Card>
 
-      <section className="grid gap-3 border border-zinc-800 bg-zinc-950/70 p-4 md:grid-cols-[1fr_auto_auto] md:items-end">
-        <label className="grid gap-2 text-sm">
-          <span className="text-zinc-400">Custom GPIO pin</span>
-          <input
-            className="h-10 border border-zinc-700 bg-zinc-900 px-3 text-zinc-100 outline-none focus:border-zinc-400"
-            max={MAX_GPIO_PIN}
-            min={MIN_GPIO_PIN}
-            type="number"
-            value={customPin}
-            onChange={(event) => {
-              setCustomPin(Number(event.target.value));
-            }}
-          />
-        </label>
-        <Button
-          disabled={!connected || busyAction !== null || !Number.isInteger(customPin)}
-          type="button"
-          variant="outline"
-          onClick={() => void setPinLevel(customPin, false)}
-        >
-          <Power className={ICON_CLASS_NAME} />
-          Low
-        </Button>
-        <Button
-          disabled={!connected || busyAction !== null || !Number.isInteger(customPin)}
-          type="button"
-          onClick={() => void setPinLevel(customPin, true)}
-        >
-          <Power className={ICON_CLASS_NAME} />
-          High
-        </Button>
-      </section>
-
-      {requestError !== null ? (
-        <section className="border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+      {requestError === null ? null : (
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4 text-sm">
           {requestError}
-        </section>
-      ) : null}
+        </div>
+      )}
 
-      <section className="border border-zinc-800 bg-zinc-950/70">
-        <div className="border-b border-zinc-800 px-4 py-3 text-sm font-medium">Packet log</div>
-        <div className="grid max-h-72 gap-2 overflow-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Packet log</CardTitle>
+          <CardDescription>
+            The last {MAX_LOG_ENTRIES} packets received from the device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid max-h-72 gap-2 overflow-auto">
           {packetLogs.length === 0 ? (
-            <div className="text-sm text-zinc-500">No packets received.</div>
+            <p className="text-muted-foreground text-sm">No packets received.</p>
           ) : (
             packetLogs.map((entry) => (
               <pre
                 key={entry.id}
-                className="overflow-auto border border-zinc-800 bg-zinc-900 p-3 text-xs text-zinc-300"
+                className="border-border/60 bg-muted/40 overflow-auto rounded-md border p-3 text-xs"
               >
                 {`${entry.timestamp}\n${JSON.stringify(entry.packet, null, 2)}`}
               </pre>
             ))
           )}
-        </div>
-      </section>
-    </>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
-
-export default GpioControlSurface;

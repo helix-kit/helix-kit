@@ -1,5 +1,6 @@
 import {
   esp32FlasherApp,
+  gpioControlApp,
   linuxFilesApp,
   linuxPortForwardApp,
   linuxShellApp,
@@ -13,6 +14,7 @@ export const deviceApps: readonly DeviceApp[] = [
   uartConsoleApp,
   linuxPortForwardApp,
   linuxFilesApp,
+  gpioControlApp,
 ];
 
 export const getDeviceApp = (slug: string): DeviceApp | null =>

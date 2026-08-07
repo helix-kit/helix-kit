@@ -3,10 +3,9 @@
 import { useMemo, useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
+import { GpioControls } from '@helix/device-apps';
 import { MqttGatewayProvider, useMqttGatewayTransport } from '@helix/protocol/mqtt/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
-
-import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';
 
 const ICON_CLASS_NAME = 'h-4 w-4';
 const DEFAULT_DEVICE_ID = 'helix-esp32-usb';
@@ -85,7 +84,7 @@ const MqttTransportShell = ({ deviceId, gatewayUrl }: MqttTransportShellProps) =
           </section>
         ) : null}
 
-        <GpioControlSurface />
+        <GpioControls />
       </div>
     </main>
   );

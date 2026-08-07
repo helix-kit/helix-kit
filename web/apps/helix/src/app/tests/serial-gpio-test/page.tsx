@@ -4,14 +4,13 @@ import { useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
 import { Textarea } from '@helix/design-system/components/textarea';
+import { GpioControls } from '@helix/device-apps';
 import {
   ESP32_LINUX_SERIAL_PREP_COMMAND,
   ESP32_SERIAL_PORT_FILTERS,
 } from '@helix/device-apps/esp32-flasher';
 import { SerialTransportProvider, useSerialTransport } from '@helix/protocol/serial/react';
 import { Check, Copy, PlugZap, RotateCw, Unplug } from 'lucide-react';
-
-import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';
 
 const ICON_CLASS_NAME = 'h-4 w-4';
 const HEX_RADIX = 16;
@@ -130,7 +129,7 @@ const SerialTransportShell = () => {
           />
         </section>
 
-        <GpioControlSurface />
+        <GpioControls />
       </div>
     </main>
   );

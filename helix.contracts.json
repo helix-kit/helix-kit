@@ -44,7 +44,7 @@
         },
         {
           "target": "typescript",
-          "out": "web/apps/helix/src/generated/contracts"
+          "out": "web/packages/device-apps/src/gpio-control/generated"
         }
       ]
     },

@@ -1,10 +1,9 @@
 'use client';
 
 import { Button } from '@helix/design-system/components/button';
+import { GpioControls } from '@helix/device-apps';
 import { HelixEsp32BleProvider, useBleTransport } from '@helix/protocol/ble';
 import { Bluetooth, Unplug } from 'lucide-react';
-
-import GpioControlSurface from '../../../features/gpio-control/gpio-control-surface';
 
 const ICON_CLASS_NAME = 'h-4 w-4';
 
@@ -86,7 +85,7 @@ const BleTransportShell = () => {
           </section>
         ) : null}
 
-        <GpioControlSurface />
+        <GpioControls />
       </div>
     </main>
   );

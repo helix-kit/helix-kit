@@ -8,22 +8,45 @@ semantic node to that platform's best component + model artifact.
   hxc.py compile graph.json --target deepstream|hailo|radxa   # show the native pipeline
   hxc.py run     graph.json --target deepstream [--host IP]    # actually run it (DeepStream here)
 """
-import argparse, json, os, subprocess, sys, tempfile
+
+import argparse
+import json
+import os
+import subprocess
+import sys
 
 # node role -> native component, per platform (the "compiler" mapping table)
 ROLE_MAP = {
     "deepstream": {
-        "decode": "nvurisrcbin(RTSP+NVDEC->NVMM)", "batch": "nvstreammux", "detect": "nvinfer(TensorRT)",
-        "track": "nvtracker(NvDCF)", "tile": "nvmultistreamtiler", "overlay": "nvdsosd",
-        "sink": "nvv4l2h264enc(NVENC)->RTSP", "artifact": "yolo11s.onnx -> .engine (TensorRT)"},
+        "decode": "nvurisrcbin(RTSP+NVDEC->NVMM)",
+        "batch": "nvstreammux",
+        "detect": "nvinfer(TensorRT)",
+        "track": "nvtracker(NvDCF)",
+        "tile": "nvmultistreamtiler",
+        "overlay": "nvdsosd",
+        "sink": "nvv4l2h264enc(NVENC)->RTSP",
+        "artifact": "yolo11s.onnx -> .engine (TensorRT)",
+    },
     "hailo": {
-        "decode": "v4l2h264dec", "batch": "hailoroundrobin", "detect": "hailonet(HEF)+hailofilter",
-        "track": "hailotracker", "tile": "compositor", "overlay": "hailooverlay",
-        "sink": "x264enc->RTSP", "artifact": "yolo11s.onnx -> .hef (Hailo DFC)"},
+        "decode": "v4l2h264dec",
+        "batch": "hailoroundrobin",
+        "detect": "hailonet(HEF)+hailofilter",
+        "track": "hailotracker",
+        "tile": "compositor",
+        "overlay": "hailooverlay",
+        "sink": "x264enc->RTSP",
+        "artifact": "yolo11s.onnx -> .hef (Hailo DFC)",
+    },
     "radxa": {
-        "decode": "omxh264dec(Cedar VE)", "batch": "(per-stream workers)", "detect": "hxawnninfer(NPU,.nb)",
-        "track": "(cpu)", "tile": "hx_comp_grid(opencv)", "overlay": "hx_overlay_boxes(opencv)",
-        "sink": "hx_sink_cedar_rtmp(Cedar VE)", "artifact": "yolo11s.onnx -> .nb (ACUITY)"},
+        "decode": "omxh264dec(Cedar VE)",
+        "batch": "(per-stream workers)",
+        "detect": "hxawnninfer(NPU,.nb)",
+        "track": "(cpu)",
+        "tile": "hx_comp_grid(opencv)",
+        "overlay": "hx_overlay_boxes(opencv)",
+        "sink": "hx_sink_cedar_rtmp(Cedar VE)",
+        "artifact": "yolo11s.onnx -> .nb (ACUITY)",
+    },
 }
 
 
@@ -46,26 +69,80 @@ def deepstream_config(g, work):
     det = next(n for n in g["nodes"] if n["role"] == "detect")["params"]
     tile = next(n for n in g["nodes"] if n["role"] == "tile")["params"]
     snk = next(n for n in g["nodes"] if n["role"] == "sink")["params"]
-    out = ["[application]", "enable-perf-measurement=1", "perf-measurement-interval-sec=5", "",
-           "[tiled-display]", "enable=1", f"rows={tile['rows']}", f"columns={tile['cols']}",
-           f"width={tile['width']}", f"height={tile['height']}", "gpu-id=0", ""]
+    out = [
+        "[application]",
+        "enable-perf-measurement=1",
+        "perf-measurement-interval-sec=5",
+        "",
+        "[tiled-display]",
+        "enable=1",
+        f"rows={tile['rows']}",
+        f"columns={tile['cols']}",
+        f"width={tile['width']}",
+        f"height={tile['height']}",
+        "gpu-id=0",
+        "",
+    ]
     for i, uri in enumerate(g["streams"]):
-        out += [f"[source{i}]", "enable=1", "type=4", f"uri={uri}", "num-sources=1", "gpu-id=0",
-                "cudadec-memtype=0", "latency=100", ""]
+        out += [
+            f"[source{i}]",
+            "enable=1",
+            "type=4",
+            f"uri={uri}",
+            "num-sources=1",
+            "gpu-id=0",
+            "cudadec-memtype=0",
+            "latency=100",
+            "",
+        ]
     bat = next(n for n in g["nodes"] if n["role"] == "batch")["params"]
-    out += ["[streammux]", "gpu-id=0", "live-source=1", f"batch-size={len(g['streams'])}",
-            "batched-push-timeout=40000", f"width={bat['width']}", f"height={bat['height']}",
-            "attach-sys-ts-as-ntp=1", ""]
-    out += ["[primary-gie]", "enable=1", "gpu-id=0", f"batch-size={len(g['streams'])}", "interval=0",
-            "gie-unique-id=1", "config-file=config_infer_yolo11s.txt", ""]
+    out += [
+        "[streammux]",
+        "gpu-id=0",
+        "live-source=1",
+        f"batch-size={len(g['streams'])}",
+        "batched-push-timeout=40000",
+        f"width={bat['width']}",
+        f"height={bat['height']}",
+        "attach-sys-ts-as-ntp=1",
+        "",
+    ]
+    out += [
+        "[primary-gie]",
+        "enable=1",
+        "gpu-id=0",
+        f"batch-size={len(g['streams'])}",
+        "interval=0",
+        "gie-unique-id=1",
+        "config-file=config_infer_yolo11s.txt",
+        "",
+    ]
     if any(n["role"] == "track" for n in g["nodes"]):
         base = "/opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app"
-        out += ["[tracker]", "enable=1", "tracker-width=640", "tracker-height=384", "gpu-id=0",
-                "ll-lib-file=/opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so",
-                f"ll-config-file={base}/config_tracker_NvDCF_perf.yml", ""]
+        out += [
+            "[tracker]",
+            "enable=1",
+            "tracker-width=640",
+            "tracker-height=384",
+            "gpu-id=0",
+            "ll-lib-file=/opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so",
+            f"ll-config-file={base}/config_tracker_NvDCF_perf.yml",
+            "",
+        ]
     out += ["[osd]", "enable=1", "gpu-id=0", "border-width=2", "text-size=12", ""]
-    out += ["[sink0]", "enable=1", "type=4", "codec=1", "enc-type=0", "sync=0", "bitrate=4000000",
-            f"rtsp-port={snk['port']}", "udp-port=5400", "gpu-id=0", ""]
+    out += [
+        "[sink0]",
+        "enable=1",
+        "type=4",
+        "codec=1",
+        "enc-type=0",
+        "sync=0",
+        "bitrate=4000000",
+        f"rtsp-port={snk['port']}",
+        "udp-port=5400",
+        "gpu-id=0",
+        "",
+    ]
     out += ["[tests]", "file-loop=0", ""]
     return "\n".join(out)
 
@@ -73,12 +150,16 @@ def deepstream_config(g, work):
 def deepstream_gstlaunch(g):
     n = len(g["streams"])
     tile = next(x for x in g["nodes"] if x["role"] == "tile")["params"]
-    p = [f"nvstreammux name=m batch-size={n} width={tile['width']} height={tile['height']} live-source=1",
-         "! nvinfer config-file-path=config_infer_yolo11s.txt"]
+    p = [
+        f"nvstreammux name=m batch-size={n} width={tile['width']} height={tile['height']} live-source=1",
+        "! nvinfer config-file-path=config_infer_yolo11s.txt",
+    ]
     if any(x["role"] == "track" for x in g["nodes"]):
         p.append("! nvtracker ll-lib-file=.../libnvds_nvmultiobjecttracker.so")
-    p += [f"! nvmultistreamtiler rows={tile['rows']} columns={tile['cols']} width={tile['width']} height={tile['height']}",
-          "! nvdsosd ! nvvideoconvert ! nvv4l2h264enc ! rtph264pay ! (RTSP server)"]
+    p += [
+        f"! nvmultistreamtiler rows={tile['rows']} columns={tile['cols']} width={tile['width']} height={tile['height']}",
+        "! nvdsosd ! nvvideoconvert ! nvv4l2h264enc ! rtph264pay ! (RTSP server)",
+    ]
     for i, uri in enumerate(g["streams"]):
         p.append(f"nvurisrcbin uri={uri} ! m.sink_{i}")
     return "gst-launch-1.0 \\\n    " + " \\\n    ".join(p)
@@ -87,9 +168,14 @@ def deepstream_gstlaunch(g):
 # Hailo backend (illustrative; runs on RPi+Hailo, not this box)
 def hailo_gstlaunch(g):
     n = len(g["streams"])
-    p = [f"hailoroundrobin name=rr", "! hailonet hef-path=yolo11s.hef batch-size=%d" % n,
-         "! hailofilter so-path=libyolo_post.so", "! hailotracker", "! compositor name=comp",
-         "! hailooverlay ! x264enc ! rtph264pay ! (RTSP)"]
+    p = [
+        "hailoroundrobin name=rr",
+        "! hailonet hef-path=yolo11s.hef batch-size=%d" % n,
+        "! hailofilter so-path=libyolo_post.so",
+        "! hailotracker",
+        "! compositor name=comp",
+        "! hailooverlay ! x264enc ! rtph264pay ! (RTSP)",
+    ]
     for i, uri in enumerate(g["streams"]):
         p.append(f"uridecodebin uri={uri} ! v4l2h264dec ! rr.")
     return "gst-launch-1.0 \\\n    " + " \\\n    ".join(p)
@@ -102,22 +188,49 @@ def radxa_config(g):
     snk = next(x for x in g["nodes"] if x["role"] == "sink")["params"]
     streams = []
     for i, uri in enumerate(g["streams"]):
-        streams.append({
-            "label": f"s{i+1}",
-            "source": {"module": "hx_src_gst", "params": {"url": uri, "decoder": "omxh264dec", "fps": 12}},
-            "preprocess": {"module": "hx_pre_letterbox", "params": {"size": 640}},
-            "infer": {"module": "hx_infer_awnn", "params": {"nb": "/home/radxa/lab/yolo11s.nb"}},
-            "postprocess": {"module": "hx_post_yolo11", "params": {"conf": det["conf"], "nms": det["nms"]}},
-            "overlay": {"module": "hx_overlay_boxes", "params": {"color": "orange"}},
-        })
-    return json.dumps({
-        "host": {"warmup_ms": 1500, "serialize_infer": True},
-        "streams": streams,
-        "compositor": {"module": "hx_comp_grid", "params": {"cols": tile["cols"], "rows": tile["rows"],
-                                                            "grid_w": tile["width"], "grid_h": tile["height"]}},
-        "sink": {"module": "hx_sink_cedar_rtmp", "params": {"url": f"rtmp://${{HOST}}:1935/detgrid",
-                                                            "width": tile["width"], "height": tile["height"]}},
-    }, indent=2)
+        streams.append(
+            {
+                "label": f"s{i+1}",
+                "source": {
+                    "module": "hx_src_gst",
+                    "params": {"url": uri, "decoder": "omxh264dec", "fps": 12},
+                },
+                "preprocess": {"module": "hx_pre_letterbox", "params": {"size": 640}},
+                "infer": {
+                    "module": "hx_infer_awnn",
+                    "params": {"nb": "/home/radxa/lab/yolo11s.nb"},
+                },
+                "postprocess": {
+                    "module": "hx_post_yolo11",
+                    "params": {"conf": det["conf"], "nms": det["nms"]},
+                },
+                "overlay": {"module": "hx_overlay_boxes", "params": {"color": "orange"}},
+            }
+        )
+    return json.dumps(
+        {
+            "host": {"warmup_ms": 1500, "serialize_infer": True},
+            "streams": streams,
+            "compositor": {
+                "module": "hx_comp_grid",
+                "params": {
+                    "cols": tile["cols"],
+                    "rows": tile["rows"],
+                    "grid_w": tile["width"],
+                    "grid_h": tile["height"],
+                },
+            },
+            "sink": {
+                "module": "hx_sink_cedar_rtmp",
+                "params": {
+                    "url": "rtmp://${HOST}:1935/detgrid",
+                    "width": tile["width"],
+                    "height": tile["height"],
+                },
+            },
+        },
+        indent=2,
+    )
 
 
 def cmd_compile(g, target):
@@ -133,23 +246,55 @@ def cmd_compile(g, target):
 
 def cmd_run(g, target, host):
     if target != "deepstream":
-        print(f"[hxc] run for '{target}' needs that hardware; only 'deepstream' is runnable on this box.")
+        print(
+            f"[hxc] run for '{target}' needs that hardware; only 'deepstream' is runnable on this box."
+        )
         print("      Native pipeline that WOULD run there:\n")
         cmd_compile(g, target)
         return
-    work = os.path.expanduser("~/edge-x86/DeepStream-Yolo")   # has the engine + parser + config_infer
+    work = os.path.expanduser(
+        "~/edge-x86/DeepStream-Yolo"
+    )  # has the engine + parser + config_infer
     if not os.path.isdir(work):
-        sys.exit(f"[hxc] {work} not found — run deepstream/run.sh once to build the engine + parser.")
+        sys.exit(
+            f"[hxc] {work} not found — run deepstream/run.sh once to build the engine + parser."
+        )
     cfg = deepstream_config(g, work)
     open(os.path.join(work, "_hxc_ds.txt"), "w").write(cfg)
-    print(f"[hxc] compiled graph '{g['name']}' -> DeepStream (nvstreammux+nvinfer+nvtracker+tiler+osd+NVENC)")
-    subprocess.run(["docker", "rm", "-f", "ds-hxc"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["docker", "run", "-d", "--name", "ds-hxc", "--gpus", "all", "--network", "host",
-                    "-v", f"{work}:/work", "-w", "/work", "--entrypoint", "deepstream-app",
-                    "nvcr.io/nvidia/deepstream:7.1-samples-multiarch", "-c", "_hxc_ds.txt"],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(
+        f"[hxc] compiled graph '{g['name']}' -> DeepStream (nvstreammux+nvinfer+nvtracker+tiler+osd+NVENC)"
+    )
+    subprocess.run(
+        ["docker", "rm", "-f", "ds-hxc"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            "ds-hxc",
+            "--gpus",
+            "all",
+            "--network",
+            "host",
+            "-v",
+            f"{work}:/work",
+            "-w",
+            "/work",
+            "--entrypoint",
+            "deepstream-app",
+            "nvcr.io/nvidia/deepstream:7.1-samples-multiarch",
+            "-c",
+            "_hxc_ds.txt",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     print("[hxc] deepstream-app launched as 'ds-hxc'.  FPS: docker logs -f ds-hxc | grep PERF")
-    print(f"[hxc] view: rtsp://{host}:{next(n for n in g['nodes'] if n['role']=='sink')['params']['port']}/ds-test")
+    print(
+        f"[hxc] view: rtsp://{host}:{next(n for n in g['nodes'] if n['role']=='sink')['params']['port']}/ds-test"
+    )
 
 
 def main():

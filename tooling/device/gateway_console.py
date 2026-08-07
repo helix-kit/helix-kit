@@ -114,14 +114,10 @@ class GatewayConsoleSession:
         self._device_id = device_id
         self._control_url = f"{scheme}://{host}/ws?deviceId={urllib.parse.quote(device_id)}"
         self._session_id = uuid.uuid4().hex
-        self._data_url = (
-            f"{scheme}://{host}:4001/stream/device?session={self._session_id}"
-        )
+        self._data_url = f"{scheme}://{host}:4001/stream/device?session={self._session_id}"
         cols, rows = self._term_size()
         meta = urllib.parse.quote(json.dumps({"cols": cols, "rows": rows}))
-        self._client_url = (
-            f"{scheme}://{host}/stream/client?session={self._session_id}&meta={meta}"
-        )
+        self._client_url = f"{scheme}://{host}/stream/client?session={self._session_id}&meta={meta}"
         self._socket: Any = None
         self._ws_mod: Any = None
         self._stop = threading.Event()

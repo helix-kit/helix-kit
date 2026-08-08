@@ -2,96 +2,114 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { JsonSchemaBuilder } from '@helix/json-schema/builder';
+
 import { renderReportToBlob } from './browser';
 import { fetchReportPdf } from './client';
-import { defaultReportDocument } from './defaults';
+import { CodeEditorPane } from './code-editor-pane';
+import { defaultReportTemplate } from './defaults';
 import { parseJson, prettyJson } from './json';
 import { JsonEditorPane } from './json-editor-pane';
 import { reportSpecJsonSchema } from './schema';
 
-import type { ReportBranding, ReportDocument } from './types';
+import type { ReportBranding, ReportTemplate } from './types';
+import type { JSONSchema } from 'zod/v4/core';
 
 type ParseState =
-  { status: 'ready'; document: ReportDocument } | { status: 'error'; error: string };
+  { status: 'ready'; template: ReportTemplate } | { status: 'error'; error: string };
 
 // A server render costs a round trip, so it is worth waiting longer to avoid
 // firing one per keystroke. A client render is local and cheap enough to feel
 // immediate, so it can afford to react sooner.
-const DEBOUNCE_MS = { client: 150, server: 400 } as const;
+const DEBOUNCE_MS = { client: 250, server: 500 } as const;
 
-const TEMPLATE_PATH = 'helix-pdf-report-template.json';
-const PREVIEW_DATA_PATH = 'helix-pdf-report-preview-data.json';
+const SPEC_PATH = 'helix-pdf-report-spec.json';
+const INPUT_PATH = 'helix-pdf-report-input.json';
 
 // Built once: the catalog is static, and Monaco keys its schemas by file match.
-const templateSchema = { fileMatch: TEMPLATE_PATH, schema: reportSpecJsonSchema() };
+const specSchema = { fileMatch: SPEC_PATH, schema: reportSpecJsonSchema() };
+
+type Pane = 'schema' | 'code' | 'spec' | 'input';
+
+const PANES: { id: Pane; label: string }[] = [
+  { id: 'schema', label: 'Input schema' },
+  { id: 'code', label: 'Code' },
+  { id: 'spec', label: 'Layout' },
+  { id: 'input', label: 'Preview data' },
+];
 
 export type ReportTemplateEditorProps = {
-  /** Starting document. The editor is uncontrolled — remount it (change `key`) to reset. */
-  defaultValue?: ReportDocument;
-  /** Fires whenever both panes parse cleanly, so the host can drive a download button. */
-  onChange?: (value: ReportDocument) => void;
-  /** Fires with the parse error, or null once the drafts parse again. */
+  /** Starting template. The editor is uncontrolled — remount it (change `key`) to reset. */
+  defaultValue?: ReportTemplate;
+  /** Fires whenever every pane parses cleanly, so the host can drive a download button. */
+  onChange?: (value: ReportTemplate) => void;
+  /** Fires with the parse or render error, or null once it clears. */
   onError?: (error: string | null) => void;
   /** Render route the preview posts to; defaults to `/api/pdf-report`. */
   endpoint?: string;
   /**
    * Where the preview is rendered. `client` skips the round trip, which makes
    * editing feel immediate; `server` proves what a delivered document contains.
-   * Both prepare the spec identically.
+   * Both run the same pipeline.
    */
   renderMode?: 'client' | 'server';
   branding?: ReportBranding;
   theme?: 'light' | 'dark';
-  showDemoDataEditor?: boolean;
-  /** Defaults to 150ms for a client render, 400ms for a server one. */
   previewDebounceMs?: number;
 };
 
 /**
- * Two-pane template authoring: the json-render spec (and optionally its demo
- * data) on the left, the server-rendered PDF on the right. The preview goes
- * through the same render route as a delivered report, so what an author sees is
- * what recipients receive.
+ * Two-tier template authoring.
+ *
+ * Left: the four things a template is — the schema of its input, the code that
+ * turns that into display values, the layout those values bind into, and sample
+ * input to preview against. Right: the rendered PDF.
+ *
+ * The preview runs the whole pipeline, code step included, so what an author
+ * sees is what a recipient gets rather than an approximation of it.
  */
 export const ReportTemplateEditor = ({
-  defaultValue = defaultReportDocument,
+  defaultValue = defaultReportTemplate,
   onChange,
   onError,
   endpoint,
   branding,
   renderMode = 'client',
   theme = 'light',
-  showDemoDataEditor = true,
   previewDebounceMs,
 }: ReportTemplateEditorProps) => {
-  const debounceMs = previewDebounceMs ?? DEBOUNCE_MS[renderMode];
+  const [pane, setPane] = useState<Pane>('code');
+  const [inputSchema, setInputSchema] = useState<JSONSchema._JSONSchema>(defaultValue.inputSchema);
+  const [code, setCode] = useState(defaultValue.code);
   const [specDraft, setSpecDraft] = useState(() => prettyJson(defaultValue.spec));
-  const [demoDataDraft, setDemoDataDraft] = useState(() => prettyJson(defaultValue.demoData));
+  const [outputDraft, setOutputDraft] = useState(() => prettyJson(defaultValue.outputSchema));
+  const [inputDraft, setInputDraft] = useState(() => prettyJson(defaultValue.demoInput));
+
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isDemoDataOpen, setIsDemoDataOpen] = useState(false);
 
   const previewUrlRef = useRef<string | null>(null);
   const lastCommittedRef = useRef(JSON.stringify(defaultValue));
 
+  const debounceMs = previewDebounceMs ?? DEBOUNCE_MS[renderMode];
   const monacoTheme: 'light' | 'vs-dark' = theme === 'dark' ? 'vs-dark' : 'light';
 
   const parseState = useMemo<ParseState>(() => {
     try {
       return {
         status: 'ready',
-        document: {
-          spec: parseJson(specDraft, 'Template JSON') as ReportDocument['spec'],
-          demoData: parseJson(demoDataDraft, 'Demo data JSON') as Record<string, unknown>,
+        template: {
+          inputSchema,
+          code,
+          outputSchema: parseJson(outputDraft, 'Output schema') as JSONSchema._JSONSchema,
+          spec: parseJson(specDraft, 'Layout JSON') as ReportTemplate['spec'],
+          demoInput: parseJson(inputDraft, 'Preview data'),
         },
       };
     } catch (error) {
-      return {
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Invalid JSON',
-      };
+      return { status: 'error', error: error instanceof Error ? error.message : 'Invalid JSON' };
     }
-  }, [demoDataDraft, specDraft]);
+  }, [code, inputDraft, inputSchema, outputDraft, specDraft]);
 
   useEffect(() => {
     if (parseState.status === 'error') {
@@ -99,13 +117,13 @@ export const ReportTemplateEditor = ({
       return;
     }
 
-    onError?.(null);
-    const serialized = JSON.stringify(parseState.document);
+    onError?.(previewError);
+    const serialized = JSON.stringify(parseState.template);
     if (serialized !== lastCommittedRef.current) {
       lastCommittedRef.current = serialized;
-      onChange?.(parseState.document);
+      onChange?.(parseState.template);
     }
-  }, [onChange, onError, parseState]);
+  }, [onChange, onError, parseState, previewError]);
 
   useEffect(() => {
     if (parseState.status === 'error') {
@@ -113,21 +131,16 @@ export const ReportTemplateEditor = ({
     }
 
     const controller = new AbortController();
-
     const timer = setTimeout(() => {
-      const renderPreview = async () => {
+      const render = async () => {
         try {
           setPreviewError(null);
 
           const blob =
             renderMode === 'client'
-              ? await renderReportToBlob(
-                  parseState.document.spec,
-                  parseState.document.demoData,
-                  branding,
-                )
+              ? await renderReportToBlob(parseState.template, { branding })
               : await fetchReportPdf({
-                  document: parseState.document,
+                  template: parseState.template,
                   branding,
                   endpoint,
                   filename: 'helix-report-preview.pdf',
@@ -141,11 +154,9 @@ export const ReportTemplateEditor = ({
           }
 
           const objectUrl = URL.createObjectURL(blob);
-
           if (previewUrlRef.current !== null) {
             URL.revokeObjectURL(previewUrlRef.current);
           }
-
           previewUrlRef.current = objectUrl;
           setPreviewUrl(objectUrl);
         } catch (error) {
@@ -157,13 +168,12 @@ export const ReportTemplateEditor = ({
             URL.revokeObjectURL(previewUrlRef.current);
             previewUrlRef.current = null;
           }
-
           setPreviewUrl(null);
           setPreviewError(error instanceof Error ? error.message : 'Failed to render the preview');
         }
       };
 
-      void renderPreview();
+      void render();
     }, debounceMs);
 
     return () => {
@@ -181,18 +191,13 @@ export const ReportTemplateEditor = ({
     [],
   );
 
-  let previewContent: React.ReactNode;
+  const message = parseState.status === 'error' ? parseState.error : previewError;
 
-  if (parseState.status === 'error') {
+  let previewContent: React.ReactNode;
+  if (message !== null) {
     previewContent = (
-      <div className="text-destructive flex h-full items-center justify-center px-6 text-center text-sm">
-        {parseState.error}
-      </div>
-    );
-  } else if (previewError !== null) {
-    previewContent = (
-      <div className="text-destructive flex h-full items-center justify-center px-6 text-center text-sm">
-        {previewError}
+      <div className="text-destructive h-full overflow-auto px-6 py-4 font-mono text-xs whitespace-pre-wrap">
+        {message}
       </div>
     );
   } else if (previewUrl === null) {
@@ -208,52 +213,82 @@ export const ReportTemplateEditor = ({
   return (
     <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-2">
       <div className="bg-background flex h-full min-h-[26rem] min-w-0 flex-col overflow-hidden rounded-md border">
-        <div className="flex h-10 shrink-0 items-center border-b px-3">
-          <span className="text-muted-foreground text-xs font-medium tracking-[0.16em] uppercase">
-            Template JSON
-          </span>
-        </div>
-        <div className="min-h-0 flex-1">
-          <JsonEditorPane
-            className="h-full"
-            path={TEMPLATE_PATH}
-            schema={templateSchema}
-            theme={monacoTheme}
-            value={specDraft}
-            onChange={setSpecDraft}
-          />
-        </div>
-
-        {showDemoDataEditor ? (
-          <div className="shrink-0 border-t">
+        <div className="flex h-10 shrink-0 items-center gap-1 border-b px-1">
+          {PANES.map((entry) => (
             <button
-              aria-expanded={isDemoDataOpen}
-              className="hover:bg-muted/50 flex h-10 w-full items-center gap-2 px-3 text-left"
+              key={entry.id}
+              className={
+                entry.id === pane
+                  ? 'bg-muted text-foreground rounded px-3 py-1 text-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground rounded px-3 py-1 text-xs'
+              }
               type="button"
               onClick={() => {
-                setIsDemoDataOpen((open) => !open);
+                setPane(entry.id);
               }}
             >
-              <span className="text-muted-foreground text-xs font-medium tracking-[0.16em] uppercase">
-                Preview Data
-              </span>
-              <span className="text-muted-foreground/70 ml-auto text-xs">
-                {isDemoDataOpen ? 'Hide' : 'Edit'}
-              </span>
+              {entry.label}
             </button>
-            {/* Monaco sizes to 100% of its container, so the height lives on the
-                wrapper rather than the editor's className. */}
-            {isDemoDataOpen ? (
-              <div className="h-[240px] border-t">
-                <JsonEditorPane
-                  className="h-full"
-                  path={PREVIEW_DATA_PATH}
-                  theme={monacoTheme}
-                  value={demoDataDraft}
-                  onChange={setDemoDataDraft}
-                />
-              </div>
-            ) : null}
+          ))}
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
+          {pane === 'schema' ? (
+            <div className="p-2">
+              <p className="text-muted-foreground mb-2 px-1 text-xs">
+                What the report is handed. This also types <code>input</code> in the code pane.
+              </p>
+              <JsonSchemaBuilder value={inputSchema} onValueChange={setInputSchema} />
+            </div>
+          ) : null}
+
+          {pane === 'code' ? (
+            <CodeEditorPane
+              className="h-full"
+              inputSchema={inputSchema}
+              theme={monacoTheme}
+              value={code}
+              onChange={setCode}
+            />
+          ) : null}
+
+          {pane === 'spec' ? (
+            <JsonEditorPane
+              className="h-full"
+              path={SPEC_PATH}
+              schema={specSchema}
+              theme={monacoTheme}
+              value={specDraft}
+              onChange={setSpecDraft}
+            />
+          ) : null}
+
+          {pane === 'input' ? (
+            <JsonEditorPane
+              className="h-full"
+              path={INPUT_PATH}
+              theme={monacoTheme}
+              value={inputDraft}
+              onChange={setInputDraft}
+            />
+          ) : null}
+        </div>
+
+        {pane === 'code' ? (
+          <div className="shrink-0 border-t">
+            <div className="text-muted-foreground px-3 py-1.5 text-xs font-medium tracking-[0.16em] uppercase">
+              Output schema
+            </div>
+            {/* Monaco sizes to its container, so the height lives on the wrapper. */}
+            <div className="h-[180px] border-t">
+              <JsonEditorPane
+                className="h-full"
+                path="helix-pdf-report-output.json"
+                theme={monacoTheme}
+                value={outputDraft}
+                onChange={setOutputDraft}
+              />
+            </div>
           </div>
         ) : null}
       </div>

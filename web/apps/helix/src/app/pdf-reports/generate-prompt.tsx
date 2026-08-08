@@ -7,7 +7,7 @@ import { Textarea } from '@helix/design-system/components/textarea';
 import {
   createReportStreamReader,
   prettyJson,
-  type ReportDocument,
+  type ReportTemplate,
   type ReportSpec,
 } from '@helix/pdf-report';
 import { Loader2, Sparkles, Square } from 'lucide-react';
@@ -23,7 +23,7 @@ export const GeneratePrompt = ({
   onGenerated,
 }: {
   /** Read as `currentSpec`, which puts the model into patch-only refine mode. */
-  currentDocument: () => ReportDocument;
+  currentDocument: () => ReportTemplate;
   /** Fires with the compiled spec once the stream completes. */
   onGenerated: (spec: ReportSpec) => void;
 }) => {

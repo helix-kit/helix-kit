@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { reportCatalog } from './catalog';
-import { defaultReportDocument } from './defaults';
+import { defaultReportTemplate } from './defaults';
 import { reportSpecJsonSchema } from './schema';
 import { validateReportSpec } from './validate';
 
@@ -22,7 +22,7 @@ const messages = (value: Spec): string[] =>
 
 describe('validateReportSpec', () => {
   it('accepts the default template', () => {
-    expect(validateReportSpec(defaultReportDocument.spec)).toEqual([]);
+    expect(validateReportSpec(defaultReportTemplate.spec)).toEqual([]);
   });
 
   it('accepts hand-authored templates that omit optional props', () => {
@@ -52,10 +52,14 @@ describe('validateReportSpec', () => {
     const issues = messages(
       spec({
         ...page(['m']),
-        m: { type: 'MetricCard', props: { label: 'x', agg: 'median' }, children: [] },
+        m: {
+          type: 'MetricCard',
+          props: { label: 'x', value: 'y', tone: 'sideways' },
+          children: [],
+        },
       }),
     );
-    expect(issues[0]).toContain('m: MetricCard — agg');
+    expect(issues[0]).toContain('m: MetricCard — tone');
   });
 
   it('catches a missing required prop', () => {
@@ -71,12 +75,12 @@ describe('validateReportSpec', () => {
         ...page(['t']),
         t: {
           type: 'DataTable',
-          props: { columns: [{ header: 'Device', align: 'sideways' }] },
+          props: { headers: ['Device'], rows: [['a']], align: ['sideways'] },
           children: [],
         },
       }),
     );
-    expect(issues[0]).toContain('t: DataTable — columns.0.align');
+    expect(issues[0]).toContain('t: DataTable — align.0');
   });
 
   it('does not flag a bound prop, whose shape is only known at render time', () => {
@@ -116,7 +120,7 @@ describe('reportCatalog', () => {
   it('declares the stock catalog plus the Helix pack', () => {
     expect(reportCatalog.componentNames).toContain('Heading');
     expect(reportCatalog.componentNames).toContain('MetricCard');
-    expect(reportCatalog.componentNames).toContain('GroupedTable');
+    expect(reportCatalog.componentNames).toContain('DataTable');
   });
 
   it('generates a system prompt describing the Helix components and their props', () => {
@@ -124,7 +128,7 @@ describe('reportCatalog', () => {
     expect(prompt).toContain('MetricCard');
     expect(prompt).toContain('A KPI tile');
     // Prop shapes reach the model through the prompt, not the JSON Schema.
-    expect(prompt).toContain('toneWhenAbove');
+    expect(prompt).toContain('rowColors');
   });
 });
 
@@ -138,9 +142,15 @@ describe('reportSpecJsonSchema', () => {
   };
 
   it('enumerates every available component for editor completion', () => {
-    expect(schema.properties.elements.additionalProperties.properties.type.enum).toContain(
-      'SummaryTable',
-    );
+    const names = schema.properties.elements.additionalProperties.properties.type.enum;
+
+    // Stock catalog and Helix pack alike, so completion covers the whole
+    // vocabulary a template may use.
+    expect(names).toContain('Document');
+    expect(names).toContain('Heading');
+    expect(names).toContain('DataTable');
+    expect(names).toContain('MetricCard');
+    expect(names).toContain('BarChart');
   });
 
   it('does not require `visible`, which hand-authored templates omit', () => {

@@ -2,25 +2,15 @@
 /* eslint-disable react/no-array-index-key -- static, non-reordered PDF rows */
 import type { ReactElement } from 'react';
 
-import { Image, Link, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
+import { displayable } from './text';
 import { reportTheme } from './theme';
-import {
-  filterRows,
-  formatValue,
-  matchesRule,
-  renderTemplate,
-  resolveValue,
-  sortRows,
-  stripEmoji,
-  toArray,
-} from './utils';
 
-import type { CellFormat, DataTableProps, PathSpec, Rule } from '../catalog';
+import type { DataTableProps } from '../catalog';
 import type { RenderProps } from './types';
 
-/** Shared by every tabular component so borders and header fills cannot drift. */
-export const tableStyles = StyleSheet.create({
+const tableStyles = StyleSheet.create({
   table: { width: 'auto' },
   row: { flexDirection: 'row' },
   cell: {
@@ -39,146 +29,17 @@ export const tableStyles = StyleSheet.create({
   emptyText: { fontSize: 9, color: reportTheme.textMuted, paddingVertical: 8 },
 });
 
-type ColumnDefinition = {
-  header: string;
-  /**
-   * `text` (default) renders the formatted value. `image` renders the value as
-   * a picture and `link` as a clickable link — both expect the cell value to be
-   * a URL, e.g. a signed URL for a device-captured frame.
-   */
-  type?: 'text' | 'image' | 'link' | null;
-  /** Link text for `type: 'link'`; defaults to the column header. */
-  linkLabel?: string | null;
-  imageHeight?: number | null;
-  imageWidth?: number | null;
-  /** Dot-path into each row object, e.g. `payload.uptime`. A list coalesces the
-   *  first path that has a value (handles payload variants). */
-  path?: PathSpec | PathSpec[];
-  /** Adds several fields together, e.g. every error counter. */
-  sumOf?: PathSpec[] | null;
-  /** Builds the cell from a `{dot.path}` string, e.g. "{profile} / {deviceId}". */
-  template?: string | null;
-  /**
-   * First matching rule replaces the cell with its `text` — how a column shows a
-   * flag ("stale?") for rows meeting a condition. Falls through to
-   * `path`/`template`/`placeholder` when nothing matches.
-   */
-  rules?: ({ text: string } & Rule)[] | null;
-  /** Multiplies numeric values, e.g. 0.001 to convert ms to seconds. */
-  scale?: number | null;
-  /** Subtracted from `path` before formatting, e.g. lastSeen - firstSeen. */
-  minus?: PathSpec | PathSpec[] | null;
-  width?: string | null;
-  align?: 'left' | 'center' | 'right' | null;
-  format?: CellFormat | null;
-  digits?: number | null;
-  /** IANA zone for `datetime`/`date` cells; defaults to UTC. */
-  timeZone?: string | null;
-  placeholder?: string | null;
-};
-
-type RowHighlightRule = Rule & { color: string };
-
-const resolveRowColor = (
-  row: unknown,
-  rules: RowHighlightRule[] | null | undefined,
-  index: number,
-  striped: boolean,
-): string | undefined => {
-  for (const rule of rules ?? []) {
-    if (matchesRule(row, rule)) {
-      return rule.color;
-    }
-  }
-  if (striped && index % 2 === 1) {
-    return reportTheme.surfaceMuted;
-  }
-  return undefined;
-};
-
-// Renders one cell: a thumbnail, a link, or formatted text.
-const renderCell = (row: unknown, column: ColumnDefinition, fontSize: number) => {
-  const matched = (column.rules ?? []).find((rule) => matchesRule(row, rule));
-  if (matched !== undefined) {
-    return (
-      <Text style={{ fontSize, textAlign: column.align ?? 'left' }}>
-        {stripEmoji(matched.text)}
-      </Text>
-    );
-  }
-
-  if (column.template !== undefined && column.template !== null) {
-    return (
-      <Text style={{ fontSize, textAlign: column.align ?? 'left' }}>
-        {stripEmoji(renderTemplate(row, column.template))}
-      </Text>
-    );
-  }
-
-  const raw = resolveValue(row, {
-    path: column.path,
-    sumOf: column.sumOf ?? undefined,
-    minus: column.minus ?? undefined,
-    scale: column.scale ?? undefined,
-  });
-  const kind = column.type ?? 'text';
-
-  if (kind === 'image') {
-    return typeof raw === 'string' && raw !== '' ? (
-      <Image
-        src={raw}
-        style={{ height: column.imageHeight ?? 38, width: column.imageWidth ?? 54 }}
-      />
-    ) : (
-      <Text style={{ fontSize, textAlign: column.align ?? 'center' }}>—</Text>
-    );
-  }
-
-  if (kind === 'link') {
-    return typeof raw === 'string' && raw !== '' ? (
-      <Link
-        src={raw}
-        style={{ fontSize, textAlign: column.align ?? 'center', color: reportTheme.brandDeep }}
-      >
-        {stripEmoji(column.linkLabel ?? column.header)}
-      </Link>
-    ) : (
-      <Text style={{ fontSize, textAlign: column.align ?? 'center' }}>—</Text>
-    );
-  }
-
-  return (
-    <Text style={{ fontSize, textAlign: column.align ?? 'left' }}>
-      {stripEmoji(
-        formatValue(raw, column.format ?? 'text', {
-          digits: column.digits ?? undefined,
-          placeholder: column.placeholder ?? undefined,
-          timeZone: column.timeZone ?? undefined,
-        }),
-      )}
-    </Text>
-  );
-};
-
 /**
- * A table that binds directly to an array of objects with dot-path column
- * definitions, per-cell formatting and rule-based row tinting — so report
- * authors never have to pre-shape `string[][]` rows.
+ * A table of pre-formatted strings.
+ *
+ * Every cell arrives ready to draw. Sorting, filtering, grouping and formatting
+ * happened in the code step, which is also what decides `rowColors` — so the
+ * component has no rules to evaluate and no data to reshape.
  */
 export const DataTable = ({ props }: RenderProps<DataTableProps>): ReactElement | null => {
-  const columns = props.columns ?? [];
-  const allRows = sortRows(
-    filterRows(toArray(props.data), props.where),
-    props.sortBy === undefined || props.sortBy === null ? undefined : { path: props.sortBy },
-    props.sortDir ?? 'asc',
-  );
-  const maxRows = props.maxRows ?? null;
-  const rows = maxRows === null || maxRows <= 0 ? allRows : allRows.slice(0, maxRows);
-  const fontSize = props.fontSize ?? 9;
-  const borderColor = props.borderColor ?? reportTheme.borderSubtle;
-  const striped = props.striped ?? false;
+  const { headers, rows } = props;
 
-  if (columns.length === 0) {
+  if (headers.length === 0) {
     return null;
   }
 
@@ -188,55 +49,64 @@ export const DataTable = ({ props }: RenderProps<DataTableProps>): ReactElement 
     );
   }
 
-  const defaultWidth = `${100 / columns.length}%`;
+  const fontSize = props.fontSize ?? 9;
+  const borderColor = props.borderColor ?? reportTheme.borderSubtle;
+  const striped = props.striped ?? false;
+  const defaultWidth = `${100 / headers.length}%`;
+
+  const widthOf = (column: number): string => props.columnWidths?.[column] ?? defaultWidth;
+  const alignOf = (column: number) => props.align?.[column] ?? 'left';
+
+  const backgroundOf = (row: number): string => {
+    const explicit = props.rowColors?.[row];
+    if (explicit !== undefined && explicit !== null) {
+      return explicit;
+    }
+    return striped && row % 2 === 1 ? reportTheme.surfaceMuted : reportTheme.surface;
+  };
 
   return (
     <View style={tableStyles.table}>
       <View style={tableStyles.row}>
-        {columns.map((column, columnIndex) => (
+        {headers.map((header, column) => (
           <View
-            key={`header-${columnIndex}`}
+            key={`header-${column}`}
             style={[
               tableStyles.cell,
               tableStyles.headerCell,
-              columnIndex === 0 ? tableStyles.firstCell : {},
+              column === 0 ? tableStyles.firstCell : {},
               {
-                width: column.width ?? defaultWidth,
+                width: widthOf(column),
                 borderColor,
                 backgroundColor: props.headerBackgroundColor ?? reportTheme.headerFill,
               },
             ]}
           >
-            <Text style={[tableStyles.headerText, { fontSize, textAlign: column.align ?? 'left' }]}>
-              {stripEmoji(column.header)}
+            <Text style={[tableStyles.headerText, { fontSize, textAlign: alignOf(column) }]}>
+              {header}
             </Text>
           </View>
         ))}
       </View>
 
-      {rows.map((row, rowIndex) => {
-        const background = resolveRowColor(row, props.rowHighlight, rowIndex, striped);
-        return (
-          <View key={`row-${rowIndex}`} style={tableStyles.row} wrap={false}>
-            {columns.map((column, columnIndex) => (
-              <View
-                key={`cell-${rowIndex}-${columnIndex}`}
-                style={[
-                  tableStyles.cell,
-                  columnIndex === 0 ? tableStyles.firstCell : {},
-                  {
-                    width: column.width ?? defaultWidth,
-                    borderColor,
-                    backgroundColor: background ?? reportTheme.surface,
-                  },
-                ]}
-              >
-                {renderCell(row, column, fontSize)}
-              </View>
-            ))}
-          </View>
-        );
-      })}
+      {rows.map((cells, row) => (
+        <View key={`row-${row}`} style={tableStyles.row} wrap={false}>
+          {headers.map((_, column) => (
+            <View
+              key={`cell-${row}-${column}`}
+              style={[
+                tableStyles.cell,
+                column === 0 ? tableStyles.firstCell : {},
+                { width: widthOf(column), borderColor, backgroundColor: backgroundOf(row) },
+              ]}
+            >
+              <Text style={{ fontSize, textAlign: alignOf(column) }}>
+                {displayable(cells[column] ?? '')}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ))}
     </View>
   );
 };

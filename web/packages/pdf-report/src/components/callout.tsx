@@ -2,8 +2,8 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
+import { displayable } from './text';
 import { reportTheme } from './theme';
-import { filterRows, stripEmoji, toArray } from './utils';
 
 import type { CalloutProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -16,47 +16,34 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderStyle: 'solid',
   },
-  text: { fontSize: 8 },
+  text: { fontSize: 8, color: reportTheme.text },
 });
 
-const FALLBACK_TONE = {
-  fill: reportTheme.surfaceMuted,
-  accent: reportTheme.brandAccent,
-  text: reportTheme.text,
-};
+const FALLBACK = { fill: reportTheme.surfaceMuted, accent: reportTheme.brandAccent };
 
-const TONES: Record<string, { fill: string; accent: string; text: string }> = {
-  info: FALLBACK_TONE,
-  warning: { fill: reportTheme.warningFill, accent: reportTheme.warning, text: reportTheme.text },
-  danger: { fill: reportTheme.dangerFill, accent: reportTheme.danger, text: reportTheme.text },
-  success: { fill: reportTheme.successFill, accent: reportTheme.success, text: reportTheme.text },
+const TONES: Record<string, { fill: string; accent: string }> = {
+  info: FALLBACK,
+  warning: { fill: reportTheme.warningFill, accent: reportTheme.warning },
+  danger: { fill: reportTheme.dangerFill, accent: reportTheme.danger },
+  success: { fill: reportTheme.successFill, accent: reportTheme.success },
 };
 
 /**
- * A conditional note — e.g. "N devices reported an un-synced clock".
+ * A short highlighted note.
  *
- * Data-quality caveats belong in the report, but only when they apply, so the
- * component counts matching rows itself and removes itself when there are none.
+ * Empty text renders nothing, which is how a template shows one conditionally:
+ * the code emits the message or an empty string.
  */
 export const Callout = ({ props }: RenderProps<CalloutProps>): ReactElement | null => {
-  const text = props.text ?? '';
-  if (text === '') {
+  if (props.text === '') {
     return null;
   }
 
-  const count = filterRows(toArray(props.data), props.where).length;
-  const hasData = Array.isArray(props.data);
-  if (hasData && count === 0 && (props.hideWhenEmpty ?? true)) {
-    return null;
-  }
-
-  const tone = TONES[props.tone ?? 'info'] ?? FALLBACK_TONE;
+  const tone = TONES[props.tone ?? 'info'] ?? FALLBACK;
 
   return (
     <View style={[styles.callout, { backgroundColor: tone.fill, borderLeftColor: tone.accent }]}>
-      <Text style={[styles.text, { color: tone.text }]}>
-        {stripEmoji(text.replaceAll('{count}', String(count)))}
-      </Text>
+      <Text style={styles.text}>{displayable(props.text)}</Text>
     </View>
   );
 };

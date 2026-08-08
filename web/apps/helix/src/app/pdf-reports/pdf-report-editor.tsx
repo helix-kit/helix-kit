@@ -4,8 +4,12 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
 import { useTheme } from '@helix/design-system/components/theme-provider';
-import { defaultReportDocument, type ReportDocument, type ReportSpec } from '@helix/pdf-report';
-import { fetchReportPdf } from '@helix/pdf-report/client';
+import {
+  defaultReportTemplate,
+  fetchReportPdf,
+  type ReportSpec,
+  type ReportTemplate,
+} from '@helix/pdf-report';
 import { ReportTemplateEditor } from '@helix/pdf-report/editor';
 import { Cloud, Download, Loader2, MonitorSmartphone, RotateCcw } from 'lucide-react';
 
@@ -19,14 +23,14 @@ export const PdfReportEditor = () => {
   // Remounting the editor is how a reset discards the Monaco drafts.
   const [editorKey, setEditorKey] = useState(0);
   // Seeds the (uncontrolled) editor; generation swaps it and bumps the key.
-  const [editorDocument, setEditorDocument] = useState<ReportDocument>(defaultReportDocument);
+  const [editorDocument, setEditorDocument] = useState<ReportTemplate>(defaultReportTemplate);
   const [parseError, setParseError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [renderMode, setRenderMode] = useState<'client' | 'server'>('client');
-  const documentRef = useRef<ReportDocument>(defaultReportDocument);
+  const documentRef = useRef<ReportTemplate>(defaultReportTemplate);
 
-  const handleChange = useCallback((next: ReportDocument) => {
+  const handleChange = useCallback((next: ReportTemplate) => {
     documentRef.current = next;
   }, []);
 
@@ -34,9 +38,9 @@ export const PdfReportEditor = () => {
   const currentDocument = useCallback(() => documentRef.current, []);
 
   const applyGenerated = useCallback((spec: ReportSpec) => {
-    // Generation rewrites the template only; the preview data it was bound
-    // against is the author's and stays put.
-    const next = { spec, demoData: documentRef.current.demoData };
+    // Generation rewrites the layout only; the schemas, code and preview data
+    // it was bound against are the author's and stay put.
+    const next = { ...documentRef.current, spec };
     documentRef.current = next;
     setEditorDocument(next);
     setEditorKey((key) => key + 1);
@@ -48,7 +52,7 @@ export const PdfReportEditor = () => {
       setDownloadError(null);
 
       const blob = await fetchReportPdf({
-        document: documentRef.current,
+        template: documentRef.current,
         filename: DOWNLOAD_FILENAME,
       });
       const objectUrl = URL.createObjectURL(blob);
@@ -76,8 +80,8 @@ export const PdfReportEditor = () => {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">PDF report templates</h1>
           <p className="text-muted-foreground text-sm">
-            Edit the json-render template on the left; the right pane is the real server render.
-            Preview data drives both the preview and the download.
+            Two tiers: code turns the input into display values, the layout places them. The preview
+            runs the whole pipeline, so it is what a recipient would receive.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -98,8 +102,8 @@ export const PdfReportEditor = () => {
             type="button"
             variant="outline"
             onClick={() => {
-              documentRef.current = defaultReportDocument;
-              setEditorDocument(defaultReportDocument);
+              documentRef.current = defaultReportTemplate;
+              setEditorDocument(defaultReportTemplate);
               setParseError(null);
               setDownloadError(null);
               setEditorKey((key) => key + 1);

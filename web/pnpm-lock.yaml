@@ -1005,6 +1005,12 @@ importers:
 
   packages/pdf-report:
     dependencies:
+      '@helix/code-executor':
+        specifier: workspace:*
+        version: link:../code-executor
+      '@helix/json-schema':
+        specifier: workspace:*
+        version: link:../json-schema
       '@json-render/core':
         specifier: ^0.19.0
         version: 0.19.0(zod@4.4.3)

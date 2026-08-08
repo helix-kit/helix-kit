@@ -1,9 +1,9 @@
-import { defaultReportDocument } from './defaults';
+import { defaultReportTemplate } from './defaults';
 import { cloneJson, isObjectRecord } from './json';
 
-import type { ReportDocument } from './types';
+import type { ReportTemplate } from './types';
 
-export const isReportSpec = (value: unknown): value is ReportDocument['spec'] => {
+export const isReportSpec = (value: unknown): value is ReportTemplate['spec'] => {
   if (!isObjectRecord(value)) {
     return false;
   }
@@ -11,17 +11,29 @@ export const isReportSpec = (value: unknown): value is ReportDocument['spec'] =>
   return typeof value.root === 'string' && isObjectRecord(value.elements);
 };
 
-/** Coerces untrusted JSON into a usable document, falling back per-field to the default. */
-export const resolveReportDocument = (value: unknown): ReportDocument => {
+/**
+ * Coerces untrusted JSON into a usable template, falling back per-field.
+ *
+ * Per-field rather than all-or-nothing because an editor posts whatever is in
+ * its panes, and one malformed pane should not discard the other three.
+ */
+export const resolveReportTemplate = (value: unknown): ReportTemplate => {
   if (!isObjectRecord(value)) {
-    return cloneJson(defaultReportDocument);
+    return cloneJson(defaultReportTemplate);
   }
 
-  const demoData = isObjectRecord(value.demoData) ? value.demoData : defaultReportDocument.demoData;
-  const spec = isReportSpec(value.spec) ? value.spec : defaultReportDocument.spec;
-
   return {
-    demoData: cloneJson(demoData),
-    spec: cloneJson(spec),
+    inputSchema: isObjectRecord(value.inputSchema)
+      ? cloneJson(value.inputSchema)
+      : cloneJson(defaultReportTemplate.inputSchema),
+    outputSchema: isObjectRecord(value.outputSchema)
+      ? cloneJson(value.outputSchema)
+      : cloneJson(defaultReportTemplate.outputSchema),
+    code: typeof value.code === 'string' ? value.code : defaultReportTemplate.code,
+    spec: isReportSpec(value.spec) ? cloneJson(value.spec) : cloneJson(defaultReportTemplate.spec),
+    demoInput:
+      value.demoInput === undefined
+        ? cloneJson(defaultReportTemplate.demoInput)
+        : cloneJson(value.demoInput),
   };
 };

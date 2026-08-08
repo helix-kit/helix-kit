@@ -3,8 +3,8 @@ import type { ReactElement } from 'react';
 import { Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 import { BrandMark } from './brand-mark';
+import { displayable } from './text';
 import { reportLayout, reportTheme } from './theme';
-import { stripEmoji } from './utils';
 
 import type { ReportPageProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -81,9 +81,9 @@ export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): R
           <Text style={styles.wordmarkText}>HELIX</Text>
         </View>
         <View style={styles.headerRight}>
-          {title === null ? null : <Text style={styles.headerTitle}>{stripEmoji(title)}</Text>}
+          {title === null ? null : <Text style={styles.headerTitle}>{displayable(title)}</Text>}
           {subtitle === null ? null : (
-            <Text style={styles.headerSubtitle}>{stripEmoji(subtitle)}</Text>
+            <Text style={styles.headerSubtitle}>{displayable(subtitle)}</Text>
           )}
         </View>
       </View>

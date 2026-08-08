@@ -3,10 +3,8 @@ import { defineRegistry } from '@json-render/react-pdf';
 import { Callout } from './callout';
 import { BarChart, LineChart, PieChart } from './charts';
 import { DataTable } from './data-table';
-import { GroupedTable } from './grouped-table';
 import { KeepTogether, MetricCard, MetricGrid, Section } from './layout';
 import { ReportPage } from './report-page';
-import { SummaryTable } from './summary-table';
 
 import { helixPackCatalog } from '../catalog';
 
@@ -36,8 +34,6 @@ export const { registry: helixPdfComponents } = defineRegistry(helixPackCatalog,
     MetricGrid,
     MetricCard,
     DataTable,
-    GroupedTable,
-    SummaryTable,
     Callout,
     BarChart,
     LineChart,

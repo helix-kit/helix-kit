@@ -6,38 +6,37 @@ import { JSONUIProvider, Renderer } from '@json-render/react-pdf';
 import { pdf, type DocumentProps } from '@react-pdf/renderer';
 
 import { helixPdfComponents } from './components/registry';
-import { prepareReportSpec } from './prepare';
+import { prepareReport, type PrepareReportOptions } from './pipeline';
 
-import type { ReportBranding } from './types';
-import type { Spec } from '@json-render/core';
+import type { ReportTemplate } from './types';
 
 /**
  * Renders a report to a PDF blob in the browser.
  *
- * Same catalog, same components, same branding as `renderReportToBuffer` — only
+ * Same pipeline, same components, same branding as `renderReportToBuffer` — only
  * the react-pdf entry point differs (its `browser` field swaps in the DOM build).
- * That makes this usable for a live preview without a round trip, while the
- * server path stays authoritative for delivered documents.
+ * The code step runs here too, in the same WASM sandbox, so a live preview costs
+ * no round trip while the server path stays authoritative for delivered
+ * documents.
  */
 export const renderReportToBlob = async (
-  spec: Spec,
-  data?: Record<string, unknown>,
-  branding: ReportBranding = {},
+  template: ReportTemplate,
+  options: PrepareReportOptions = {},
 ): Promise<Blob> => {
-  // Mirrors the render route, which stamps one when the caller omits it —
-  // otherwise a client preview would show a blank footer where the delivered
-  // document shows a timestamp.
-  const prepared = prepareReportSpec(spec, {
-    ...branding,
-    generatedAt: branding.generatedAt ?? new Date().toUTCString(),
+  const { spec, data } = await prepareReport(template, {
+    ...options,
+    // Mirrors the render route, which stamps one when the caller omits it —
+    // otherwise a client preview shows a blank footer where the delivered
+    // document shows a timestamp.
+    branding: {
+      ...options.branding,
+      generatedAt: options.branding?.generatedAt ?? new Date().toUTCString(),
+    },
   });
 
-  // `Renderer` resolves the spec into react-pdf elements and the provider
-  // supplies the state its `$state` bindings read. The cast is because the tree
-  // is typed as a generic component rather than a `Document`.
   const element = (
     <JSONUIProvider initialState={data}>
-      <Renderer registry={helixPdfComponents} spec={prepared} />
+      <Renderer registry={helixPdfComponents} spec={spec} />
     </JSONUIProvider>
   ) as ReactElement<DocumentProps>;
 

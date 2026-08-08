@@ -26,10 +26,6 @@
       "import": "./src/browser.tsx",
       "types": "./src/browser.tsx"
     },
-    "./client": {
-      "import": "./src/client.ts",
-      "types": "./src/client.ts"
-    },
     "./components": {
       "import": "./src/components/registry.ts",
       "types": "./src/components/registry.ts"
@@ -54,10 +50,6 @@
         "import": "./dist/browser.js",
         "types": "./dist/browser.d.ts"
       },
-      "./client": {
-        "import": "./dist/client.js",
-        "types": "./dist/client.d.ts"
-      },
       "./components": {
         "import": "./dist/components/registry.js",
         "types": "./dist/components/registry.d.ts"
@@ -73,6 +65,8 @@
     }
   },
   "dependencies": {
+    "@helix/code-executor": "workspace:*",
+    "@helix/json-schema": "workspace:*",
     "@json-render/core": "^0.19.0",
     "@json-render/react-pdf": "^0.19.0",
     "@monaco-editor/react": "^4.7.0",

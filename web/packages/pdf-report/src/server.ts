@@ -1,24 +1,21 @@
 import { renderToBuffer } from '@json-render/react-pdf/render';
 
 import { helixPdfComponents } from './components/registry';
-import { prepareReportSpec } from './prepare';
+import { prepareReport, type PrepareReportOptions } from './pipeline';
 
-import type { ReportBranding } from './types';
-import type { Spec } from '@json-render/core';
+import type { ReportTemplate } from './types';
 
 /**
- * Renders a report PDF on the server: the Helix component pack plus
- * auto-injected, non-removable page branding.
+ * Renders a report on the server: run the template's code, then draw its output.
  *
- * The client path (`./browser`) prepares the spec identically, so a preview
- * rendered there matches what this produces.
+ * The browser path (`./browser`) runs the same pipeline, so a preview rendered
+ * there matches what this produces.
  */
 export const renderReportToBuffer = async (
-  spec: Spec,
-  data?: Record<string, unknown>,
-  branding: ReportBranding = {},
-): Promise<Uint8Array> =>
-  renderToBuffer(prepareReportSpec(spec, branding), {
-    registry: helixPdfComponents,
-    state: data,
-  });
+  template: ReportTemplate,
+  options: PrepareReportOptions = {},
+): Promise<Uint8Array> => {
+  const { spec, data } = await prepareReport(template, options);
+
+  return renderToBuffer(spec, { registry: helixPdfComponents, state: data });
+};

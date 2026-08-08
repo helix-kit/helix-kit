@@ -4,6 +4,7 @@ import { formatReportSpecIssues, validateReportSpec } from './validate';
 
 import type { ReportBranding } from './types';
 import type { Spec, UIElement } from '@json-render/core';
+import type { JSONSchema } from 'zod/v4/core';
 
 const PAGE_TYPE = 'Page';
 const REPORT_PAGE_TYPE = 'ReportPage';
@@ -47,12 +48,16 @@ const applyReportBranding = (spec: Spec, branding: ReportBranding): Spec => {
  * as a null dereference), so an author is better served by the catalog's account
  * of what is wrong.
  */
-export const prepareReportSpec = (spec: Spec, branding: ReportBranding = {}): Spec => {
+export const prepareReportSpec = (
+  spec: Spec,
+  branding: ReportBranding = {},
+  outputSchema?: JSONSchema._JSONSchema,
+): Spec => {
   if (!isReportSpec(spec)) {
     throw new Error('A PDF report template must contain a valid json-render spec');
   }
 
-  const issues = validateReportSpec(spec);
+  const issues = validateReportSpec(spec, outputSchema);
   if (issues.length > 0) {
     throw new Error(`Invalid report template — ${formatReportSpecIssues(issues)}`);
   }

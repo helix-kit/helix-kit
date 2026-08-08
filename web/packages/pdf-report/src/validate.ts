@@ -3,6 +3,8 @@ import { validateSpec, type Spec, type UIElement } from '@json-render/core';
 import { authoringComponentSchemas, reportCatalog } from './catalog';
 import { isObjectRecord } from './json';
 
+import type { JSONSchema } from 'zod/v4/core';
+
 export type ReportSpecIssue = {
   /** The element the issue was found on, when it belongs to one. */
   elementKey?: string;
@@ -31,6 +33,84 @@ const valueAtPath = (source: unknown, path: PropertyKey[]): unknown =>
 const isBindingIssue = (props: Record<string, unknown>, issue: IssueLike): boolean =>
   issue.path.length > 0 && isBinding(valueAtPath(props, issue.path));
 
+/**
+ * Whether a JSON-Pointer path exists in a schema.
+ *
+ * Only descends what can be named: object properties by key, and array items by
+ * index or `*`. A path into something the schema leaves open (a record, an
+ * unconstrained object) is accepted rather than guessed at.
+ */
+const pathExistsInSchema = (schema: JSONSchema._JSONSchema, pointer: string): boolean => {
+  const segments = pointer.split('/').filter((segment) => segment !== '');
+  // Annotated, and read through a local each iteration: reassigning from a
+  // property of itself is otherwise a circular inference the compiler rejects.
+  let current: JSONSchema._JSONSchema = schema;
+
+  for (const segment of segments) {
+    const node: JSONSchema._JSONSchema = current;
+    if (typeof node !== 'object') {
+      return true;
+    }
+
+    if (node.type === 'array') {
+      const { items } = node;
+      if (items === undefined || Array.isArray(items)) {
+        return true;
+      }
+      current = items;
+      continue;
+    }
+
+    const { properties } = node;
+    if (properties === undefined) {
+      // Open or unconstrained: nothing here contradicts the path.
+      return true;
+    }
+
+    const next = properties[segment];
+    if (next === undefined) {
+      return false;
+    }
+    current = next;
+  }
+
+  return true;
+};
+
+/** Every `$state` pointer a spec reads, with the element that reads it. */
+const collectStateBindings = (spec: Spec): { elementKey: string; pointer: string }[] => {
+  const bindings: { elementKey: string; pointer: string }[] = [];
+
+  const walk = (elementKey: string, value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        walk(elementKey, entry);
+      }
+      return;
+    }
+
+    if (!isObjectRecord(value)) {
+      return;
+    }
+
+    const pointer = value.$state;
+    if (typeof pointer === 'string') {
+      bindings.push({ elementKey, pointer });
+      return;
+    }
+
+    for (const entry of Object.values(value)) {
+      walk(elementKey, entry);
+    }
+  };
+
+  for (const [key, element] of Object.entries(spec.elements as Record<string, UIElement>)) {
+    walk(key, element.props);
+  }
+
+  return bindings;
+};
+
 const formatIssue = (issue: IssueLike): string => {
   const path = issue.path.join('.');
   return path === '' ? issue.message : `${path}: ${issue.message}`;
@@ -49,7 +129,10 @@ const formatIssue = (issue: IssueLike): string => {
  * Returns every issue rather than throwing on the first, so an author fixing a
  * template sees the whole list at once.
  */
-export const validateReportSpec = (spec: Spec): ReportSpecIssue[] => {
+export const validateReportSpec = (
+  spec: Spec,
+  outputSchema?: JSONSchema._JSONSchema,
+): ReportSpecIssue[] => {
   const issues: ReportSpecIssue[] = [];
 
   for (const issue of validateSpec(spec).issues) {
@@ -77,6 +160,20 @@ export const validateReportSpec = (spec: Spec): ReportSpecIssue[] => {
         if (!isBindingIssue(props, issue)) {
           issues.push({ elementKey: key, message: `${element.type} — ${formatIssue(issue)}` });
         }
+      }
+    }
+  }
+
+  // A binding that reads a path the code never produces renders as empty rather
+  // than failing, so without this a typo is invisible until someone reads the
+  // PDF and wonders where a column went.
+  if (outputSchema !== undefined) {
+    for (const { elementKey, pointer } of collectStateBindings(spec)) {
+      if (!pathExistsInSchema(outputSchema, pointer)) {
+        issues.push({
+          elementKey,
+          message: `Binding "${pointer}" is not produced by the output schema.`,
+        });
       }
     }
   }

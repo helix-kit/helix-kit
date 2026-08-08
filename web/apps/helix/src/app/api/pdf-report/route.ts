@@ -13,27 +13,29 @@ const asString = (value: unknown): string | undefined =>
 
 export const POST = async (request: Request) => {
   try {
-    // Loaded lazily so the PDF renderer is not pulled into the route's cold path
-    // until a render is actually requested.
-    const [{ resolveReportDocument }, { renderReportToBuffer }] = await Promise.all([
+    // Loaded lazily so the PDF renderer and the code sandbox are not pulled into
+    // the route's cold path until a render is actually requested.
+    const [{ resolveReportTemplate }, { renderReportToBuffer }] = await Promise.all([
       import('@helix/pdf-report'),
       import('@helix/pdf-report/server'),
     ]);
 
     const rawBody = (await request.json().catch(() => ({}))) as unknown;
     const body = isObjectRecord(rawBody) ? rawBody : {};
-    const document = resolveReportDocument(body.document);
-    const data = isObjectRecord(body.data) ? body.data : document.demoData;
+    const template = resolveReportTemplate(body.template);
     const filename = asString(body.filename) ?? DEFAULT_FILENAME;
 
     // Branding is stamped here rather than in the template, so a preview goes
     // through exactly the same path as a delivered report.
     const branding = isObjectRecord(body.branding) ? body.branding : {};
-    const pdf = await renderReportToBuffer(document.spec, data, {
-      title: asString(branding.title),
-      subtitle: asString(branding.subtitle),
-      generatedAt: asString(branding.generatedAt) ?? new Date().toUTCString(),
-      footerNote: asString(branding.footerNote),
+    const pdf = await renderReportToBuffer(template, {
+      input: body.input,
+      branding: {
+        title: asString(branding.title),
+        subtitle: asString(branding.subtitle),
+        generatedAt: asString(branding.generatedAt) ?? new Date().toUTCString(),
+        footerNote: asString(branding.footerNote),
+      },
     });
 
     return new NextResponse(Buffer.from(pdf), {

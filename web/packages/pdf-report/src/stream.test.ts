@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultReportDocument } from './defaults';
+import { defaultReportTemplate } from './defaults';
 import { createReportStreamCompiler, createReportStreamReader } from './stream';
 import { validateReportSpec } from './validate';
 
@@ -27,7 +27,7 @@ const GENERATED = [
     path: '/elements/tile',
     value: {
       type: 'MetricCard',
-      props: { label: 'Total Faults', data: { $state: '/devices' }, agg: 'sum', path: 'faults' },
+      props: { label: 'Total Faults', value: { $state: '/totalFaults' } },
       children: [],
     },
   },
@@ -46,12 +46,7 @@ describe('createReportStreamCompiler', () => {
         page: { type: 'Page', props: { size: 'A4' }, children: ['tile'] },
         tile: {
           type: 'MetricCard',
-          props: {
-            label: 'Total Faults',
-            data: { $state: '/devices' },
-            agg: 'sum',
-            path: 'faults',
-          },
+          props: { label: 'Total Faults', value: { $state: '/totalFaults' } },
           children: [],
         },
       },
@@ -84,7 +79,7 @@ describe('createReportStreamCompiler', () => {
   });
 
   it('refines a seeded spec rather than starting empty', () => {
-    const compiler = createReportStreamCompiler(defaultReportDocument.spec);
+    const compiler = createReportStreamCompiler(defaultReportTemplate.spec);
 
     compiler.push(
       `${jsonl([{ op: 'replace', path: '/elements/title/props/level', value: 'h2' }])}\n`,
@@ -96,17 +91,17 @@ describe('createReportStreamCompiler', () => {
     expect(title.props.level).toBe('h2');
     // …and the rest of the seeded template survived.
     expect(Object.keys(result.elements)).toEqual(
-      Object.keys(defaultReportDocument.spec.elements as Record<string, unknown>),
+      Object.keys(defaultReportTemplate.spec.elements as Record<string, unknown>),
     );
   });
 
   it('leaves the seed untouched', () => {
-    const before = JSON.stringify(defaultReportDocument.spec);
-    const compiler = createReportStreamCompiler(defaultReportDocument.spec);
+    const before = JSON.stringify(defaultReportTemplate.spec);
+    const compiler = createReportStreamCompiler(defaultReportTemplate.spec);
 
     compiler.push(`${jsonl([{ op: 'replace', path: '/root', value: 'other' }])}\n`);
 
-    expect(JSON.stringify(defaultReportDocument.spec)).toBe(before);
+    expect(JSON.stringify(defaultReportTemplate.spec)).toBe(before);
   });
 
   it('silently drops prose, which is why the reader exists', () => {
@@ -170,13 +165,13 @@ describe('createReportStreamReader', () => {
   });
 
   it('refines a seeded spec without mutating the seed', () => {
-    const before = JSON.stringify(defaultReportDocument.spec);
-    const stream = createReportStreamReader(defaultReportDocument.spec);
+    const before = JSON.stringify(defaultReportTemplate.spec);
+    const stream = createReportStreamReader(defaultReportTemplate.spec);
 
     stream.push(`${jsonl([{ op: 'replace', path: '/root', value: 'other' }])}\n`);
     stream.flush();
 
     expect(stream.spec().root).toBe('other');
-    expect(JSON.stringify(defaultReportDocument.spec)).toBe(before);
+    expect(JSON.stringify(defaultReportTemplate.spec)).toBe(before);
   });
 });

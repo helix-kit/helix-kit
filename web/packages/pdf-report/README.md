@@ -1,8 +1,8 @@
 # @helix/pdf-report
 
-JSON-defined PDF reports for Helix. A template is one JSON document — a
-[json-render](https://json-render.dev) spec plus the data it binds to — and this
-package turns it into a PDF.
+JSON-defined PDF reports for Helix, in two tiers: a sandboxed code step that
+turns caller data into display values, and a [json-render](https://json-render.dev)
+layout that places them.
 
 The package deals with **rendering only**. It owns no database, no scheduling, no
 delivery and no workflow semantics: an adopter who wants report authoring installs
@@ -10,25 +10,41 @@ it, supplies a render route, and composes everything else themselves.
 
 ## Exports
 
-| Entry                          | Contents                                                                                                                                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@helix/pdf-report`            | `reportCatalog`, `helixComponentDefinitions`, `validateReportSpec`, `reportSpecJsonSchema`, `ReportDocument` / `ReportBranding` types, `defaultReportDocument`, `resolveReportDocument`, `isReportSpec`, JSON helpers |
-| `@helix/pdf-report/server`     | `renderReportToBuffer(spec, data, branding)` — Node only                                                                                                                                                              |
-| `@helix/pdf-report/editor`     | `ReportTemplateEditor` — client two-pane authoring UI                                                                                                                                                                 |
-| `@helix/pdf-report/client`     | `fetchReportPdf(...)`, `DEFAULT_RENDER_ENDPOINT`                                                                                                                                                                      |
-| `@helix/pdf-report/components` | `helixPdfComponents` — the catalog-bound component registry                                                                                                                                                           |
+| Entry                          | Contents                                                                                                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@helix/pdf-report`            | `ReportTemplate` / `ReportBranding`, `defaultReportTemplate`, `resolveReportTemplate`, `prepareReport`, `fetchReportPdf`, `reportCatalog`, `validateReportSpec`, `reportSpecJsonSchema` |
+| `@helix/pdf-report/server`     | `renderReportToBuffer(template, options)` — Node only                                                                                                                                   |
+| `@helix/pdf-report/browser`    | `renderReportToBlob(template, options)` — in-browser render                                                                                                                             |
+| `@helix/pdf-report/editor`     | `ReportTemplateEditor` — schema, code, layout and preview panes                                                                                                                         |
+| `@helix/pdf-report/components` | `helixPdfComponents` — the catalog-bound component registry                                                                                                                             |
 
-## The document
+## Two tiers
+
+A template is a code step and a layout, and the two schemas between them are the
+whole contract:
 
 ```ts
-type ReportDocument = {
-  spec: Spec; // json-render element graph
-  demoData: Record<string, unknown>; // sample values the editor previews against
+type ReportTemplate = {
+  inputSchema: JSONSchema; // what the report is handed
+  code: string; // TypeScript over `input`, returning display values
+  outputSchema: JSONSchema; // what the code produces, and what `spec` may bind to
+  spec: Spec; // presentation only
+  demoInput: unknown; // sample input for the editor preview
 };
 ```
 
-`spec.elements` reference data with json-render's `{ "$state": "/devices" }`
-bindings, resolved against whatever `data` the caller passes at render time.
+`input → validate(inputSchema) → run code → validate(outputSchema) → bind into spec → PDF`
+
+The code runs in `@helix/code-executor`'s QuickJS sandbox, so it has no network,
+no filesystem and bounded CPU and memory. It is typed from `inputSchema` in the
+editor, so an author gets completion on `input.devices[0].faults`.
+
+**Why the split.** The components used to carry the computation themselves: a
+`DataTable` column could coalesce dot-paths, sum several fields, subtract one
+from another, apply a scale, match rules and format the result. That grammar was
+a small untyped programming language expressed in JSON — less capable than code,
+and harder to read than a template. Aggregation, filtering, grouping, sorting and
+formatting now live in code, where they are ordinary TypeScript.
 
 ## The catalog
 
@@ -63,11 +79,12 @@ templates omit. So `validateReportSpec` takes the names and schemas from the
 catalog and does the checking itself:
 
 - unknown component names, reported with the available set;
-- props checked against the component's zod schema, including nested shapes such
-  as a `DataTable` column;
+- props checked against the component's zod schema, including nested shapes;
+- every `{"$state": "/x"}` binding checked against `outputSchema`, so a typo'd
+  path is an error rather than a silently empty cell;
 - structural problems (missing root, dangling child references);
-- bound props (`{"$state": "/devices"}`) are skipped, since they are resolved at
-  render time.
+- the _shape_ of a bound prop is not checked, since its value only exists at
+  render time — only that the path it reads is produced.
 
 The stock definitions are relaxed for this check: they declare every prop
 `.nullable()` but present, which is what a model should emit, whereas a
@@ -75,26 +92,21 @@ hand-written template just omits what it does not set.
 
 ## Components
 
-On top of the stock `@json-render/react-pdf` catalog (`Document`, `Page`, `View`,
-`Row`, `Column`, `Heading`, `Text`, `Image`, `Link`, `Table`, `List`, `Divider`,
-`Spacer`, `PageNumber`) the pack adds:
+Presentational only — each places values it is handed and computes nothing:
 
-| Component                             | What it does                                                                          |
+| Component                             | Takes                                                                                 |
 | ------------------------------------- | ------------------------------------------------------------------------------------- |
 | `ReportPage`                          | Branded page with a repeating header/footer. Injected automatically — see _Branding_. |
 | `Section`                             | Titled panel that groups content.                                                     |
-| `MetricGrid` / `MetricCard`           | KPI tiles; each value is computed from a raw array (`data` + `agg` + `path`).         |
-| `DataTable`                           | One row per record, dot-path columns, per-cell formatting, rule-based row tinting.    |
-| `GroupedTable`                        | One row per distinct `groupBy` value, columns aggregated within each bucket.          |
-| `SummaryTable`                        | Transposed: one row per _field_, each cell aggregated across the dataset.             |
-| `Callout`                             | Conditional note that counts matching rows and hides itself when none match.          |
-| `BarChart` / `LineChart` / `PieChart` | Vector SVG charts, no rasterizing.                                                    |
+| `MetricGrid` / `MetricCard`           | A KPI tile; `value` is already formatted.                                             |
+| `DataTable`                           | `headers: string[]`, `rows: string[][]`, and `rowColors` the code decided.            |
+| `Callout`                             | `text` and `tone`. Empty text renders nothing, which is how a template hides one.     |
+| `BarChart` / `LineChart` / `PieChart` | `series: { label, value }[]`, pre-aggregated.                                         |
 | `KeepTogether`                        | Stops its children being split across a page break.                                   |
 
-They all consume **raw arrays of objects** directly. Dot-paths coalesce across
-candidates (`["a.uptime_s", {"path": "a.uptime_ms", "scale": 0.001}]`), `sumOf`
-adds several fields per row, `minus` subtracts one, and `where` rules filter — so
-a template never needs the caller to pre-shape rows first.
+They sit on top of the stock `@json-render/react-pdf` catalog (`Document`,
+`Page`, `View`, `Row`, `Column`, `Heading`, `Text`, `Image`, `Link`, `Table`,
+`List`, `Divider`, `Spacer`, `PageNumber`), which stays available.
 
 ## Branding
 

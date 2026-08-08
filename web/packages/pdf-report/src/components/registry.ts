@@ -45,12 +45,22 @@ type ElementProps = {
 /**
  * Adapts a catalog component to the element-shaped renderer contract.
  *
- * This is what `defineRegistry` does at runtime, done here because that helper
- * only ships from the package root, which pulls in the React context providers
- * (`StateProvider`, `ActionProvider`, …). Importing those from a Next.js route
- * handler blows up on `createContext`, whereas `@json-render/react-pdf/render`
- * is explicitly the hook-free server entry point. The typing above still comes
- * from the library, so the catalog binding is unaffected.
+ * This is what `defineRegistry` does at runtime. It is done here because that
+ * helper ships only from the package root, which builds four React contexts at
+ * module scope (`StateContext`, `VisibilityContext`, `ActionContext`,
+ * `ValidationContext`). Under Next's `react-server` condition `createContext`
+ * does not exist, so importing it from a route handler throws — whereas
+ * `@json-render/react-pdf/render` is documented as the hook-free server entry.
+ *
+ * `serverExternalPackages: ['@json-render/react-pdf']` in the host's Next config
+ * does fix it (verified). We do not rely on that: it would make this package's
+ * server entry drag a client-only module into every consumer's render path, and
+ * force each adopter to add that line or hit the same opaque error. The library
+ * contributes the *typing* (`Components<HelixPackCatalog>` above, from the
+ * server-safe entry) — the runtime part is a loop, so it lives here instead.
+ *
+ * Upstream: https://github.com/vercel-labs/json-render/issues/317 — drop this
+ * once `defineRegistry` ships from a server-safe subpath.
  */
 const toElementComponent =
   (render: (typeof components)[keyof typeof components]): ComponentType<ElementProps> =>

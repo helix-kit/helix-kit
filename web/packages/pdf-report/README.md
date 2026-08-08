@@ -138,6 +138,14 @@ export const POST = async (request: Request) => {
 
 ## Notes
 
+- The registry adapts catalog components to the renderer's element contract
+  itself rather than calling `defineRegistry`. That helper ships only from the
+  package root, which builds React contexts at module scope and therefore throws
+  under Next's `react-server` condition; `@json-render/react-pdf/render` is the
+  documented hook-free server entry. A host can work around it with
+  `serverExternalPackages: ['@json-render/react-pdf']`, but this package does not
+  require that of its consumers. Tracked upstream as
+  [json-render#317](https://github.com/vercel-labs/json-render/issues/317).
 - `@monaco-editor/react` loads the Monaco assets from a CDN by default. Call its
   `loader.config({ paths: { vs: … } })` in the host app to self-host them.
 - The report palette is declared as literal hex in `src/components/theme.ts`:

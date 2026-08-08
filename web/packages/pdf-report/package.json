@@ -22,6 +22,10 @@
       "import": "./src/index.ts",
       "types": "./src/index.ts"
     },
+    "./browser": {
+      "import": "./src/browser.tsx",
+      "types": "./src/browser.tsx"
+    },
     "./client": {
       "import": "./src/client.ts",
       "types": "./src/client.ts"
@@ -45,6 +49,10 @@
       ".": {
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./browser": {
+        "import": "./dist/browser.js",
+        "types": "./dist/browser.d.ts"
       },
       "./client": {
         "import": "./dist/client.js",

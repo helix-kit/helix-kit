@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { renderReportToBlob } from './browser';
 import { fetchReportPdf } from './client';
 import { defaultReportDocument } from './defaults';
 import { parseJson, prettyJson } from './json';
@@ -13,7 +14,10 @@ import type { ReportBranding, ReportDocument } from './types';
 type ParseState =
   { status: 'ready'; document: ReportDocument } | { status: 'error'; error: string };
 
-const DEFAULT_PREVIEW_DEBOUNCE_MS = 400;
+// A server render costs a round trip, so it is worth waiting longer to avoid
+// firing one per keystroke. A client render is local and cheap enough to feel
+// immediate, so it can afford to react sooner.
+const DEBOUNCE_MS = { client: 150, server: 400 } as const;
 
 const TEMPLATE_PATH = 'helix-pdf-report-template.json';
 const PREVIEW_DATA_PATH = 'helix-pdf-report-preview-data.json';
@@ -30,9 +34,16 @@ export type ReportTemplateEditorProps = {
   onError?: (error: string | null) => void;
   /** Render route the preview posts to; defaults to `/api/pdf-report`. */
   endpoint?: string;
+  /**
+   * Where the preview is rendered. `client` skips the round trip, which makes
+   * editing feel immediate; `server` proves what a delivered document contains.
+   * Both prepare the spec identically.
+   */
+  renderMode?: 'client' | 'server';
   branding?: ReportBranding;
   theme?: 'light' | 'dark';
   showDemoDataEditor?: boolean;
+  /** Defaults to 150ms for a client render, 400ms for a server one. */
   previewDebounceMs?: number;
 };
 
@@ -48,10 +59,12 @@ export const ReportTemplateEditor = ({
   onError,
   endpoint,
   branding,
+  renderMode = 'client',
   theme = 'light',
   showDemoDataEditor = true,
-  previewDebounceMs = DEFAULT_PREVIEW_DEBOUNCE_MS,
+  previewDebounceMs,
 }: ReportTemplateEditorProps) => {
+  const debounceMs = previewDebounceMs ?? DEBOUNCE_MS[renderMode];
   const [specDraft, setSpecDraft] = useState(() => prettyJson(defaultValue.spec));
   const [demoDataDraft, setDemoDataDraft] = useState(() => prettyJson(defaultValue.demoData));
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -106,13 +119,27 @@ export const ReportTemplateEditor = ({
         try {
           setPreviewError(null);
 
-          const blob = await fetchReportPdf({
-            document: parseState.document,
-            branding,
-            endpoint,
-            filename: 'helix-report-preview.pdf',
-            signal: controller.signal,
-          });
+          const blob =
+            renderMode === 'client'
+              ? await renderReportToBlob(
+                  parseState.document.spec,
+                  parseState.document.demoData,
+                  branding,
+                )
+              : await fetchReportPdf({
+                  document: parseState.document,
+                  branding,
+                  endpoint,
+                  filename: 'helix-report-preview.pdf',
+                  signal: controller.signal,
+                });
+
+          // A client render cannot be aborted mid-flight, so drop a result that
+          // a newer edit has already superseded.
+          if (controller.signal.aborted) {
+            return;
+          }
+
           const objectUrl = URL.createObjectURL(blob);
 
           if (previewUrlRef.current !== null) {
@@ -137,13 +164,13 @@ export const ReportTemplateEditor = ({
       };
 
       void renderPreview();
-    }, previewDebounceMs);
+    }, debounceMs);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [branding, endpoint, parseState, previewDebounceMs]);
+  }, [branding, debounceMs, endpoint, parseState, renderMode]);
 
   useEffect(
     () => () => {

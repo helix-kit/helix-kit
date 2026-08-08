@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     '@helix/blog',
     '@helix/design-system',
     '@helix/device-apps',
+    '@helix/pdf-report',
     '@helix/protocol',
     '@helix/web-core',
   ],

@@ -5,6 +5,7 @@
 @source '../../../../packages/helix-design-system/src/**/*.{ts,tsx}';
 @source '../../../../packages/device-apps/src/**/*.{ts,tsx}';
 @source '../../../../packages/blog/src/**/*.{ts,tsx}';
+@source '../../../../packages/pdf-report/src/**/*.{ts,tsx}';
 
 /* Marketing / blog / admin theme tokens. The docs section (Fumadocs) owns its
  * own token layer in the /docs route group. Light is default; `.dark` (driven by

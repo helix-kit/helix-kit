@@ -24,6 +24,7 @@
     "@helix/device-apps": "workspace:*",
     "@helix/firmware-builder": "workspace:*",
     "@helix/logger": "workspace:*",
+    "@helix/pdf-report": "workspace:*",
     "@helix/protocol": "workspace:*",
     "@helix/web-core": "workspace:*",
     "@react-email/components": "^1.0.12",

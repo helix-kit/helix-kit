@@ -29,6 +29,10 @@
     "./types": {
       "import": "./src/types.ts",
       "types": "./src/types.ts"
+    },
+    "./ai": {
+      "import": "./src/ai.ts",
+      "types": "./src/ai.ts"
     }
   },
   "publishConfig": {
@@ -45,10 +49,15 @@
       "./types": {
         "import": "./dist/types.js",
         "types": "./dist/types.d.ts"
+      },
+      "./ai": {
+        "import": "./dist/ai.js",
+        "types": "./dist/ai.d.ts"
       }
     }
   },
   "dependencies": {
+    "@helix/ai-kit": "workspace:*",
     "@helix/json-schema": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "quickjs-emscripten": "^0.32.0",

@@ -29,6 +29,10 @@
     "./editor": {
       "import": "./src/editor.tsx",
       "types": "./src/editor.tsx"
+    },
+    "./ai": {
+      "import": "./src/ai.ts",
+      "types": "./src/ai.ts"
     }
   },
   "publishConfig": {
@@ -45,10 +49,15 @@
       "./editor": {
         "import": "./dist/editor.js",
         "types": "./dist/editor.d.ts"
+      },
+      "./ai": {
+        "import": "./dist/ai.js",
+        "types": "./dist/ai.d.ts"
       }
     }
   },
   "dependencies": {
+    "@helix/ai-kit": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "zod": "4.4.3"
   },

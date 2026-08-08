@@ -37,6 +37,10 @@
     "./server": {
       "import": "./src/server.ts",
       "types": "./src/server.ts"
+    },
+    "./ai": {
+      "import": "./src/ai.ts",
+      "types": "./src/ai.ts"
     }
   },
   "publishConfig": {
@@ -61,10 +65,15 @@
       "./server": {
         "import": "./dist/server.js",
         "types": "./dist/server.d.ts"
+      },
+      "./ai": {
+        "import": "./dist/ai.js",
+        "types": "./dist/ai.d.ts"
       }
     }
   },
   "dependencies": {
+    "@helix/ai-kit": "workspace:*",
     "@helix/code-executor": "workspace:*",
     "@helix/json-schema": "workspace:*",
     "@json-render/core": "^0.19.0",

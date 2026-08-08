@@ -105,8 +105,21 @@ caller.
 
 ## Wiring it into an app
 
-Add the package to `transpilePackages`, and to Tailwind's `@source` list so the
-editor's classes are generated.
+Three lines of host config:
+
+```ts
+// next.config.ts
+transpilePackages: ['@helix/pdf-report'],
+// Both are server-only. Bundling them under the RSC export conditions strips
+// `createContext`, which the json-render registry needs — this is the same
+// wiring upstream's own react-pdf example ships.
+serverExternalPackages: ['@react-pdf/renderer', '@json-render/react-pdf'],
+```
+
+```css
+/* globals.css — so the editor's classes are generated */
+@source '../../../../packages/pdf-report/src/**/*.{ts,tsx}';
+```
 
 The editor and `fetchReportPdf` post to a render route, `/api/pdf-report` by
 default (override with the `endpoint` prop). The route is the host's to provide —
@@ -138,13 +151,13 @@ export const POST = async (request: Request) => {
 
 ## Notes
 
-- The registry adapts catalog components to the renderer's element contract
-  itself rather than calling `defineRegistry`. That helper ships only from the
-  package root, which builds React contexts at module scope and therefore throws
-  under Next's `react-server` condition; `@json-render/react-pdf/render` is the
-  documented hook-free server entry. A host can work around it with
-  `serverExternalPackages: ['@json-render/react-pdf']`, but this package does not
-  require that of its consumers. Tracked upstream as
+- `serverExternalPackages` is not optional. `defineRegistry` ships only from
+  `@json-render/react-pdf`'s root, which builds four React contexts at module
+  scope; under Next's `react-server` condition `createContext` does not exist and
+  a render throws. Externalising the package resolves it outside those
+  conditions. Verified in a production build and against `next start`. The API
+  page's server-safe-imports section does not mention this — only the example's
+  `next.config.ts` does — which is
   [json-render#317](https://github.com/vercel-labs/json-render/issues/317).
 - `@monaco-editor/react` loads the Monaco assets from a CDN by default. Call its
   `loader.config({ paths: { vs: … } })` in the host app to self-host them.

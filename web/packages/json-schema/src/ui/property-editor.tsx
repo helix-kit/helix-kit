@@ -8,7 +8,6 @@
  */
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
 import { Checkbox } from '@helix/design-system/components/checkbox';
 import { Input } from '@helix/design-system/components/input';
 import { Label } from '@helix/design-system/components/label';
@@ -72,28 +71,31 @@ const PropertyRow = ({
 
   return (
     <div className={cn(index > 0 ? 'border-t' : '', 'border-input')}>
-      <div className="bg-muted/30 flex items-center">
-        {expandable ? (
-          <button
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-            className="text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center"
-            type="button"
-            onClick={() => {
-              setExpanded(!expanded);
-            }}
-          >
-            {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
-            )}
-          </button>
-        ) : (
-          <div className="w-8 shrink-0" />
-        )}
+      {/* A table row: the row owns the background, each cell is separated by a
+          single right border, and the controls inside are transparent so they
+          read as cells rather than as boxes sitting on one. */}
+      <div className="bg-muted/20 flex items-stretch">
+        <div className="border-input flex w-8 shrink-0 items-center justify-center border-r">
+          {expandable ? (
+            <button
+              aria-label={expanded ? 'Collapse' : 'Expand'}
+              className="text-muted-foreground hover:text-foreground flex size-full items-center justify-center"
+              type="button"
+              onClick={() => {
+                setExpanded(!expanded);
+              }}
+            >
+              {expanded ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronRight className="size-3.5" />
+              )}
+            </button>
+          ) : null}
+        </div>
 
         <Input
-          className="h-8 flex-1 border-y-0 border-r-0 font-mono text-xs"
+          className="border-input h-8 flex-1 rounded-none border-0 border-r bg-transparent font-mono text-xs shadow-none focus-visible:ring-inset dark:bg-transparent"
           placeholder="property name"
           value={property.name}
           onChange={(event) => {
@@ -101,42 +103,47 @@ const PropertyRow = ({
           }}
         />
 
-        <div className="shrink-0">
+        <div className="border-input shrink-0 border-r">
           <SchemaDefinitionEditor value={property.schema} onChange={updateSchema} />
         </div>
 
-        <div className="border-input flex h-8 shrink-0 items-center gap-1 border-r px-2">
-          <Checkbox
-            checked={property.required}
-            className="h-3.5 w-3.5"
-            onCheckedChange={(checked) => {
-              onChange({ ...property, required: checked === true });
-            }}
-          />
-          <Label className="text-muted-foreground cursor-pointer text-[10px]">Required</Label>
-        </div>
+        {(
+          [
+            [
+              'Required',
+              property.required,
+              (checked: boolean) => ({ ...property, required: checked }),
+            ],
+            [
+              'Nullable',
+              property.nullable,
+              (checked: boolean) => ({ ...property, nullable: checked }),
+            ],
+          ] as const
+        ).map(([label, checked, apply]) => (
+          <div
+            key={label}
+            className="border-input flex h-8 shrink-0 items-center gap-1.5 border-r px-2.5"
+          >
+            <Checkbox
+              checked={checked}
+              className="size-3.5 rounded-none"
+              onCheckedChange={(next) => {
+                onChange(apply(next === true));
+              }}
+            />
+            <Label className="text-muted-foreground text-[10px]">{label}</Label>
+          </div>
+        ))}
 
-        <div className="border-input flex h-8 shrink-0 items-center gap-1 border-r px-2">
-          <Checkbox
-            checked={property.nullable}
-            className="h-3.5 w-3.5"
-            onCheckedChange={(checked) => {
-              onChange({ ...property, nullable: checked === true });
-            }}
-          />
-          <Label className="text-muted-foreground cursor-pointer text-[10px]">Nullable</Label>
-        </div>
-
-        <Button
+        <button
           aria-label="Remove property"
-          className="h-8 w-8 shrink-0 border-0 p-0"
-          size="sm"
+          className="text-muted-foreground hover:text-destructive hover:bg-muted flex size-8 shrink-0 items-center justify-center transition-colors"
           type="button"
-          variant="outline"
           onClick={onRemove}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+          <Trash2 className="size-3.5" />
+        </button>
       </div>
 
       {expanded && expandable ? (
@@ -235,17 +242,15 @@ export const PropertyListEditor = ({
       ))
     )}
 
-    <Button
-      className="h-8 w-full border-0 border-t text-xs"
-      size="sm"
+    <button
+      className="border-input text-muted-foreground hover:bg-muted/50 hover:text-foreground flex h-8 w-full items-center justify-center gap-1.5 border-t text-xs transition-colors"
       type="button"
-      variant="outline"
       onClick={() => {
         onChange([...properties, createDefaultProperty(nextPropertyName(properties))]);
       }}
     >
-      <Plus className="mr-1 h-3.5 w-3.5" />
+      <Plus className="size-3.5" />
       Add property
-    </Button>
+    </button>
   </div>
 );

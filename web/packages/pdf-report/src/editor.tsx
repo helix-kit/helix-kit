@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CodeEditor } from '@helix/code-executor/editor';
-import { JsonSchemaBuilder } from '@helix/json-schema/builder';
-import { JsonEditor } from '@helix/json-schema/editor';
+import { JsonEditor, SchemaEditor } from '@helix/json-schema/editor';
 
 import { renderReportToBlob } from './browser';
 import { fetchReportPdf } from './client';
@@ -24,18 +23,25 @@ type ParseState =
 const DEBOUNCE_MS = { client: 250, server: 500 } as const;
 
 const SPEC_PATH = 'helix-pdf-report-spec.json';
-const INPUT_PATH = 'helix-pdf-report-input.json';
+const INPUT_DATA_PATH = 'helix-pdf-report-input-data.json';
+const INPUT_SCHEMA_PATH = 'helix-pdf-report-input-schema.json';
+const OUTPUT_SCHEMA_PATH = 'helix-pdf-report-output-schema.json';
 
 // Built once: the catalog is static, and Monaco keys its schemas by file match.
 const specSchema = { fileMatch: SPEC_PATH, schema: reportSpecJsonSchema() };
 
-type Pane = 'schema' | 'code' | 'spec' | 'input';
+type Pane = 'input' | 'code' | 'output' | 'layout' | 'data';
 
-const PANES: { id: Pane; label: string }[] = [
-  { id: 'schema', label: 'Input schema' },
-  { id: 'code', label: 'Code' },
-  { id: 'spec', label: 'Layout' },
-  { id: 'input', label: 'Preview data' },
+/**
+ * Ordered as the data flows: what comes in, what transforms it, what comes out,
+ * how that is drawn — and the sample used to preview the whole thing.
+ */
+const PANES: { id: Pane; label: string; hint: string }[] = [
+  { id: 'input', label: 'Input', hint: 'What the report is handed. Types `input` in the code.' },
+  { id: 'code', label: 'Code', hint: 'Turns the input into the values below.' },
+  { id: 'output', label: 'Output', hint: 'What the code returns. The layout binds to this.' },
+  { id: 'layout', label: 'Layout', hint: 'Where those values are drawn on the page.' },
+  { id: 'data', label: 'Preview data', hint: 'Sample input, for the preview on the right.' },
 ];
 
 export type ReportTemplateEditorProps = {
@@ -82,7 +88,9 @@ export const ReportTemplateEditor = ({
   const [inputSchema, setInputSchema] = useState<JSONSchema._JSONSchema>(defaultValue.inputSchema);
   const [code, setCode] = useState(defaultValue.code);
   const [specDraft, setSpecDraft] = useState(() => prettyJson(defaultValue.spec));
-  const [outputDraft, setOutputDraft] = useState(() => prettyJson(defaultValue.outputSchema));
+  const [outputSchema, setOutputSchema] = useState<JSONSchema._JSONSchema>(
+    defaultValue.outputSchema,
+  );
   const [inputDraft, setInputDraft] = useState(() => prettyJson(defaultValue.demoInput));
 
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -101,7 +109,7 @@ export const ReportTemplateEditor = ({
         template: {
           inputSchema,
           code,
-          outputSchema: parseJson(outputDraft, 'Output schema') as JSONSchema._JSONSchema,
+          outputSchema,
           spec: parseJson(specDraft, 'Layout JSON') as ReportTemplate['spec'],
           demoInput: parseJson(inputDraft, 'Preview data'),
         },
@@ -109,7 +117,7 @@ export const ReportTemplateEditor = ({
     } catch (error) {
       return { status: 'error', error: error instanceof Error ? error.message : 'Invalid JSON' };
     }
-  }, [code, inputDraft, inputSchema, outputDraft, specDraft]);
+  }, [code, inputDraft, inputSchema, outputSchema, specDraft]);
 
   useEffect(() => {
     if (parseState.status === 'error') {
@@ -232,14 +240,20 @@ export const ReportTemplateEditor = ({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto">
-          {pane === 'schema' ? (
-            <div className="p-2">
-              <p className="text-muted-foreground mb-2 px-1 text-xs">
-                What the report is handed. This also types <code>input</code> in the code pane.
-              </p>
-              <JsonSchemaBuilder value={inputSchema} onValueChange={setInputSchema} />
-            </div>
+        <p className="text-muted-foreground shrink-0 border-b px-3 py-1.5 text-xs">
+          {PANES.find((entry) => entry.id === pane)?.hint}
+        </p>
+
+        {/* Each pane is mounted only while selected; Monaco keeps its model by
+            `path`, so drafts survive switching tabs. */}
+        <div className="min-h-0 flex-1">
+          {pane === 'input' ? (
+            <SchemaEditor
+              path={INPUT_SCHEMA_PATH}
+              theme={monacoTheme}
+              value={inputSchema}
+              onChange={setInputSchema}
+            />
           ) : null}
 
           {pane === 'code' ? (
@@ -252,7 +266,16 @@ export const ReportTemplateEditor = ({
             />
           ) : null}
 
-          {pane === 'spec' ? (
+          {pane === 'output' ? (
+            <SchemaEditor
+              path={OUTPUT_SCHEMA_PATH}
+              theme={monacoTheme}
+              value={outputSchema}
+              onChange={setOutputSchema}
+            />
+          ) : null}
+
+          {pane === 'layout' ? (
             <JsonEditor
               className="h-full"
               path={SPEC_PATH}
@@ -263,34 +286,16 @@ export const ReportTemplateEditor = ({
             />
           ) : null}
 
-          {pane === 'input' ? (
+          {pane === 'data' ? (
             <JsonEditor
               className="h-full"
-              path={INPUT_PATH}
+              path={INPUT_DATA_PATH}
               theme={monacoTheme}
               value={inputDraft}
               onChange={setInputDraft}
             />
           ) : null}
         </div>
-
-        {pane === 'code' ? (
-          <div className="shrink-0 border-t">
-            <div className="text-muted-foreground px-3 py-1.5 text-xs font-medium tracking-[0.16em] uppercase">
-              Output schema
-            </div>
-            {/* Monaco sizes to its container, so the height lives on the wrapper. */}
-            <div className="h-[180px] border-t">
-              <JsonEditor
-                className="h-full"
-                path="helix-pdf-report-output.json"
-                theme={monacoTheme}
-                value={outputDraft}
-                onChange={setOutputDraft}
-              />
-            </div>
-          </div>
-        ) : null}
       </div>
 
       <div className="bg-background flex h-full min-h-[26rem] min-w-0 flex-col overflow-hidden rounded-md border">

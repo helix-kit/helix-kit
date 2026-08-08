@@ -70,7 +70,6 @@ const config: KnipConfig = {
         'embla-carousel-react',
         'input-otp',
         'motion',
-        'react-resizable-panels',
         'recharts',
       ],
     },

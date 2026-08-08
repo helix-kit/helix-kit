@@ -986,6 +986,9 @@ importers:
       lucide-react:
         specifier: ^1.23.0
         version: 1.24.0(react@19.2.7)
+      react-resizable-panels:
+        specifier: ^4.12.1
+        version: 4.12.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tsdown:
         specifier: ^0.22.4
         version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)

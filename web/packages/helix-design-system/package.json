@@ -181,6 +181,10 @@
       "import": "./src/components/progress.tsx",
       "types": "./src/components/progress.tsx"
     },
+    "./components/resizable": {
+      "import": "./src/components/resizable.tsx",
+      "types": "./src/components/resizable.tsx"
+    },
     "./components/responsive-modal": {
       "import": "./src/components/responsive-modal.tsx",
       "types": "./src/components/responsive-modal.tsx"
@@ -382,6 +386,10 @@
       "./components/progress": {
         "import": "./dist/components/progress.js",
         "types": "./dist/components/progress.d.ts"
+      },
+      "./components/resizable": {
+        "import": "./dist/components/resizable.js",
+        "types": "./dist/components/resizable.d.ts"
       },
       "./components/responsive-modal": {
         "import": "./dist/components/responsive-modal.js",

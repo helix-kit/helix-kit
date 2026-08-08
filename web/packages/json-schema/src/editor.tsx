@@ -96,3 +96,6 @@ export const JsonEditor = ({
     }}
   />
 );
+
+export { SchemaEditor } from './ui/schema-editor';
+export type { SchemaEditorProps } from './ui/schema-editor';

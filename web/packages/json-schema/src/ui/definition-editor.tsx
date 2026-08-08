@@ -33,7 +33,7 @@ export const SchemaDefinitionEditor = ({
       onChange(createDefaultDefinition(nextType as SchemaType));
     }}
   >
-    <SelectTrigger className="h-8 w-[120px] border-y-0 text-xs">
+    <SelectTrigger className="h-8 w-[120px] rounded-none border-0 bg-transparent text-xs shadow-none dark:bg-transparent dark:hover:bg-transparent">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>
@@ -57,14 +57,14 @@ export const EnumEditor = ({
     {values.map((value, index) => (
       <div key={index} className="flex items-center gap-1.5">
         <Input
-          className="h-7 flex-1 text-xs"
+          className="border-input h-7 flex-1 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent"
           value={value}
           onChange={(event) => {
             onChange(values.map((entry, at) => (at === index ? event.target.value : entry)));
           }}
         />
         <Button
-          className="h-7 w-7 p-0"
+          className="h-7 w-7 rounded-none p-0"
           disabled={values.length <= 1}
           size="sm"
           type="button"
@@ -78,7 +78,7 @@ export const EnumEditor = ({
       </div>
     ))}
     <Button
-      className="h-7 text-xs"
+      className="border-input h-7 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent"
       size="sm"
       type="button"
       variant="outline"
@@ -115,7 +115,7 @@ export const LiteralEditor = ({
           }
         }}
       >
-        <SelectTrigger className="h-7 text-xs">
+        <SelectTrigger className="border-input h-7 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent dark:hover:bg-transparent">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -132,7 +132,7 @@ export const LiteralEditor = ({
             onChange(nextValue === 'true');
           }}
         >
-          <SelectTrigger className="h-7 text-xs">
+          <SelectTrigger className="border-input h-7 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent dark:hover:bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -142,7 +142,7 @@ export const LiteralEditor = ({
         </Select>
       ) : (
         <Input
-          className="h-7 text-xs"
+          className="border-input h-7 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent"
           type={literalType === 'number' ? 'number' : 'text'}
           value={String(value)}
           onChange={(event) => {
@@ -168,7 +168,7 @@ export const UnionEditor = ({
 }) => (
   <div className="space-y-2">
     {variants.map((variant, index) => (
-      <div key={index} className="border-input flex items-start gap-1.5 rounded border p-2">
+      <div key={index} className="border-input flex items-start gap-1.5 border p-2">
         <div className="flex-1">
           <SchemaDefinitionEditor
             value={variant}
@@ -178,7 +178,7 @@ export const UnionEditor = ({
           />
         </div>
         <Button
-          className="h-7 w-7 shrink-0 p-0"
+          className="h-7 w-7 shrink-0 rounded-none p-0"
           disabled={variants.length <= 1}
           size="sm"
           type="button"
@@ -192,7 +192,7 @@ export const UnionEditor = ({
       </div>
     ))}
     <Button
-      className="h-7 text-xs"
+      className="border-input h-7 rounded-none bg-transparent text-xs shadow-none dark:bg-transparent"
       size="sm"
       type="button"
       variant="outline"

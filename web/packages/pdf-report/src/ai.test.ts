@@ -2,13 +2,15 @@ import { composeAssistant, extendCapability } from '@helix/ai-kit';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { reportAuthoring, reportCapabilities, REPORT_ARTIFACTS } from './ai';
+import { reportAuthoring, reportCapabilities } from './ai';
+import { REPORT_ARTIFACTS } from './artifacts';
 import { defaultReportTemplate } from './defaults';
 
 import type { ReportTemplate } from './types';
 
-const toolNamed = (name: string) => {
-  const composed = composeAssistant(reportCapabilities({ template: defaultReportTemplate }));
+/** Builds the assistant around a fixed template, as a host holding live state would. */
+const toolNamed = (name: string, template: ReportTemplate = defaultReportTemplate) => {
+  const composed = composeAssistant(reportCapabilities({ template, current: () => template }));
   const tool = composed.tools.find((entry) => entry.name === name);
   if (tool === undefined) {
     throw new Error(`No tool named ${name}.`);
@@ -16,7 +18,8 @@ const toolNamed = (name: string) => {
   return tool;
 };
 
-const check = (template: ReportTemplate) => toolNamed('check_report').execute(template);
+// The checks read what the host has, so a case is set up by handing that in.
+const check = (template: ReportTemplate) => toolNamed('check_report', template).execute({});
 
 describe('the composed report assistant', () => {
   it('composes without a name or kind collision', () => {
@@ -44,7 +47,7 @@ describe('the composed report assistant', () => {
   it('streams the layout as patches and replaces everything else', () => {
     const byKind = new Map(REPORT_ARTIFACTS.map((artifact) => [artifact.kind, artifact.mode]));
 
-    expect(byKind.get('report.layout')).toBe('jsonl-patch');
+    expect(byKind.get('report.spec')).toBe('jsonl-patch');
     expect(byKind.get('report.code')).toBe('replace');
   });
 
@@ -111,6 +114,20 @@ describe('check_report', () => {
     expect(result.valid).toBe(false);
     expect(result.stage).toBe('pipeline');
     expect(result.error).toContain('reached the aggregation');
+  });
+
+  it('judges the host state, not what the model hands it', async () => {
+    // The drift this closes: a model that resends a template with its check can
+    // pass on a version other than the one it wrote, and the editor receives the
+    // other one. Arguments are ignored, so only what the host holds is judged.
+    const broken: ReportTemplate = { ...defaultReportTemplate, code: 'throw new Error("bad");' };
+    const tool = toolNamed('check_report', broken);
+
+    const result = (await tool.execute({ code: defaultReportTemplate.code })) as {
+      valid: boolean;
+    };
+
+    expect(result.valid).toBe(false);
   });
 
   it('reports an unknown component as a layout problem', async () => {

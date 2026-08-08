@@ -4,15 +4,8 @@
   "concurrency": "50",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**",
-        "out/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "out/**"],
       "env": [
         "DATABASE_URL",
         "NODE_ENV",
@@ -138,21 +131,15 @@
       ]
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ],
+      "dependsOn": ["^lint"],
       "outputs": []
     },
     "test": {
-      "dependsOn": [
-        "^test"
-      ],
+      "dependsOn": ["^test"],
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": [
-        "^typecheck"
-      ]
+      "dependsOn": ["^typecheck"]
     },
     "dev": {
       "cache": false,
@@ -295,10 +282,8 @@
     "VERCEL_URL",
     "WEB_APP_BASE_URL",
     "WORKFLOW_MAX_CONCURRENCY",
-    "WORKFLOW_SERVICE_TOKEN"
+    "WORKFLOW_SERVICE_TOKEN",
+    "HELIX_AI_MODEL"
   ],
-  "globalDependencies": [
-    "tsconfig.json",
-    "package.json"
-  ]
+  "globalDependencies": ["tsconfig.json", "package.json"]
 }

@@ -1,4 +1,6 @@
 export { composeAssistant, extendCapability, type ComposeOptions } from './compose';
+export { artifactTools, type ArtifactEmitter } from './artifact-tools';
+export { coerceArguments } from './coerce';
 export {
   createArtifactCollector,
   type ArtifactCollector,

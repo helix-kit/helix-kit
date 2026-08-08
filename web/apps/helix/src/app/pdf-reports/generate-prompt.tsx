@@ -2,100 +2,130 @@
 
 import { useRef, useState } from 'react';
 
+import { useChat } from '@ai-sdk/react';
+import { createArtifactCollector, type ArtifactEvent } from '@helix/ai-kit';
 import { Button } from '@helix/design-system/components/button';
 import { Textarea } from '@helix/design-system/components/textarea';
-import {
-  createReportStreamReader,
-  prettyJson,
-  type ReportTemplate,
-  type ReportSpec,
-} from '@helix/pdf-report';
-import { Loader2, Sparkles, Square } from 'lucide-react';
+import { applyReportPatchLine, REPORT_ARTIFACTS, type ReportTemplate } from '@helix/pdf-report';
+import { DefaultChatTransport } from 'ai';
+import { Check, Loader2, Sparkles, Square, Wrench, X } from 'lucide-react';
 
 const ENDPOINT = '/api/pdf-report/generate';
 
-// Provider errors arrive colourized for a terminal; the codes are noise here.
-// eslint-disable-next-line no-control-regex -- matching the escapes is the point
-const ANSI = /\u001b\[[0-9;]*m/g;
+/** Cheap models worth comparing on the same task, plus whatever the server defaults to. */
+const MODELS = [
+  { id: '', label: 'Server default' },
+  { id: 'deepseek/deepseek-v4-flash-0731', label: 'DeepSeek v4 Flash' },
+  { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek v4 Pro' },
+  { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5' },
+  { id: 'openai/gpt-5', label: 'GPT-5' },
+];
+
+type ToolRun = { id: string; name: string; state: 'running' | 'done' | 'failed' };
+
+const ToolIcon = ({ state }: { state: ToolRun['state'] }) => {
+  if (state === 'running') {
+    return <Loader2 className="size-3 shrink-0 animate-spin" />;
+  }
+  if (state === 'failed') {
+    return <X className="text-destructive size-3 shrink-0" />;
+  }
+  return <Check className="size-3 shrink-0 text-emerald-500" />;
+};
+
+const LABELS: Record<string, string> = {
+  write_report_input_schema: 'Input schema',
+  write_report_output_schema: 'Output schema',
+  write_report_code: 'Code',
+  write_report_spec: 'Layout',
+  write_report_demo_input: 'Preview data',
+  try_code: 'Running the code',
+  check_report: 'Checking the template',
+  check_schema: 'Checking a schema',
+};
 
 export const GeneratePrompt = ({
   currentDocument,
-  onGenerated,
+  onArtifact,
 }: {
-  /** Read as `currentSpec`, which puts the model into patch-only refine mode. */
+  /** Read when refining, so the model sees the template as it stands. */
   currentDocument: () => ReportTemplate;
-  /** Fires with the compiled spec once the stream completes. */
-  onGenerated: (spec: ReportSpec) => void;
+  /** Fires per artifact, as it arrives. */
+  onArtifact: (patch: Partial<ReportTemplate>) => void;
 }) => {
   const [prompt, setPrompt] = useState('');
-  const [spec, setSpec] = useState<ReportSpec | null>(null);
-  const [patchCount, setPatchCount] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
+  const [model, setModel] = useState('');
+  const [tools, setTools] = useState<ToolRun[]>([]);
+  const [note, setNote] = useState<string | null>(null);
 
-  const generate = async () => {
-    const controller = new AbortController();
-    controllerRef.current = controller;
-    const startingSpec = currentDocument().spec;
+  // Held across chunks: the layout arrives as patch lines that build on the spec
+  // as it stands, so each line applies to the result of the last.
+  const layoutRef = useRef<ReportTemplate['spec']>(currentDocument().spec);
 
-    try {
-      setIsStreaming(true);
-      setError(null);
-      setSpec(null);
-      setPatchCount(0);
-
-      const response = await fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt, currentSpec: startingSpec }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok || response.body === null) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? `Request failed with ${response.status}`);
-      }
-
-      // The model emits SpecStream — JSONL patch lines — optionally mixed with
-      // prose, so the reader classifies each line: patches build the spec, the
-      // rest is kept so a failure has something to say.
-      const stream = createReportStreamReader(startingSpec);
-      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
+  const collectorRef = useRef(
+    createArtifactCollector(REPORT_ARTIFACTS, {
+      // A kind's second segment is the template field it fills.
+      onValue: (kind, value) => {
+        const [, field] = kind.split('.');
+        if (field !== undefined) {
+          onArtifact({ [field]: value } as Partial<ReportTemplate>);
         }
+      },
+      onPatchLine: (_kind, line) => {
+        layoutRef.current = applyReportPatchLine(layoutRef.current, line);
+        onArtifact({ spec: { ...layoutRef.current } });
+      },
+      // A whole new layout builds from nothing: patched onto the previous one,
+      // its elements would survive and bind to fields the new code never returns.
+      onReset: () => {
+        layoutRef.current = { root: '', elements: {} } as ReportTemplate['spec'];
+      },
+      onUnknown: (kind, reason) => {
+        setNote(`Ignored an artifact for "${kind}": ${reason}.`);
+      },
+    }),
+  );
 
-        stream.push(value);
-        if (stream.patchCount() > 0) {
-          setPatchCount(stream.patchCount());
-          setSpec({ ...stream.spec() });
-        }
+  const { sendMessage, status, error, stop } = useChat({
+    id: 'pdf-report-generate',
+    transport: new DefaultChatTransport({ api: ENDPOINT }),
+    onData: (part) => {
+      if (part.type === 'data-artifact') {
+        collectorRef.current.handle(part.data as ArtifactEvent);
       }
-      stream.flush();
+    },
+    onToolCall: ({ toolCall }) => {
+      setTools((current) => [
+        ...current,
+        { id: toolCall.toolCallId, name: toolCall.toolName, state: 'running' },
+      ]);
+    },
+    onFinish: ({ message }) => {
+      // Every tool that never reported back is finished by the time the turn is.
+      setTools((current) =>
+        current.map((run) => (run.state === 'running' ? { ...run, state: 'done' } : run)),
+      );
+      const text = message.parts
+        .filter((part) => part.type === 'text')
+        .map((part) => ('text' in part ? part.text : ''))
+        .join('')
+        .trim();
+      setNote(text === '' ? null : text);
+    },
+  });
 
-      if (stream.patchCount() === 0) {
-        // ANSI is stripped here, not per chunk: an escape sequence can straddle a
-        // chunk boundary, so it only matches reliably on the whole string.
-        const message = stream.text().replace(ANSI, '').trim();
-        throw new Error(message === '' ? 'Empty response' : message);
-      }
+  const streaming = status === 'submitted' || status === 'streaming';
 
-      const finalSpec = stream.spec();
-      setPatchCount(stream.patchCount());
-      setSpec(finalSpec);
-      onGenerated(finalSpec);
-    } catch (nextError) {
-      if (!controller.signal.aborted) {
-        setError(nextError instanceof Error ? nextError.message : 'Generation failed');
-      }
-    } finally {
-      setIsStreaming(false);
-      controllerRef.current = null;
-    }
+  const generate = () => {
+    const template = currentDocument();
+    layoutRef.current = template.spec;
+    setTools([]);
+    setNote(null);
+
+    void sendMessage(
+      { text: prompt },
+      { body: { prompt, template, model: model === '' ? undefined : model } },
+    );
   };
 
   return (
@@ -103,7 +133,7 @@ export const GeneratePrompt = ({
       <div className="flex items-start gap-2 p-3">
         <Textarea
           className="min-h-[2.5rem] flex-1 resize-none"
-          placeholder="Describe the report to generate — e.g. “a monthly uptime summary grouped by profile, with a donut of faults”"
+          placeholder="Describe the report to generate — e.g. “a monthly uptime summary grouped by profile, with a bar chart of events”"
           rows={2}
           value={prompt}
           onChange={(event) => {
@@ -112,55 +142,58 @@ export const GeneratePrompt = ({
           onKeyDown={(event) => {
             if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
               event.preventDefault();
-              void generate();
+              generate();
             }
           }}
         />
-        {isStreaming ? (
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => {
-              controllerRef.current?.abort();
+        <div className="flex flex-col gap-2">
+          <select
+            className="border-input bg-background h-8 rounded-md border px-2 text-xs"
+            value={model}
+            onChange={(event) => {
+              setModel(event.target.value);
             }}
           >
-            <Square />
-            Stop
-          </Button>
-        ) : (
-          <Button
-            disabled={prompt.trim() === ''}
-            size="sm"
-            type="button"
-            onClick={() => {
-              void generate();
-            }}
-          >
-            <Sparkles />
-            Generate
-          </Button>
-        )}
+            {MODELS.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.label}
+              </option>
+            ))}
+          </select>
+          {streaming ? (
+            <Button size="sm" type="button" variant="outline" onClick={() => void stop()}>
+              <Square />
+              Stop
+            </Button>
+          ) : (
+            <Button disabled={prompt.trim() === ''} size="sm" type="button" onClick={generate}>
+              <Sparkles />
+              Generate
+            </Button>
+          )}
+        </div>
       </div>
 
-      {error === null ? null : (
+      {error === undefined ? null : (
         <div className="text-destructive border-destructive/30 bg-destructive/5 border-t px-3 py-2 font-mono text-xs whitespace-pre-wrap">
-          {error}
+          {error.message}
         </div>
       )}
 
-      {spec === null && !isStreaming ? null : (
-        <div className="border-t">
-          <div className="text-muted-foreground flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-[0.16em] uppercase">
-            {isStreaming ? <Loader2 className="size-3 animate-spin" /> : null}
-            Compiled spec
-            <span className="text-muted-foreground/70 normal-case">
-              {patchCount} patch{patchCount === 1 ? '' : 'es'} applied
-            </span>
-          </div>
-          <pre className="bg-muted/40 max-h-56 overflow-auto px-3 py-2 font-mono text-xs whitespace-pre-wrap">
-            {spec === null ? '…' : prettyJson(spec)}
-          </pre>
+      {tools.length === 0 && note === null ? null : (
+        <div className="space-y-1 border-t px-3 py-2">
+          {tools.map((run) => (
+            <div key={run.id} className="text-muted-foreground flex items-center gap-2 text-xs">
+              <ToolIcon state={run.state} />
+              {LABELS[run.name] ?? (
+                <span className="flex items-center gap-1">
+                  <Wrench className="size-3" />
+                  {run.name}
+                </span>
+              )}
+            </div>
+          ))}
+          {note === null ? null : <p className="text-muted-foreground pt-1 text-xs">{note}</p>}
         </div>
       )}
     </div>

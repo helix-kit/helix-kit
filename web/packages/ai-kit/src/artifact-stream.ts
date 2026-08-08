@@ -10,6 +10,8 @@ import type { ArtifactSpec } from './types';
 export type ArtifactEvent =
   /** A whole value, for `replace` artifacts. */
   | { type: 'artifact-value'; kind: string; value: unknown }
+  /** Discard what was built so far: what follows is a replacement, not an edit. */
+  | { type: 'artifact-reset'; kind: string }
   /** A fragment of a `jsonl-patch` artifact. Boundaries are arbitrary. */
   | { type: 'artifact-delta'; kind: string; chunk: string }
   /** No more of this artifact is coming. */
@@ -20,6 +22,8 @@ export type ArtifactHandlers = {
   onValue?: (kind: string, value: unknown) => void;
   /** One complete line of a `jsonl-patch` artifact. */
   onPatchLine?: (kind: string, line: string) => void;
+  /** Start this artifact over; the patches that follow build from nothing. */
+  onReset?: (kind: string) => void;
   onEnd?: (kind: string) => void;
   /** An event that does not match the artifact table. */
   onUnknown?: (kind: string, reason: string) => void;
@@ -65,6 +69,12 @@ export const createArtifactCollector = (
       const spec = byKind.get(event.kind);
       if (spec === undefined) {
         handlers.onUnknown?.(event.kind, 'not a declared artifact kind');
+        return;
+      }
+
+      if (event.type === 'artifact-reset') {
+        buffers.delete(event.kind);
+        handlers.onReset?.(event.kind);
         return;
       }
 

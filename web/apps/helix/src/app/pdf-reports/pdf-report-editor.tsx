@@ -4,12 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
 import { useTheme } from '@helix/design-system/components/theme-provider';
-import {
-  defaultReportTemplate,
-  fetchReportPdf,
-  type ReportSpec,
-  type ReportTemplate,
-} from '@helix/pdf-report';
+import { defaultReportTemplate, fetchReportPdf, type ReportTemplate } from '@helix/pdf-report';
 import { ReportTemplateEditor } from '@helix/pdf-report/editor';
 import { Cloud, Download, Loader2, MonitorSmartphone, RotateCcw } from 'lucide-react';
 
@@ -37,10 +32,12 @@ export const PdfReportEditor = () => {
   // A getter, so the prompt reads the live draft without re-rendering on keystrokes.
   const currentDocument = useCallback(() => documentRef.current, []);
 
-  const applyGenerated = useCallback((spec: ReportSpec) => {
-    // Generation rewrites the layout only; the schemas, code and preview data
-    // it was bound against are the author's and stay put.
-    const next = { ...documentRef.current, spec };
+  // Each artifact lands in its own pane as it arrives, rather than the editor
+  // waiting for a whole template. The editor is uncontrolled, so a remount is
+  // what makes a generated part visible — keyed on the artifact count so panes
+  // the model has not touched keep whatever the author had.
+  const applyArtifact = useCallback((patch: Partial<ReportTemplate>) => {
+    const next = { ...documentRef.current, ...patch };
     documentRef.current = next;
     setEditorDocument(next);
     setEditorKey((key) => key + 1);
@@ -126,7 +123,7 @@ export const PdfReportEditor = () => {
         </div>
       </div>
 
-      <GeneratePrompt currentDocument={currentDocument} onGenerated={applyGenerated} />
+      <GeneratePrompt currentDocument={currentDocument} onArtifact={applyArtifact} />
 
       <ReportTemplateEditor
         key={editorKey}

@@ -1,3 +1,5 @@
+import { composeAssistant } from '@helix/ai-kit';
+import { toToolSet } from '@helix/ai-kit/ai-sdk';
 import { saveConversation } from '@helix/backend/agent';
 import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
 import {
@@ -10,8 +12,8 @@ import {
 } from 'ai';
 
 import { env } from '@/lib/env';
-import { buildSystemPrompt } from '@/server/agent/system-prompt';
-import { buildAgentTools } from '@/server/agent/tools';
+import { assistantCapabilities } from '@/server/agent/capabilities';
+import { buildIntro } from '@/server/agent/system-prompt';
 import { db } from '@/server/db';
 import { appRouter, createTRPCContext } from '@/server/trpc';
 
@@ -83,12 +85,19 @@ export const POST = async (req: Request): Promise<Response> => {
     );
   }
 
+  // Composed per request: the tool set is bound to this user's caller, so what
+  // the assistant can reach is exactly what they can.
+  const assistant = composeAssistant(
+    assistantCapabilities({ db, caller, conversationId, userId: user.id }),
+    { intro: buildIntro(user) },
+  );
+
   const startedAt = Date.now();
   const result = streamText({
     model: gateway(env.AGENT_MODEL),
-    system: buildSystemPrompt(user),
+    system: assistant.system,
     messages: await convertToModelMessages(messages),
-    tools: buildAgentTools({ db, caller, conversationId, userId: user.id }),
+    tools: toToolSet(assistant.tools),
     stopWhen: stepCountIs(MAX_STEPS),
     // Meter this turn against the platform-wide AI ledger. `totalUsage` covers
     // every step of the tool loop, not just the last model call, and metering

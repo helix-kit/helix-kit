@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultReportTemplate } from './defaults';
-import { createReportStreamCompiler, createReportStreamReader } from './stream';
+import { applyReportPatchLine } from './stream';
 import { validateReportSpec } from './validate';
 
 import type { ReportSpec } from './types';
 
-/** One SpecStream line per array entry, as a model emits them. */
-const jsonl = (lines: unknown[]): string => lines.map((line) => JSON.stringify(line)).join('\n');
+const EMPTY = {} as ReportSpec;
+
+/** One SpecStream line, as a model emits it. */
+const line = (patch: unknown): string => JSON.stringify(patch);
 
 const GENERATED = [
   { op: 'add', path: '/root', value: 'doc' },
@@ -20,158 +21,79 @@ const GENERATED = [
   {
     op: 'add',
     path: '/elements/page',
-    value: { type: 'Page', props: { size: 'A4' }, children: ['tile'] },
+    value: { type: 'Page', props: { size: 'A4' }, children: ['title'] },
   },
   {
     op: 'add',
-    path: '/elements/tile',
-    value: {
-      type: 'MetricCard',
-      props: { label: 'Total Faults', value: { $state: '/totalFaults' } },
-      children: [],
-    },
+    path: '/elements/title',
+    value: { type: 'Heading', props: { text: 'Fleet' }, children: [] },
   },
 ];
 
-describe('createReportStreamCompiler', () => {
-  it('compiles a patch stream into a spec', () => {
-    const compiler = createReportStreamCompiler();
-    const { newPatches } = compiler.push(`${jsonl(GENERATED)}\n`);
+const applyAll = (patches: unknown[]): ReportSpec =>
+  patches.reduce<ReportSpec>((spec, patch) => applyReportPatchLine(spec, line(patch)), EMPTY);
 
-    expect(newPatches).toHaveLength(GENERATED.length);
-    expect(compiler.getResult()).toEqual({
-      root: 'doc',
-      elements: {
-        doc: { type: 'Document', props: {}, children: ['page'] },
-        page: { type: 'Page', props: { size: 'A4' }, children: ['tile'] },
-        tile: {
-          type: 'MetricCard',
-          props: { label: 'Total Faults', value: { $state: '/totalFaults' } },
-          children: [],
-        },
-      },
-    });
+describe('applyReportPatchLine', () => {
+  it('builds a spec one line at a time', () => {
+    const spec = applyAll(GENERATED);
+
+    expect(spec.root).toBe('doc');
+    expect(Object.keys(spec.elements)).toEqual(['doc', 'page', 'title']);
   });
 
-  it('produces a spec the renderer accepts', () => {
-    const compiler = createReportStreamCompiler();
-    compiler.push(`${jsonl(GENERATED)}\n`);
-
-    expect(validateReportSpec(compiler.getResult())).toEqual([]);
+  it('produces a spec that validates', () => {
+    expect(validateReportSpec(applyAll(GENERATED))).toEqual([]);
   });
 
-  it('builds up progressively, so a partial stream is still a usable spec', () => {
-    const compiler = createReportStreamCompiler();
-    const seen: number[] = [];
+  it('returns a new object, so a host can render each step', () => {
+    const first = applyReportPatchLine(EMPTY, line(GENERATED[0]));
+    const second = applyReportPatchLine(first, line(GENERATED[1]));
 
-    // Split mid-line to mimic chunk boundaries falling anywhere.
-    const text = `${jsonl(GENERATED)}\n`;
-    const size = 17;
-    for (let index = 0; index < text.length; index += size) {
-      const { newPatches } = compiler.push(text.slice(index, index + size));
-      if (newPatches.length > 0) {
-        seen.push(newPatches.length);
-      }
-    }
-
-    expect(seen.reduce((total, count) => total + count, 0)).toBe(GENERATED.length);
-    expect(compiler.getResult().root).toBe('doc');
+    expect(second).not.toBe(first);
   });
 
-  it('refines a seeded spec rather than starting empty', () => {
-    const compiler = createReportStreamCompiler(defaultReportTemplate.spec);
-
-    compiler.push(
-      `${jsonl([{ op: 'replace', path: '/elements/title/props/level', value: 'h2' }])}\n`,
+  it('edits what earlier lines put there', () => {
+    const spec = applyReportPatchLine(
+      applyAll(GENERATED),
+      line({ op: 'replace', path: '/elements/title/props/text', value: 'Renamed' }),
     );
 
-    const result = compiler.getResult();
-    // The patch landed…
-    const title = result.elements.title as unknown as { props: { level: string } };
-    expect(title.props.level).toBe('h2');
-    // …and the rest of the seeded template survived.
-    expect(Object.keys(result.elements)).toEqual(
-      Object.keys(defaultReportTemplate.spec.elements as Record<string, unknown>),
+    const title = spec.elements.title as unknown as { props: { text: string } };
+    expect(title.props.text).toBe('Renamed');
+  });
+
+  it('ignores a line that is not a patch, since prose shares the channel', () => {
+    const spec = applyReportPatchLine(applyAll(GENERATED), 'Here is the layout:');
+
+    expect(spec.root).toBe('doc');
+  });
+
+  it('leaves the spec it was given untouched', () => {
+    // A patch writes into nested paths, so a shallow copy would reach through
+    // into the caller's objects — silently rewriting the template that was used
+    // as a starting point, for the rest of the process.
+    const base = applyAll(GENERATED);
+    const before = JSON.stringify(base);
+
+    applyReportPatchLine(
+      base,
+      line({ op: 'replace', path: '/elements/title/props/text', value: 'Changed' }),
     );
+
+    expect(JSON.stringify(base)).toBe(before);
   });
 
-  it('leaves the seed untouched', () => {
-    const before = JSON.stringify(defaultReportTemplate.spec);
-    const compiler = createReportStreamCompiler(defaultReportTemplate.spec);
-
-    compiler.push(`${jsonl([{ op: 'replace', path: '/root', value: 'other' }])}\n`);
-
-    expect(JSON.stringify(defaultReportTemplate.spec)).toBe(before);
-  });
-
-  it('silently drops prose, which is why the reader exists', () => {
-    const compiler = createReportStreamCompiler();
-    const { newPatches } = compiler.push('[stream error] Unauthenticated request to AI Gateway.\n');
-
-    expect(newPatches).toHaveLength(0);
-    expect(compiler.getResult() as ReportSpec | Record<string, never>).toEqual({});
-  });
-});
-
-describe('createReportStreamReader', () => {
-  it('separates patches from prose in one stream', () => {
-    const stream = createReportStreamReader();
-
-    stream.push('Here is the report you asked for.\n');
-    stream.push(`${jsonl(GENERATED)}\n`);
-    stream.push('Let me know if you want a chart.\n');
-    stream.flush();
-
-    expect(stream.patchCount()).toBe(GENERATED.length);
-    expect(stream.spec().root).toBe('doc');
-    expect(stream.text()).toBe(
-      'Here is the report you asked for.\nLet me know if you want a chart.',
+  it('does not share nested objects with its result', () => {
+    const base = applyAll(GENERATED);
+    const next = applyReportPatchLine(
+      base,
+      line({ op: 'add', path: '/elements/extra', value: {} }),
     );
+
+    expect(next.elements).not.toBe(base.elements);
   });
 
-  it('keeps a relayed error, which the compiler would have thrown away', () => {
-    const stream = createReportStreamReader();
-
-    stream.push('[stream error] Unauthenticated request to AI Gateway.\n');
-    stream.flush();
-
-    expect(stream.patchCount()).toBe(0);
-    expect(stream.text()).toContain('Unauthenticated request to AI Gateway');
-  });
-
-  it('reads patches out of a ```spec fence', () => {
-    const stream = createReportStreamReader();
-
-    stream.push('Sure.\n```spec\n');
-    stream.push(`${jsonl(GENERATED)}\n`);
-    stream.push('```\n');
-    stream.flush();
-
-    expect(stream.patchCount()).toBe(GENERATED.length);
-    expect(stream.text()).toBe('Sure.');
-  });
-
-  it('survives chunk boundaries falling mid-line', () => {
-    const stream = createReportStreamReader();
-    const text = `${jsonl(GENERATED)}\n`;
-
-    for (let index = 0; index < text.length; index += 13) {
-      stream.push(text.slice(index, index + 13));
-    }
-    stream.flush();
-
-    expect(stream.patchCount()).toBe(GENERATED.length);
-    expect(validateReportSpec(stream.spec())).toEqual([]);
-  });
-
-  it('refines a seeded spec without mutating the seed', () => {
-    const before = JSON.stringify(defaultReportTemplate.spec);
-    const stream = createReportStreamReader(defaultReportTemplate.spec);
-
-    stream.push(`${jsonl([{ op: 'replace', path: '/root', value: 'other' }])}\n`);
-    stream.flush();
-
-    expect(stream.spec().root).toBe('other');
-    expect(JSON.stringify(defaultReportTemplate.spec)).toBe(before);
+  it('ignores an empty line', () => {
+    expect(applyReportPatchLine(applyAll(GENERATED), '').root).toBe('doc');
   });
 });

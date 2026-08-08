@@ -1,47 +1,14 @@
 import { codeExecutorAuthoring } from '@helix/code-executor/ai';
 import { jsonSchemaAuthoring } from '@helix/json-schema/ai';
 
+import { REPORT_ARTIFACTS } from './artifacts';
 import { reportCatalog } from './catalog';
 import { prepareReport } from './pipeline';
+import { renderReportToBuffer } from './server';
 import { formatReportSpecIssues, validateReportSpec } from './validate';
 
 import type { ReportTemplate } from './types';
-import type { AiCapability, ArtifactSpec, PromptSection } from '@helix/ai-kit';
-
-/**
- * The four parts of a template, as the model addresses them.
- *
- * Named artifacts rather than one blob because they are edited in four different
- * panes and generated at different moments — a refine that only changes the
- * layout should not resend the code.
- */
-export const REPORT_ARTIFACTS: ArtifactSpec[] = [
-  {
-    kind: 'report.inputSchema',
-    description: 'JSON Schema of the data the report is given.',
-    mode: 'replace',
-  },
-  {
-    kind: 'report.outputSchema',
-    description: 'JSON Schema of what the code returns, which the layout binds to.',
-    mode: 'replace',
-  },
-  {
-    kind: 'report.code',
-    description: 'The function body turning the input into the output.',
-    mode: 'replace',
-  },
-  {
-    kind: 'report.layout',
-    description: 'The page layout, streamed as SpecStream patch operations.',
-    mode: 'jsonl-patch',
-  },
-  {
-    kind: 'report.demoInput',
-    description: 'Sample input matching the input schema, used for the preview.',
-    mode: 'replace',
-  },
-];
+import type { AiCapability, PromptSection } from '@helix/ai-kit';
 
 const TWO_TIER = `A report template is two tiers, and keeping them apart is the whole design.
 
@@ -63,6 +30,16 @@ Every binding is checked against the output schema before anything renders. A po
 export type ReportAssistantOptions = {
   /** The template being worked on, when refining rather than starting fresh. */
   template?: ReportTemplate;
+  /**
+   * The template as it stands, including everything written this turn.
+   *
+   * The checks read this rather than taking a template as arguments. A model
+   * that resends the whole template with each check is both expensive and free
+   * to send something other than what it wrote — and the divergence goes
+   * unnoticed, because the check passes on the version it was handed while the
+   * version that reaches the editor is the other one.
+   */
+  current?: () => ReportTemplate;
 };
 
 /**
@@ -77,7 +54,8 @@ export type ReportAssistantOptions = {
  * see the other's half, so a binding pointing at a field the code never produces
  * is invisible to both and renders as blank space in a delivered document.
  */
-export const reportAuthoring = (): AiCapability => {
+export const reportAuthoring = (options: ReportAssistantOptions = {}): AiCapability => {
+  const { current } = options;
   const sections: PromptSection[] = [
     { id: 'report.tiers', title: 'How a report is built', body: TWO_TIER },
     { id: 'report.bindings', title: 'Binding values into the layout', body: BINDINGS },
@@ -92,21 +70,13 @@ export const reportAuthoring = (): AiCapability => {
       {
         name: 'check_report',
         description:
-          'Runs a complete template end to end: executes the code against its demo input, validates the output against the output schema, and checks every layout binding. Returns what the code produced. Use it before finishing, and after every fix.',
-        parameters: {
-          type: 'object',
-          properties: {
-            inputSchema: { type: 'object' },
-            outputSchema: { type: 'object' },
-            code: { type: 'string' },
-            spec: { type: 'object' },
-            demoInput: {},
-          },
-          required: ['inputSchema', 'outputSchema', 'code', 'spec', 'demoInput'],
-          additionalProperties: false,
-        },
-        execute: async (raw) => {
-          const candidate = raw as ReportTemplate;
+          'Checks everything written so far, end to end: runs the code against the demo input, validates its output against the output schema, checks every layout binding, and renders the document. Takes no arguments — it reads what you have written. Use it before finishing, and after every fix.',
+        parameters: { type: 'object', properties: {}, additionalProperties: false },
+        execute: async () => {
+          const candidate = current?.();
+          if (candidate === undefined) {
+            return { valid: false, stage: 'host', error: 'No template has been written yet.' };
+          }
 
           const issues = validateReportSpec(candidate.spec);
           if (issues.length > 0) {
@@ -115,6 +85,11 @@ export const reportAuthoring = (): AiCapability => {
 
           try {
             const prepared = await prepareReport(candidate);
+            // Rendered, not just prepared. A spec can satisfy the catalog and
+            // still fail in react-pdf — a chart handed the wrong shape, a table
+            // whose rows are not arrays — and a check that stops short of
+            // drawing reports success for a document nobody can open.
+            await renderReportToBuffer(candidate);
             return {
               valid: true,
               // The values the page will draw. A model that can see these
@@ -127,7 +102,7 @@ export const reportAuthoring = (): AiCapability => {
             return {
               valid: false,
               stage: 'pipeline',
-              error: error instanceof Error ? error.message : 'The template did not run.',
+              error: error instanceof Error ? error.message : 'The template did not run or render.',
             };
           }
         },
@@ -146,13 +121,23 @@ export const reportCapabilities = (options: ReportAssistantOptions = {}): AiCapa
   const { template } = options;
 
   return [
-    reportAuthoring(),
+    reportAuthoring(options),
     jsonSchemaAuthoring(),
     codeExecutorAuthoring({
       id: 'code',
       inputSchema: template?.inputSchema,
       outputSchema: template?.outputSchema,
       sampleInput: template?.demoInput,
+      // Read live, so code written after a schema change is checked against the
+      // schema the model just wrote rather than the one it replaced.
+      resolve: () => {
+        const now = options.current?.();
+        return {
+          inputSchema: now?.inputSchema,
+          outputSchema: now?.outputSchema,
+          sampleInput: now?.demoInput,
+        };
+      },
     }),
   ];
 };

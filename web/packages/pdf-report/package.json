@@ -13,9 +13,10 @@
     "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/*.live.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:live": "vitest run ai.live"
   },
   "exports": {
     ".": {
@@ -91,6 +92,7 @@
     "@types/react-dom": "^19.2.3",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
+    "ai": "^7.0.42",
     "eslint": "^10.6.0",
     "tsdown": "^0.22.4",
     "typescript": "^7.0.2",

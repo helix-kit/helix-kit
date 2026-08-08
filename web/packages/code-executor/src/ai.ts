@@ -24,23 +24,42 @@ const TRY_RESULT_SCHEMA: JSONSchema.JSONSchema = {
   type: 'object',
   properties: {
     code: { type: 'string', description: 'The code to run — a function body.' },
-    input: { description: 'Input to run against. Omit to use the sample input.' },
+    input: {
+      anyOf: [
+        { type: 'object' },
+        { type: 'array' },
+        { type: 'string' },
+        { type: 'number' },
+        { type: 'boolean' },
+      ],
+      description: 'Input to run against. Omit to use the sample input.',
+    },
   },
   required: ['code'],
   additionalProperties: false,
 };
 
-export type CodeAuthoringOptions = {
-  /** Shape bound as `input`; also what the generated declarations describe. */
+export type CodeEnvironment = {
   inputSchema?: JSONSchema._JSONSchema;
-  /** Shape the code must return. Checked when the try-it tool runs. */
   outputSchema?: JSONSchema._JSONSchema;
-  functions?: HostFunctions;
   /** Input the try-it tool uses when the model does not supply one. */
   sampleInput?: unknown;
+};
+
+export type CodeAuthoringOptions = CodeEnvironment & {
+  functions?: HostFunctions;
   limits?: ExecutionLimits;
   /** Distinguishes ids and the tool name when two executors are composed. */
   id?: string;
+  /**
+   * Reads the environment as it stands when the tool runs, rather than as it was
+   * when the capability was built.
+   *
+   * Necessary wherever the model can change the environment mid-turn: having
+   * rewritten the input schema, it would otherwise have its code checked against
+   * the schema it replaced, and be told its correct code is wrong.
+   */
+  resolve?: () => CodeEnvironment;
 };
 
 /**
@@ -53,7 +72,15 @@ export type CodeAuthoringOptions = {
  * within the same turn.
  */
 export const codeExecutorAuthoring = (options: CodeAuthoringOptions = {}): AiCapability => {
-  const { id = 'code', inputSchema, outputSchema, functions, sampleInput, limits = {} } = options;
+  const {
+    id = 'code',
+    inputSchema,
+    outputSchema,
+    functions,
+    sampleInput,
+    limits = {},
+    resolve,
+  } = options;
 
   const sections: PromptSection[] = [
     { id: `${id}.contract`, title: 'Writing the code', body: GUEST_CONTRACT },
@@ -72,10 +99,17 @@ export const codeExecutorAuthoring = (options: CodeAuthoringOptions = {}): AiCap
     parameters: TRY_RESULT_SCHEMA,
     execute: async (raw) => {
       const { code, input } = raw as { code: string; input?: unknown };
+      const current = resolve?.() ?? {};
+      const environment = {
+        inputSchema: current.inputSchema ?? inputSchema,
+        outputSchema: current.outputSchema ?? outputSchema,
+        sampleInput: current.sampleInput ?? sampleInput,
+      };
+
       const result = await executeCode(code, {
-        input: input === undefined ? sampleInput : input,
-        inputSchema,
-        outputSchema,
+        input: input === undefined ? environment.sampleInput : input,
+        inputSchema: environment.inputSchema,
+        outputSchema: environment.outputSchema,
         functions,
         limits,
       });

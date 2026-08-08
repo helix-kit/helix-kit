@@ -59,41 +59,7 @@ export const agentToolCall = pgTable(
   ],
 );
 
-/**
- * Per-turn AI usage — a first-class usage metric (tokens, tool calls, model). One
- * row per completed chat turn, written from the chat route's `streamText.onFinish`.
- * `conversationId` is a soft reference (no FK) so usage history survives conversation
- * deletion; a user's usage is removed only when the user is deleted.
- */
-export const agentUsage = pgTable(
-  'agent_usage',
-  {
-    id: text('id').primaryKey(),
-    userId: text('user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    conversationId: text('conversation_id'),
-    model: text('model').notNull(),
-    inputTokens: integer('input_tokens').notNull().default(0),
-    outputTokens: integer('output_tokens').notNull().default(0),
-    totalTokens: integer('total_tokens').notNull().default(0),
-    reasoningTokens: integer('reasoning_tokens'),
-    cachedInputTokens: integer('cached_input_tokens'),
-    toolCalls: integer('tool_calls').notNull().default(0),
-    steps: integer('steps').notNull().default(1),
-    durationMs: integer('duration_ms'),
-    finishReason: text('finish_reason'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => [
-    index('agent_usage_user_idx').on(table.userId, table.createdAt),
-    index('agent_usage_created_idx').on(table.createdAt),
-  ],
-);
-
 export type AgentConversation = typeof agentConversation.$inferSelect;
 export type NewAgentConversation = typeof agentConversation.$inferInsert;
 export type AgentToolCall = typeof agentToolCall.$inferSelect;
 export type NewAgentToolCall = typeof agentToolCall.$inferInsert;
-export type AgentUsage = typeof agentUsage.$inferSelect;
-export type NewAgentUsage = typeof agentUsage.$inferInsert;

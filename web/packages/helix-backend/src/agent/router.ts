@@ -1,17 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DatabaseClient } from '../db';
 
-import {
-  agentConversation,
-  agentToolCall,
-  agentUsage,
-  type NewAgentToolCall,
-  type NewAgentUsage,
-} from '../db/agent-schema';
+import { agentConversation, agentToolCall, type NewAgentToolCall } from '../db/agent-schema';
 import { user as userTable } from '../db/auth-schema';
 import { createRouterFactory, TRPCError } from '../trpc';
 
@@ -29,11 +23,6 @@ export type AgentContext = Readonly<{
 
 const TITLE_MAX_LENGTH = 200;
 const LIST_LIMIT = 100;
-const USAGE_WINDOW_DAYS = 30;
-const MS_PER_DAY = 86_400_000;
-const USAGE_USER_LIMIT = 200;
-
-const asInt = (column: unknown) => sql<number>`coalesce(sum(${column}), 0)::int`;
 
 // The conversation-management API is not itself an agent tool — the agent
 // shouldn't manage its own chat threads. Kept off the tool surface.
@@ -48,103 +37,7 @@ export const agentRouter = createRouterFactory<AgentContext>()((t) => {
     return next({ ctx: { ...ctx, user: ctx.user } });
   });
 
-  const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-    if (!ctx.adminRoles.includes(ctx.user.role ?? '')) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: 'Sysadmin access required' });
-    }
-    return next({ ctx });
-  });
-
-  const windowStart = () => new Date(Date.now() - USAGE_WINDOW_DAYS * MS_PER_DAY);
-
   return t.router({
-    // The signed-in user's own AI usage: lifetime totals, by-model, and a daily series.
-    myUsage: protectedProcedure.meta(NOT_A_TOOL).query(async ({ ctx }) => {
-      const scope = eq(agentUsage.userId, ctx.user.id);
-      const [totals] = await ctx.db
-        .select({
-          requests: sql<number>`count(*)::int`,
-          inputTokens: asInt(agentUsage.inputTokens),
-          outputTokens: asInt(agentUsage.outputTokens),
-          totalTokens: asInt(agentUsage.totalTokens),
-          toolCalls: asInt(agentUsage.toolCalls),
-        })
-        .from(agentUsage)
-        .where(scope);
-      const byModel = await ctx.db
-        .select({
-          model: agentUsage.model,
-          requests: sql<number>`count(*)::int`,
-          totalTokens: asInt(agentUsage.totalTokens),
-        })
-        .from(agentUsage)
-        .where(scope)
-        .groupBy(agentUsage.model)
-        .orderBy(desc(asInt(agentUsage.totalTokens)));
-      const daily = await ctx.db
-        .select({
-          day: sql<string>`to_char(date_trunc('day', ${agentUsage.createdAt}), 'YYYY-MM-DD')`,
-          requests: sql<number>`count(*)::int`,
-          totalTokens: asInt(agentUsage.totalTokens),
-        })
-        .from(agentUsage)
-        .where(and(scope, gte(agentUsage.createdAt, windowStart())))
-        .groupBy(sql`date_trunc('day', ${agentUsage.createdAt})`)
-        .orderBy(sql`date_trunc('day', ${agentUsage.createdAt})`);
-      return {
-        totals: totals ?? {
-          requests: 0,
-          inputTokens: 0,
-          outputTokens: 0,
-          totalTokens: 0,
-          toolCalls: 0,
-        },
-        byModel,
-        daily,
-      };
-    }),
-
-    // Platform-wide AI usage (admin): totals, per-user breakdown, by-model.
-    usageOverview: adminProcedure.meta(NOT_A_TOOL).query(async ({ ctx }) => {
-      const [totals] = await ctx.db
-        .select({
-          requests: sql<number>`count(*)::int`,
-          totalTokens: asInt(agentUsage.totalTokens),
-          toolCalls: asInt(agentUsage.toolCalls),
-          activeUsers: sql<number>`count(distinct ${agentUsage.userId})::int`,
-        })
-        .from(agentUsage);
-      const byUser = await ctx.db
-        .select({
-          userId: agentUsage.userId,
-          name: userTable.name,
-          email: userTable.email,
-          requests: sql<number>`count(*)::int`,
-          totalTokens: asInt(agentUsage.totalTokens),
-          toolCalls: asInt(agentUsage.toolCalls),
-          lastUsedAt: sql<string>`max(${agentUsage.createdAt})`,
-        })
-        .from(agentUsage)
-        .innerJoin(userTable, eq(agentUsage.userId, userTable.id))
-        .groupBy(agentUsage.userId, userTable.name, userTable.email)
-        .orderBy(desc(asInt(agentUsage.totalTokens)))
-        .limit(USAGE_USER_LIMIT);
-      const byModel = await ctx.db
-        .select({
-          model: agentUsage.model,
-          requests: sql<number>`count(*)::int`,
-          totalTokens: asInt(agentUsage.totalTokens),
-        })
-        .from(agentUsage)
-        .groupBy(agentUsage.model)
-        .orderBy(desc(asInt(agentUsage.totalTokens)));
-      return {
-        totals: totals ?? { requests: 0, totalTokens: 0, toolCalls: 0, activeUsers: 0 },
-        byUser,
-        byModel,
-      };
-    }),
-
     listConversations: protectedProcedure.meta(NOT_A_TOOL).query(async ({ ctx }) =>
       ctx.db
         .select({
@@ -255,12 +148,4 @@ export const recordToolCall = async (
   entry: Omit<NewAgentToolCall, 'id'>,
 ): Promise<void> => {
   await db.insert(agentToolCall).values({ id: randomUUID(), ...entry });
-};
-
-/** Record one chat turn's AI usage metrics (tokens, tool calls, model, timing). */
-export const recordUsage = async (
-  db: DatabaseClient,
-  entry: Omit<NewAgentUsage, 'id'>,
-): Promise<void> => {
-  await db.insert(agentUsage).values({ id: randomUUID(), ...entry });
 };

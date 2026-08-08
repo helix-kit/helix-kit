@@ -1,4 +1,5 @@
-import { recordUsage, saveConversation } from '@helix/backend/agent';
+import { saveConversation } from '@helix/backend/agent';
+import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
 import {
   convertToModelMessages,
   createIdGenerator,
@@ -17,9 +18,16 @@ import { appRouter, createTRPCContext } from '@/server/trpc';
 // Cap on agent reasoning/tool steps per turn.
 const MAX_STEPS = 16;
 
+/** Which AI surface this usage belongs to, for per-feature spend breakdowns. */
+const FEATURE = 'assistant';
+
 const STATUS = {
   badRequest: 400,
   unauthorized: 401,
+  forbidden: 403,
+  // `402 Payment Required` distinguishes "out of credits" from "not allowed", so
+  // the client can word the two cases differently.
+  paymentRequired: 402,
   notFound: 404,
   serviceUnavailable: 503,
 } as const;
@@ -66,6 +74,15 @@ export const POST = async (req: Request): Promise<Response> => {
     return json({ error: 'Conversation not found.' }, STATUS.notFound);
   }
 
+  // Refuse before spending anything if the user is disabled or out of credits.
+  const access = await checkAiAccess(db, user.id);
+  if (!access.allowed) {
+    return json(
+      { error: access.message },
+      access.reason === 'out_of_credits' ? STATUS.paymentRequired : STATUS.forbidden,
+    );
+  }
+
   const startedAt = Date.now();
   const result = streamText({
     model: gateway(env.AGENT_MODEL),
@@ -73,30 +90,22 @@ export const POST = async (req: Request): Promise<Response> => {
     messages: await convertToModelMessages(messages),
     tools: buildAgentTools({ db, caller, conversationId, userId: user.id }),
     stopWhen: stepCountIs(MAX_STEPS),
-    // Capture first-class usage metrics for this turn. Never let a metrics write
-    // break the chat response.
+    // Meter this turn against the platform-wide AI ledger. `totalUsage` covers
+    // every step of the tool loop, not just the last model call, and metering
+    // never throws — it must not break the answer the user already received.
     onFinish: async ({ totalUsage, finishReason, steps }) => {
-      try {
-        const toolCalls = steps.reduce((count, step) => count + step.toolCalls.length, 0);
-        // reasoning/cached token counts are provider-dependent and not on the base type.
-        const extra = totalUsage as { reasoningTokens?: number; cachedInputTokens?: number };
-        await recordUsage(db, {
-          userId: user.id,
-          conversationId,
-          model: env.AGENT_MODEL,
-          inputTokens: totalUsage.inputTokens ?? 0,
-          outputTokens: totalUsage.outputTokens ?? 0,
-          totalTokens: totalUsage.totalTokens ?? 0,
-          reasoningTokens: extra.reasoningTokens ?? null,
-          cachedInputTokens: extra.cachedInputTokens ?? null,
-          toolCalls,
-          steps: steps.length,
-          durationMs: Date.now() - startedAt,
-          finishReason,
-        });
-      } catch {
-        // Usage metrics are best-effort.
-      }
+      await meterSdkUsage(db, {
+        userId: user.id,
+        feature: FEATURE,
+        model: env.AGENT_MODEL,
+        referenceId: conversationId,
+        gateway,
+        usage: totalUsage,
+        toolCalls: steps.reduce((count, step) => count + step.toolCalls.length, 0),
+        steps: steps.length,
+        durationMs: Date.now() - startedAt,
+        finishReason,
+      });
     },
   });
 

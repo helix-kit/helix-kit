@@ -2,6 +2,7 @@ import 'server-only';
 
 import { accountRouter } from '@helix/backend/account';
 import { agentRouter, findAgentUser } from '@helix/backend/agent';
+import { aiUsageRouter } from '@helix/backend/ai-usage';
 import { devicesAdminRouter } from '@helix/backend/devices';
 import { featuresAdminRouter } from '@helix/backend/features';
 import { iceRouter, type TurnSettings } from '@helix/backend/ice';
@@ -70,6 +71,7 @@ export const { router: appRouter } = createRootRouter({
   deviceCertificates: deviceCertificatesAdminRouter,
   ice: iceRouter,
   agent: agentRouter,
+  aiUsage: aiUsageRouter,
   account: accountRouter,
 });
 export type AppRouter = typeof appRouter;

@@ -30,6 +30,10 @@
       "import": "./src/agent/index.ts",
       "types": "./src/agent/index.ts"
     },
+    "./ai-usage": {
+      "import": "./src/ai-usage/index.ts",
+      "types": "./src/ai-usage/index.ts"
+    },
     "./db": {
       "import": "./src/db/index.ts",
       "types": "./src/db/index.ts"
@@ -145,6 +149,10 @@
       "./agent": {
         "import": "./dist/agent/index.js",
         "types": "./dist/agent/index.d.ts"
+      },
+      "./ai-usage": {
+        "import": "./dist/ai-usage/index.js",
+        "types": "./dist/ai-usage/index.d.ts"
       },
       "./db": {
         "import": "./dist/db/index.js",

@@ -4,10 +4,12 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@helix/design-system/components/button';
 import { useTheme } from '@helix/design-system/components/theme-provider';
-import { defaultReportDocument, type ReportDocument } from '@helix/pdf-report';
+import { defaultReportDocument, type ReportDocument, type ReportSpec } from '@helix/pdf-report';
 import { fetchReportPdf } from '@helix/pdf-report/client';
 import { ReportTemplateEditor } from '@helix/pdf-report/editor';
-import { Download, Loader2, RotateCcw } from 'lucide-react';
+import { Cloud, Download, Loader2, MonitorSmartphone, RotateCcw } from 'lucide-react';
+
+import { GeneratePrompt } from './generate-prompt';
 
 const DOWNLOAD_FILENAME = 'helix-report.pdf';
 const OBJECT_URL_REVOKE_DELAY_MS = 60_000;
@@ -16,13 +18,28 @@ export const PdfReportEditor = () => {
   const { resolvedTheme } = useTheme();
   // Remounting the editor is how a reset discards the Monaco drafts.
   const [editorKey, setEditorKey] = useState(0);
+  // Seeds the (uncontrolled) editor; generation swaps it and bumps the key.
+  const [editorDocument, setEditorDocument] = useState<ReportDocument>(defaultReportDocument);
   const [parseError, setParseError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [renderMode, setRenderMode] = useState<'client' | 'server'>('client');
   const documentRef = useRef<ReportDocument>(defaultReportDocument);
 
   const handleChange = useCallback((next: ReportDocument) => {
     documentRef.current = next;
+  }, []);
+
+  // A getter, so the prompt reads the live draft without re-rendering on keystrokes.
+  const currentDocument = useCallback(() => documentRef.current, []);
+
+  const applyGenerated = useCallback((spec: ReportSpec) => {
+    // Generation rewrites the template only; the preview data it was bound
+    // against is the author's and stays put.
+    const next = { spec, demoData: documentRef.current.demoData };
+    documentRef.current = next;
+    setEditorDocument(next);
+    setEditorKey((key) => key + 1);
   }, []);
 
   const download = async () => {
@@ -66,10 +83,23 @@ export const PdfReportEditor = () => {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            title="Where the preview renders. Both paths validate and brand identically."
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setRenderMode((mode) => (mode === 'client' ? 'server' : 'client'));
+            }}
+          >
+            {renderMode === 'client' ? <MonitorSmartphone /> : <Cloud />}
+            {renderMode === 'client' ? 'Client render' : 'Server render'}
+          </Button>
+          <Button
+            size="sm"
             type="button"
             variant="outline"
             onClick={() => {
               documentRef.current = defaultReportDocument;
+              setEditorDocument(defaultReportDocument);
               setParseError(null);
               setDownloadError(null);
               setEditorKey((key) => key + 1);
@@ -92,9 +122,13 @@ export const PdfReportEditor = () => {
         </div>
       </div>
 
+      <GeneratePrompt currentDocument={currentDocument} onGenerated={applyGenerated} />
+
       <ReportTemplateEditor
         key={editorKey}
         branding={{ title: 'Helix report' }}
+        defaultValue={editorDocument}
+        renderMode={renderMode}
         theme={resolvedTheme}
         onChange={handleChange}
         onError={setParseError}

@@ -1,5 +1,8 @@
 import type { Spec } from '@json-render/core';
 
+/** The json-render element graph a template is made of. */
+export type ReportSpec = Spec;
+
 /**
  * A report template: the json-render spec plus the sample data the editor
  * previews it against. Runtime callers supply their own data of the same shape.

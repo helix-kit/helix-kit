@@ -31,6 +31,21 @@ const config: KnipConfig = {
     'apps/helix-server': {
       project: ['src/**/*.ts'],
     },
+    'apps/hardware-catalog': {
+      entry: [...nextSrcAppRouterEntries, 'drizzle.config.ts', 'scripts/*.mts'],
+      project: ['src/**/*.{ts,tsx}'],
+      // The drizzle schema modules are the app's data contract: every table exports its
+      // Select/Insert types by convention, for drizzle-kit and for anything reading the
+      // catalog, so an export with no in-app caller is not dead code.
+      ignore: ['src/server/schema/**'],
+      // Reached only from CSS or the toolchain, which knip cannot see by parsing TS.
+      ignoreDependencies: [
+        '@tailwindcss/postcss',
+        'postcss',
+        'tailwindcss',
+        '@typescript/native-preview',
+      ],
+    },
     e2e: {
       entry: ['tests/**/*.ts'],
       project: ['harness/**/*.{ts,tsx}', 'serial/**/*.{ts,tsx}', 'tests/**/*.ts', '*.ts'],

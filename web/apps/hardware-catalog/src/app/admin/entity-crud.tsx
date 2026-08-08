@@ -35,7 +35,7 @@ type RouterProcedures = {
   delete: { mutationOptions: (options?: unknown) => never };
 };
 
-export const useEntityRouter = (routerKey: string): RouterProcedures => {
+const useEntityRouter = (routerKey: string): RouterProcedures => {
   const api = useTRPC() as unknown as Record<string, RouterProcedures>;
   const router = api[routerKey];
   if (router == null) {

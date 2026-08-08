@@ -129,9 +129,7 @@ export const vendorOfferSnapshot = pgTable(
     observedAt: timestamp('observed_at').defaultNow().notNull(),
     ...timestamps,
   },
-  (table) => [
-    index('vendor_offer_snapshot_offer_idx').on(table.offerId, table.observedAt),
-  ],
+  (table) => [index('vendor_offer_snapshot_offer_idx').on(table.offerId, table.observedAt)],
 );
 
 export type Vendor = typeof vendor.$inferSelect;

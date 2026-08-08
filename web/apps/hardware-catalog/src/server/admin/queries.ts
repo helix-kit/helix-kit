@@ -142,7 +142,7 @@ export const childEntitiesOf = (parentSlug: string): EntityDefinition[] =>
     return parentField?.referenceEntity === parentSlug;
   });
 
-export type ChildSection = {
+type ChildSection = {
   slug: string;
   label: string;
   hint?: string;

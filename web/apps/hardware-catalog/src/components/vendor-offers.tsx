@@ -26,7 +26,13 @@ const STOCK_VARIANT: Record<string, 'default' | 'secondary'> = {
   backorder: 'secondary',
 };
 
-const StockBadge = ({ status, quantity }: { readonly status: string; readonly quantity: number | null }) => {
+const StockBadge = ({
+  status,
+  quantity,
+}: {
+  readonly status: string;
+  readonly quantity: number | null;
+}) => {
   const label = STOCK_LABEL[status] ?? status;
   const variant = STOCK_VARIANT[status] ?? 'outline';
 

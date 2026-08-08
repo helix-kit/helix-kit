@@ -10,5 +10,8 @@ export default [
   {
     languageOptions: { parserOptions: { project: './tsconfig.json', tsconfigRootDir: __dirname } },
   },
-  { ignores: ['dist/**', 'eslint.config.mjs', 'tsdown.config.ts'] },
+  // `**/dist/**`, not `dist/**`: this package builds into per-transport subdirectories
+  // (transport-websocket/dist, transport-serial/dist), which a top-level-only glob misses.
+  // They are gitignored, so a fresh checkout is clean and only a post-build lint sees them.
+  { ignores: ['**/dist/**', 'eslint.config.mjs', 'tsdown.config.ts'] },
 ];

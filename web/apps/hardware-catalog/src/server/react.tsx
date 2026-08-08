@@ -9,10 +9,9 @@ import { createTRPCClient } from '@trpc/client';
 import type { AppRouter } from '@/server/trpc';
 import { createQueryClient, links } from '@/server/utils';
 
-const { TRPCProvider, useTRPC, useTRPCMutation, useTRPCQuery } =
-  createTRPCReactContext<AppRouter>();
+const { TRPCProvider, useTRPC, useTRPCMutation } = createTRPCReactContext<AppRouter>();
 
-export { useTRPC, useTRPCMutation, useTRPCQuery };
+export { useTRPC, useTRPCMutation };
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = (): QueryClient => {

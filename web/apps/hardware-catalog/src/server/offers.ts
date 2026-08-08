@@ -137,13 +137,3 @@ export const cheapestLiveByProduct = async (
   }
   return cheapest;
 };
-
-/** How many vendors are tracked and how many offers exist, for the empty-state copy. */
-export const offerCoverage = async (): Promise<{ vendors: number; offers: number }> => {
-  const [vendors] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(vendor)
-    .where(eq(vendor.isActive, true));
-  const [offers] = await db.select({ value: sql<number>`count(*)::int` }).from(vendorOffer);
-  return { vendors: vendors?.value ?? 0, offers: offers?.value ?? 0 };
-};

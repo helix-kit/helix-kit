@@ -265,5 +265,3 @@ export const loadProductDetail = async (db: CatalogDatabase, productId: string) 
     ),
   };
 };
-
-export type ProductDetail = NonNullable<Awaited<ReturnType<typeof loadProductDetail>>>;

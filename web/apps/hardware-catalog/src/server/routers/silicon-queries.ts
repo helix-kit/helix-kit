@@ -201,5 +201,3 @@ export const loadSiliconSummaries = async (db: CatalogDatabase, siliconIds: read
     ];
   });
 };
-
-export type SiliconSummary = Awaited<ReturnType<typeof loadSiliconSummaries>>[number];

@@ -2,9 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 
-import { describeEnvironment } from '@helix/code-executor';
 import { Editor } from '@monaco-editor/react';
 
+import { describeEnvironment } from './declarations';
+
+import type { HostFunctions } from './types';
 import type { JSONSchema } from 'zod/v4/core';
 
 /**
@@ -27,28 +29,33 @@ type MonacoTypeScriptApi = {
   };
 };
 
-const TYPES_PATH = 'ts:helix-report-env.d.ts';
+const TYPES_PATH = 'ts:helix-code-env.d.ts';
 
 // The code is a function body, so a bare `return` is legal here even though
 // TypeScript would otherwise call it a top-level return.
 const RETURN_OUTSIDE_FUNCTION = 1108;
 
 /**
- * Monaco configured for the report's code step.
+ * Monaco configured for code this package will execute.
  *
- * The declarations come from the executor, so `input` is typed from the
- * template's input schema and the author gets completion and inline errors
- * against the real shape rather than `any`.
+ * The declarations come from `describeEnvironment`, so the editor describes
+ * exactly what a run will bind: `input` typed from the schema, and a signature
+ * per host function. Author-time completion and run-time behaviour therefore
+ * cannot disagree.
  */
-export const CodeEditorPane = ({
+export const CodeEditor = ({
   className,
   inputSchema,
+  functions,
   theme,
   value,
   onChange,
 }: {
   className?: string;
-  inputSchema: JSONSchema._JSONSchema;
+  /** Types `input`. Omit for an editor over an untyped environment. */
+  inputSchema?: JSONSchema._JSONSchema;
+  /** Declared as callable globals, matching what the executor binds. */
+  functions?: HostFunctions;
   theme: 'light' | 'vs-dark';
   value: string;
   onChange: (value: string) => void;
@@ -66,10 +73,10 @@ export const CodeEditorPane = ({
 
     libRef.current?.dispose();
     libRef.current = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      describeEnvironment({ inputSchema }),
+      describeEnvironment({ inputSchema, functions }),
       TYPES_PATH,
     );
-  }, [inputSchema]);
+  }, [functions, inputSchema]);
 
   useEffect(() => () => libRef.current?.dispose(), []);
 
@@ -87,7 +94,7 @@ export const CodeEditorPane = ({
         scrollBeyondLastLine: false,
         wordWrap: 'on',
       }}
-      path="helix-report-code.ts"
+      path="helix-code.ts"
       theme={theme}
       value={value}
       onChange={(next) => {
@@ -110,7 +117,7 @@ export const CodeEditorPane = ({
 
         libRef.current?.dispose();
         libRef.current = api.languages.typescript.typescriptDefaults.addExtraLib(
-          describeEnvironment({ inputSchema }),
+          describeEnvironment({ inputSchema, functions }),
           TYPES_PATH,
         );
       }}

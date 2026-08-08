@@ -25,6 +25,10 @@
     "./builder": {
       "import": "./src/builder.tsx",
       "types": "./src/builder.tsx"
+    },
+    "./editor": {
+      "import": "./src/editor.tsx",
+      "types": "./src/editor.tsx"
     }
   },
   "publishConfig": {
@@ -37,10 +41,15 @@
       "./builder": {
         "import": "./dist/builder.js",
         "types": "./dist/builder.d.ts"
+      },
+      "./editor": {
+        "import": "./dist/editor.js",
+        "types": "./dist/editor.d.ts"
       }
     }
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "zod": "4.4.3"
   },
   "peerDependencies": {

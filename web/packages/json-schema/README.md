@@ -41,6 +41,20 @@ It covers what `z.toJSONSchema()` emits: objects, arrays, tuples, unions,
 intersections, enums, `const`, nullable, `$ref`/`$defs`, optional properties and
 records.
 
+## `JsonEditor`
+
+Monaco for JSON, with a schema attached:
+
+```tsx
+<JsonEditor path="config.json" schema={{ fileMatch: 'config.json', schema }} … />
+```
+
+That schema drives completion, hover documentation and inline validation, which
+is why it belongs beside the schema tooling rather than in whichever feature
+happened to need an editor first. Monaco registers schemas globally and keys them
+by `fileMatch`, so the pane re-registers the whole list on mount rather than
+appending a duplicate.
+
 ## On degrading rather than throwing
 
 Every entry point returns something usable for input it cannot model — `unknown`

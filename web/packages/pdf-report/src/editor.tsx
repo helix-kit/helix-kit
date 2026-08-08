@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { CodeEditor } from '@helix/code-executor/editor';
 import { JsonSchemaBuilder } from '@helix/json-schema/builder';
+import { JsonEditor } from '@helix/json-schema/editor';
 
 import { renderReportToBlob } from './browser';
 import { fetchReportPdf } from './client';
-import { CodeEditorPane } from './code-editor-pane';
 import { defaultReportTemplate } from './defaults';
 import { parseJson, prettyJson } from './json';
-import { JsonEditorPane } from './json-editor-pane';
 import { reportSpecJsonSchema } from './schema';
 
 import type { ReportBranding, ReportTemplate } from './types';
@@ -243,7 +243,7 @@ export const ReportTemplateEditor = ({
           ) : null}
 
           {pane === 'code' ? (
-            <CodeEditorPane
+            <CodeEditor
               className="h-full"
               inputSchema={inputSchema}
               theme={monacoTheme}
@@ -253,7 +253,7 @@ export const ReportTemplateEditor = ({
           ) : null}
 
           {pane === 'spec' ? (
-            <JsonEditorPane
+            <JsonEditor
               className="h-full"
               path={SPEC_PATH}
               schema={specSchema}
@@ -264,7 +264,7 @@ export const ReportTemplateEditor = ({
           ) : null}
 
           {pane === 'input' ? (
-            <JsonEditorPane
+            <JsonEditor
               className="h-full"
               path={INPUT_PATH}
               theme={monacoTheme}
@@ -281,7 +281,7 @@ export const ReportTemplateEditor = ({
             </div>
             {/* Monaco sizes to its container, so the height lives on the wrapper. */}
             <div className="h-[180px] border-t">
-              <JsonEditorPane
+              <JsonEditor
                 className="h-full"
                 path="helix-pdf-report-output.json"
                 theme={monacoTheme}

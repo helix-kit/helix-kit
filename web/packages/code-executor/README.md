@@ -59,13 +59,23 @@ would otherwise outrun it unnoticed; the bridge therefore refuses calls past the
 ceiling, and a run that hit it fails even if the guest caught the refusal and
 returned normally.
 
-## Editor types
+## Editing code for it
 
 `describeEnvironment({ inputSchema, functions })` emits TypeScript declarations
-for exactly what the executor binds — `declare const input: …` plus a signature
-per function. Fed to Monaco via `addExtraLib`, that is what makes a bound code
-editor typesafe. It lives beside the executor on purpose: a declaration that
-drifts from the runtime is worse than none.
+for exactly what a run binds — `declare const input: …` plus a signature per
+function.
+
+`@helix/code-executor/editor` is Monaco already wired to it:
+
+```tsx
+<CodeEditor inputSchema={inputSchema} functions={functions} value={code} onChange={setCode} … />
+```
+
+Both live here on purpose. The editor's promises and the sandbox's behaviour come
+from one description, so author-time completion cannot disagree with what happens
+at run time — and a declaration that drifts from the runtime is worse than none.
+The editor also silences TS1108 (`return` outside a function), since the code
+_is_ a function body.
 
 ## Where it runs
 

@@ -31,8 +31,15 @@ type MonacoJsonApi = {
   };
 };
 
-/** Monaco configured for JSON authoring; sizes itself to its container. */
-export const JsonEditorPane = ({
+/**
+ * Monaco configured for JSON authoring; sizes itself to its container.
+ *
+ * Pass a `schema` to get completion, hover documentation and inline validation
+ * for that model — which is the point of pairing this with the rest of the
+ * package: a schema built here can immediately drive the editor for documents
+ * that must satisfy it.
+ */
+export const JsonEditor = ({
   className,
   path,
   schema,
@@ -58,7 +65,7 @@ export const JsonEditorPane = ({
 
       // Schemas are registered globally and keyed by `fileMatch`, so re-register
       // the whole list rather than appending a duplicate on every mount.
-      const uri = `helix://pdf-report/${schema.fileMatch}`;
+      const uri = `helix://json-schema/${schema.fileMatch}`;
       const existing = (jsonDefaults.diagnosticsOptions.schemas ?? []).filter(
         (entry) => entry.uri !== uri,
       );

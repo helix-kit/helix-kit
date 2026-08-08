@@ -1,4 +1,5 @@
 /* eslint-disable no-magic-numbers -- unit conversions and precision defaults read best inline */
+import type { Aggregation, CellFormat, PathSpec, Rule, ValueSpec } from '../catalog';
 
 // Shared helpers that let the report components consume raw data (arrays of
 // objects, e.g. a device-event query's output) directly, so report authors do
@@ -30,13 +31,6 @@ const getByPath = (source: unknown, path: string): unknown => {
 };
 
 /**
- * A field reference. The object form lets a candidate carry its own unit
- * conversion, which is what makes cross-variant fields normalizable without
- * pre-processing (e.g. `rssi_dbm` alongside a scaled `rssi_milli_dbm`).
- */
-export type PathSpec = string | { path: string; scale?: number };
-
-/**
  * Reads the first path that yields a value, applying that candidate's `scale`.
  *
  * Device payloads commonly ship the same fact under different keys (and units)
@@ -62,21 +56,6 @@ const getByPaths = (source: unknown, path: PathSpec | PathSpec[] | undefined): u
     return numeric === undefined ? value : numeric * scale;
   }
   return undefined;
-};
-
-/**
- * How a single value is read out of a row.
- *
- * `path` coalesces (first candidate that has a value) whereas `sumOf` adds every
- * candidate together — devices spread one logical total across several counters
- * (e.g. total faults = `crc_err + timeout_err + …`), and summing them in the
- * template is what keeps that out of the caller's code.
- */
-export type ValueSpec = {
-  path?: PathSpec | PathSpec[];
-  sumOf?: PathSpec[];
-  minus?: PathSpec | PathSpec[];
-  scale?: number;
 };
 
 /**
@@ -159,17 +138,6 @@ const formatDateTime = (value: unknown, timeZone: string): string => {
   return parsed.toLocaleString('en-GB', { timeZone });
 };
 
-export type CellFormat =
-  | 'text'
-  | 'number'
-  | 'integer'
-  | 'duration'
-  | 'durationMs'
-  | 'datetime'
-  | 'date'
-  | 'bytes'
-  | 'percent';
-
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
 const BYTES_PER_UNIT = 1024;
 
@@ -232,8 +200,6 @@ export const formatValue = (
   }
 };
 
-export type Aggregation = 'count' | 'sum' | 'avg' | 'min' | 'max' | 'first' | 'last' | 'distinct';
-
 /** Aggregates a raw array over an optional value spec — used by metrics, tables and charts. */
 export const aggregate = (
   rows: unknown[],
@@ -273,15 +239,6 @@ export const aggregate = (
     default:
       return undefined;
   }
-};
-
-type ComparisonOperator = 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'ne' | 'truthy' | 'empty';
-
-/** A row predicate. Reads its left-hand value with the full `ValueSpec` grammar. */
-export type Rule = ValueSpec & {
-  op?: ComparisonOperator;
-  value?: unknown;
-  valuePath?: string;
 };
 
 /** Evaluates one conditional rule against a row — powers conditional row tinting. */

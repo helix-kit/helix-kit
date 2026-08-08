@@ -6,7 +6,8 @@ import { BrandMark } from './brand-mark';
 import { reportLayout, reportTheme } from './theme';
 import { stripEmoji } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { ReportPageProps } from '../catalog';
+import type { RenderProps } from './types';
 
 const styles = StyleSheet.create({
   page: {
@@ -57,27 +58,12 @@ const styles = StyleSheet.create({
   footerText: { fontSize: 8, color: reportTheme.textMuted },
 });
 
-type ReportPageProps = {
-  size?: string | null;
-  orientation?: 'portrait' | 'landscape' | null;
-  backgroundColor?: string | null;
-  // Injected by the render wrapper — see `renderReportToBuffer`.
-  brandTitle?: string | null;
-  brandSubtitle?: string | null;
-  brandGeneratedAt?: string | null;
-  brandFooterNote?: string | null;
-};
-
 /**
  * The branded report page. Every `Page` element in a report spec is rewritten to
  * this component at render time, so the header/footer cannot be omitted by a
  * template author. `fixed` makes both repeat on every page.
  */
-export const ReportPage = ({
-  element,
-  children,
-}: ComponentRenderProps<ReportPageProps>): ReactElement => {
-  const { props } = element;
+export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): ReactElement => {
   const title = props.brandTitle ?? null;
   const subtitle = props.brandSubtitle ?? null;
   const generatedAt = props.brandGeneratedAt ?? null;

@@ -6,6 +6,7 @@ import { fetchReportPdf } from './client';
 import { defaultReportDocument } from './defaults';
 import { parseJson, prettyJson } from './json';
 import { JsonEditorPane } from './json-editor-pane';
+import { reportSpecJsonSchema } from './schema';
 
 import type { ReportBranding, ReportDocument } from './types';
 
@@ -13,6 +14,12 @@ type ParseState =
   { status: 'ready'; document: ReportDocument } | { status: 'error'; error: string };
 
 const DEFAULT_PREVIEW_DEBOUNCE_MS = 400;
+
+const TEMPLATE_PATH = 'helix-pdf-report-template.json';
+const PREVIEW_DATA_PATH = 'helix-pdf-report-preview-data.json';
+
+// Built once: the catalog is static, and Monaco keys its schemas by file match.
+const templateSchema = { fileMatch: TEMPLATE_PATH, schema: reportSpecJsonSchema() };
 
 export type ReportTemplateEditorProps = {
   /** Starting document. The editor is uncontrolled — remount it (change `key`) to reset. */
@@ -182,7 +189,8 @@ export const ReportTemplateEditor = ({
         <div className="min-h-0 flex-1">
           <JsonEditorPane
             className="h-full"
-            path="helix-pdf-report-template.json"
+            path={TEMPLATE_PATH}
+            schema={templateSchema}
             theme={monacoTheme}
             value={specDraft}
             onChange={setSpecDraft}
@@ -212,7 +220,7 @@ export const ReportTemplateEditor = ({
               <div className="h-[240px] border-t">
                 <JsonEditorPane
                   className="h-full"
-                  path="helix-pdf-report-preview-data.json"
+                  path={PREVIEW_DATA_PATH}
                   theme={monacoTheme}
                   value={demoDataDraft}
                   onChange={setDemoDataDraft}

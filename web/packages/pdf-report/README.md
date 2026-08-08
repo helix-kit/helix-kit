@@ -10,13 +10,13 @@ it, supplies a render route, and composes everything else themselves.
 
 ## Exports
 
-| Entry                          | Contents                                                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `@helix/pdf-report`            | `ReportDocument` / `ReportBranding` types, `defaultReportDocument`, `resolveReportDocument`, `isReportSpec`, JSON helpers |
-| `@helix/pdf-report/server`     | `renderReportToBuffer(spec, data, branding)` — Node only                                                                  |
-| `@helix/pdf-report/editor`     | `ReportTemplateEditor` — client two-pane authoring UI                                                                     |
-| `@helix/pdf-report/client`     | `fetchReportPdf(...)`, `DEFAULT_RENDER_ENDPOINT`                                                                          |
-| `@helix/pdf-report/components` | `helixPdfComponents` — the raw component registry                                                                         |
+| Entry                          | Contents                                                                                                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@helix/pdf-report`            | `reportCatalog`, `helixComponentDefinitions`, `validateReportSpec`, `reportSpecJsonSchema`, `ReportDocument` / `ReportBranding` types, `defaultReportDocument`, `resolveReportDocument`, `isReportSpec`, JSON helpers |
+| `@helix/pdf-report/server`     | `renderReportToBuffer(spec, data, branding)` — Node only                                                                                                                                                              |
+| `@helix/pdf-report/editor`     | `ReportTemplateEditor` — client two-pane authoring UI                                                                                                                                                                 |
+| `@helix/pdf-report/client`     | `fetchReportPdf(...)`, `DEFAULT_RENDER_ENDPOINT`                                                                                                                                                                      |
+| `@helix/pdf-report/components` | `helixPdfComponents` — the catalog-bound component registry                                                                                                                                                           |
 
 ## The document
 
@@ -29,6 +29,49 @@ type ReportDocument = {
 
 `spec.elements` reference data with json-render's `{ "$state": "/devices" }`
 bindings, resolved against whatever `data` the caller passes at render time.
+
+## The catalog
+
+`src/catalog.ts` is the single source of truth for what a template may say. Each
+component is declared the way json-render prescribes — a zod `props` schema,
+`slots`, a `description` and an `example` — and that one declaration drives
+everything downstream:
+
+- **Typed components.** `defineRegistry(helixPackCatalog, { components })` binds
+  the implementations to their declarations, so a component whose signature
+  drifts from its zod schema fails to compile. Components receive resolved
+  props (`{ props, children }`) rather than a raw element.
+- **Validation.** `validateReportSpec(spec)` checks structure, component names
+  and props, and is run by `renderReportToBuffer` before anything reaches
+  react-pdf.
+- **Authoring.** `reportSpecJsonSchema()` feeds the editor's JSON language
+  service, giving component-name completion and inline errors.
+- **AI.** `reportCatalog.prompt()` is a ready-made system prompt describing the
+  whole vocabulary, including prop shapes, for generating templates.
+
+Two catalogs are exported because they answer different questions:
+`reportCatalog` is the full authoring vocabulary (stock catalog + Helix pack),
+while `helixPackCatalog` covers only what this package implements, which is what
+`defineRegistry` requires — the renderer supplies the standard components itself.
+
+### What validation does and does not cover
+
+`catalog.validate()` is not used directly. It types a spec's `props` as a loose
+object — the per-component schemas describe the vocabulary but are never
+enforced — and it requires `visible` on every element, which hand-authored
+templates omit. So `validateReportSpec` takes the names and schemas from the
+catalog and does the checking itself:
+
+- unknown component names, reported with the available set;
+- props checked against the component's zod schema, including nested shapes such
+  as a `DataTable` column;
+- structural problems (missing root, dangling child references);
+- bound props (`{"$state": "/devices"}`) are skipped, since they are resolved at
+  render time.
+
+The stock definitions are relaxed for this check: they declare every prop
+`.nullable()` but present, which is what a model should emit, whereas a
+hand-written template just omits what it does not set.
 
 ## Components
 

@@ -16,9 +16,10 @@ import {
 } from '@react-pdf/renderer';
 
 import { chartPalette, reportTheme } from './theme';
-import { niceAxisMax, stripEmoji, toArray, toChartSeries, type Aggregation } from './utils';
+import { niceAxisMax, stripEmoji, toArray, toChartSeries } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { BarChartProps, LineChartProps, PieChartProps } from '../catalog';
+import type { RenderProps } from './types';
 
 const styles = StyleSheet.create({
   wrapper: { marginTop: 6 },
@@ -30,25 +31,9 @@ const styles = StyleSheet.create({
   empty: { fontSize: 9, color: reportTheme.textMuted, paddingVertical: 6 },
 });
 
-type BaseChartProps = {
-  data?: unknown;
-  xKey?: string | null;
-  yKey?: string | null;
-  groupBy?: string | null;
-  aggregation?: Aggregation | null;
-  title?: string | null;
-  width?: number | null;
-  height?: number | null;
-  color?: string | null;
-  showLegend?: boolean | null;
-  showGrid?: boolean | null;
-  showValues?: boolean | null;
-  maxItems?: number | null;
-};
-
 const DEFAULT_MAX_ITEMS = 12;
 
-const buildSeries = (props: BaseChartProps) => {
+const buildSeries = (props: BarChartProps) => {
   const series = toChartSeries(toArray(props.data), {
     xKey: props.xKey ?? undefined,
     yKey: props.yKey ?? undefined,
@@ -109,8 +94,7 @@ const PLOT_PAD_TOP = 8;
 const PLOT_PAD_RIGHT = 8;
 
 /** Vertical bar chart drawn with react-pdf SVG primitives (vector, no rasterizing). */
-export const BarChart = ({ element }: ComponentRenderProps<BaseChartProps>) => {
-  const { props } = element;
+export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
   const series = buildSeries(props);
   const width = props.width ?? 500;
   const height = props.height ?? 200;
@@ -203,10 +187,7 @@ export const BarChart = ({ element }: ComponentRenderProps<BaseChartProps>) => {
 };
 
 /** Line chart with optional filled area, drawn as an SVG polyline path. */
-export const LineChart = ({
-  element,
-}: ComponentRenderProps<BaseChartProps & { area?: boolean | null }>) => {
-  const { props } = element;
+export const LineChart = ({ props }: RenderProps<LineChartProps>) => {
   const series = buildSeries(props);
   const width = props.width ?? 500;
   const height = props.height ?? 200;
@@ -305,10 +286,7 @@ const polarPoint = (cx: number, cy: number, radius: number, angle: number) => ({
 });
 
 /** Pie / donut chart. Set `innerRadius` above 0 for a donut. */
-export const PieChart = ({
-  element,
-}: ComponentRenderProps<BaseChartProps & { innerRadius?: number | null }>) => {
-  const { props } = element;
+export const PieChart = ({ props }: RenderProps<PieChartProps>) => {
   const series = buildSeries(props);
   const width = props.width ?? 320;
   const height = props.height ?? 200;

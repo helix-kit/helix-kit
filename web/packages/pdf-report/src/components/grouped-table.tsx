@@ -14,13 +14,10 @@ import {
   renderTemplate,
   stripEmoji,
   toArray,
-  type Aggregation,
-  type CellFormat,
-  type PathSpec,
-  type Rule,
 } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { Aggregation, CellFormat, GroupedTableProps, PathSpec } from '../catalog';
+import type { RenderProps } from './types';
 
 type GroupedColumn = {
   header: string;
@@ -44,26 +41,6 @@ type GroupedColumn = {
   highlightColor?: string | null;
 };
 
-type GroupedTableProps = {
-  /** Raw array of objects — e.g. a device-event query's output. */
-  data?: unknown;
-  /** Dot-path whose distinct values become one row each. */
-  groupBy?: string;
-  /**
-   * Row label built from the bucket's first row, e.g. "{profile} / {firmware}".
-   * Defaults to the grouped value itself.
-   */
-  labelTemplate?: string | null;
-  columns?: GroupedColumn[];
-  where?: Rule | Rule[] | null;
-  /** Index of the column to order by; defaults to source order. */
-  sortByColumn?: number | null;
-  sortDir?: 'asc' | 'desc' | null;
-  fontSize?: number | null;
-  emptyText?: string | null;
-  maxRows?: number | null;
-};
-
 // The bucket's own label: the grouped value, or a template filled from its first row.
 const groupLabel = (
   bucket: { key: string; rows: unknown[] },
@@ -82,10 +59,7 @@ const groupLabel = (
  * would have to be pre-aggregated by the caller — which is exactly what
  * templated reports exist to avoid.
  */
-export const GroupedTable = ({
-  element,
-}: ComponentRenderProps<GroupedTableProps>): ReactElement | null => {
-  const { props } = element;
+export const GroupedTable = ({ props }: RenderProps<GroupedTableProps>): ReactElement | null => {
   const columns = props.columns ?? [];
   const { groupBy } = props;
   const fontSize = props.fontSize ?? 9;

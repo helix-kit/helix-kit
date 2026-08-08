@@ -6,19 +6,10 @@ import { Text, View } from '@react-pdf/renderer';
 
 import { tableStyles } from './data-table';
 import { reportTheme } from './theme';
-import {
-  aggregate,
-  filterRows,
-  formatValue,
-  stripEmoji,
-  toArray,
-  type Aggregation,
-  type CellFormat,
-  type PathSpec,
-  type Rule,
-} from './utils';
+import { aggregate, filterRows, formatValue, stripEmoji, toArray } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { Aggregation, CellFormat, PathSpec, Rule, SummaryTableProps } from '../catalog';
+import type { RenderProps } from './types';
 
 type ComputedCell = {
   /** Dot-path aggregated across every row of `data`. */
@@ -36,16 +27,6 @@ type ComputedCell = {
 
 type SummaryCell = string | number | ComputedCell;
 
-type SummaryTableProps = {
-  /** The dataset every computed cell is aggregated over. */
-  data?: unknown;
-  columns?: { header: string; width?: string | null; align?: 'left' | 'center' | 'right' | null }[];
-  rows?: { cells: SummaryCell[] }[];
-  /** Tints a row when any of its computed cells aggregates above zero. */
-  rowHighlightColor?: string | null;
-  fontSize?: number | null;
-};
-
 const isComputed = (cell: SummaryCell): cell is ComputedCell => typeof cell === 'object';
 
 /**
@@ -56,10 +37,7 @@ const isComputed = (cell: SummaryCell): cell is ComputedCell => typeof cell === 
  * counters, per-code totals) be expressed purely in a template, instead of being
  * pre-computed by the caller.
  */
-export const SummaryTable = ({
-  element,
-}: ComponentRenderProps<SummaryTableProps>): ReactElement | null => {
-  const { props } = element;
+export const SummaryTable = ({ props }: RenderProps<SummaryTableProps>): ReactElement | null => {
   const columns = props.columns ?? [];
   const rows = props.rows ?? [];
   const data = toArray(props.data);

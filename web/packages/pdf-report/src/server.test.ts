@@ -104,8 +104,21 @@ describe('renderReportToBuffer', () => {
     } as unknown as Spec;
 
     await expect(renderReportToBuffer(spec)).rejects.toThrow(
-      /Unknown component type\(s\): NopeComponent/,
+      /oops: Unknown component "NopeComponent"/,
     );
+  });
+
+  it('rejects a template whose props do not match the catalog', async () => {
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: { type: 'Page', props: {}, children: ['tile'] },
+        tile: { type: 'MetricCard', props: { label: 'Faults', agg: 'median' }, children: [] },
+      },
+    } as unknown as Spec;
+
+    await expect(renderReportToBuffer(spec)).rejects.toThrow(/tile: MetricCard — agg/);
   });
 
   it('rejects a spec that is not a json-render document', async () => {

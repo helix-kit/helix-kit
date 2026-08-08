@@ -3,20 +3,10 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
 import { reportTheme } from './theme';
-import {
-  aggregate,
-  filterRows,
-  formatValue,
-  stripEmoji,
-  toArray,
-  toNumber,
-  type Aggregation,
-  type CellFormat,
-  type PathSpec,
-  type Rule,
-} from './utils';
+import { aggregate, filterRows, formatValue, stripEmoji, toArray, toNumber } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { KeepTogetherProps, MetricCardProps, SectionProps } from '../catalog';
+import type { RenderProps } from './types';
 
 const styles = StyleSheet.create({
   section: {
@@ -57,19 +47,8 @@ const TONE_COLORS: Record<string, string> = {
   accent: reportTheme.brandAccent,
 };
 
-type SectionProps = {
-  title?: string | null;
-  subtitle?: string | null;
-  backgroundColor?: string | null;
-  borderColor?: string | null;
-};
-
 /** A titled card that groups report content, matching the console's panel look. */
-export const Section = ({
-  element,
-  children,
-}: ComponentRenderProps<SectionProps>): ReactElement => {
-  const { props } = element;
+export const Section = ({ props, children }: RenderProps<SectionProps>): ReactElement => {
   return (
     <View
       style={[
@@ -93,42 +72,15 @@ export const Section = ({
 };
 
 /** Lays its `MetricCard` children out in an evenly-sized responsive grid. */
-export const MetricGrid = ({ children }: ComponentRenderProps): ReactElement => (
+export const MetricGrid = ({ children }: RenderProps<Record<string, unknown>>): ReactElement => (
   <View style={styles.grid}>{children}</View>
 );
-
-type MetricCardProps = {
-  label: string;
-  /** Literal value, or omit and use `data` + `agg` to compute one. */
-  value?: unknown;
-  data?: unknown;
-  agg?: Aggregation | null;
-  path?: PathSpec | PathSpec[] | null;
-  /** Adds several fields together per row before aggregating, e.g. every error counter. */
-  sumOf?: PathSpec[] | null;
-  /** Restricts the rows the aggregation sees. */
-  where?: Rule | Rule[] | null;
-  /** Multiplies numeric values, e.g. 0.001 to convert ms to seconds. */
-  scale?: number | null;
-  /** Subtracted from `path` before aggregating, e.g. lastSeen - firstSeen. */
-  minus?: PathSpec | PathSpec[] | null;
-  format?: CellFormat | null;
-  digits?: number | null;
-  timeZone?: string | null;
-  tone?: 'default' | 'danger' | 'warning' | 'success' | 'accent' | null;
-  /** Turns the tone on only when the numeric value exceeds this threshold. */
-  toneWhenAbove?: number | null;
-  hint?: string | null;
-  width?: string | null;
-};
 
 /**
  * A KPI tile. The value is either passed directly or computed from a raw array
  * (`data` + `agg` + optional `path`), so summary numbers need no pre-processing.
  */
-export const MetricCard = ({ element }: ComponentRenderProps<MetricCardProps>): ReactElement => {
-  const { props } = element;
-
+export const MetricCard = ({ props }: RenderProps<MetricCardProps>): ReactElement => {
   const computed =
     props.agg === undefined || props.agg === null
       ? props.value
@@ -162,22 +114,8 @@ export const MetricCard = ({ element }: ComponentRenderProps<MetricCardProps>): 
   );
 };
 
-type KeepTogetherProps = {
-  gap?: number | null;
-  padding?: number | null;
-  marginTop?: number | null;
-  marginBottom?: number | null;
-  backgroundColor?: string | null;
-  borderColor?: string | null;
-  borderWidth?: number | null;
-};
-
 /** Prevents its children from being split across a page boundary. */
-export const KeepTogether = ({
-  element,
-  children,
-}: ComponentRenderProps<KeepTogetherProps>): ReactElement => {
-  const { props } = element;
+export const KeepTogether = ({ props, children }: RenderProps<KeepTogetherProps>): ReactElement => {
   return (
     <View
       style={{

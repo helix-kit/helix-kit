@@ -14,12 +14,10 @@ import {
   sortRows,
   stripEmoji,
   toArray,
-  type CellFormat,
-  type PathSpec,
-  type Rule,
 } from './utils';
 
-import type { ComponentRenderProps } from './types';
+import type { CellFormat, DataTableProps, PathSpec, Rule } from '../catalog';
+import type { RenderProps } from './types';
 
 /** Shared by every tabular component so borders and header fills cannot drift. */
 export const tableStyles = StyleSheet.create({
@@ -80,24 +78,6 @@ type ColumnDefinition = {
 };
 
 type RowHighlightRule = Rule & { color: string };
-
-type DataTableProps = {
-  /** Raw array of objects — e.g. a device-event query's output. */
-  data?: unknown;
-  columns?: ColumnDefinition[];
-  rowHighlight?: RowHighlightRule[] | null;
-  /** Keeps only the rows matching every rule. */
-  where?: Rule | Rule[] | null;
-  /** Orders rows before rendering; candidates coalesce (e.g. device time, else receive time). */
-  sortBy?: PathSpec | PathSpec[] | null;
-  sortDir?: 'asc' | 'desc' | null;
-  striped?: boolean | null;
-  fontSize?: number | null;
-  headerBackgroundColor?: string | null;
-  borderColor?: string | null;
-  emptyText?: string | null;
-  maxRows?: number | null;
-};
 
 const resolveRowColor = (
   row: unknown,
@@ -185,10 +165,7 @@ const renderCell = (row: unknown, column: ColumnDefinition, fontSize: number) =>
  * definitions, per-cell formatting and rule-based row tinting — so report
  * authors never have to pre-shape `string[][]` rows.
  */
-export const DataTable = ({
-  element,
-}: ComponentRenderProps<DataTableProps>): ReactElement | null => {
-  const { props } = element;
+export const DataTable = ({ props }: RenderProps<DataTableProps>): ReactElement | null => {
   const columns = props.columns ?? [];
   const allRows = sortRows(
     filterRows(toArray(props.data), props.where),

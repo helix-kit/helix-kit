@@ -47,9 +47,6 @@ export const AgentApp = ({ activeId, initialConversations, initialMessages }: Ag
     const conversation = await createConversation.mutateAsync({
       title: text.slice(0, TITLE_FROM_MESSAGE_LENGTH),
     });
-    if (conversation === undefined) {
-      return;
-    }
     sessionStorage.setItem(pendingKey(conversation.id), text);
     await conversationsQuery.refetch();
     router.push(`/dashboard/agent?c=${conversation.id}`);

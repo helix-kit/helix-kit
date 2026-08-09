@@ -153,12 +153,24 @@ const LABELS: Record<string, string> = {
 export const GeneratePrompt = ({
   currentDocument,
   onArtifact,
+  templateId,
+  conversationId,
+  onConversationStarted,
+  initialMessages,
   fixturesAvailable = false,
 }: {
   /** Read when refining, so the model sees the template as it stands. */
   currentDocument: () => ReportTemplate;
   /** Fires per artifact, as it arrives. */
   onArtifact: (patch: Partial<ReportTemplate>) => void;
+  /** Which template this is about; the thread is stored against it. */
+  templateId: string;
+  /** The thread to continue, or null to have the server open one. */
+  conversationId: string | null;
+  /** Fires with the id when the server opened a thread for this turn. */
+  onConversationStarted: (id: string) => void;
+  /** What was already said in this thread, so reopening it shows the exchange. */
+  initialMessages?: unknown[] | undefined;
   /** Whether this build can record and replay turns at all. */
   fixturesAvailable?: boolean;
 }) => {
@@ -201,7 +213,9 @@ export const GeneratePrompt = ({
   );
 
   const { messages, sendMessage, status, error, stop } = useChat({
-    id: 'pdf-report-generate',
+    id: `pdf-report-${conversationId ?? 'new'}`,
+    // Keyed by thread above, so switching chats rebuilds this with its own history.
+    messages: (initialMessages ?? []) as never[],
     transport: new DefaultChatTransport({ api: ENDPOINT }),
     onData: (part) => {
       if (part.type === 'data-artifact') {
@@ -219,6 +233,12 @@ export const GeneratePrompt = ({
           durationMs: number;
         };
         setDurations((current) => ({ ...current, [toolCallId]: durationMs }));
+      }
+      if (part.type === 'data-conversation') {
+        // The server opens a thread when a turn starts without one, so the
+        // sidebar learns its id from the same stream that carries the answer.
+        const { id } = part.data as { id: string };
+        onConversationStarted(id);
       }
       if (part.type === 'data-fixture') {
         // Says which it actually did, which is not always what was asked: a
@@ -261,6 +281,8 @@ export const GeneratePrompt = ({
         body: {
           prompt,
           template,
+          templateId,
+          conversationId,
           model: model === '' ? undefined : model,
           ...(fixturesAvailable ? { fixture } : {}),
         },

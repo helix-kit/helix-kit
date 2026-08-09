@@ -125,6 +125,9 @@ export const reportTemplatesRouter = createRouterFactory<ReportTemplateContext>(
             ...defaultReportTemplate,
           })
           .returning();
+        if (row === undefined) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not create it' });
+        }
         return row;
       }),
 

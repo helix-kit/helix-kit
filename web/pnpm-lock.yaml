@@ -271,6 +271,9 @@ importers:
       superjson:
         specifier: ^2.2.6
         version: 2.2.6
+      use-debounce:
+        specifier: ^10.0.6
+        version: 10.1.1(react@19.2.7)
       winston:
         specifier: ^3.19.0
         version: 3.19.0

@@ -125,6 +125,12 @@ export const conversationsRouter = (options: ConversationsRouterOptions) =>
               messages: [],
             })
             .returning();
+          if (row === undefined) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Could not start a conversation',
+            });
+          }
           return row;
         }),
 
@@ -185,6 +191,64 @@ export const saveConversation = async (
     .update(conversation)
     .set(title === undefined ? { messages } : { messages, title })
     .where(eq(conversation.id, conversationId));
+};
+
+export type OpenConversationOptions = Readonly<{
+  /** An existing thread to continue, when the caller has one. */
+  id?: string | undefined;
+  userId: string;
+  surface: string;
+  subjectId?: string | null;
+  /** Used only when a thread is actually opened. */
+  title?: string;
+}>;
+
+/**
+ * The thread this turn belongs to, opening one if it does not exist yet.
+ *
+ * Every chat surface needs this and none of them should need to think about it:
+ * without it the first message of a new conversation is a special case that has
+ * to create a thread and round-trip before it can be sent. `opened` tells the
+ * caller whether to announce a new id.
+ *
+ * An id that is not the caller's own does not match, so a borrowed id opens a
+ * fresh thread rather than writing into someone else's.
+ */
+export const openConversation = async (
+  db: DatabaseClient,
+  options: OpenConversationOptions,
+): Promise<{ id: string; opened: boolean }> => {
+  const { id, userId, surface, subjectId = null, title = '' } = options;
+
+  if (id !== undefined && id !== '') {
+    const [existing] = await db
+      .select({ id: conversation.id })
+      .from(conversation)
+      .where(
+        and(
+          eq(conversation.id, id),
+          eq(conversation.userId, userId),
+          eq(conversation.surface, surface),
+        ),
+      )
+      .limit(1);
+    if (existing !== undefined) {
+      return { id: existing.id, opened: false };
+    }
+  }
+
+  const [created] = await db
+    .insert(conversation)
+    .values({ id: randomUUID(), userId, surface, subjectId, title, messages: [] })
+    .returning({ id: conversation.id });
+
+  if (created === undefined) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Could not open a conversation',
+    });
+  }
+  return { id: created.id, opened: true };
 };
 
 /** Appends one tool-call audit row. */

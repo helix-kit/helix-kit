@@ -7,6 +7,7 @@ import {
 import { toToolSet } from '@helix/ai-kit/ai-sdk';
 import { fixtureModel, resolveFixtureMode, type FixtureChoice } from '@helix/ai-kit/fixtures';
 import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
+import { openConversation, saveConversation } from '@helix/backend/conversations';
 import {
   applyReportPatchLine,
   defaultReportTemplate,
@@ -20,6 +21,7 @@ import {
   stepCountIs,
   streamText,
   type LanguageModelUsage,
+  type UIMessage,
 } from 'ai';
 
 import { env } from '@/lib/env';
@@ -37,6 +39,9 @@ const MAX_STEPS = 24;
 
 /** Which AI surface this usage belongs to, for per-feature spend breakdowns. */
 const FEATURE = 'pdf-report';
+
+/** A thread is named after what was first asked of it. */
+const CONVERSATION_TITLE_LENGTH = 80;
 
 /** Keeps a mistyped replay delay from stalling a turn for minutes. */
 const MAX_REPLAY_DELAY_MS = 500;
@@ -75,6 +80,12 @@ type GenerateRequestBody = {
   template?: ReportTemplate;
   /** Gateway model id, for comparing models on the same task. */
   model?: string;
+  /** The thread so far, sent by `useChat`; merged with the reply before saving. */
+  messages?: UIMessage[];
+  /** Which template this turn is about, so the thread is stored against it. */
+  templateId?: string;
+  /** The thread to continue; a turn without one opens a thread. */
+  conversationId?: string;
   /** Development only: run the real model (and keep the turn) or replay the last one. */
   fixture?: FixtureChoice;
   /**
@@ -154,6 +165,17 @@ export const POST = async (request: Request) => {
   const model = typeof body.model === 'string' && body.model !== '' ? body.model : env.AGENT_MODEL;
   const startedAt = Date.now();
 
+  // A turn always belongs to a thread. Opening one here rather than making the
+  // client do it first means the first message of a new chat is not a special
+  // case that has to round-trip before it can be sent.
+  const thread = await openConversation(db, {
+    id: body.conversationId,
+    userId: user.id,
+    surface: 'pdf-report',
+    subjectId: body.templateId ?? null,
+    title: prompt.slice(0, CONVERSATION_TITLE_LENGTH),
+  });
+
   // Development only, and only when asked for by name. Working on this editor's
   // UI otherwise means paying for a real generation to look at a layout bug.
   const fixture = resolveFixtureMode({
@@ -165,6 +187,12 @@ export const POST = async (request: Request) => {
   });
 
   const stream = createUIMessageStream({
+    // Persistence mode: the reply is merged with what came before, so a thread
+    // holds the conversation rather than half of it.
+    originalMessages: body.messages,
+    onFinish: async ({ messages: thread_messages }) => {
+      await saveConversation(db, thread.id, thread_messages);
+    },
     execute: ({ writer }) => {
       // The template as written so far. Held here rather than asked of the
       // model, so the checks judge what the editor will actually receive.
@@ -238,6 +266,10 @@ export const POST = async (request: Request) => {
             ? Math.min(Math.max(body.fixtureDelayMs, 0), MAX_REPLAY_DELAY_MS)
             : undefined,
       });
+
+      if (thread.opened) {
+        writer.write({ type: 'data-conversation', data: { id: thread.id }, transient: true });
+      }
 
       // Says so on the page, so a recorded run is never mistaken for a real one.
       if (fixture.mode !== 'live') {

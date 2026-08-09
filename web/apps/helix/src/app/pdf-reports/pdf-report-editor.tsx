@@ -33,14 +33,12 @@ export const PdfReportEditor = ({ fixturesAvailable = false }: { fixturesAvailab
   const currentDocument = useCallback(() => documentRef.current, []);
 
   // Each artifact lands in its own pane as it arrives, rather than the editor
-  // waiting for a whole template. The editor is uncontrolled, so a remount is
-  // what makes a generated part visible — keyed on the artifact count so panes
-  // the model has not touched keep whatever the author had.
+  // waiting for a whole template. No remount: the panes follow the value, and
+  // remounting would discard the rendered preview on every artifact.
   const applyArtifact = useCallback((patch: Partial<ReportTemplate>) => {
     const next = { ...documentRef.current, ...patch };
     documentRef.current = next;
     setEditorDocument(next);
-    setEditorKey((key) => key + 1);
   }, []);
 
   const download = async () => {

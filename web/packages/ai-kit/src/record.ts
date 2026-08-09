@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import { wrapLanguageModel, type LanguageModel, type LanguageModelMiddleware } from 'ai';
@@ -49,8 +49,19 @@ export const recordingModel = (
     calls: [],
   };
 
+  let rotated = false;
   const flush = () => {
     mkdirSync(dirname(path), { recursive: true });
+    // The turn being replaced is often the one being debugged, and a real run
+    // started by accident should not be the end of it. Kept one generation back,
+    // once per recording rather than once per call, so the copy is the previous
+    // turn and not this one half-written.
+    if (!rotated) {
+      rotated = true;
+      if (existsSync(path)) {
+        copyFileSync(path, previousPath(path));
+      }
+    }
     writeFileSync(path, `${JSON.stringify(recording, null, 2)}\n`);
   };
 
@@ -79,6 +90,9 @@ export const recordingModel = (
 
   return wrapLanguageModel({ model, middleware });
 };
+
+/** Where the turn a recording displaced is kept. */
+const previousPath = (path: string): string => path.replace(/\.json$/, '.previous.json');
 
 export const readRecording = (path: string): Recording =>
   JSON.parse(readFileSync(path, 'utf8')) as Recording;

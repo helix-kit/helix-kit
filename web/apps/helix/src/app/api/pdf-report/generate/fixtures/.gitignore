@@ -2,3 +2,4 @@
 # run, so tracking it would churn on each use. Named fixtures next to it are
 # deliberate and stay committed.
 last-turn.json
+last-turn.previous.json

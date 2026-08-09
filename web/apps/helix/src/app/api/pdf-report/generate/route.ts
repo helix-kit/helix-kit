@@ -38,6 +38,9 @@ const MAX_STEPS = 24;
 /** Which AI surface this usage belongs to, for per-feature spend breakdowns. */
 const FEATURE = 'pdf-report';
 
+/** Keeps a mistyped replay delay from stalling a turn for minutes. */
+const MAX_REPLAY_DELAY_MS = 500;
+
 /** Recorded turns live with the app, not in a temp dir, so they can be committed. */
 const FIXTURE_DIR = 'src/app/api/pdf-report/generate/fixtures';
 
@@ -74,6 +77,14 @@ type GenerateRequestBody = {
   model?: string;
   /** Development only: run the real model (and keep the turn) or replay the last one. */
   fixture?: FixtureChoice;
+  /**
+   * Development only: how fast a replay streams.
+   *
+   * A fixture replayed as fast as it can be read collapses the whole turn into
+   * one frame, which hides every problem that only exists while a turn is in
+   * flight — exactly the ones worth watching for.
+   */
+  fixtureDelayMs?: number;
 };
 
 const json = (body: unknown, status: number): Response => Response.json(body, { status });
@@ -222,6 +233,10 @@ export const POST = async (request: Request) => {
         modelId: model,
         prompt,
         fixture,
+        chunkDelayMs:
+          typeof body.fixtureDelayMs === 'number'
+            ? Math.min(Math.max(body.fixtureDelayMs, 0), MAX_REPLAY_DELAY_MS)
+            : undefined,
       });
 
       // Says so on the page, so a recorded run is never mistaken for a real one.

@@ -45,7 +45,7 @@ const PANES: { id: Pane; label: string; hint: string }[] = [
 ];
 
 export type ReportTemplateEditorProps = {
-  /** Starting template. The editor is uncontrolled — remount it (change `key`) to reset. */
+  /** The template to show. The panes follow it, so a new value replaces them. */
   defaultValue?: ReportTemplate;
   /** Fires whenever every pane parses cleanly, so the host can drive a download button. */
   onChange?: (value: ReportTemplate) => void;
@@ -119,6 +119,24 @@ export const ReportTemplateEditor = ({
     }
   }, [code, inputDraft, inputSchema, outputSchema, specDraft]);
 
+  // Generated parts land in the panes without remounting the editor. The panes
+  // are controlled, so remounting was never needed to show them — and it threw
+  // away the rendered preview each time, blanking the pane on every artifact of
+  // a generation.
+  //
+  // Adjusted during render rather than in an effect: an effect would paint the
+  // previous template first and correct it immediately after, which is the same
+  // flicker in a smaller form.
+  const [seeded, setSeeded] = useState(defaultValue);
+  if (seeded !== defaultValue) {
+    setSeeded(defaultValue);
+    setInputSchema(defaultValue.inputSchema);
+    setCode(defaultValue.code);
+    setOutputSchema(defaultValue.outputSchema);
+    setSpecDraft(prettyJson(defaultValue.spec));
+    setInputDraft(prettyJson(defaultValue.demoInput));
+  }
+
   useEffect(() => {
     if (parseState.status === 'error') {
       onError?.(parseState.error);
@@ -142,8 +160,6 @@ export const ReportTemplateEditor = ({
     const timer = setTimeout(() => {
       const render = async () => {
         try {
-          setPreviewError(null);
-
           const blob =
             renderMode === 'client'
               ? await renderReportToBlob(parseState.template, { branding })
@@ -167,16 +183,19 @@ export const ReportTemplateEditor = ({
           }
           previewUrlRef.current = objectUrl;
           setPreviewUrl(objectUrl);
+          // Cleared here rather than before the attempt. Clearing it up front
+          // makes the error vanish and come back on every edit, and during a
+          // generation the edits arrive continuously — so a single broken state
+          // reads as flashing rather than as one problem.
+          setPreviewError(null);
         } catch (error) {
           if (controller.signal.aborted) {
             return;
           }
 
-          if (previewUrlRef.current !== null) {
-            URL.revokeObjectURL(previewUrlRef.current);
-            previewUrlRef.current = null;
-          }
-          setPreviewUrl(null);
+          // The last good render is kept. Replacing it with the error means the
+          // pane alternates between a document and a message for as long as the
+          // model takes to fix itself, and neither is readable while it does.
           setPreviewError(error instanceof Error ? error.message : 'Failed to render the preview');
         }
       };
@@ -202,20 +221,36 @@ export const ReportTemplateEditor = ({
   const message = parseState.status === 'error' ? parseState.error : previewError;
 
   let previewContent: React.ReactNode;
-  if (message !== null) {
+  if (previewUrl !== null) {
+    // The document stays on screen while something is wrong with the next
+    // version of it, with the problem stated above it. Swapping the document out
+    // for the message loses the only thing that shows what the message is about.
+    previewContent = (
+      <div className="flex h-full flex-col">
+        {message === null ? null : (
+          <div className="text-destructive border-destructive/30 bg-destructive/5 max-h-32 shrink-0 overflow-auto border-b px-4 py-2 font-mono text-xs whitespace-pre-wrap">
+            {message}
+          </div>
+        )}
+        <iframe
+          className={`w-full flex-1 ${message === null ? '' : 'opacity-60'}`}
+          src={previewUrl}
+          title="PDF preview"
+        />
+      </div>
+    );
+  } else if (message !== null) {
     previewContent = (
       <div className="text-destructive h-full overflow-auto px-6 py-4 font-mono text-xs whitespace-pre-wrap">
         {message}
       </div>
     );
-  } else if (previewUrl === null) {
+  } else {
     previewContent = (
       <div className="text-muted-foreground flex h-full items-center justify-center px-6 text-center text-sm">
         Rendering preview…
       </div>
     );
-  } else {
-    previewContent = <iframe className="h-full w-full" src={previewUrl} title="PDF preview" />;
   }
 
   return (

@@ -137,6 +137,38 @@ describe('recording a turn', () => {
     });
   });
 
+  it('keeps the turn it displaced, so a stray live run is not the end of it', async () => {
+    // The turn being replaced is often the one being debugged, and the rolling
+    // slot is rewritten by any real run — including one started by accident.
+    const path = join(dir(), 'turn.json');
+    await streamText({
+      model: recordingModel(sourceModel('first'), { path, prompt: 'a', modelId: MODEL }),
+      prompt: 'a',
+    }).text;
+    await streamText({
+      model: recordingModel(sourceModel('second'), { path, prompt: 'b', modelId: MODEL }),
+      prompt: 'b',
+    }).text;
+
+    expect(readRecording(path).prompt).toBe('b');
+    expect(readRecording(path.replace('.json', '.previous.json')).prompt).toBe('a');
+  });
+
+  it('keeps the previous turn, not this one half-written, across several calls', async () => {
+    const path = join(dir(), 'turn.json');
+    await streamText({
+      model: recordingModel(sourceModel('first'), { path, prompt: 'a', modelId: MODEL }),
+      prompt: 'a',
+    }).text;
+
+    // Two model calls in one recording must rotate once, not once per call.
+    const second = recordingModel(sourceModel('second'), { path, prompt: 'b', modelId: MODEL });
+    await streamText({ model: second, prompt: 'x' }).text;
+    await streamText({ model: second, prompt: 'y' }).text;
+
+    expect(readRecording(path.replace('.json', '.previous.json')).prompt).toBe('a');
+  });
+
   it('records each call of a multi-call turn in order', async () => {
     const path = join(dir(), 'loop.json');
     let call = 0;

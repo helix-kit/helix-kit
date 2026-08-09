@@ -11,6 +11,8 @@ export type ToolSetOptions = {
    */
   onCall?: (call: {
     name: string;
+    /** Identifies which call this was, so a host can match it to what it is showing. */
+    toolCallId: string;
     input: unknown;
     output: unknown;
     error: string | null;
@@ -26,10 +28,7 @@ export type ToolSetOptions = {
  * can change — or so a second runtime can exist — without touching the packages
  * that merely say what can be done.
  */
-export const toToolSet = (
-  descriptors: AiToolDescriptor[],
-  options: ToolSetOptions = {},
-): ToolSet => {
+export const toToolSet = (descriptors: AiToolDescriptor[], opts: ToolSetOptions = {}): ToolSet => {
   const tools: ToolSet = {};
 
   for (const descriptor of descriptors) {
@@ -38,15 +37,16 @@ export const toToolSet = (
       // Both are JSON Schema; the SDK's type is nominally its own, so the cast
       // sits at this seam rather than being forced on every capability.
       inputSchema: jsonSchema(descriptor.parameters as Parameters<typeof jsonSchema>[0]),
-      execute: async (raw: unknown) => {
+      execute: async (raw: unknown, options?: { toolCallId?: string }) => {
         const startedAt = Date.now();
         // Providers disagree on whether a nested object arrives as a value or as
         // a JSON string; accept both rather than making every tool handle it.
         const input = coerceArguments(descriptor.parameters, raw);
         try {
           const output = await descriptor.execute(input);
-          await options.onCall?.({
+          await opts.onCall?.({
             name: descriptor.name,
+            toolCallId: options?.toolCallId ?? '',
             input,
             output,
             error: null,
@@ -55,8 +55,9 @@ export const toToolSet = (
           return output;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          await options.onCall?.({
+          await opts.onCall?.({
             name: descriptor.name,
+            toolCallId: options?.toolCallId ?? '',
             input,
             output: null,
             error: message,

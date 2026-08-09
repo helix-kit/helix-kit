@@ -255,7 +255,18 @@ export const POST = async (request: Request) => {
           body.template === undefined
             ? prompt
             : `${prompt}\n\nThe template as it stands:\n\n\`\`\`json\n${JSON.stringify(body.template, null, 2)}\n\`\`\``,
-        tools: toToolSet([...assistant.tools, ...artifactTools(assistant.artifacts, emit)]),
+        tools: toToolSet([...assistant.tools, ...artifactTools(assistant.artifacts, emit)], {
+          // Measured where the work happens. A spinner cannot distinguish a tool
+          // that ran for a second from one whose arguments the model is still
+          // writing, and only the server knows which.
+          onCall: ({ toolCallId, durationMs }) => {
+            writer.write({
+              type: 'data-tool-timing',
+              data: { toolCallId, durationMs },
+              transient: true,
+            });
+          },
+        }),
         stopWhen: stepCountIs(MAX_STEPS),
         onFinish: async ({ totalUsage, finishReason, steps }) => {
           // Anything still buffered belongs to the template, not to the void.
@@ -280,7 +291,10 @@ export const POST = async (request: Request) => {
         },
       });
 
-      writer.merge(result.toUIMessageStream({ sendStart: false }));
+      // Reasoning is forwarded because the gap between two tool calls is
+      // otherwise unexplained: this model thinks for hundreds of deltas before
+      // its first call, and without it the pane looks stalled rather than busy.
+      writer.merge(result.toUIMessageStream({ sendStart: false, sendReasoning: true }));
     },
     onError: (error) => (error instanceof Error ? error.message : String(error)),
   });

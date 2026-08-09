@@ -8,7 +8,7 @@ import { Button } from '@helix/design-system/components/button';
 import { Textarea } from '@helix/design-system/components/textarea';
 import { applyReportPatchLine, REPORT_ARTIFACTS, type ReportTemplate } from '@helix/pdf-report';
 import { DefaultChatTransport } from 'ai';
-import { Check, History, Loader2, Sparkles, Square, Wrench, X } from 'lucide-react';
+import { Brain, Check, History, Loader2, Sparkles, Square, Wrench, X } from 'lucide-react';
 
 const ENDPOINT = '/api/pdf-report/generate';
 
@@ -37,6 +37,61 @@ type FixtureChoice = (typeof FIXTURES)[number]['id'];
 
 type ToolRun = { id: string; name: string; state: 'running' | 'done' | 'failed' };
 
+/**
+ * What the turn is doing, in the order it did it.
+ *
+ * Derived from the message rather than tracked alongside it. Tracking meant a
+ * tool could only be marked finished when the whole turn was, so every step sat
+ * spinning until the end and a slow one was indistinguishable from a finished
+ * one.
+ */
+type Step =
+  | { kind: 'thinking'; id: string; text: string; done: boolean }
+  | { kind: 'tool'; id: string; name: string; state: ToolRun['state'] };
+
+type MessagePart = {
+  type: string;
+  text?: string;
+  state?: string;
+  toolCallId?: string;
+  errorText?: string;
+};
+
+const toolState = (state: string | undefined): ToolRun['state'] => {
+  if (state === 'output-error') {
+    return 'failed';
+  }
+  return state === 'output-available' ? 'done' : 'running';
+};
+
+const buildSteps = (parts: MessagePart[]): Step[] =>
+  parts.flatMap<Step>((part, index) => {
+    if (part.type === 'reasoning') {
+      const text = (part.text ?? '').trim();
+      return text === ''
+        ? []
+        : [
+            {
+              kind: 'thinking' as const,
+              id: `reasoning-${String(index)}`,
+              text,
+              done: part.state !== 'streaming',
+            },
+          ];
+    }
+    if (part.type.startsWith('tool-') || part.type === 'dynamic-tool') {
+      return [
+        {
+          kind: 'tool' as const,
+          id: part.toolCallId ?? `tool-${String(index)}`,
+          name: part.type === 'dynamic-tool' ? 'tool' : part.type.slice('tool-'.length),
+          state: toolState(part.state),
+        },
+      ];
+    }
+    return [];
+  });
+
 const ToolIcon = ({ state }: { state: ToolRun['state'] }) => {
   if (state === 'running') {
     return <Loader2 className="size-3 shrink-0 animate-spin" />;
@@ -46,6 +101,24 @@ const ToolIcon = ({ state }: { state: ToolRun['state'] }) => {
   }
   return <Check className="size-3 shrink-0 text-emerald-500" />;
 };
+
+const MS_PER_SECOND = 1000;
+/** Below this a tool is instant, and a number next to every row is just noise. */
+const WORTH_SHOWING_MS = 250;
+
+/**
+ * How long a tool actually ran, measured on the server.
+ *
+ * Worth showing because the intuition it corrects is strong: the steps take a
+ * long time to appear, so the tools look slow. They are not — they finish in
+ * milliseconds, and the wait is the model thinking and writing their arguments.
+ */
+const Elapsed = ({ ms }: { ms: number | undefined }) =>
+  ms === undefined || ms < WORTH_SHOWING_MS ? null : (
+    <span className="text-muted-foreground/60 shrink-0 tabular-nums">
+      {(ms / MS_PER_SECOND).toFixed(1)}s
+    </span>
+  );
 
 const LABELS: Record<string, string> = {
   write_report_input_schema: 'Input schema',
@@ -74,8 +147,11 @@ export const GeneratePrompt = ({
   const [model, setModel] = useState('');
   const [fixture, setFixture] = useState<FixtureChoice>('live');
   const [replaying, setReplaying] = useState<string | null>(null);
-  const [tools, setTools] = useState<ToolRun[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [openThought, setOpenThought] = useState<string | null>(null);
+  // How long each tool actually ran, reported by the server. Timing it here
+  // would measure when React noticed, not when the work happened.
+  const [durations, setDurations] = useState<Record<string, number>>({});
 
   // Held across chunks: the layout arrives as patch lines that build on the spec
   // as it stands, so each line applies to the result of the last.
@@ -105,12 +181,19 @@ export const GeneratePrompt = ({
     }),
   );
 
-  const { sendMessage, status, error, stop } = useChat({
+  const { messages, sendMessage, status, error, stop } = useChat({
     id: 'pdf-report-generate',
     transport: new DefaultChatTransport({ api: ENDPOINT }),
     onData: (part) => {
       if (part.type === 'data-artifact') {
         collectorRef.current.handle(part.data as ArtifactEvent);
+      }
+      if (part.type === 'data-tool-timing') {
+        const { toolCallId, durationMs } = part.data as {
+          toolCallId: string;
+          durationMs: number;
+        };
+        setDurations((current) => ({ ...current, [toolCallId]: durationMs }));
       }
       if (part.type === 'data-fixture') {
         // Says which it actually did, which is not always what was asked: a
@@ -120,20 +203,10 @@ export const GeneratePrompt = ({
         setReplaying(using === 'replay' ? 'Replayed a recorded turn — no tokens spent.' : null);
       }
     },
-    onToolCall: ({ toolCall }) => {
-      setTools((current) => [
-        ...current,
-        { id: toolCall.toolCallId, name: toolCall.toolName, state: 'running' },
-      ]);
-    },
     onFinish: ({ message }) => {
       // A patch whose last line never got its newline is still part of the
       // layout; the turn ending is what says no more is coming.
       collectorRef.current.flush();
-      // Every tool that never reported back is finished by the time the turn is.
-      setTools((current) =>
-        current.map((run) => (run.state === 'running' ? { ...run, state: 'done' } : run)),
-      );
       const text = message.parts
         .filter((part) => part.type === 'text')
         .map((part) => ('text' in part ? part.text : ''))
@@ -145,10 +218,15 @@ export const GeneratePrompt = ({
 
   const streaming = status === 'submitted' || status === 'streaming';
 
+  // The turn in progress is the last assistant message; its parts are the record
+  // of what happened, already in order.
+  const latest = messages.findLast((message) => message.role === 'assistant');
+  const steps = buildSteps((latest?.parts ?? []) as MessagePart[]);
+
   const generate = () => {
+    setDurations({});
     const template = currentDocument();
     layoutRef.current = template.spec;
-    setTools([]);
     setNote(null);
     setReplaying(null);
 
@@ -237,7 +315,7 @@ export const GeneratePrompt = ({
         </div>
       )}
 
-      {tools.length === 0 && note === null && replaying === null ? null : (
+      {steps.length === 0 && note === null && replaying === null ? null : (
         <div className="space-y-1 border-t px-3 py-2">
           {replaying === null ? null : (
             <p className="text-muted-foreground flex items-center gap-1 text-xs">
@@ -245,17 +323,38 @@ export const GeneratePrompt = ({
               {replaying}
             </p>
           )}
-          {tools.map((run) => (
-            <div key={run.id} className="text-muted-foreground flex items-center gap-2 text-xs">
-              <ToolIcon state={run.state} />
-              {LABELS[run.name] ?? (
-                <span className="flex items-center gap-1">
-                  <Wrench className="size-3" />
-                  {run.name}
+          {steps.map((step) =>
+            step.kind === 'thinking' ? (
+              <button
+                key={step.id}
+                className="text-muted-foreground/80 flex w-full items-start gap-2 text-left text-xs italic"
+                type="button"
+                onClick={() => {
+                  setOpenThought((current) => (current === step.id ? null : step.id));
+                }}
+              >
+                {step.done ? (
+                  <Brain className="mt-0.5 size-3 shrink-0" />
+                ) : (
+                  <Loader2 className="mt-0.5 size-3 shrink-0 animate-spin" />
+                )}
+                <span className={openThought === step.id ? 'whitespace-pre-wrap' : 'line-clamp-1'}>
+                  {step.text}
                 </span>
-              )}
-            </div>
-          ))}
+              </button>
+            ) : (
+              <div key={step.id} className="text-muted-foreground flex items-center gap-2 text-xs">
+                <ToolIcon state={step.state} />
+                {LABELS[step.name] ?? (
+                  <span className="flex items-center gap-1">
+                    <Wrench className="size-3" />
+                    {step.name}
+                  </span>
+                )}
+                <Elapsed ms={durations[step.id]} />
+              </div>
+            ),
+          )}
           {note === null ? null : <p className="text-muted-foreground pt-1 text-xs">{note}</p>}
         </div>
       )}

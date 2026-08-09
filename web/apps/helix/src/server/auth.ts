@@ -21,10 +21,19 @@ export const ADMIN_ROLES = ['admin', 'sysadmin'] as const;
 const resolveBaseUrl = (): string => env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_BASE_URL;
 
 const resolveTrustedOrigins = (): string[] => {
-  if (env.NODE_ENV === 'development') {
-    return ['http://localhost:3000', env.NEXT_PUBLIC_BASE_URL];
+  if (env.NODE_ENV !== 'development') {
+    return [env.NEXT_PUBLIC_BASE_URL];
   }
-  return [env.NEXT_PUBLIC_BASE_URL];
+
+  // A dev server is often reached by a name other than the one it was
+  // configured with — a tunnel, a LAN address, a phone. Better Auth rejects
+  // those with `INVALID_ORIGIN`, which reads as "wrong password" from the form.
+  const extra = (env.DEV_ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
+
+  return ['http://localhost:3000', env.NEXT_PUBLIC_BASE_URL, ...extra];
 };
 
 const createHelixAuth = () =>

@@ -8,6 +8,10 @@ export const env = createEnv({
     // Better Auth secret (required) and canonical origin (falls back to NEXT_PUBLIC_BASE_URL).
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.url().optional(),
+    // Extra origins allowed to sign in, for reaching a dev server through a
+    // tunnel. Development only; ignored in production, where the canonical
+    // origin is the only one that may hold a session.
+    DEV_ALLOWED_ORIGINS: z.string().optional(),
 
     // SMTP transport for auth mail; when unset the sender logs the action URL to
     // the console. SMTP_SERVER accepts a bare host or an smtp://|smtps:// URL.
@@ -66,6 +70,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     BETTER_AUTH_SECRET: process.env['BETTER_AUTH_SECRET'],
     BETTER_AUTH_URL: process.env['BETTER_AUTH_URL'],
+    DEV_ALLOWED_ORIGINS: process.env['DEV_ALLOWED_ORIGINS'],
     SMTP_SERVER: process.env['SMTP_SERVER'],
     SMTP_USER: process.env['SMTP_USER'],
     SMTP_PASSWORD: process.env['SMTP_PASSWORD'],

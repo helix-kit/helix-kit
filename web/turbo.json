@@ -285,7 +285,8 @@
     "WORKFLOW_SERVICE_TOKEN",
     "HELIX_AI_MODEL",
     "HELIX_AI_RECORD",
-    "HELIX_AI_REPLAY"
+    "HELIX_AI_REPLAY",
+    "DEV_ALLOWED_ORIGINS"
   ],
   "globalDependencies": ["tsconfig.json", "package.json"]
 }

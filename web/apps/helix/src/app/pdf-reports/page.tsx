@@ -9,9 +9,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Read on the server, so a production build never ships the control at all
+// rather than shipping one the API would refuse.
 const PdfReportsPage = () => (
   <div className="mx-auto flex h-svh min-h-0 w-full max-w-[110rem] flex-col gap-6 p-4 sm:p-6">
-    <PdfReportEditor />
+    <PdfReportEditor fixturesAvailable={process.env.NODE_ENV === 'development'} />
   </div>
 );
 

@@ -5,7 +5,7 @@ import {
   type ArtifactEvent,
 } from '@helix/ai-kit';
 import { toToolSet } from '@helix/ai-kit/ai-sdk';
-import { fixtureModel, resolveFixtureMode } from '@helix/ai-kit/fixtures';
+import { fixtureModel, resolveFixtureMode, type FixtureChoice } from '@helix/ai-kit/fixtures';
 import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
 import {
   applyReportPatchLine,
@@ -72,6 +72,8 @@ type GenerateRequestBody = {
   template?: ReportTemplate;
   /** Gateway model id, for comparing models on the same task. */
   model?: string;
+  /** Development only: run the real model (and keep the turn) or replay the last one. */
+  fixture?: FixtureChoice;
 };
 
 const json = (body: unknown, status: number): Response => Response.json(body, { status });
@@ -144,6 +146,7 @@ export const POST = async (request: Request) => {
   // Development only, and only when asked for by name. Working on this editor's
   // UI otherwise means paying for a real generation to look at a layout bug.
   const fixture = resolveFixtureMode({
+    requested: body.fixture,
     record: process.env['HELIX_AI_RECORD'],
     replay: process.env['HELIX_AI_REPLAY'],
     dir: FIXTURE_DIR,

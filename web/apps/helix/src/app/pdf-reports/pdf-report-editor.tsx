@@ -13,7 +13,7 @@ import { GeneratePrompt } from './generate-prompt';
 const DOWNLOAD_FILENAME = 'helix-report.pdf';
 const OBJECT_URL_REVOKE_DELAY_MS = 60_000;
 
-export const PdfReportEditor = () => {
+export const PdfReportEditor = ({ fixturesAvailable = false }: { fixturesAvailable?: boolean }) => {
   const { resolvedTheme } = useTheme();
   // Remounting the editor is how a reset discards the Monaco drafts.
   const [editorKey, setEditorKey] = useState(0);
@@ -123,7 +123,11 @@ export const PdfReportEditor = () => {
         </div>
       </div>
 
-      <GeneratePrompt currentDocument={currentDocument} onArtifact={applyArtifact} />
+      <GeneratePrompt
+        currentDocument={currentDocument}
+        fixturesAvailable={fixturesAvailable}
+        onArtifact={applyArtifact}
+      />
 
       <ReportTemplateEditor
         key={editorKey}

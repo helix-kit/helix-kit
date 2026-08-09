@@ -6,7 +6,7 @@ import { streamText } from 'ai';
 import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
 import { describe, expect, it } from 'vitest';
 
-import { fixtureModel, resolveFixtureMode } from './fixtures';
+import { fixtureModel, LAST_TURN, resolveFixtureMode } from './fixtures';
 import { readRecording, recordingModel, replayModel, type Recording } from './record';
 
 const dir = () => mkdtempSync(join(tmpdir(), 'helix-fixture-'));
@@ -62,6 +62,41 @@ describe('resolveFixtureMode', () => {
     // Not merely "the variable is usually unset in production": a replay there
     // would serve one user's recorded turn to another.
     expect(resolveFixtureMode({ ...base, replay: 'pie-chart', nodeEnv: 'production' })).toEqual({
+      mode: 'live',
+    });
+  });
+
+  it('records into the rolling slot when a request asks for the real model', () => {
+    // Choosing live and choosing to record are the same act: a real turn that
+    // was not kept has to be paid for twice.
+    expect(resolveFixtureMode({ ...base, requested: 'live' })).toEqual({
+      mode: 'record',
+      name: LAST_TURN,
+      path: `/fixtures/${LAST_TURN}.json`,
+    });
+  });
+
+  it('replays the rolling slot when a request asks for the recorded turn', () => {
+    expect(resolveFixtureMode({ ...base, requested: 'replay' })).toEqual({
+      mode: 'replay',
+      name: LAST_TURN,
+      path: `/fixtures/${LAST_TURN}.json`,
+    });
+  });
+
+  it('lets a request override the environment, so switching needs no restart', () => {
+    const resolved = resolveFixtureMode({ ...base, replay: 'pie-chart', requested: 'live' });
+
+    expect(resolved.mode).toBe('record');
+  });
+
+  it('ignores a requested mode outside development', () => {
+    // The flag arrives from a browser. A request must not be able to talk the
+    // server into reading recorded turns or writing prompts to disk.
+    expect(resolveFixtureMode({ ...base, requested: 'replay', nodeEnv: 'production' })).toEqual({
+      mode: 'live',
+    });
+    expect(resolveFixtureMode({ ...base, requested: 'live', nodeEnv: 'production' })).toEqual({
       mode: 'live',
     });
   });

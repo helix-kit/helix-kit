@@ -78,6 +78,15 @@ should not silently write somewhere.
 the provider, so work on the UI a turn drives costs nothing and takes seconds
 rather than a minute.
 
+A request picks which it wants, so switching costs a click rather than a server
+restart — the report editor offers **Real model** and **Last recorded turn**. A
+real run always keeps its turn, because a real turn that was not kept is one that
+has to be paid for twice; the newest lands in a rolling slot that a later replay
+reads. Asking to replay with nothing recorded yet runs the model instead, since
+the first run of a fixture is the one that has to go to the provider.
+
+Named fixtures come from the environment instead, for a turn worth keeping:
+
 ```sh
 HELIX_AI_RECORD=pie-chart pnpm dev   # one real turn, written to a fixture
 HELIX_AI_REPLAY=pie-chart pnpm dev   # that turn again, for free

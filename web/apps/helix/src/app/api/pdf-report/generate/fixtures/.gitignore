@@ -1,0 +1,4 @@
+# The rolling slot behind the UI's "Real model" choice: rewritten by every live
+# run, so tracking it would churn on each use. Named fixtures next to it are
+# deliberate and stay committed.
+last-turn.json

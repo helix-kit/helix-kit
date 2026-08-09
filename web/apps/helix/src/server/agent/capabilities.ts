@@ -1,8 +1,5 @@
-import {
-  collectProcedureTools,
-  recordToolCall,
-  type ProcedureDescriptor,
-} from '@helix/backend/agent';
+import { collectProcedureTools, type ProcedureDescriptor } from '@helix/backend/agent';
+import { recordToolCall } from '@helix/backend/conversations';
 import { codeExecutorTool } from '@helix/code-executor/ai';
 
 import { appRouter } from '@/server/trpc';

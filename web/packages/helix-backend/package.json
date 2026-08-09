@@ -34,6 +34,10 @@
       "import": "./src/ai-usage/index.ts",
       "types": "./src/ai-usage/index.ts"
     },
+    "./conversations": {
+      "import": "./src/conversations/index.ts",
+      "types": "./src/conversations/index.ts"
+    },
     "./db": {
       "import": "./src/db/index.ts",
       "types": "./src/db/index.ts"
@@ -153,6 +157,10 @@
       "./ai-usage": {
         "import": "./dist/ai-usage/index.js",
         "types": "./dist/ai-usage/index.d.ts"
+      },
+      "./conversations": {
+        "import": "./dist/conversations/index.js",
+        "types": "./dist/conversations/index.d.ts"
       },
       "./db": {
         "import": "./dist/db/index.js",

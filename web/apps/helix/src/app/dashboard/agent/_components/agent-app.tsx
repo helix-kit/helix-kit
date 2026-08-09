@@ -11,7 +11,7 @@ import { ThreadSidebar } from './thread-sidebar';
 import type { inferRouterOutputs } from '@trpc/server';
 import type { UIMessage } from 'ai';
 
-export type Conversations = inferRouterOutputs<AppRouter>['agent']['listConversations'];
+export type Conversations = inferRouterOutputs<AppRouter>['conversations']['list'];
 
 // sessionStorage key that hands the first message from the "new chat" composer to
 // the freshly-created thread after navigation.
@@ -30,17 +30,13 @@ export const AgentApp = ({ activeId, initialConversations, initialMessages }: Ag
   const router = useRouter();
 
   const conversationsQuery = useTRPCQuery((api) => ({
-    ...api.agent.listConversations.queryOptions(),
+    ...api.conversations.list.queryOptions({}),
     initialData: initialConversations,
   }));
   const conversations = conversationsQuery.data ?? initialConversations;
 
-  const createConversation = useTRPCMutation((api) =>
-    api.agent.createConversation.mutationOptions(),
-  );
-  const deleteConversation = useTRPCMutation((api) =>
-    api.agent.deleteConversation.mutationOptions(),
-  );
+  const createConversation = useTRPCMutation((api) => api.conversations.create.mutationOptions());
+  const deleteConversation = useTRPCMutation((api) => api.conversations.remove.mutationOptions());
 
   const select = (id: string | null) => {
     router.push(id === null ? '/dashboard/agent' : `/dashboard/agent?c=${id}`);

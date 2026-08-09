@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createDatabasePool, createDb, type DatabaseClient } from '@helix/backend/db';
 import * as blogSchema from '@helix/blog/server/schema';
+import * as reportSchema from '@helix/pdf-report/backend/schema';
 
 import { env } from '@/lib/env';
 
@@ -12,7 +13,7 @@ export const db: DatabaseClient =
   createDb({
     pool: createDatabasePool({ connectionString: env.DATABASE_URL }),
     // Optional feature packages contribute their own tables; core knows nothing about them.
-    extraSchema: blogSchema,
+    extraSchema: { ...blogSchema, ...reportSchema },
   });
 
 if (env.NODE_ENV !== 'production') {

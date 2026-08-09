@@ -1,8 +1,11 @@
+/* eslint-disable import/max-dependencies -- composing every feature's router is
+   this module's entire job, so the ordinary cap does not apply. */
 import 'server-only';
 
 import { accountRouter } from '@helix/backend/account';
-import { agentRouter, findAgentUser } from '@helix/backend/agent';
+import { findAgentUser } from '@helix/backend/agent';
 import { aiUsageRouter } from '@helix/backend/ai-usage';
+import { conversationsRouter } from '@helix/backend/conversations';
 import { devicesAdminRouter } from '@helix/backend/devices';
 import { featuresAdminRouter } from '@helix/backend/features';
 import { iceRouter, type TurnSettings } from '@helix/backend/ice';
@@ -18,6 +21,7 @@ import {
   type BlogSessionUser,
 } from '@helix/blog/server';
 import { espFlasherRouter } from '@helix/device-apps/esp32-flasher/router';
+import { reportTemplatesRouter } from '@helix/pdf-report/backend';
 
 import { env } from '@/lib/env';
 
@@ -61,6 +65,7 @@ export const { router: appRouter } = createRootRouter({
   // literals here, not as those constants: the tRPC usage analyzer skips routers with
   // computed property names, which would drop every blog procedure from the report.
   blog: blogAdminRouter,
+  reportTemplates: reportTemplatesRouter,
   blogPublic: blogPublicRouter,
   releases: releasesAdminRouter,
   devices: devicesAdminRouter,
@@ -70,7 +75,10 @@ export const { router: appRouter } = createRootRouter({
   espFlasher: espFlasherRouter,
   deviceCertificates: deviceCertificatesAdminRouter,
   ice: iceRouter,
-  agent: agentRouter,
+  // One store, mounted per surface. The surface is bound here rather than sent
+  // by the client, so a feature cannot list or delete another's threads.
+  conversations: conversationsRouter({ surface: 'assistant' }),
+  reportConversations: conversationsRouter({ surface: 'pdf-report' }),
   aiUsage: aiUsageRouter,
   account: accountRouter,
 });

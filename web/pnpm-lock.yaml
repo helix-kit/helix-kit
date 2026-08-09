@@ -1072,6 +1072,9 @@ importers:
       '@helix/ai-kit':
         specifier: workspace:*
         version: link:../ai-kit
+      '@helix/backend':
+        specifier: workspace:*
+        version: link:../helix-backend
       '@helix/code-executor':
         specifier: workspace:*
         version: link:../code-executor
@@ -1087,6 +1090,9 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.5.1
         version: 4.5.1(react@19.2.7)
+      drizzle-orm:
+        specifier: 1.0.0-beta.15-859cf75
+        version: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
       react:
         specifier: 19.2.7
         version: 19.2.7

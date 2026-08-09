@@ -9,10 +9,11 @@ export default defineConfig({
     '../../packages/helix-backend/src/db/auth-schema.ts',
     '../../packages/helix-backend/src/db/release-schema.ts',
     '../../packages/helix-backend/src/db/feature-schema.ts',
-    '../../packages/helix-backend/src/db/agent-schema.ts',
+    '../../packages/helix-backend/src/db/conversation-schema.ts',
     '../../packages/helix-backend/src/db/ai-usage-schema.ts',
     // Optional feature packages contribute their own tables.
     '../../packages/blog/src/server/schema.ts',
+    '../../packages/pdf-report/src/backend/schema.ts',
   ],
   dialect: 'postgresql',
   dbCredentials: {

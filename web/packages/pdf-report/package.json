@@ -23,6 +23,18 @@
       "import": "./src/index.ts",
       "types": "./src/index.ts"
     },
+    "./ai": {
+      "import": "./src/ai.ts",
+      "types": "./src/ai.ts"
+    },
+    "./backend": {
+      "import": "./src/backend/index.ts",
+      "types": "./src/backend/index.ts"
+    },
+    "./backend/schema": {
+      "import": "./src/backend/schema.ts",
+      "types": "./src/backend/schema.ts"
+    },
     "./browser": {
       "import": "./src/browser.tsx",
       "types": "./src/browser.tsx"
@@ -38,10 +50,6 @@
     "./server": {
       "import": "./src/server.ts",
       "types": "./src/server.ts"
-    },
-    "./ai": {
-      "import": "./src/ai.ts",
-      "types": "./src/ai.ts"
     }
   },
   "publishConfig": {
@@ -50,6 +58,18 @@
       ".": {
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./ai": {
+        "import": "./dist/ai.js",
+        "types": "./dist/ai.d.ts"
+      },
+      "./backend": {
+        "import": "./dist/backend/index.js",
+        "types": "./dist/backend/index.d.ts"
+      },
+      "./backend/schema": {
+        "import": "./dist/backend/schema.js",
+        "types": "./dist/backend/schema.d.ts"
       },
       "./browser": {
         "import": "./dist/browser.js",
@@ -66,20 +86,18 @@
       "./server": {
         "import": "./dist/server.js",
         "types": "./dist/server.d.ts"
-      },
-      "./ai": {
-        "import": "./dist/ai.js",
-        "types": "./dist/ai.d.ts"
       }
     }
   },
   "dependencies": {
     "@helix/ai-kit": "workspace:*",
+    "@helix/backend": "workspace:*",
     "@helix/code-executor": "workspace:*",
     "@helix/json-schema": "workspace:*",
     "@json-render/core": "^0.19.0",
     "@json-render/react-pdf": "^0.19.0",
     "@react-pdf/renderer": "^4.5.1",
+    "drizzle-orm": "1.0.0-beta.15-859cf75",
     "zod": "4.4.3"
   },
   "peerDependencies": {

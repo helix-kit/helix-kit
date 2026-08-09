@@ -25,14 +25,14 @@ export default async function AgentPage({
   }
 
   const { c } = await searchParams;
-  const conversations = await fetchQuery((trpc) => trpc.agent.listConversations.queryOptions());
+  const conversations = await fetchQuery((trpc) => trpc.conversations.list.queryOptions({}));
 
   let activeId: string | null = null;
   let initialMessages: unknown[] = [];
   if (c != null && c !== '') {
     try {
       const conversation = await fetchQuery((trpc) =>
-        trpc.agent.getConversation.queryOptions({ id: c }),
+        trpc.conversations.get.queryOptions({ id: c }),
       );
       activeId = conversation.id;
       initialMessages = conversation.messages;

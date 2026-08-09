@@ -1,9 +1,9 @@
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import * as agentSchema from './agent-schema';
 import * as aiUsageSchema from './ai-usage-schema';
 import * as authSchema from './auth-schema';
+import * as conversationSchema from './conversation-schema';
 import * as featureSchema from './feature-schema';
 import * as releaseSchema from './release-schema';
 import * as appSchema from './schema';
@@ -13,7 +13,7 @@ const databaseSchema = {
   ...appSchema,
   ...releaseSchema,
   ...featureSchema,
-  ...agentSchema,
+  ...conversationSchema,
   ...aiUsageSchema,
 };
 

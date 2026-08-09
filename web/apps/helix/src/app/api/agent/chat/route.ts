@@ -1,7 +1,7 @@
 import { composeAssistant } from '@helix/ai-kit';
 import { toToolSet } from '@helix/ai-kit/ai-sdk';
-import { saveConversation } from '@helix/backend/agent';
 import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
+import { saveConversation } from '@helix/backend/conversations';
 import {
   convertToModelMessages,
   createIdGenerator,
@@ -71,7 +71,7 @@ export const POST = async (req: Request): Promise<Response> => {
 
   // Authorize the thread through the same guard the UI uses (throws if not owned).
   try {
-    await caller.agent.getConversation({ id: conversationId });
+    await caller.conversations.get({ id: conversationId });
   } catch {
     return json({ error: 'Conversation not found.' }, STATUS.notFound);
   }

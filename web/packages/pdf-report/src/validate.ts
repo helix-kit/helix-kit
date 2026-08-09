@@ -117,18 +117,20 @@ const formatIssue = (issue: IssueLike): string => {
 };
 
 /**
- * Checks a template against the catalog: structural integrity first, then every
- * element's component name and props.
+ * A key at the top of the layout that does not belong there.
  *
- * `catalog.validate()` is deliberately not used. It types a spec's `props` as a
- * loose object — the per-component schemas describe the vocabulary (they are
- * what `catalog.prompt()` renders) but are never enforced — and it additionally
- * requires `visible` on every element, which hand-authored templates omit. So
- * the names and schemas come from the catalog, and the checking happens here.
- *
- * Returns every issue rather than throwing on the first, so an author fixing a
- * template sees the whole list at once.
+ * A patch aimed outside the layout — `/spec/elements/...` from a model shown the
+ * whole template — does not fail. `replace` invents the parents it cannot find,
+ * so the layout quietly grows a `spec` key holding a second, partial layout that
+ * nothing draws.
  */
+const strayTopLevelIssues = (spec: Spec): ReportSpecIssue[] =>
+  Object.keys(spec as unknown as Record<string, unknown>)
+    .filter((key) => key !== 'root' && key !== 'elements')
+    .map((key) => ({
+      message: `The layout has an unexpected top-level key "${key}". Patch paths are rooted at the layout, so they start with "/elements" or "/root".`,
+    }));
+
 const childrenOf = (element: UIElement): string[] =>
   Array.isArray(element.children) ? element.children.filter((c) => typeof c === 'string') : [];
 
@@ -194,6 +196,19 @@ const unreachableElementIssues = (spec: Spec): ReportSpecIssue[] => {
     }));
 };
 
+/**
+ * Checks a template against the catalog: structural integrity first, then every
+ * element's component name and props.
+ *
+ * `catalog.validate()` is deliberately not used. It types a spec's `props` as a
+ * loose object — the per-component schemas describe the vocabulary (they are
+ * what `catalog.prompt()` renders) but are never enforced — and it additionally
+ * requires `visible` on every element, which hand-authored templates omit. So
+ * the names and schemas come from the catalog, and the checking happens here.
+ *
+ * Returns every issue rather than throwing on the first, so an author fixing a
+ * template sees the whole list at once.
+ */
 export const validateReportSpec = (
   spec: Spec,
   outputSchema?: JSONSchema._JSONSchema,
@@ -229,7 +244,11 @@ export const validateReportSpec = (
     }
   }
 
-  issues.push(...duplicateChildIssues(spec), ...unreachableElementIssues(spec));
+  issues.push(
+    ...strayTopLevelIssues(spec),
+    ...duplicateChildIssues(spec),
+    ...unreachableElementIssues(spec),
+  );
 
   // A binding that reads a path the code never produces renders as empty rather
   // than failing, so without this a typo is invisible until someone reads the

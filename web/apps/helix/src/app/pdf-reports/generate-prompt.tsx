@@ -55,13 +55,32 @@ type MessagePart = {
   state?: string;
   toolCallId?: string;
   errorText?: string;
+  output?: unknown;
 };
 
-const toolState = (state: string | undefined): ToolRun['state'] => {
-  if (state === 'output-error') {
+/**
+ * A tool that reported a problem failed, whether or not the call did.
+ *
+ * Tool errors come back as output rather than thrown, so the model can read them
+ * and correct itself. That makes them invisible to a state check alone: the step
+ * shows a tick while the model is being told its patch was rejected, and the only
+ * account the reader gets is prose claiming the work was done.
+ */
+const toolState = (part: MessagePart): ToolRun['state'] => {
+  if (part.state === 'output-error') {
     return 'failed';
   }
-  return state === 'output-available' ? 'done' : 'running';
+  if (part.state !== 'output-available') {
+    return 'running';
+  }
+  const { output } = part;
+  const reported =
+    typeof output === 'object' &&
+    output !== null &&
+    'error' in output &&
+    typeof (output as { error: unknown }).error === 'string';
+
+  return reported ? 'failed' : 'done';
 };
 
 const buildSteps = (parts: MessagePart[]): Step[] =>
@@ -85,7 +104,7 @@ const buildSteps = (parts: MessagePart[]): Step[] =>
           kind: 'tool' as const,
           id: part.toolCallId ?? `tool-${String(index)}`,
           name: part.type === 'dynamic-tool' ? 'tool' : part.type.slice('tool-'.length),
-          state: toolState(part.state),
+          state: toolState(part),
         },
       ];
     }
@@ -186,7 +205,13 @@ export const GeneratePrompt = ({
     transport: new DefaultChatTransport({ api: ENDPOINT }),
     onData: (part) => {
       if (part.type === 'data-artifact') {
-        collectorRef.current.handle(part.data as ArtifactEvent);
+        try {
+          collectorRef.current.handle(part.data as ArtifactEvent);
+        } catch (error) {
+          // The server rejects the same patch and tells the model, which fixes
+          // it and sends another. Here it only needs to not take the page down.
+          setNote(error instanceof Error ? error.message : 'A layout patch was rejected.');
+        }
       }
       if (part.type === 'data-tool-timing') {
         const { toolCallId, durationMs } = part.data as {

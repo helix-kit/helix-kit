@@ -2,6 +2,27 @@ import { applySpecStreamPatch, createMixedStreamParser, type Spec } from '@json-
 
 import { cloneJson } from './json';
 
+/** The only two things a layout has at its top level. */
+const SPEC_ROOTS = ['/root', '/elements'];
+
+/**
+ * Refuses a path that is not rooted at the layout.
+ *
+ * Paths address the layout, not the template that holds it, and a model shown
+ * the whole template naturally writes `/spec/elements/...`. Left alone that is
+ * far worse than an error: a `remove` at an unknown path does nothing at all,
+ * and a `replace` invents the missing parents, so the layout grows a `spec` key
+ * containing a second half-layout. Nothing fails, nothing changes, and the model
+ * reports that it removed something it did not.
+ */
+const assertSpecPath = (path: string): void => {
+  if (!SPEC_ROOTS.some((root) => path === root || path.startsWith(`${root}/`))) {
+    throw new Error(
+      `Patch path "${path}" is not part of the layout. Paths are rooted at the layout itself, so they start with "/elements" or "/root" — for example "/elements/page/children/0", not "/spec/elements/...".`,
+    );
+  }
+};
+
 /**
  * Applies one SpecStream line to a spec, returning the result.
  *
@@ -19,6 +40,7 @@ export const applyReportPatchLine = (spec: Spec, line: string): Spec => {
   const next = cloneJson(spec) as unknown as Record<string, unknown>;
   const parser = createMixedStreamParser({
     onPatch: (patch) => {
+      assertSpecPath(patch.path);
       applySpecStreamPatch(next, patch);
     },
     onText: () => {},

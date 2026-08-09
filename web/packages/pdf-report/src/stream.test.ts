@@ -96,4 +96,36 @@ describe('applyReportPatchLine', () => {
   it('ignores an empty line', () => {
     expect(applyReportPatchLine(applyAll(GENERATED), '').root).toBe('doc');
   });
+
+  it('refuses a path aimed outside the layout', () => {
+    // What a real turn sent when asked to remove a chart. Paths address the
+    // layout, but the model had been shown the whole template, so it wrote
+    // `/spec/elements/...` — and nothing failed: the removes matched nothing and
+    // the replace invented the parents, so the chart stayed and the model
+    // reported that it had gone.
+    const base = applyAll(GENERATED);
+
+    expect(() =>
+      applyReportPatchLine(base, line({ op: 'remove', path: '/spec/elements/profile-chart' })),
+    ).toThrow(/rooted at the layout/);
+  });
+
+  it('names the correct root in the refusal, so it can be corrected', () => {
+    const base = applyAll(GENERATED);
+
+    expect(() =>
+      applyReportPatchLine(base, line({ op: 'replace', path: '/template/root', value: 'doc' })),
+    ).toThrow(/"\/elements" or "\/root"/);
+  });
+
+  it('still applies a path rooted at the layout', () => {
+    const base = applyAll(GENERATED);
+
+    const next = applyReportPatchLine(
+      base,
+      line({ op: 'add', path: '/elements/extra', value: {} }),
+    );
+
+    expect(next.elements).toHaveProperty('extra');
+  });
 });

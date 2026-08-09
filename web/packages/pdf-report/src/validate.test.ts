@@ -236,4 +236,26 @@ describe('reportSpecJsonSchema', () => {
 
     expect(validateReportSpec(spec)).toEqual([]);
   });
+
+  it('rejects a layout that grew a key outside root and elements', () => {
+    // The residue of a patch aimed at `/spec/...`: `replace` invents the parents
+    // it cannot find, so the layout ends up holding a second, partial layout
+    // that nothing draws and nothing else objects to.
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: { type: 'Page', props: {}, children: [] },
+      },
+      spec: { elements: { page: { children: [] } } },
+    } as unknown as Parameters<typeof validateReportSpec>[0];
+
+    const issues = validateReportSpec(spec);
+
+    expect(issues).toContainEqual(
+      expect.objectContaining({
+        message: expect.stringContaining('unexpected top-level key "spec"') as unknown as string,
+      }),
+    );
+  });
 });

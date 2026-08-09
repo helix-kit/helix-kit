@@ -156,4 +156,84 @@ describe('reportSpecJsonSchema', () => {
   it('does not require `visible`, which hand-authored templates omit', () => {
     expect(schema.properties.elements.additionalProperties.required).not.toContain('visible');
   });
+
+  it('rejects a child listed twice in the same container', () => {
+    // Exactly what a recorded turn produced: the model inserted a new section
+    // before the table with `add .../children/5`, which already shifts the table
+    // down, and then "moved" the table by adding it again at 6. The report drew
+    // the device table twice and every other check passed, because a duplicate
+    // child is valid and renders perfectly well.
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: {
+          type: 'Page',
+          props: {},
+          children: ['chart-section', 'lastseen-section', 'table-section', 'table-section'],
+        },
+        'chart-section': { type: 'Section', props: { title: 'Chart' }, children: [] },
+        'lastseen-section': { type: 'Section', props: { title: 'Last seen' }, children: [] },
+        'table-section': { type: 'Section', props: { title: 'Devices' }, children: [] },
+      },
+    } as unknown as Parameters<typeof validateReportSpec>[0];
+
+    const issues = validateReportSpec(spec);
+
+    expect(issues).toContainEqual(
+      expect.objectContaining({
+        elementKey: 'page',
+        message: expect.stringContaining('listed more than once') as unknown as string,
+      }),
+    );
+  });
+
+  it('reports a duplicated child once, not once per repeat', () => {
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: { type: 'Page', props: {}, children: ['a', 'a', 'a'] },
+        a: { type: 'Section', props: { title: 'A' }, children: [] },
+      },
+    } as unknown as Parameters<typeof validateReportSpec>[0];
+
+    const duplicates = validateReportSpec(spec).filter((issue) =>
+      issue.message.includes('listed more than once'),
+    );
+
+    expect(duplicates).toHaveLength(1);
+  });
+
+  it('rejects an element nothing reaches from the root', () => {
+    // The other half of the same failure: a chart that was created and bound but
+    // never attached, so the page renders without it and the checks say it is
+    // fine — because it is, it is just not on the page.
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: { type: 'Page', props: {}, children: [] },
+        orphan: { type: 'Section', props: { title: 'Never drawn' }, children: [] },
+      },
+    } as unknown as Parameters<typeof validateReportSpec>[0];
+
+    const issues = validateReportSpec(spec);
+
+    expect(issues).toContainEqual(expect.objectContaining({ elementKey: 'orphan' }));
+  });
+
+  it('accepts a spec where every element is reached exactly once', () => {
+    const spec = {
+      root: 'doc',
+      elements: {
+        doc: { type: 'Document', props: {}, children: ['page'] },
+        page: { type: 'Page', props: {}, children: ['a', 'b'] },
+        a: { type: 'Section', props: { title: 'A' }, children: [] },
+        b: { type: 'Section', props: { title: 'B' }, children: [] },
+      },
+    } as unknown as Parameters<typeof validateReportSpec>[0];
+
+    expect(validateReportSpec(spec)).toEqual([]);
+  });
 });

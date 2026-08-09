@@ -129,6 +129,71 @@ const formatIssue = (issue: IssueLike): string => {
  * Returns every issue rather than throwing on the first, so an author fixing a
  * template sees the whole list at once.
  */
+const childrenOf = (element: UIElement): string[] =>
+  Array.isArray(element.children) ? element.children.filter((c) => typeof c === 'string') : [];
+
+/**
+ * The same child listed twice in one container.
+ *
+ * Nothing is invalid about it — the element simply draws twice — which is why it
+ * survives every other check and is only noticed by whoever reads the document.
+ * It comes from a specific mistake: JSON Patch `add` on an array inserts, so a
+ * model that inserts a section before an existing one and then "moves" that one
+ * down by adding it again ends up with two of it.
+ */
+const duplicateChildIssues = (spec: Spec): ReportSpecIssue[] => {
+  const issues: ReportSpecIssue[] = [];
+
+  for (const [key, element] of Object.entries(spec.elements as Record<string, UIElement>)) {
+    const seen = new Set<string>();
+    const reported = new Set<string>();
+    for (const child of childrenOf(element)) {
+      if (seen.has(child) && !reported.has(child)) {
+        reported.add(child);
+        issues.push({
+          elementKey: key,
+          message: `Child "${child}" is listed more than once, so it draws more than once. Adding to an array inserts; it does not move what is already there.`,
+        });
+      }
+      seen.add(child);
+    }
+  }
+
+  return issues;
+};
+
+/**
+ * An element nothing reaches from the root.
+ *
+ * Also not invalid, and also invisible: the element is built, bound and checked,
+ * and then never drawn, so a report is missing a section that every check
+ * reported as present.
+ */
+const unreachableElementIssues = (spec: Spec): ReportSpecIssue[] => {
+  const elements = spec.elements as Record<string, UIElement>;
+  const reached = new Set<string>();
+  const queue = [spec.root];
+
+  while (queue.length > 0) {
+    const key = queue.shift();
+    if (key === undefined || reached.has(key)) {
+      continue;
+    }
+    reached.add(key);
+    const element = elements[key];
+    if (element !== undefined) {
+      queue.push(...childrenOf(element));
+    }
+  }
+
+  return Object.keys(elements)
+    .filter((key) => !reached.has(key))
+    .map((key) => ({
+      elementKey: key,
+      message: 'Nothing reaches this element from the root, so it is never drawn.',
+    }));
+};
+
 export const validateReportSpec = (
   spec: Spec,
   outputSchema?: JSONSchema._JSONSchema,
@@ -163,6 +228,8 @@ export const validateReportSpec = (
       }
     }
   }
+
+  issues.push(...duplicateChildIssues(spec), ...unreachableElementIssues(spec));
 
   // A binding that reads a path the code never produces renders as empty rather
   // than failing, so without this a typo is invisible until someone reads the

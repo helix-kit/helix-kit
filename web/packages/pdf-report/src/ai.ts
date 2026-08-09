@@ -54,11 +54,16 @@ export type ReportAssistantOptions = {
  * see the other's half, so a binding pointing at a field the code never produces
  * is invisible to both and renders as blank space in a delivered document.
  */
+const EDITING = `Adding to a children array **inserts**; everything after it shifts along on its own.
+
+So to put a new section before an existing one, add the new key at that index and stop. Do not also re-add the section that follows — that inserts a second copy of it, and the report draws it twice while every check still passes.`;
+
 export const reportAuthoring = (options: ReportAssistantOptions = {}): AiCapability => {
   const { current } = options;
   const sections: PromptSection[] = [
     { id: 'report.tiers', title: 'How a report is built', body: TWO_TIER },
     { id: 'report.bindings', title: 'Binding values into the layout', body: BINDINGS },
+    { id: 'report.editing', title: 'Editing an existing layout', body: EDITING },
     { id: 'report.components', title: 'Available components', body: reportCatalog.prompt() },
   ];
 

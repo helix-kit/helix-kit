@@ -37,6 +37,13 @@ const SheetOverlay = ({
   />
 );
 
+/**
+ * A width override must carry the side variant it is overriding —
+ * `data-[side=right]:sm:max-w-4xl`, not `sm:max-w-4xl`. The default below is set
+ * per side, and an attribute selector outranks a plain one, so an unprefixed
+ * override is simply ignored: the sheet stays at its default width with no sign
+ * that anything was asked for.
+ */
 const SheetContent = ({
   className,
   children,

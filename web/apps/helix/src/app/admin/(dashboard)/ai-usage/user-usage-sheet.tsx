@@ -54,7 +54,8 @@ export const UserUsageSheet = ({
         }
       }}
     >
-      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+      {/* The side variant is required: a plain `sm:max-w-*` loses to the default. */}
+      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-4xl">
         <SheetHeader>
           <SheetTitle>AI usage detail</SheetTitle>
           <SheetDescription>Spend, recent requests, and credit grants.</SheetDescription>

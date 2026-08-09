@@ -6,6 +6,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -181,13 +182,38 @@ def _render_env(env: dict[str, str], overrides: dict[str, str]) -> str:
 
 
 def _tunnel_args(host: str, user: str, key: Path | None, offset: int) -> list[str]:
-    args = ["ssh", "-N", "-o", "StrictHostKeyChecking=accept-new", "-o", "ExitOnForwardFailure=yes"]
+    args = [
+        "ssh",
+        "-N",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ExitOnForwardFailure=yes",
+        # A dev tunnel spends most of its life idle, which is exactly what a NAT
+        # or firewall drops. Without these the connection dies quietly and the
+        # app keeps serving until something asks the database a question.
+        "-o",
+        f"ServerAliveInterval={KEEPALIVE_SECONDS}",
+        "-o",
+        f"ServerAliveCountMax={KEEPALIVE_RETRIES}",
+        "-o",
+        "TCPKeepAlive=yes",
+    ]
     if key is not None:
         args += ["-i", str(key)]
     for tunnel in TUNNELS:
         # local:remote — the remote side is always the appliance's real port.
         args += ["-L", f"127.0.0.1:{tunnel.port + offset}:127.0.0.1:{tunnel.port}"]
     return args + [f"{user}@{host}"]
+
+
+# Idle links get dropped, so speak up every half minute and give up after three.
+KEEPALIVE_SECONDS = 30
+KEEPALIVE_RETRIES = 3
+
+RECONNECT_ATTEMPTS = 10
+RECONNECT_BASE_SECONDS = 2
+RECONNECT_MAX_SECONDS = 30
 
 
 def _in_use(port: int) -> bool:
@@ -273,16 +299,44 @@ def run_remote_dev(
         "Ctrl-C here closes the tunnels (and the app loses its backing services).\n"
     )
 
-    process = subprocess.Popen(_tunnel_args(host, user, key, port_offset))
-    try:
-        process.wait()
-    except KeyboardInterrupt:
-        click.echo("\nclosing tunnels …")
-        process.send_signal(signal.SIGTERM)
+    _hold_tunnels(host, user, key, port_offset)
+
+
+def _hold_tunnels(host: str, user: str, key: Path | None, offset: int) -> None:
+    """Keeps the tunnels up, reconnecting if the link drops.
+
+    A dropped tunnel does not announce itself: the dev server stays up and keeps
+    serving until a request needs the database, then fails with a 500 that says
+    nothing about ssh. Reconnecting is nearly always what was wanted — the
+    alternative is noticing by accident, some minutes later.
+    """
+    attempt = 0
+    while True:
+        process = subprocess.Popen(_tunnel_args(host, user, key, offset))
         try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-        sys.exit(0)
-    if process.returncode not in (0, None):
-        raise click.ClickException(f"ssh exited with {process.returncode}")
+            process.wait()
+        except KeyboardInterrupt:
+            click.echo("\nclosing tunnels …")
+            process.send_signal(signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            sys.exit(0)
+
+        if process.returncode in (0, None):
+            return
+
+        attempt += 1
+        if attempt > RECONNECT_ATTEMPTS:
+            raise click.ClickException(
+                f"ssh exited with {process.returncode} and did not come back after "
+                f"{RECONNECT_ATTEMPTS} attempts."
+            )
+        delay = min(RECONNECT_BASE_SECONDS * attempt, RECONNECT_MAX_SECONDS)
+        click.secho(
+            f"  tunnel dropped (ssh exited with {process.returncode}); "
+            f"reconnecting in {delay}s [{attempt}/{RECONNECT_ATTEMPTS}]",
+            fg="yellow",
+        )
+        time.sleep(delay)

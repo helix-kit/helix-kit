@@ -125,4 +125,36 @@ describe('createArtifactCollector', () => {
 
     expect(lines.map(([, line]) => line)).toEqual(['leftover', 'fresh']);
   });
+
+  it('applies a buffered last line when asked to flush', () => {
+    // The failure this prevents: a model that never sets `done` leaves the final
+    // operation in the buffer, and the final operation of a patch is usually the
+    // one attaching everything before it to the document — so the parts arrive,
+    // orphaned, and the page renders without them.
+    const lines: string[] = [];
+    const collector = createArtifactCollector(ARTIFACTS, {
+      onPatchLine: (_kind, line) => lines.push(line),
+    });
+
+    collector.handle({ type: DELTA, kind: LAYOUT, chunk: `${OP_A}\n${OP_B}` });
+    expect(lines).toEqual([OP_A]);
+
+    collector.flush();
+
+    expect(lines).toEqual([OP_A, OP_B]);
+  });
+
+  it('flushes every kind that still holds something', () => {
+    const seen: string[] = [];
+    const collector = createArtifactCollector(ARTIFACTS, {
+      onPatchLine: (kind, line) => seen.push(`${kind}:${line}`),
+    });
+
+    collector.handle({ type: DELTA, kind: LAYOUT, chunk: OP_A });
+    collector.flush();
+    collector.flush();
+
+    // Flushed once, not once per call: a second flush has nothing left to apply.
+    expect(seen).toEqual([`${LAYOUT}:${OP_A}`]);
+  });
 });

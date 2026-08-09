@@ -240,6 +240,8 @@ export const POST = async (request: Request) => {
         tools: toToolSet([...assistant.tools, ...artifactTools(assistant.artifacts, emit)]),
         stopWhen: stepCountIs(MAX_STEPS),
         onFinish: async ({ totalUsage, finishReason, steps }) => {
+          // Anything still buffered belongs to the template, not to the void.
+          collector.flush();
           await meter({
             usage: totalUsage,
             toolCalls: steps.reduce((count, step) => count + step.toolCalls.length, 0),

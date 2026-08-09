@@ -82,7 +82,15 @@ export const artifactTools = (
           if (replaces === true) {
             emit({ type: 'artifact-reset', kind: artifact.kind });
           }
-          emit({ type: 'artifact-delta', kind: artifact.kind, chunk: patch });
+          // Terminated here because a tool call is a complete message, not a
+          // network fragment. Without this the last operation sits in the
+          // collector's buffer waiting for a newline that never comes, and a
+          // model that does not set `done` silently loses it.
+          emit({
+            type: 'artifact-delta',
+            kind: artifact.kind,
+            chunk: patch.endsWith('\n') ? patch : `${patch}\n`,
+          });
           if (done === true) {
             emit({ type: 'artifact-end', kind: artifact.kind });
           }

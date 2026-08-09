@@ -31,6 +31,15 @@ export type ArtifactHandlers = {
 
 export type ArtifactCollector = {
   handle: (event: ArtifactEvent) => void;
+  /**
+   * Applies whatever is still buffered, for a source that stops without saying so.
+   *
+   * A patch artifact holds its trailing partial line waiting for the newline that
+   * completes it. If the stream simply ends — a model that never sets `done` —
+   * that line is otherwise lost, and losing the *last* line of a patch is losing
+   * the one most likely to attach everything before it to the document.
+   */
+  flush: () => void;
 };
 
 /**
@@ -65,6 +74,12 @@ export const createArtifactCollector = (
   };
 
   return {
+    flush: () => {
+      for (const kind of [...buffers.keys()]) {
+        flushLines(kind, '', true);
+        buffers.delete(kind);
+      }
+    },
     handle: (event) => {
       const spec = byKind.get(event.kind);
       if (spec === undefined) {

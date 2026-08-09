@@ -101,6 +101,9 @@ export const GeneratePrompt = ({
       ]);
     },
     onFinish: ({ message }) => {
+      // A patch whose last line never got its newline is still part of the
+      // layout; the turn ending is what says no more is coming.
+      collectorRef.current.flush();
       // Every tool that never reported back is finished by the time the turn is.
       setTools((current) =>
         current.map((run) => (run.state === 'running' ? { ...run, state: 'done' } : run)),

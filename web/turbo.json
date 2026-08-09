@@ -283,7 +283,9 @@
     "WEB_APP_BASE_URL",
     "WORKFLOW_MAX_CONCURRENCY",
     "WORKFLOW_SERVICE_TOKEN",
-    "HELIX_AI_MODEL"
+    "HELIX_AI_MODEL",
+    "HELIX_AI_RECORD",
+    "HELIX_AI_REPLAY"
   ],
   "globalDependencies": ["tsconfig.json", "package.json"]
 }

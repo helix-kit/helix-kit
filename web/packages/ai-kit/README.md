@@ -71,3 +71,32 @@ rest arrives, and each kind buffers independently.
 Events naming a kind outside the artifact table, or using the wrong mode for
 their kind, are reported rather than applied — a model inventing a destination
 should not silently write somewhere.
+
+## Turns can be recorded and replayed
+
+`@helix/ai-kit/fixtures` records a real turn to a file and replays it in place of
+the provider, so work on the UI a turn drives costs nothing and takes seconds
+rather than a minute.
+
+```sh
+HELIX_AI_RECORD=pie-chart pnpm dev   # one real turn, written to a fixture
+HELIX_AI_REPLAY=pie-chart pnpm dev   # that turn again, for free
+```
+
+Both sides are the AI SDK's own seams: recording is a `wrapLanguageModel`
+middleware that tees `wrapStream`, and replay is a `MockLanguageModelV4` serving
+the recorded parts through `simulateReadableStream`.
+
+The provider's stream parts are kept verbatim rather than summarised, because
+what a summary drops — the deltas and their boundaries — is exactly what the UI
+has to cope with. An agent loop is many calls, so a fixture holds all of them in
+order, and a run that outlasts its recording fails rather than stopping silently.
+
+Tools still execute for real on replay. That is the point: the sandbox, the
+checks and the render are local and free, so artifacts stream into the panes
+exactly as in a real run while nothing is spent. A replayed turn is not metered,
+since billing tokens nobody spent would make the ledger useless.
+
+It refuses to arm outside development rather than trusting the variable to be
+absent: a replay reaching production would serve one user's recorded turn to
+another.

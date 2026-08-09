@@ -25,6 +25,10 @@
     "./ai-sdk": {
       "import": "./src/ai-sdk.ts",
       "types": "./src/ai-sdk.ts"
+    },
+    "./fixtures": {
+      "import": "./src/fixtures.ts",
+      "types": "./src/fixtures.ts"
     }
   },
   "publishConfig": {
@@ -37,6 +41,10 @@
       "./ai-sdk": {
         "import": "./dist/ai-sdk.js",
         "types": "./dist/ai-sdk.d.ts"
+      },
+      "./fixtures": {
+        "import": "./dist/fixtures.js",
+        "types": "./dist/fixtures.d.ts"
       }
     }
   },

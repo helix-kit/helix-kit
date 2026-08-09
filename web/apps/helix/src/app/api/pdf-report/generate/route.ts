@@ -5,6 +5,7 @@ import {
   type ArtifactEvent,
 } from '@helix/ai-kit';
 import { toToolSet } from '@helix/ai-kit/ai-sdk';
+import { fixtureModel, resolveFixtureMode } from '@helix/ai-kit/fixtures';
 import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
 import {
   applyReportPatchLine,
@@ -36,6 +37,9 @@ const MAX_STEPS = 24;
 
 /** Which AI surface this usage belongs to, for per-feature spend breakdowns. */
 const FEATURE = 'pdf-report';
+
+/** Recorded turns live with the app, not in a temp dir, so they can be committed. */
+const FIXTURE_DIR = 'src/app/api/pdf-report/generate/fixtures';
 
 const STATUS = {
   badRequest: 400,
@@ -137,6 +141,15 @@ export const POST = async (request: Request) => {
   const model = typeof body.model === 'string' && body.model !== '' ? body.model : env.AGENT_MODEL;
   const startedAt = Date.now();
 
+  // Development only, and only when asked for by name. Working on this editor's
+  // UI otherwise means paying for a real generation to look at a layout bug.
+  const fixture = resolveFixtureMode({
+    record: process.env['HELIX_AI_RECORD'],
+    replay: process.env['HELIX_AI_REPLAY'],
+    dir: FIXTURE_DIR,
+    nodeEnv: process.env.NODE_ENV,
+  });
+
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
       // The template as written so far. Held here rather than asked of the
@@ -179,6 +192,12 @@ export const POST = async (request: Request) => {
         steps: number;
         finishReason: string;
       }) => {
+        // A replayed turn calls no provider. Metering it would bill the user for
+        // tokens nobody spent and make the ledger useless for the comparison it
+        // exists to support.
+        if (using === 'replay') {
+          return;
+        }
         await meterSdkUsage(db, {
           userId: user.id,
           feature: FEATURE,
@@ -195,8 +214,24 @@ export const POST = async (request: Request) => {
         });
       };
 
+      const { model: languageModel, using } = fixtureModel({
+        live: () => gateway(model),
+        modelId: model,
+        prompt,
+        fixture,
+      });
+
+      // Says so on the page, so a recorded run is never mistaken for a real one.
+      if (fixture.mode !== 'live') {
+        writer.write({
+          type: 'data-fixture',
+          data: { using, name: fixture.name },
+          transient: true,
+        });
+      }
+
       const result = streamText({
-        model: gateway(model),
+        model: languageModel,
         system: assistant.system,
         prompt:
           body.template === undefined

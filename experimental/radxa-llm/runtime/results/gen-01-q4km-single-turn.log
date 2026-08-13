@@ -1,0 +1,33 @@
+
+
+Loading model... |-\|/-\|/-\|/-\|/-\|/-\ 
+
+▄▄ ▄▄
+██ ██
+██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄
+██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██
+██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀
+                                    ██    ██
+                                    ▀▀    ▀▀
+
+build      : b0-unknown
+model      : /home/radxa/models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf
+ftype      : Q4_K - Medium
+modalities : text
+
+available commands:
+  /exit or Ctrl+C     stop or exit
+  /regen              regenerate the last response
+  /clear              clear the chat history
+  /read <file>        add a text file
+  /glob <pattern>     add text files using globbing pattern
+
+
+
+> Explain what a single-board computer is, in three sentences.
+A single-board computer (SBC) is a type of personal computer that contains only a single central processing unit (CPU), memory, and graphics processing unit (GPU). It is designed to be small, lightweight, and portable, making it ideal for use in a variety of applications, from home and office computing to mobile devices and robotics. Single-board computers are known for their portability, ease of use, and ability to expand their processing power by adding additional components such as RAM, storage, and external devices.
+
+[ Prompt: 31.0 t/s | Generation: 16.9 t/s ]
+
+
+Exiting...

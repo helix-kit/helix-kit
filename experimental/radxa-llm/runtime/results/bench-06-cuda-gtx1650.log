@@ -1,0 +1,19 @@
+Captured 2026-07-20 on the laptop (x86_64 + GTX 1650), same llama.cpp commit 91d2fc3,
+same Qwen2.5-0.5B-Instruct-Q4_K_M.gguf as the board runs — the reference point for
+"how far is the board from a discrete GPU".
+
+  Device 0: NVIDIA GeForce GTX 1650, compute capability 7.5, VMM: yes, VRAM: 3715 MiB
+The following devices will have suboptimal performance due to a lack of tensor cores:
+  Device 0: NVIDIA GeForce GTX 1650
+Consider compiling with CMAKE_CUDA_ARCHITECTURES=61-virtual;80-virtual and DGGML_CUDA_FORCE_MMQ to force the use of the Pascal code for Turing.
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CUDA       |  99 |            pp64 |      991.32 ± 229.23 |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CUDA       |  99 |            tg64 |        236.24 ± 2.11 |
+
+build: 91d2fc3 (1)
+
+--- live single-turn on the same build ---
+Hello, how can I assist you today?
+
+[ Prompt: 427.3 t/s | Generation: 157.8 t/s ]

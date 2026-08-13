@@ -1,0 +1,3 @@
+# Generated conversion artifacts (ONNX/engine/nb, calibration inputs, logs).
+# The runnable scripts + RESULTS.md are the deliverable; heavy outputs live as Linear attachments.
+work/

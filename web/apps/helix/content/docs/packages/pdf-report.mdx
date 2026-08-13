@@ -15,9 +15,16 @@ none at all, since it renders in the browser too.
 pnpm add @helix-hq/pdf-report
 ```
 
-Peers you supply: `react` and `react-dom`. If you use the template **editor**,
-also install `@helix-hq/design-system` — an optional peer, so a render-only
-install never pulls it in.
+Peers you supply: `react` and `react-dom`. That is all a **rendering** install
+needs — no UI library, no Tailwind, no backend.
+
+The template **editor** additionally wants `@helix-hq/design-system` and
+`react-resizable-panels`. Both are optional peers, so a render-only install
+never pulls them in:
+
+```sh
+pnpm add @helix-hq/design-system react-resizable-panels
+```
 
 ## The two tiers
 

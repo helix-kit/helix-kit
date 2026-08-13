@@ -65,7 +65,6 @@ const config: KnipConfig = {
       ignore: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         'postcss-load-config',
-        'react-hook-form',
         '@base-ui/react',
         'embla-carousel-react',
         'input-otp',

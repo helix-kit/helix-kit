@@ -1,6 +1,6 @@
 {
   "name": "@helix-hq/json-schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Author JSON Schemas in React \u2014 a property-list builder, a schema-aware Monaco editor, and a TypeScript emitter.",
   "keywords": [
     "json-schema",
@@ -78,12 +78,12 @@
     }
   },
   "dependencies": {
-    "@helix-hq/ai-kit": "workspace:*",
+    "@helix-hq/ai-kit": "workspace:^",
     "@monaco-editor/react": "^4.7.0",
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@helix-hq/design-system": "workspace:*",
+    "@helix-hq/design-system": "workspace:^",
     "lucide-react": "^0.400.0 || ^1.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",

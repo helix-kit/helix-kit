@@ -39,7 +39,15 @@ export default defineConfig({
   format: ['esm'],
   dts: false,
   sourcemap: true,
+  // Everything listed here stays an external import. Every peer belongs in it:
+  // bundling one would ship a second copy of a library the consumer already
+  // installed, which for React-context packages means two contexts and a
+  // component that silently does nothing.
   deps: createDependencyConfig([
+    '@base-ui/react',
+    '@hookform/resolvers',
+    'react-dropzone',
+    'react-resizable-panels',
     '@dnd-kit/core',
     '@dnd-kit/modifiers',
     '@dnd-kit/sortable',

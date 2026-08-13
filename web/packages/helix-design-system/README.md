@@ -9,8 +9,34 @@ a sidebar shell, charts and a map.
 pnpm add @helix-hq/design-system
 ```
 
-Peers you supply: `react`, `react-dom`, `lucide-react`, `nuqs` (URL state for
-the data table) and `react-hook-form` (the form-driven dialogs).
+Required peers: `react`, `react-dom`, `lucide-react`. That is the whole install
+— six small dependencies and those three peers.
+
+## Pay only for what you import
+
+Every component is its own entry point, and so is its dependency tree. The
+libraries only one or two components need are **optional peer dependencies**:
+they are not installed unless you ask for them, so importing `Button` does not
+drag in a map renderer.
+
+40 of the 50 entry points need nothing beyond the required peers. These are the
+exceptions:
+
+| Import | Also install |
+| --- | --- |
+| `./components/map` | `maplibre-gl` |
+| `./components/data-table` | `@tanstack/react-table`, `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/modifiers`, `@dnd-kit/utilities` |
+| `./components/data-table/data-table-toolbar` | `@tanstack/react-table`, `cmdk`, `nuqs`, `react-day-picker`, `zod` |
+| `./hooks/use-data-table` | `@tanstack/react-table`, `nuqs`, `zod` |
+| `./components/mutation-modal` | `react-hook-form`, `@hookform/resolvers`, `zod`, `sonner`, `date-fns`, `react-day-picker`, `react-dropzone` |
+| `./components/dynamic-form-fields` | `react-hook-form`, `date-fns`, `react-day-picker`, `react-dropzone` |
+| `./components/command` | `cmdk` |
+| `./components/drawer` | `vaul` |
+| `./components/resizable` | `react-resizable-panels` |
+| `./components/sonner` | `sonner` |
+
+Miss one and resolution fails at the import with the missing package named,
+rather than at runtime.
 
 ## Using it
 

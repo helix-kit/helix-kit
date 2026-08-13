@@ -1,6 +1,6 @@
-import { connectPeer, type IceServer } from '@helix/protocol/peer';
+import { connectPeer, type IceServer } from '@helix-hq/protocol/peer';
 
-import type { HelixStreamSession } from '@helix/protocol/stream';
+import type { HelixStreamSession } from '@helix-hq/protocol/stream';
 
 // Opening a data-plane session over either transport from the browser's side.
 

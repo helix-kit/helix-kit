@@ -1,1 +1,1 @@
-export { ThemeProvider, useTheme } from '@helix/design-system/components/theme-provider';
+export { ThemeProvider, useTheme } from '@helix-hq/design-system/components/theme-provider';

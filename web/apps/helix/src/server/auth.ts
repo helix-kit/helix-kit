@@ -2,7 +2,7 @@ import 'server-only';
 
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
-import * as schema from '@helix/backend/db/auth-schema';
+import * as schema from '@helix-hq/backend/db/auth-schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, mcp } from 'better-auth/plugins';

@@ -1,5 +1,5 @@
 {
-  "name": "@helix/server-app",
+  "name": "@helix-hq/server-app",
   "version": "0.0.1",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@helix/backend": "workspace:*",
-    "@helix/logger": "workspace:*",
+    "@helix-hq/backend": "workspace:*",
+    "@helix-hq/logger": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "inngest": "^4.12.0",
     "kafkajs": "^2.2.4",

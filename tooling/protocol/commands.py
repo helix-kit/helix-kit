@@ -231,7 +231,7 @@ def _typescript_contract(data: dict[str, Any]) -> str:
     if messages:
         imported.append("message")
     lines = [
-        f"import {{ {', '.join(imported)} }} from '@helix/protocol/service';",
+        f"import {{ {', '.join(imported)} }} from '@helix-hq/protocol/service';",
         "import { z } from 'zod';",
         "",
     ]

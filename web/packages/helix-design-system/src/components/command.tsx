@@ -8,9 +8,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@helix/design-system/components/dialog';
-import { InputGroup, InputGroupAddon } from '@helix/design-system/components/input-group';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/dialog';
+import { InputGroup, InputGroupAddon } from '@helix-hq/design-system/components/input-group';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { Command as CommandPrimitive } from 'cmdk';
 import { SearchIcon, CheckIcon } from 'lucide-react';
 

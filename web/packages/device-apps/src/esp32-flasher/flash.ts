@@ -3,7 +3,7 @@ import {
   selectSerialPort,
   type SerialPort,
   type SerialPortFilter,
-} from '@helix/protocol/serial';
+} from '@helix-hq/protocol/serial';
 
 export type Esp32FirmwareArtifact = Readonly<{
   id: string;

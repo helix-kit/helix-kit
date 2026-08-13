@@ -1,12 +1,12 @@
-import { collectProcedureTools, type ProcedureDescriptor } from '@helix/backend/agent';
-import { recordToolCall } from '@helix/backend/conversations';
-import { codeExecutorTool } from '@helix/code-executor/ai';
+import { collectProcedureTools, type ProcedureDescriptor } from '@helix-hq/backend/agent';
+import { recordToolCall } from '@helix-hq/backend/conversations';
+import { codeExecutorTool } from '@helix-hq/code-executor/ai';
 
 import { appRouter } from '@/server/trpc';
 
-import type { AiCapability, AiToolDescriptor } from '@helix/ai-kit';
-import type { DatabaseClient } from '@helix/backend/db';
-import type { HostFunctions } from '@helix/code-executor';
+import type { AiCapability, AiToolDescriptor } from '@helix-hq/ai-kit';
+import type { DatabaseClient } from '@helix-hq/backend/db';
+import type { HostFunctions } from '@helix-hq/code-executor';
 
 /** Procedures the sandbox may call. Read-only: code runs without confirmation. */
 const sandboxable = (descriptor: ProcedureDescriptor): boolean => descriptor.readOnly;

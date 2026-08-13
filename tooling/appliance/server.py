@@ -137,10 +137,10 @@ class HelixServer:
         self._pki = self.appliance.export_pki(self.work_dir / "pki")
 
         log_file = self._log_path.open("wb")
-        click.echo("+ pnpm --filter @helix/server-app dev  (host mode)")
+        click.echo("+ pnpm --filter @helix-hq/server-app dev  (host mode)")
         # New session so stop() can signal the whole pnpm -> tsx -> node tree.
         self._process = subprocess.Popen(
-            ["pnpm", "--filter", "@helix/server-app", "dev"],
+            ["pnpm", "--filter", "@helix-hq/server-app", "dev"],
             cwd=WEB_ROOT,
             env=self._host_env(),
             stdout=log_file,
@@ -191,7 +191,7 @@ class HelixServer:
         return [_ServerProcess(roles, i) for i, roles in enumerate(groups)]
 
     def _start_prebaked(self) -> None:
-        run(["pnpm", "--filter", "@helix/server-app", "build"], cwd=WEB_ROOT)
+        run(["pnpm", "--filter", "@helix-hq/server-app", "build"], cwd=WEB_ROOT)
         # The baked helix-server unit (if any) would fight for the ports.
         self.appliance.stop_services(["server"])
         self.appliance.exec_shell(f"rm -rf {PREBAKED_DIST}", check=False)

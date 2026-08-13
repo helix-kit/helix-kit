@@ -2,17 +2,17 @@
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Progress } from '@helix/design-system/components/progress';
-import { useFeatureApi } from '@helix/web-core/trpc/feature';
+} from '@helix-hq/design-system/components/card';
+import { Progress } from '@helix-hq/design-system/components/progress';
+import { useFeatureApi } from '@helix-hq/web-core/trpc/feature';
 import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, RefreshCw, Usb } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 /** Reusable terminal chrome (traffic-light dots + title + optional LIVE badge). */
 export const TerminalWindow = ({

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { useQueryState, parseAsArrayOf, parseAsString } from 'nuqs';
 
 const compareParser = parseAsArrayOf(parseAsString, ',').withDefault([]);

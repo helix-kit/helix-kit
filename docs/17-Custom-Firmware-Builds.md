@@ -18,7 +18,7 @@ build**, and a **UI to drive it**.
 Admin UI (web/apps/helix, /admin/builds/new)
    │  releases.builds.catalog / .request / .get   (session-authed tRPC)
    ▼
-@helix/backend/releases
+@helix-hq/backend/releases
    │  requestBuild()  → Tier-0 dedupe + queued build row + callback token
    │  dispatchBuild() → POST /build to the container
    ▼
@@ -54,17 +54,17 @@ from the real firmware sources so it can never drift from what
   of the build service, not of any one source file).
 
 The backend proxies the catalog (`releases.builds.catalog` →
-`fetchCatalog(workerUrl)`); the `@helix/firmware-builder` package renders it. Run
+`fetchCatalog(workerUrl)`); the `@helix-hq/firmware-builder` package renders it. Run
 `helix release catalog` to print the same catalog locally.
 
 ## Packages and files
 
-- **`@helix/firmware-builder`** (`web/packages/firmware-builder`) — the UI.
+- **`@helix-hq/firmware-builder`** (`web/packages/firmware-builder`) — the UI.
   `FirmwareBuilderForm` (apps, feature toggles that auto-enable app-required
   fragments, chip/flash-size, sdkconfig overrides, name/version/channel) and
   `BuildStatusPanel` (live queued → success/failed). Presentational only: the app
   passes the catalog and wires the tRPC request/poll.
-- **`@helix/backend/releases`** — `build-dispatch.ts` adds `requestBuild`,
+- **`@helix-hq/backend/releases`** — `build-dispatch.ts` adds `requestBuild`,
   `dispatchBuild`, `fetchCatalog` and the catalog/config types. `api-router.ts`'s
   `buildsRequest` now uses the shared `requestBuild`. `admin-router.ts`'s
   `builds` sub-router gains `serviceStatus`, `catalog`, `request`, `get`.

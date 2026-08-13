@@ -1,4 +1,4 @@
-import { collectProcedureDescriptors, invokeProcedure } from '@helix/backend/agent';
+import { collectProcedureDescriptors, invokeProcedure } from '@helix-hq/backend/agent';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 
 import { auth } from '@/server/auth';

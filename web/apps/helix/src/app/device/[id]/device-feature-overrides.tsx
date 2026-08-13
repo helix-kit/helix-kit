@@ -1,15 +1,15 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Switch } from '@helix/design-system/components/switch';
+} from '@helix-hq/design-system/components/card';
+import { Switch } from '@helix-hq/design-system/components/switch';
 import { toast } from 'sonner';
 
 import { useSession } from '@/lib/auth-client';

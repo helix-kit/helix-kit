@@ -28,10 +28,10 @@ const WRITE = process.argv.includes('--write');
 const TARGET_ROOTS = ['packages'] as const;
 const SCAN_ROOTS = ['apps', 'packages'] as const;
 const SYNC_ENABLED_PACKAGES = new Set([
-  '@helix/backend',
-  '@helix/design-system',
-  '@helix/logger',
-  '@helix/protocol',
+  '@helix-hq/backend',
+  '@helix-hq/design-system',
+  '@helix-hq/logger',
+  '@helix-hq/protocol',
 ]);
 const SCAN_EXTENSIONS = new Set([
   '.css',
@@ -46,7 +46,7 @@ const SCAN_EXTENSIONS = new Set([
 ]);
 // Public SDK subpaths with no in-repo importer; specifier-scanning alone would drop these on `--write`.
 const ALWAYS_INCLUDE_EXPORTS: Record<string, string[]> = {
-  '@helix/backend': [
+  '@helix-hq/backend': [
     './events',
     './gateway/mqtt-bridge',
     './gateway/router',
@@ -59,7 +59,7 @@ const ALWAYS_INCLUDE_EXPORTS: Record<string, string[]> = {
     './storage/object-keys',
     './storage/s3-compatible-provider',
   ],
-  '@helix/design-system': [
+  '@helix-hq/design-system': [
     './components/accordion',
     './components/alert-dialog',
     './components/app-header',
@@ -78,11 +78,17 @@ const ALWAYS_INCLUDE_EXPORTS: Record<string, string[]> = {
     './globals.css',
     './postcss.config',
   ],
-  '@helix/protocol': ['./mqtt', './websocket'],
+  // Only an installed consumer imports this: in-repo, the app generates the
+  // editor's classes from source via `@source`.
+  '@helix-hq/pdf-report': ['./editor.css'],
+  '@helix-hq/protocol': ['./mqtt', './websocket'],
 };
 const FORCED_SOURCE_PATHS: Record<string, Record<string, string>> = {
-  '@helix/design-system': {
+  '@helix-hq/design-system': {
     './globals.css': './src/styles/globals.css',
+  },
+  '@helix-hq/pdf-report': {
+    './editor.css': './src/styles/editor.css',
   },
 };
 const ROOT_FILE_CANDIDATE_EXTENSIONS = [

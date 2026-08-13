@@ -14,7 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@helix/design-system/components/sidebar';
+} from '@helix-hq/design-system/components/sidebar';
 import { Bot, LayoutDashboard, Settings, Shield } from 'lucide-react';
 
 import { HelixMark } from '@/components/logo';

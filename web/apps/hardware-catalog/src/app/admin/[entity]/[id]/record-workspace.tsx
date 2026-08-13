@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import { Pencil } from 'lucide-react';
 
 import type { AdminRow, FieldMeta } from '@/lib/field-meta';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { createTRPCReactContext } from '@helix/web-core/trpc/client';
+import { createTRPCReactContext } from '@helix-hq/web-core/trpc/client';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { createTRPCClient } from '@trpc/client';
 

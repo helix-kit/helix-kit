@@ -13,7 +13,8 @@ export default defineConfig({
     '../../packages/helix-backend/src/db/ai-usage-schema.ts',
     // Optional feature packages contribute their own tables.
     '../../packages/blog/src/server/schema.ts',
-    '../../packages/pdf-report/src/backend/schema.ts',
+    // App-local features do too.
+    './src/server/report-templates/schema.ts',
   ],
   dialect: 'postgresql',
   dbCredentials: {

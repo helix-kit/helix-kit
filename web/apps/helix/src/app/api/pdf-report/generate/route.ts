@@ -3,17 +3,17 @@ import {
   composeAssistant,
   createArtifactCollector,
   type ArtifactEvent,
-} from '@helix/ai-kit';
-import { toToolSet } from '@helix/ai-kit/ai-sdk';
-import { fixtureModel, resolveFixtureMode, type FixtureChoice } from '@helix/ai-kit/fixtures';
-import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
-import { openConversation, saveConversation } from '@helix/backend/conversations';
+} from '@helix-hq/ai-kit';
+import { toToolSet } from '@helix-hq/ai-kit/ai-sdk';
+import { fixtureModel, resolveFixtureMode, type FixtureChoice } from '@helix-hq/ai-kit/fixtures';
+import { checkAiAccess, meterSdkUsage } from '@helix-hq/backend/ai-usage';
+import { openConversation, saveConversation } from '@helix-hq/backend/conversations';
 import {
   applyReportPatchLine,
   defaultReportTemplate,
   REPORT_ARTIFACTS,
   type ReportTemplate,
-} from '@helix/pdf-report';
+} from '@helix-hq/pdf-report';
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -130,7 +130,7 @@ const sumUsage = (steps: LanguageModelUsage[]): LanguageModelUsage =>
  * the endpoint would let anyone who found the URL spend from the gateway account.
  */
 export const POST = async (request: Request) => {
-  const { reportCapabilities } = await import('@helix/pdf-report/ai');
+  const { reportCapabilities } = await import('@helix-hq/pdf-report/ai');
 
   const body = (await request.json().catch(() => ({}))) as GenerateRequestBody;
   const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';

@@ -5,18 +5,18 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
-import { MutationModal } from '@helix/design-system/components/mutation-modal';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+} from '@helix-hq/design-system/components/dropdown-menu';
+import { MutationModal } from '@helix-hq/design-system/components/mutation-modal';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 

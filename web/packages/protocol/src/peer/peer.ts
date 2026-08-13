@@ -1,4 +1,4 @@
-import { HelixStreamSession } from '@helix/protocol/stream';
+import { HelixStreamSession } from '@helix-hq/protocol/stream';
 
 import { dataChannelTransport } from './transport';
 

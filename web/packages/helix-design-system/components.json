@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@helix/design-system/components",
-    "utils": "@helix/design-system/lib/utils",
-    "hooks": "@helix/design-system/hooks",
-    "lib": "@helix/design-system/lib",
-    "ui": "@helix/design-system/components"
+    "components": "@helix-hq/design-system/components",
+    "utils": "@helix-hq/design-system/lib/utils",
+    "hooks": "@helix-hq/design-system/hooks",
+    "lib": "@helix-hq/design-system/lib",
+    "ui": "@helix-hq/design-system/components"
   },
   "menuColor": "default-translucent",
   "menuAccent": "subtle",

@@ -1,4 +1,4 @@
-import { composeAssistant, extendCapability } from '@helix/ai-kit';
+import { composeAssistant, extendCapability } from '@helix-hq/ai-kit';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 

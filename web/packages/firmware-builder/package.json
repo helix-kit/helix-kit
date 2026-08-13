@@ -1,5 +1,5 @@
 {
-  "name": "@helix/firmware-builder",
+  "name": "@helix-hq/firmware-builder",
   "version": "0.0.1",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -32,8 +32,8 @@
     }
   },
   "dependencies": {
-    "@helix/backend": "workspace:*",
-    "@helix/design-system": "workspace:*",
+    "@helix-hq/backend": "workspace:*",
+    "@helix-hq/design-system": "workspace:*",
     "lucide-react": "^1.23.0"
   },
   "peerDependencies": {

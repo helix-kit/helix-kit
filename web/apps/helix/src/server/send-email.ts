@@ -2,7 +2,7 @@ import 'server-only';
 
 import type React from 'react';
 
-import { logger } from '@helix/logger';
+import { logger } from '@helix-hq/logger';
 import { render } from '@react-email/components';
 import nodemailer from 'nodemailer';
 

@@ -1,4 +1,4 @@
-import { executeCode, type ExecutionLimits } from '@helix/code-executor';
+import { executeCode, type ExecutionLimits } from '@helix-hq/code-executor';
 
 import { prepareReportSpec } from './prepare';
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { ArrowRight, Mouse } from 'lucide-react';
 import { motion } from 'motion/react';
 

@@ -1,7 +1,7 @@
-import { composeAssistant } from '@helix/ai-kit';
-import { toToolSet } from '@helix/ai-kit/ai-sdk';
-import { checkAiAccess, meterSdkUsage } from '@helix/backend/ai-usage';
-import { saveConversation } from '@helix/backend/conversations';
+import { composeAssistant } from '@helix-hq/ai-kit';
+import { toToolSet } from '@helix-hq/ai-kit/ai-sdk';
+import { checkAiAccess, meterSdkUsage } from '@helix-hq/backend/ai-usage';
+import { saveConversation } from '@helix-hq/backend/conversations';
 import {
   convertToModelMessages,
   createIdGenerator,

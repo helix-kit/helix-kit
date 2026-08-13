@@ -1,4 +1,4 @@
-import { type Logger } from '@helix/logger';
+import { type Logger } from '@helix-hq/logger';
 
 import { type DatabaseClient } from '../db';
 

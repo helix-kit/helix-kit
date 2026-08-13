@@ -2,34 +2,34 @@
    this module's entire job, so the ordinary cap does not apply. */
 import 'server-only';
 
-import { accountRouter } from '@helix/backend/account';
-import { findAgentUser } from '@helix/backend/agent';
-import { aiUsageRouter } from '@helix/backend/ai-usage';
-import { conversationsRouter } from '@helix/backend/conversations';
-import { devicesAdminRouter } from '@helix/backend/devices';
-import { featuresAdminRouter } from '@helix/backend/features';
-import { iceRouter, type TurnSettings } from '@helix/backend/ice';
-import { deviceCertificatesAdminRouter } from '@helix/backend/pki/admin-router';
-import { profilesAdminRouter } from '@helix/backend/profiles';
-import { releasesAdminRouter } from '@helix/backend/releases';
-import { createRootRouter } from '@helix/backend/trpc';
-import { usersAdminRouter } from '@helix/backend/users';
+import { accountRouter } from '@helix-hq/backend/account';
+import { findAgentUser } from '@helix-hq/backend/agent';
+import { aiUsageRouter } from '@helix-hq/backend/ai-usage';
+import { conversationsRouter } from '@helix-hq/backend/conversations';
+import { devicesAdminRouter } from '@helix-hq/backend/devices';
+import { featuresAdminRouter } from '@helix-hq/backend/features';
+import { iceRouter, type TurnSettings } from '@helix-hq/backend/ice';
+import { deviceCertificatesAdminRouter } from '@helix-hq/backend/pki/admin-router';
+import { profilesAdminRouter } from '@helix-hq/backend/profiles';
+import { releasesAdminRouter } from '@helix-hq/backend/releases';
+import { createRootRouter } from '@helix-hq/backend/trpc';
+import { usersAdminRouter } from '@helix-hq/backend/users';
 import {
   blogAdminRouter,
   blogPublicRouter,
   type BlogContext,
   type BlogSessionUser,
-} from '@helix/blog/server';
-import { espFlasherRouter } from '@helix/device-apps/esp32-flasher/router';
-import { reportTemplatesRouter } from '@helix/pdf-report/backend';
+} from '@helix-hq/blog/server';
+import { espFlasherRouter } from '@helix-hq/device-apps/esp32-flasher/router';
 
 import { env } from '@/lib/env';
 
 import { ADMIN_ROLES, auth } from './auth';
 import { db } from './db';
+import { reportTemplatesRouter } from './report-templates/router';
 import { storage } from './storage';
 
-import type { StepCaSettings } from '@helix/backend/pki/step-ca';
+import type { StepCaSettings } from '@helix-hq/backend/pki/step-ca';
 
 const stepCaSettings: StepCaSettings | null =
   env.MQTT_STEP_CA_URL != null &&
@@ -61,7 +61,7 @@ const turnSettings: TurnSettings | null =
 
 export const { router: appRouter } = createRootRouter({
   // Feature packages declare the keys their own client components resolve them by
-  // (`BLOG_ADMIN_ROUTER_KEY` / `BLOG_PUBLIC_ROUTER_KEY` in @helix/blog). Spelled as
+  // (`BLOG_ADMIN_ROUTER_KEY` / `BLOG_PUBLIC_ROUTER_KEY` in @helix-hq/blog). Spelled as
   // literals here, not as those constants: the tRPC usage analyzer skips routers with
   // computed property names, which would drop every blog procedure from the report.
   blog: blogAdminRouter,

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 import { createLoader, type SearchParams } from 'nuqs/server';
 
 import { Pagination } from '@/components/pagination';

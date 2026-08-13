@@ -51,13 +51,13 @@ importers:
 
   apps/hardware-catalog:
     dependencies:
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../../packages/helix-backend
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../../packages/helix-design-system
-      '@helix/web-core':
+      '@helix-hq/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
       '@t3-oss/env-nextjs':
@@ -153,41 +153,41 @@ importers:
         version: 4.0.50(react@19.2.7)(zod@4.4.3)
       '@better-auth/api-key':
         specifier: 1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))
       '@better-auth/passkey':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
-      '@helix/ai-kit':
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
+      '@helix-hq/ai-kit':
         specifier: workspace:*
         version: link:../../packages/ai-kit
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../../packages/helix-backend
-      '@helix/blog':
+      '@helix-hq/blog':
         specifier: workspace:*
         version: link:../../packages/blog
-      '@helix/code-executor':
+      '@helix-hq/code-executor':
         specifier: workspace:*
         version: link:../../packages/code-executor
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../../packages/helix-design-system
-      '@helix/device-apps':
+      '@helix-hq/device-apps':
         specifier: workspace:*
         version: link:../../packages/device-apps
-      '@helix/firmware-builder':
+      '@helix-hq/firmware-builder':
         specifier: workspace:*
         version: link:../../packages/firmware-builder
-      '@helix/logger':
+      '@helix-hq/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@helix/pdf-report':
+      '@helix-hq/pdf-report':
         specifier: workspace:*
         version: link:../../packages/pdf-report
-      '@helix/protocol':
+      '@helix-hq/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
-      '@helix/web-core':
+      '@helix-hq/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
       '@react-email/components':
@@ -213,7 +213,10 @@ importers:
         version: 7.0.47(zod@4.4.3)
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
+        version: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
+      drizzle-orm:
+        specifier: 1.0.0-beta.15-859cf75
+        version: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
       fumadocs-core:
         specifier: 16.11.1
         version: 16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
@@ -329,10 +332,10 @@ importers:
 
   apps/helix-server:
     dependencies:
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../../packages/helix-backend
-      '@helix/logger':
+      '@helix-hq/logger':
         specifier: workspace:*
         version: link:../../packages/logger
       '@t3-oss/env-core':
@@ -375,7 +378,7 @@ importers:
 
   e2e:
     dependencies:
-      '@helix/protocol':
+      '@helix-hq/protocol':
         specifier: workspace:*
         version: link:../packages/protocol
       react:
@@ -449,13 +452,13 @@ importers:
       '@fumadocs/mdx-remote':
         specifier: ^1.5.1
         version: 1.5.1(@types/mdx@2.0.14)(@types/react@19.2.17)(fumadocs-core@16.11.1(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.5)(@types/mdast@4.0.4)(@types/react@19.2.17)(lucide-react@1.24.0(react@19.2.7))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3))(react@19.2.7)
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../helix-backend
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../helix-design-system
-      '@helix/web-core':
+      '@helix-hq/web-core':
         specifier: workspace:*
         version: link:../web-core
       '@mdxeditor/editor':
@@ -534,10 +537,10 @@ importers:
 
   packages/code-executor:
     dependencies:
-      '@helix/ai-kit':
+      '@helix-hq/ai-kit':
         specifier: workspace:*
         version: link:../ai-kit
-      '@helix/json-schema':
+      '@helix-hq/json-schema':
         specifier: workspace:*
         version: link:../json-schema
       '@monaco-editor/react':
@@ -589,16 +592,16 @@ importers:
 
   packages/device-apps:
     dependencies:
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../helix-backend
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../helix-design-system
-      '@helix/protocol':
+      '@helix-hq/protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@helix/web-core':
+      '@helix-hq/web-core':
         specifier: workspace:*
         version: link:../web-core
       '@tanstack/react-query':
@@ -728,10 +731,10 @@ importers:
 
   packages/firmware-builder:
     dependencies:
-      '@helix/backend':
+      '@helix-hq/backend':
         specifier: workspace:*
         version: link:../helix-backend
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../helix-design-system
       lucide-react:
@@ -783,10 +786,10 @@ importers:
       '@dbos-inc/dbos-sdk':
         specifier: ^4.23.6
         version: 4.23.6
-      '@helix/logger':
+      '@helix-hq/logger':
         specifier: workspace:*
         version: link:../logger
-      '@helix/protocol':
+      '@helix-hq/protocol':
         specifier: workspace:*
         version: link:../protocol
       '@trpc/server':
@@ -992,7 +995,7 @@ importers:
 
   packages/json-schema:
     dependencies:
-      '@helix/ai-kit':
+      '@helix-hq/ai-kit':
         specifier: workspace:*
         version: link:../ai-kit
       '@monaco-editor/react':
@@ -1008,7 +1011,7 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
-      '@helix/design-system':
+      '@helix-hq/design-system':
         specifier: workspace:*
         version: link:../helix-design-system
       '@types/node':
@@ -1072,16 +1075,13 @@ importers:
 
   packages/pdf-report:
     dependencies:
-      '@helix/ai-kit':
+      '@helix-hq/ai-kit':
         specifier: workspace:*
         version: link:../ai-kit
-      '@helix/backend':
-        specifier: workspace:*
-        version: link:../helix-backend
-      '@helix/code-executor':
+      '@helix-hq/code-executor':
         specifier: workspace:*
         version: link:../code-executor
-      '@helix/json-schema':
+      '@helix-hq/json-schema':
         specifier: workspace:*
         version: link:../json-schema
       '@json-render/core':
@@ -1093,9 +1093,6 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.5.1
         version: 4.5.1(react@19.2.7)
-      drizzle-orm:
-        specifier: 1.0.0-beta.15-859cf75
-        version: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -1106,6 +1103,12 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
+      '@helix-hq/design-system':
+        specifier: workspace:*
+        version: link:../helix-design-system
+      '@tailwindcss/cli':
+        specifier: ^4.3.2
+        version: 4.3.2
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
@@ -1127,6 +1130,9 @@ importers:
       eslint:
         specifier: ^10.6.0
         version: 10.6.0(jiti@2.7.0)
+      tailwindcss:
+        specifier: ^4.3.2
+        version: 4.3.2
       tsdown:
         specifier: ^0.22.4
         version: 0.22.4(@tsdown/css@0.22.4)(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@7.0.2)
@@ -11431,11 +11437,11 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
 
-  '@better-auth/api-key@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))':
+  '@better-auth/api-key@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
-      better-auth: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
+      better-auth: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
       better-call: 1.3.7(zod@4.4.3)
       zod: 4.4.3
 
@@ -11453,10 +11459,12 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)':
+  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
+    optionalDependencies:
+      drizzle-orm: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
 
   '@better-auth/kysely-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(kysely@0.29.3)':
     dependencies:
@@ -11475,14 +11483,14 @@ snapshots:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/passkey@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)':
+  '@better-auth/passkey@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       '@simplewebauthn/browser': 13.3.0
       '@simplewebauthn/server': 13.3.2
-      better-auth: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
+      better-auth: 1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))
       better-call: 1.3.7(zod@4.4.3)
       nanostores: 1.4.0
       zod: 4.4.3
@@ -16085,10 +16093,10 @@ snapshots:
 
   baseline-browser-mapping@2.10.42: {}
 
-  better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))):
+  better-auth@1.6.23(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.15-90d1d1a)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
-      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)
+      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3))
       '@better-auth/kysely-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(kysely@0.29.3)
       '@better-auth/memory-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)
       '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(@better-auth/utils@0.4.2)
@@ -16106,6 +16114,7 @@ snapshots:
       zod: 4.4.3
     optionalDependencies:
       drizzle-kit: 1.0.0-beta.15-90d1d1a
+      drizzle-orm: 1.0.0-beta.15-859cf75(@opentelemetry/api@1.9.1)(@types/mssql@9.1.11)(@types/pg@8.20.0)(mssql@11.0.1)(pg@8.22.0)(zod@4.4.3)
       next: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       pg: 8.22.0
       react: 19.2.7

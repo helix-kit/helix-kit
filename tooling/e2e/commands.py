@@ -45,5 +45,5 @@ def e2e_run(mode: str, keep: bool, build_image: bool, keyword: str | None) -> No
 @click.option("--headed", is_flag=True, help="Run with a visible browser (needs a display).")
 def e2e_browser(headed: bool) -> None:
     """Run the hardware-in-the-loop browser (Playwright) tests."""
-    command = ["pnpm", "--filter", "@helix/e2e", "test:headed" if headed else "test"]
+    command = ["pnpm", "--filter", "@helix-hq/e2e", "test:headed" if headed else "test"]
     run(command, cwd=WEB_ROOT)

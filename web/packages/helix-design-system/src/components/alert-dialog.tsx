@@ -2,8 +2,8 @@
 
 import type * as React from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { AlertDialog as AlertDialogPrimitive } from 'radix-ui';
 
 const AlertDialog = ({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) => (

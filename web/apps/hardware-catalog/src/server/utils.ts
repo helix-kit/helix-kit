@@ -1,5 +1,5 @@
-import { createTRPCLinks } from '@helix/web-core/trpc/links';
-import { createQueryClient as createSharedQueryClient } from '@helix/web-core/trpc/query-client';
+import { createTRPCLinks } from '@helix-hq/web-core/trpc/links';
+import { createQueryClient as createSharedQueryClient } from '@helix-hq/web-core/trpc/query-client';
 
 import { env } from '@/lib/env';
 

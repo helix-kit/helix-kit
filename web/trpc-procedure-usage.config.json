@@ -13,7 +13,7 @@
   "manualUsages": [
     {
       "path": "blog.*",
-      "reason": "Consumed by @helix/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
+      "reason": "Consumed by @helix-hq/blog's own admin UI through useBlogAdminApi() -> useFeatureApi(mount key); a feature package resolves its router off the root router at runtime, so the analyzer cannot follow the call."
     }
   ],
   "reportJsonPath": "../reports/trpc-procedure-usage.json",

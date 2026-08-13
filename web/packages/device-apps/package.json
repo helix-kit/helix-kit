@@ -1,5 +1,5 @@
 {
-  "name": "@helix/device-apps",
+  "name": "@helix-hq/device-apps",
   "version": "0.0.1",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -52,10 +52,10 @@
     }
   },
   "dependencies": {
-    "@helix/backend": "workspace:*",
-    "@helix/design-system": "workspace:*",
-    "@helix/protocol": "workspace:*",
-    "@helix/web-core": "workspace:*",
+    "@helix-hq/backend": "workspace:*",
+    "@helix-hq/design-system": "workspace:*",
+    "@helix-hq/protocol": "workspace:*",
+    "@helix-hq/web-core": "workspace:*",
     "@tanstack/react-query": "^5.101.2",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",

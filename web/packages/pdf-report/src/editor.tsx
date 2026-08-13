@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { CodeEditor } from '@helix/code-executor/editor';
-import { JsonEditor, SchemaEditor } from '@helix/json-schema/editor';
+import { CodeEditor } from '@helix-hq/code-executor/editor';
+import { JsonEditor, SchemaEditor } from '@helix-hq/json-schema/editor';
 
 import { renderReportToBlob } from './browser';
 import { fetchReportPdf } from './client';

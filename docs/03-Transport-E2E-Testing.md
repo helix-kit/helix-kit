@@ -11,7 +11,7 @@ Google Chrome 150 on Linux (X11 + Wayland host, CP210x ESP32 DevKit).
 
 ## Goal
 
-Prove that the shared transport packages (`@helix/protocol/serial`, and later
+Prove that the shared transport packages (`@helix-hq/protocol/serial`, and later
 BLE / WebSocket / MQTT) actually connect, send, and read against a real device
 **in a real browser**, driving the same code paths a user would. No mocks of the
 transport logic; the only thing ever substituted is the parts of the browser a
@@ -23,10 +23,10 @@ The tests do **not** run against the product app (those pages are temporary).
 They run against a minimal Vite + React harness in `web/e2e/harness/` that
 imports only the packages under test:
 
-- `@helix/protocol/serial/react` — Web Serial connect / disconnect / status
-- `@helix/protocol/ble` — Web Bluetooth connect / disconnect / status
-- `@helix/protocol/service/react` — `useHelixTransport()` (raw transport handle)
-- `@helix/protocol` — `createRequestId` + packet types
+- `@helix-hq/protocol/serial/react` — Web Serial connect / disconnect / status
+- `@helix-hq/protocol/ble` — Web Bluetooth connect / disconnect / status
+- `@helix-hq/protocol/service/react` — `useHelixTransport()` (raw transport handle)
+- `@helix-hq/protocol` — `createRequestId` + packet types
 
 The harness is **contract-agnostic**. `RawMessagePanel` has one input (request
 message JSON) and one output (received packets, verbatim). It wraps the injected
@@ -40,7 +40,7 @@ styling. Adding a transport = adding a panel (a provider wrapping the shared
 One transport renders per page, chosen by URL hash (`/` → serial, `/#ble` →
 BLE), so the two `RawMessagePanel`s never share `data-testid`s. Playwright's
 `webServer` serves this harness on `http://localhost:3200`. Runners:
-`pnpm --filter @helix/e2e test` (serial), `test:ble` (BLE, under Xvfb). Lint +
+`pnpm --filter @helix-hq/e2e test` (serial), `test:ble` (BLE, under Xvfb). Lint +
 typecheck are enabled on the package and pass under `turbo run lint typecheck`.
 
 ## Web Serial vs Web Bluetooth — what each needs
@@ -78,7 +78,7 @@ Two differences from the ESP32 mattered, both now handled:
    nothing unless **DTR is asserted** — with DTR deasserted the read simply
    hangs. The ESP32 DevKit is the reverse: DTR must be **deasserted** or its
    auto-reset circuit holds it in reset. The shared transport now takes an
-   `openSignals` option (`@helix/protocol/serial`); default deasserts DTR/RTS
+   `openSignals` option (`@helix-hq/protocol/serial`); default deasserts DTR/RTS
    (ESP32), and the harness's `/#arduino` panel passes
    `{ dataTerminalReady: true, requestToSend: true }`.
 2. **brltty hijacks the port.** Ubuntu's `brltty` (braille display driver) claims

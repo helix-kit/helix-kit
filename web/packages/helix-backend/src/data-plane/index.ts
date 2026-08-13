@@ -1,7 +1,7 @@
 import { createServer as createNetServer, type Server as NetServer, type Socket } from 'node:net';
 
-import { logger } from '@helix/logger';
-import { HelixStreamSession } from '@helix/protocol/stream';
+import { logger } from '@helix-hq/logger';
+import { HelixStreamSession } from '@helix-hq/protocol/stream';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { wsTransport } from './ws-transport';

@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react';
 
-import { Label } from '@helix/design-system/components/label';
-import { Separator } from '@helix/design-system/components/separator';
-import { cn } from '@helix/design-system/lib/utils';
+import { Label } from '@helix-hq/design-system/components/label';
+import { Separator } from '@helix-hq/design-system/components/separator';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const FieldSet = ({ className, ...props }: React.ComponentProps<'fieldset'>) => (

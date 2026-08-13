@@ -2,7 +2,7 @@
 
 import type * as React from 'react';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { HoverCard as HoverCardPrimitive } from 'radix-ui';
 
 const HoverCard = ({ ...props }: React.ComponentProps<typeof HoverCardPrimitive.Root>) => (

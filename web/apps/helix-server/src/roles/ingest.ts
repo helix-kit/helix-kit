@@ -1,5 +1,5 @@
-import { attachDeviceEventIngestion, type DeviceEventQueue } from '@helix/backend';
-import { logger } from '@helix/logger';
+import { attachDeviceEventIngestion, type DeviceEventQueue } from '@helix-hq/backend';
+import { logger } from '@helix-hq/logger';
 
 import { type RoleCloser } from './roles';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@helix/design-system/components/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@helix-hq/design-system/components/tabs';
 
 import type { AppRouter } from '@/server/trpc';
 

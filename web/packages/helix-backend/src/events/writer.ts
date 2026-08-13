@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { type Logger } from '@helix/logger';
+import { type Logger } from '@helix-hq/logger';
 
 import { parseDeviceEventEnvelope } from './topic';
 

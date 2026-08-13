@@ -20,8 +20,8 @@ This app is **not** part of the Helix web stack's runtime. It has:
 - **No dependency on core Helix data.** It never reads a Helix table.
 - **No `helix` CLI integration.** Everything runs through `pnpm` scripts here.
 
-It reuses only shared plumbing: `@helix/design-system`, `@helix/web-core` (router-agnostic
-tRPC/React scaffolding), `@helix/backend/trpc` (the router factory), and the workspace
+It reuses only shared plumbing: `@helix-hq/design-system`, `@helix-hq/web-core` (router-agnostic
+tRPC/React scaffolding), `@helix-hq/backend/trpc` (the router factory), and the workspace
 eslint/tsconfig presets.
 
 ## Running it

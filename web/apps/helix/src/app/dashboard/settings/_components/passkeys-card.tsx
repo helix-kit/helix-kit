@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { Input } from '@helix/design-system/components/input';
+} from '@helix-hq/design-system/components/card';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { Input } from '@helix-hq/design-system/components/input';
 import { useQuery } from '@tanstack/react-query';
 import { KeyRound, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';

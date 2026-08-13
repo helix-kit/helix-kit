@@ -1,7 +1,7 @@
 import { definitionToJsonSchema, jsonSchemaToDefinition } from './definition';
 import { jsonSchemaToTypeString } from './type-string';
 
-import type { AiCapability, ArtifactSpec } from '@helix/ai-kit';
+import type { AiCapability, ArtifactSpec } from '@helix-hq/ai-kit';
 import type { JSONSchema } from 'zod/v4/core';
 
 const SUPPORTED = `Schemas are authored against a deliberate subset of JSON Schema — enough to describe data that crosses a boundary, small enough that every case has an obvious editor control.

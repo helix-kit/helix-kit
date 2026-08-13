@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { createStorageProviderFromEnv } from '@helix/backend/storage/factory';
+import { createStorageProviderFromEnv } from '@helix-hq/backend/storage/factory';
 
-import type { StorageProvider } from '@helix/backend/storage/interface';
+import type { StorageProvider } from '@helix-hq/backend/storage/interface';
 
 const globalForStorage = globalThis as unknown as { helixStorage?: StorageProvider };
 

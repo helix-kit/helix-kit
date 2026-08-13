@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { GpioControls } from '@helix/device-apps';
-import { WebSocketProvider, useWebSocketTransport } from '@helix/protocol/websocket/react';
+import { Button } from '@helix-hq/design-system/components/button';
+import { GpioControls } from '@helix-hq/device-apps';
+import { WebSocketProvider, useWebSocketTransport } from '@helix-hq/protocol/websocket/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
 
 const DEFAULT_WEBSOCKET_URL = 'ws://192.168.1.39/helix';

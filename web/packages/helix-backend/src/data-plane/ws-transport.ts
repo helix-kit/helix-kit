@@ -1,4 +1,4 @@
-import type { StreamTransport } from '@helix/protocol/stream';
+import type { StreamTransport } from '@helix-hq/protocol/stream';
 import type { WebSocket } from 'ws';
 
 /** Adapt a Node `ws` WebSocket to the HelixStream StreamTransport. */

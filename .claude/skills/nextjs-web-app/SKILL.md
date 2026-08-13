@@ -5,7 +5,7 @@ description: >-
   the way this project wants it. Use whenever you add or change a page, route,
   React component, tRPC router/procedure, data table, list/filter/pagination,
   create/edit dialog, delete confirmation, or URL/query-param state in
-  web/apps/helix or the @helix/backend / @helix/design-system packages. Covers:
+  web/apps/helix or the @helix-hq/backend / @helix-hq/design-system packages. Covers:
   tRPC router factories, server-side (RSC) data fetching vs client fetching,
   server/client component boundaries, nuqs query params, the design-system
   DataTable, and the MutationModal / DeleteConfirmDialog dialog pattern. Read
@@ -17,20 +17,20 @@ description: >-
 
 The Helix core app is `web/apps/helix` (Next.js 16 App Router, React 19, Turbopack,
 tRPC v11, TanStack Query v5 + Table v8, nuqs v2, Drizzle/Postgres). Backend logic
-lives in `@helix/backend` (`web/packages/helix-backend`); shared UI lives in
-`@helix/design-system`. Apps are thin; capability lives in the packages.
+lives in `@helix-hq/backend` (`web/packages/helix-backend`); shared UI lives in
+`@helix-hq/design-system`. Apps are thin; capability lives in the packages.
 
 The **admin blog list** is the in-repo reference that uses every pattern below
 end to end — read it first: `src/app/admin/(dashboard)/page.tsx` (server page +
 `createLoader`), `posts-table.tsx` (`DataTable` + `useDataTable`), `search-params.ts`
-(nuqs parsers), and `blog/router.ts` `list` in `@helix/backend` (server-side
+(nuqs parsers), and `blog/router.ts` `list` in `@helix-hq/backend` (server-side
 pagination/filter/sort returning `{ rows, pageCount }`). Most other screens in the
 app are still placeholders — copy the admin blog list, not them.
 
 ## The six rules
 
 1. **Build every tRPC router with the factory** (`createRouterFactory` / `createRootRouter`
-   from `@helix/backend/trpc`). Never hand-roll `initTRPC` in a router.
+   from `@helix-hq/backend/trpc`). Never hand-roll `initTRPC` in a router.
 2. **Prefer server-fetched queries over client fetching.** Fetch in the async
    Server Component with `fetchQuery(...)` and pass data down as props. Reach for
    client `useTRPCQuery` only when the data must change without a navigation.
@@ -53,7 +53,7 @@ app are still placeholders — copy the admin blog list, not them.
 ## 1. tRPC routers — always via the factory
 
 The factory lives in `web/packages/helix-backend/src/trpc/index.ts`
-(`@helix/backend/trpc`). Each router **declares the minimum context it needs** as a
+(`@helix-hq/backend/trpc`). Each router **declares the minimum context it needs** as a
 plain type; `createRootRouter` intersects the contexts of every mounted router.
 There is **no global `publicProcedure`/`protectedProcedure`** — public is plain
 `t.procedure`, and auth is a context-narrowing middleware built with
@@ -274,9 +274,9 @@ The design system ships the full server-side table (TanStack Table v8, URL-synce
 nuqs). **Do not build your own.** Public imports:
 
 ```ts
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 ```
 
 `useDataTable` is built for **server-backed** data: it sets `manualPagination`,
@@ -293,9 +293,9 @@ client `useDataTable` → `DataTable` + `DataTableToolbar`.**
 'use client';
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 
 export default function WidgetsTable({ rows, pageCount }: { rows: WidgetRow[]; pageCount: number }) {
   const columns = useMemo<ColumnDef<WidgetRow>[]>(() => [
@@ -327,7 +327,7 @@ faceted/select variants need `meta.options`. For selected-row bulk actions pass 
 `actionBar` to `DataTable`.
 
 For a small, static, non-paginated table it's fine to use the plain
-`@helix/design-system/components/table` primitives — the "never hand-roll" rule is
+`@helix-hq/design-system/components/table` primitives — the "never hand-roll" rule is
 about large/filtered/paginated data.
 
 ---
@@ -345,7 +345,7 @@ and the post edit page.
 ### Create/edit dialogs — `MutationModal`
 
 ```ts
-import { MutationModal } from '@helix/design-system/components/mutation-modal';
+import { MutationModal } from '@helix-hq/design-system/components/mutation-modal';
 ```
 
 `MutationModal` wraps `ResponsiveModal` (Dialog on desktop, Drawer on mobile) +
@@ -386,7 +386,7 @@ that nests `<p>` inside `<p>` and throws a hydration error).
 ### Delete confirmations — `DeleteConfirmDialog`
 
 ```ts
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
 ```
 
 Every destructive action needs an `AlertDialog` confirmation step — `DeleteConfirmDialog`
@@ -424,7 +424,7 @@ the raw `Dialog`/`DialogContent` primitives — it's the one shared base every d
 in the app should render through, so mobile behavior and styling stay consistent:
 
 ```ts
-import { ResponsiveModal } from '@helix/design-system/components/responsive-modal';
+import { ResponsiveModal } from '@helix-hq/design-system/components/responsive-modal';
 ```
 
 ```tsx
@@ -452,7 +452,7 @@ flex rows too) — a wide unbreakable string (a token, an id, a URL) next to a f
 button will overflow the dialog unless **every** ancestor in that row down to the
 `truncate` element has `min-w-0` (grid/flex items default to `min-width: auto`,
 which sizes to content and defeats `truncate`). `DialogFooter` (from
-`@helix/design-system/components/dialog`) is just a styled `div`, safe to reuse
+`@helix-hq/design-system/components/dialog`) is just a styled `div`, safe to reuse
 inside `ResponsiveModal`'s children even though it's usually paired with raw
 `Dialog`.
 

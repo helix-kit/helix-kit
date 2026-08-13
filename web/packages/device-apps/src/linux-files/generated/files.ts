@@ -1,4 +1,4 @@
-import { defineServiceContract, method } from '@helix/protocol/service';
+import { defineServiceContract, method } from '@helix-hq/protocol/service';
 import { z } from 'zod';
 
 export const IceServerSchema = z.object({

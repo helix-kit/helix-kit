@@ -6,7 +6,7 @@ import {
   linuxShellApp,
   uartConsoleApp,
   type DeviceApp,
-} from '@helix/device-apps';
+} from '@helix-hq/device-apps';
 
 export const deviceApps: readonly DeviceApp[] = [
   esp32FlasherApp,

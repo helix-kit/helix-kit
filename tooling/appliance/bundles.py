@@ -19,7 +19,7 @@ EMIT_RUNTIME = WEB_ROOT / "scripts" / "emit-runtime-package.cjs"
 BUNDLE_NAMES = ("helix-cloud-app", "helix-server")
 
 # The two app builds we drive directly (not `turbo run build`); they consume workspace packages from source.
-BUILD_FILTERS = ("--filter", "helix", "--filter", "@helix/server-app")
+BUILD_FILTERS = ("--filter", "helix", "--filter", "@helix-hq/server-app")
 
 
 def _default_version() -> str:

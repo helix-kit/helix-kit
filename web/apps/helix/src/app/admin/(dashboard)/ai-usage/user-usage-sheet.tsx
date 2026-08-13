@@ -1,13 +1,13 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@helix/design-system/components/sheet';
+} from '@helix-hq/design-system/components/sheet';
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@helix/design-system/components/table';
+} from '@helix-hq/design-system/components/table';
 
 import { useTRPCQuery } from '@/server/react';
 

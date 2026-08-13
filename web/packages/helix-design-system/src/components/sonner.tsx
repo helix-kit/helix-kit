@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from '@helix/design-system/components/theme-provider';
+import { useTheme } from '@helix-hq/design-system/components/theme-provider';
 import {
   CircleCheckIcon,
   InfoIcon,

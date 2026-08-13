@@ -1,9 +1,9 @@
-import { resolveDeviceTracks } from '@helix/backend/releases';
-import { createRouterFactory } from '@helix/backend/trpc';
+import { resolveDeviceTracks } from '@helix-hq/backend/releases';
+import { createRouterFactory } from '@helix-hq/backend/trpc';
 import { z } from 'zod';
 
-import type { DatabaseClient } from '@helix/backend/db';
-import type { StorageProvider } from '@helix/backend/storage/interface';
+import type { DatabaseClient } from '@helix-hq/backend/db';
+import type { StorageProvider } from '@helix-hq/backend/storage/interface';
 
 export type EspFlasherContext = Readonly<{
   db: DatabaseClient;

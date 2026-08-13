@@ -2,12 +2,12 @@
 
 import { useRef, useState } from 'react';
 
-import { type BuildCatalog } from '@helix/backend/releases';
+import { type BuildCatalog } from '@helix-hq/backend/releases';
 import {
   BuildStatusPanel,
   FirmwareBuilderForm,
   type FirmwareBuildValues,
-} from '@helix/firmware-builder';
+} from '@helix-hq/firmware-builder';
 import { toast } from 'sonner';
 
 import { useTRPCMutation, useTRPCQuery } from '@/server/react';

@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@helix/design-system/components/avatar';
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@helix-hq/design-system/components/avatar';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +22,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+} from '@helix-hq/design-system/components/dropdown-menu';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 import { type ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Ban, MoreHorizontal, ShieldCheck, Trash2, UserCog } from 'lucide-react';
 import { toast } from 'sonner';

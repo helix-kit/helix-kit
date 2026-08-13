@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { isDeviceAppAvailable } from '@helix/device-apps';
+import { isDeviceAppAvailable } from '@helix-hq/device-apps';
 
 import { getDeviceApp } from '@/device-apps/registry';
 import { resolveDeviceFeatureSet } from '@/device-apps/resolve';

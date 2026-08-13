@@ -5,15 +5,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
+} from '@helix-hq/design-system/components/card';
 import {
   Command,
   CommandEmpty,
@@ -21,8 +21,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@helix/design-system/components/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@helix/design-system/components/popover';
+} from '@helix-hq/design-system/components/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@helix-hq/design-system/components/popover';
 import { Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 

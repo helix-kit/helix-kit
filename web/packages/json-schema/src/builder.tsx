@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { ScrollArea } from '@helix/design-system/components/scroll-area';
-import { cn } from '@helix/design-system/lib/utils';
+import { ScrollArea } from '@helix-hq/design-system/components/scroll-area';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 import {
   definitionToJsonSchema,

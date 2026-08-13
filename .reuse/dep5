@@ -7,3 +7,15 @@ License: AGPL-3.0-only
 Files: docs/*
 Copyright: 2026 Hardik Jain
 License: CC-BY-SA-4.0
+
+# Packages published to npm under the @helix-hq scope are MIT: they are
+# libraries other people install into their own products, and copyleft would
+# stop that. The apps, appliance and device runtime stay AGPL-3.0-only.
+Files:
+ web/packages/ai-kit/*
+ web/packages/code-executor/*
+ web/packages/helix-design-system/*
+ web/packages/json-schema/*
+ web/packages/pdf-report/*
+Copyright: 2026 Hardik Jain
+License: MIT

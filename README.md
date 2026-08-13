@@ -26,7 +26,7 @@ over any transport, local or remote.
 | --- | --- |
 | `embedded/` | ESP32 (ESP-IDF) and Arduino/AVR firmware; the transport-abstracting protocol core + services on top. |
 | `linux/` | Minimal Helix Linux OS image build + protocol reference implementations (Go, Python). |
-| `web/` | pnpm + Turborepo monorepo: `@helix/backend` core, protocol/transport packages, `apps/helix` (ONE Next.js app: public site + docs + blog + console), `apps/helix-server` (headless backend). |
+| `web/` | pnpm + Turborepo monorepo: `@helix-hq/backend` core, protocol/transport packages, `apps/helix` (ONE Next.js app: public site + docs + blog + console), `apps/helix-server` (headless backend). |
 | `android/` | Native Kotlin/Compose `:helix` SDK + `:app`. |
 | `cloud/` | Cloud infra: the single-image `appliance/`, build service, and the multi-container stack. |
 | `tooling/` | The `helix` Python CLI — the one developer entry point. |

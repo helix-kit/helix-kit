@@ -1,6 +1,6 @@
 'use client';
 
-import { MqttGatewayProvider } from '@helix/protocol/mqtt/react';
+import { MqttGatewayProvider } from '@helix-hq/protocol/mqtt/react';
 
 import { FileBrowser } from './browser';
 

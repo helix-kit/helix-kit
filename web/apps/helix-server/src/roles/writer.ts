@@ -1,5 +1,5 @@
-import { DeviceEventWriter, type DatabaseClient, type DeviceEventQueue } from '@helix/backend';
-import { logger } from '@helix/logger';
+import { DeviceEventWriter, type DatabaseClient, type DeviceEventQueue } from '@helix-hq/backend';
+import { logger } from '@helix-hq/logger';
 
 import { type RoleCloser } from './roles';
 

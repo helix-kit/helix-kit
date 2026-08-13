@@ -1,6 +1,6 @@
 'use client';
 
-import type { HelixStreamSession } from '@helix/protocol/stream';
+import type { HelixStreamSession } from '@helix-hq/protocol/stream';
 
 import { openPeerChannel, openRelayChannel, type DeviceChannel } from '../data-plane';
 

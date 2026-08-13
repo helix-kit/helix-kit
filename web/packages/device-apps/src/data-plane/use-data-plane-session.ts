@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { selectedCandidatePair } from '@helix/protocol/peer';
+import { selectedCandidatePair } from '@helix-hq/protocol/peer';
 
 import {
   openFailureMessage,
@@ -13,7 +13,7 @@ import {
 } from './open-session';
 import { useIceServers } from './use-ice-servers';
 
-import type { HelixStreamSession } from '@helix/protocol/stream';
+import type { HelixStreamSession } from '@helix-hq/protocol/stream';
 
 // The session lifecycle every stream app repeats: pick a transport, wait for ICE,
 // open exactly one session, expose the negotiated path, and tear it all down on a

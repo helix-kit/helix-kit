@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import { createRequestId, type HelixPacket } from '@helix/protocol';
-import { useHelixTransport } from '@helix/protocol/service/react';
+import { createRequestId, type HelixPacket } from '@helix-hq/protocol';
+import { useHelixTransport } from '@helix-hq/protocol/service/react';
 
-import type { HelixMessage } from '@helix/protocol/service';
+import type { HelixMessage } from '@helix-hq/protocol/service';
 
 const MAX_LOG = 50;
 

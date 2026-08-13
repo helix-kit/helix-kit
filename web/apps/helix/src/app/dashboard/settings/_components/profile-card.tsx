@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
@@ -10,9 +10,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
+} from '@helix-hq/design-system/components/card';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
 import { toast } from 'sonner';
 
 import { authClient } from '@/lib/auth-client';

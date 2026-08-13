@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { Check, Link2 } from 'lucide-react';
 
 import { useCopyLink } from './use-copy-link';

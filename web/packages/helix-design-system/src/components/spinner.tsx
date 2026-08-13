@@ -1,4 +1,4 @@
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { Loader2Icon } from 'lucide-react';
 
 const Spinner = ({ className, ...props }: React.ComponentProps<'svg'>) => (

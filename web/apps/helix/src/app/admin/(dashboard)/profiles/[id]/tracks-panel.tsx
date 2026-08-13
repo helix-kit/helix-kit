@@ -2,16 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+} from '@helix-hq/design-system/components/card';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
 import { CircleAlert, CircleCheck, Pencil, Pin, Plus, Radio, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 

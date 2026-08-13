@@ -5,11 +5,11 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { Checkbox } from '@helix/design-system/components/checkbox';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
-import { Separator } from '@helix/design-system/components/separator';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Checkbox } from '@helix-hq/design-system/components/checkbox';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
+import { Separator } from '@helix-hq/design-system/components/separator';
 import { Fingerprint } from 'lucide-react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { toast } from 'sonner';

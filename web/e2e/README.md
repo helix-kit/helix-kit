@@ -1,4 +1,4 @@
-# @helix/e2e — transport hardware-in-the-loop tests
+# @helix-hq/e2e — transport hardware-in-the-loop tests
 
 Playwright tests that drive a **real, connected ESP32** (gpio-control firmware)
 through the **shared Helix transport packages** — no mocks, no polyfills. Real
@@ -12,9 +12,9 @@ The tests do **not** run against the product Next app (those pages are
 throwaway). They run against a **minimal Vite + React harness** in `harness/`
 that imports only the shared packages under test:
 
-- `@helix/protocol/serial/react` — connect / disconnect / status
-- `@helix/protocol/service/react` — `useHelixTransport()` (raw transport handle)
-- `@helix/protocol` — `createRequestId` + packet types
+- `@helix-hq/protocol/serial/react` — connect / disconnect / status
+- `@helix-hq/protocol/service/react` — `useHelixTransport()` (raw transport handle)
+- `@helix-hq/protocol` — `createRequestId` + packet types
 
 The harness is **contract-agnostic**: `RawMessagePanel` has one input (request
 message JSON) and one output (received packets, verbatim). It wraps the injected

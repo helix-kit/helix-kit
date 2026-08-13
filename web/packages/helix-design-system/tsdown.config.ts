@@ -71,6 +71,12 @@ export default defineConfig({
   ]),
   outExtensions: () => ({ js: '.js' }),
   outDir: 'dist',
+  // Without this rolldown emits its CommonJS-interop runtime with a
+  // `createRequire` from `node:module`, and pulls that chunk into client
+  // components (`components/resizable`). A browser consumer of the built package
+  // then fails to bundle. Invisible in this repo, where the workspace `exports`
+  // resolve to source and nothing is built.
+  platform: 'browser',
   treeshake: true,
   clean: true,
   target: false as const,

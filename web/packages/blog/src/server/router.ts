@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
-import { user } from '@helix/backend/db/auth-schema';
-import { createRouterFactory, TRPCError } from '@helix/backend/trpc';
+import { user } from '@helix-hq/backend/db/auth-schema';
+import { createRouterFactory, TRPCError } from '@helix-hq/backend/trpc';
 import { and, arrayOverlaps, asc, desc, eq, ilike, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { post } from './schema';
 
-import type { DatabaseClient } from '@helix/backend/db';
+import type { DatabaseClient } from '@helix-hq/backend/db';
 
 /** Context for the blog control-plane API: public procedures read published posts, admin procedures require `adminRoles`. */
 export type BlogSessionUser = Readonly<{

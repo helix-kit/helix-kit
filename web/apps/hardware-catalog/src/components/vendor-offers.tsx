@@ -1,4 +1,4 @@
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 import { ExternalLink } from 'lucide-react';
 
 import { formatMoney } from '@/lib/format';

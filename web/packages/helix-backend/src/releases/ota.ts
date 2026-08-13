@@ -1,4 +1,4 @@
-import { jsonPacketCodec } from '@helix/protocol';
+import { jsonPacketCodec } from '@helix-hq/protocol';
 import { type MqttClient } from 'mqtt';
 
 import { resolveOtaTarget } from './resolve';

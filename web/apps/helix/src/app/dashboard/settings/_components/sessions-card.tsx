@@ -4,15 +4,15 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
+} from '@helix-hq/design-system/components/card';
 import { useQuery } from '@tanstack/react-query';
 import { Monitor } from 'lucide-react';
 import { toast } from 'sonner';

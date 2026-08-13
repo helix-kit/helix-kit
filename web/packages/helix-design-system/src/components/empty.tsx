@@ -1,4 +1,4 @@
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const Empty = ({ className, ...props }: React.ComponentProps<'div'>) => (

@@ -3,7 +3,7 @@ import {
   type DatabaseClient,
   type WorkflowDeps,
   type WorkflowInngestClient,
-} from '@helix/backend';
+} from '@helix-hq/backend';
 
 import { env } from '../env';
 

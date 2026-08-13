@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { MutationModal } from '@helix/design-system/components/mutation-modal';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { MutationModal } from '@helix-hq/design-system/components/mutation-modal';
 import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';

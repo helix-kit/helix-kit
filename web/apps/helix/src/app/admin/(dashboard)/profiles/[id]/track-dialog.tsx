@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Dialog,
   DialogContent,
@@ -13,17 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@helix/design-system/components/dialog';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
+} from '@helix-hq/design-system/components/dialog';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@helix/design-system/components/select';
-import { Switch } from '@helix/design-system/components/switch';
+} from '@helix-hq/design-system/components/select';
+import { Switch } from '@helix-hq/design-system/components/switch';
 import { toast } from 'sonner';
 
 import { useTRPCMutation } from '@/server/react';

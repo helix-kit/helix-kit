@@ -1,4 +1,4 @@
-import { TRPCError } from '@helix/backend/trpc';
+import { TRPCError } from '@helix-hq/backend/trpc';
 import { and, asc, count, eq, ilike, or, type InferSelectModel, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 

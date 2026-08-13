@@ -1,4 +1,4 @@
-# @helix/json-schema
+# @helix-hq/json-schema
 
 Authoring JSON Schemas, and turning them into TypeScript.
 
@@ -10,8 +10,8 @@ a **schema editor** that avoids making people hand-write JSON Schema, and a
 
 | Entry                        | Contents                                                                          |
 | ---------------------------- | --------------------------------------------------------------------------------- |
-| `@helix/json-schema`         | `SchemaDefinition` and its converters, `toObjectSchema`, `jsonSchemaToTypeString` |
-| `@helix/json-schema/builder` | `JsonSchemaBuilder` — the React property editor                                   |
+| `@helix-hq/json-schema`         | `SchemaDefinition` and its converters, `toObjectSchema`, `jsonSchemaToTypeString` |
+| `@helix-hq/json-schema/builder` | `JsonSchemaBuilder` — the React property editor                                   |
 
 ## `SchemaDefinition`
 

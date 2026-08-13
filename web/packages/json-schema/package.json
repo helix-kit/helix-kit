@@ -1,12 +1,33 @@
 {
-  "name": "@helix/json-schema",
-  "version": "0.0.1",
-  "license": "AGPL-3.0-only",
+  "name": "@helix-hq/json-schema",
+  "version": "0.1.0",
+  "description": "Author JSON Schemas in React \u2014 a property-list builder, a schema-aware Monaco editor, and a TypeScript emitter.",
+  "keywords": [
+    "json-schema",
+    "schema-editor",
+    "monaco",
+    "react",
+    "typescript",
+    "zod"
+  ],
+  "license": "MIT",
+  "author": "Hardik Jain",
+  "homepage": "https://github.com/helix-kit/helix-kit/tree/main/web/packages/json-schema#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helix-kit/helix-kit.git",
+    "directory": "web/packages/json-schema"
+  },
+  "bugs": {
+    "url": "https://github.com/helix-kit/helix-kit/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "files": [
+    "LICENSE",
+    "README.md",
     "dist",
-    "README.md"
+    "src"
   ],
   "scripts": {
     "build": "tsdown && pnpm run build:types",
@@ -57,19 +78,19 @@
     }
   },
   "dependencies": {
-    "@helix/ai-kit": "workspace:*",
+    "@helix-hq/ai-kit": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@helix/design-system": "workspace:*",
+    "@helix-hq/design-system": "workspace:*",
     "lucide-react": "^0.400.0 || ^1.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
     "react-resizable-panels": "^4.12.1"
   },
   "devDependencies": {
-    "@helix/design-system": "workspace:*",
+    "@helix-hq/design-system": "workspace:*",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -81,5 +102,10 @@
     "tsdown": "^0.22.4",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "peerDependenciesMeta": {
+    "@helix-hq/design-system": {
+      "optional": true
+    }
   }
 }

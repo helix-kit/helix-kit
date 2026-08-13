@@ -136,7 +136,7 @@ owner's admin account. Leave it in place.
 | HELIX-12 | Device data plane & P2P / WebRTC transport |
 | HELIX-13 | Helix Linux platform OS |
 | HELIX-14 | Web app — Next.js console, marketing, docs, blog |
-| HELIX-15 | @helix/backend core (auth, tRPC, storage, PKI, releases/OTA, events) |
+| HELIX-15 | @helix-hq/backend core (auth, tRPC, storage, PKI, releases/OTA, events) |
 | HELIX-16 | Cloud appliance & AMI |
 | HELIX-17 | Custom firmware build service |
 | HELIX-18 | Load testing & scaling |

@@ -53,7 +53,7 @@ authorizes a session; the data plane carries its bytes.
 
 ```
               ┌──────────────────────────── Browser / Web app ────────────────────────────┐
-              │  control: @helix/protocol/service client        data: @helix/protocol/stream │
+              │  control: @helix-hq/protocol/service client        data: @helix-hq/protocol/stream │
               └────────┬──────────────────────────────────────────────────┬────────────────┘
         control: WS /ws?deviceId  (HelixPacket JSON)          data: WSS binary stream frames
                        │  {requestId, message:{service,method,payload}}     │  [type][streamId][bytes]
@@ -206,7 +206,7 @@ the Go path is first.
 ## Gateway
 
 Fold the standalone Caddy + Node gateway into `helix-server`'s existing gateway
-role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
+role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix-hq/backend`.
 
 - **Keep** the WS⇄MQTT bridge (`helix-backend/src/gateway/*`) for control —
   unchanged.
@@ -263,8 +263,8 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 
 | Path | What |
 | --- | --- |
-| `web/packages/protocol/helix-stream` (`@helix/protocol/stream`) | Layer-1 mux (browser + gateway) + flow control |
-| `web/packages/protocol/transport-ws-binary` | binary-WS transport for the mux (distinct from JSON `@helix/protocol/websocket`) |
+| `web/packages/protocol/helix-stream` (`@helix-hq/protocol/stream`) | Layer-1 mux (browser + gateway) + flow control |
+| `web/packages/protocol/transport-ws-binary` | binary-WS transport for the mux (distinct from JSON `@helix-hq/protocol/websocket`) |
 | `web/packages/helix-backend/src/streams/` | gateway HelixStream server, session broker, subdomain router |
 | `web/packages/helix-backend/src/streams/apps/{port-forward,shell}` | gateway-side app logic |
 | `linux/protocol/go/stream/` | device Layer-1 mux (promote experimental framing) |
@@ -277,7 +277,7 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 
 ## Rollout phases
 
-1. **Extract the substrate.** Build `@helix/protocol/stream` (TS) and
+1. **Extract the substrate.** Build `@helix-hq/protocol/stream` (TS) and
    `linux/protocol/go/stream` (Go) from the experimental framing, add
    `CREDIT` flow control, and re-implement *both* experimental agents/gateways on
    it — still standalone — to prove one substrate serves both apps.
@@ -286,7 +286,7 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
    `REGISTER`/`REQ_HEAD`/`OPEN{cols}` from the data plane. Session/target/size
    now come from the control plane.
 3. **Fold into the gateway.** Stand up the HelixStream server + subdomain routing
-   in `@helix/backend`/`helix-server`; device dials the data plane over mTLS;
+   in `@helix-hq/backend`/`helix-server`; device dials the data plane over mTLS;
    retire the standalone Caddy + Node gateway (keep only appliance ingress TLS).
 4. **Web UIs.** Port the shell UI and add a port-forward UI into
    `web/apps/helix`, using the generated contract for control and the stream
@@ -323,10 +323,10 @@ role (`web/apps/helix-server/src/roles/gateway.ts`) and `@helix/backend`.
 | step-ca PKI + device mTLS on MQTT | ✅ exists |
 | Multiplexed byte-stream framing | ⚠️ prototyped in `experimental/*/agent/protocol.go`; not a lib, no flow control |
 | Outbound WS binary transport (Go) | ⚠️ prototyped in the experimental agent; needs mTLS + generalizing |
-| `@helix/protocol/stream` + `linux/protocol/go/stream` (Layer-1 mux) | ⛔ to build |
+| `@helix-hq/protocol/stream` + `linux/protocol/go/stream` (Layer-1 mux) | ⛔ to build |
 | `stream` service contract + device handlers + allowlist | ⛔ to build |
 | Go/Python full contract codegen | ✅ implemented — typed structs + `Dispatch`/`Handler` from co-located contract JSON |
-| HelixStream server in `@helix/backend` + subdomain routing | ⛔ to build (fold experiment) |
+| HelixStream server in `@helix-hq/backend` + subdomain routing | ⛔ to build (fold experiment) |
 | mTLS on the data-plane WS | ⛔ to add (PKI exists) |
 | Web-user auth on control/data WS | ⛔ gap: token parsed but never validated |
 | Flow control (`CREDIT`) | ⛔ to add |

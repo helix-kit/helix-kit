@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 import { Check, Loader2, Wrench, X } from 'lucide-react';
 
 type ToolPart = {

@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { GpioControls } from '@helix/device-apps';
-import { MqttGatewayProvider, useMqttGatewayTransport } from '@helix/protocol/mqtt/react';
+import { Button } from '@helix-hq/design-system/components/button';
+import { GpioControls } from '@helix-hq/device-apps';
+import { MqttGatewayProvider, useMqttGatewayTransport } from '@helix-hq/protocol/mqtt/react';
 import { PlugZap, RotateCw, Unplug } from 'lucide-react';
 
 const ICON_CLASS_NAME = 'h-4 w-4';

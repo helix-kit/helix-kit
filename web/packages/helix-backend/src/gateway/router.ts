@@ -1,5 +1,5 @@
-import type { HelixPacket } from '@helix/protocol';
-import type { HelixMessage } from '@helix/protocol/service';
+import type { HelixPacket } from '@helix-hq/protocol';
+import type { HelixMessage } from '@helix-hq/protocol/service';
 
 export type GatewayConnectionContext<TAuth = unknown> = Readonly<{
   auth: TAuth;

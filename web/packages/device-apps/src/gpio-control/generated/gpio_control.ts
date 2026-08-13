@@ -1,4 +1,4 @@
-import { defineServiceContract, method, message } from '@helix/protocol/service';
+import { defineServiceContract, method, message } from '@helix-hq/protocol/service';
 import { z } from 'zod';
 
 export const setGpioRequestSchema = z.object({

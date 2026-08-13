@@ -2,10 +2,10 @@
 // (the appliance). Exercises the resolveDeviceFeatures precedence — default →
 // profile-enabled → device-override (both directions) → cleared — plus that the
 // catalog was seeded. Setup/teardown use raw SQL so the script depends only on
-// @helix/backend. Exits non-zero on any assertion failure. Run with:
+// @helix-hq/backend. Exits non-zero on any assertion failure. Run with:
 //   DATABASE_URL=... node --import tsx/esm scripts/verify-features.mts
-import { createDatabasePool, createDb } from '@helix/backend/db';
-import { feature, resolveDeviceFeatures, seedFeatures } from '@helix/backend/features';
+import { createDatabasePool, createDb } from '@helix-hq/backend/db';
+import { feature, resolveDeviceFeatures, seedFeatures } from '@helix-hq/backend/features';
 
 const TEST_PROFILE = 'prof_verify_features';
 const TEST_DEVICE = 'dev_verify_features';

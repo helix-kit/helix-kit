@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@helix/design-system/components/button';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { useDocsSearch } from 'fumadocs-core/search/client';
 import {
   SearchDialog as FumadocsSearchDialog,

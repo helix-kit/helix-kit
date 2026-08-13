@@ -1,13 +1,13 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
+} from '@helix-hq/design-system/components/card';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 
 export type FirmwareBuildStatus = {

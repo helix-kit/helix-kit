@@ -1,10 +1,10 @@
 import 'server-only';
 
-import { createStorageProviderFromEnv } from '@helix/backend/storage/factory';
+import { createStorageProviderFromEnv } from '@helix-hq/backend/storage/factory';
 
 import { env } from '@/lib/env';
 
-import type { StorageProvider } from '@helix/backend/storage/interface';
+import type { StorageProvider } from '@helix-hq/backend/storage/interface';
 
 /**
  * Object storage, shared with the rest of Helix: the same provider factory, the same production

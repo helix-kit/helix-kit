@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 import { Section } from '@/components/marketing/section';

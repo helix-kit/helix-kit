@@ -6,12 +6,12 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
-import { Switch } from '@helix/design-system/components/switch';
-import { Textarea } from '@helix/design-system/components/textarea';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
+import { Switch } from '@helix-hq/design-system/components/switch';
+import { Textarea } from '@helix-hq/design-system/components/textarea';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';

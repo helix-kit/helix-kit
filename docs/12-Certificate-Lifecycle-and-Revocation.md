@@ -18,7 +18,7 @@ and the mTLS gateway enforce.
 
 ## What is recorded
 
-`device_certificate` (drizzle, `@helix/backend/db/schema`) stores one row per
+`device_certificate` (drizzle, `@helix-hq/backend/db/schema`) stores one row per
 issuance:
 
 | column | meaning |
@@ -32,13 +32,13 @@ issuance:
 | `revoked_at`, `revocation_reason`, `revoked_by_user_id` | set on revoke |
 
 The row is written in `pkiRouter.issueDeviceCertificate` right after step-ca
-signs the CSR: `parseCertificateMetadata` (`@helix/backend/pki/step-ca`) reads the
+signs the CSR: `parseCertificateMetadata` (`@helix-hq/backend/pki/step-ca`) reads the
 leaf with Node's `X509Certificate` and the row is inserted (`onConflictDoNothing`
 on the serial, so re-issuance is idempotent).
 
 ## Admin surface
 
-`deviceCertificatesAdminRouter` (`@helix/backend/pki/admin-router`, mounted as
+`deviceCertificatesAdminRouter` (`@helix-hq/backend/pki/admin-router`, mounted as
 `deviceCertificates` in the core app) exposes:
 
 - `list({ deviceId })` — every certificate for a device, newest first, with a

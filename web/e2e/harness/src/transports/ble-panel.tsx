@@ -1,4 +1,4 @@
-import { HelixEsp32BleProvider, useBleTransport } from '@helix/protocol/ble';
+import { HelixEsp32BleProvider, useBleTransport } from '@helix-hq/protocol/ble';
 
 import { RawMessagePanel } from '../raw-message-panel';
 

@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
 
-import { excerpt } from '@helix/blog/seo';
-import { compilePost } from '@helix/blog/server/mdx';
-import { PostArticle, PostBreadcrumb, PostUnavailable, RelatedPosts } from '@helix/blog/ui';
-import { logger } from '@helix/logger';
+import { excerpt } from '@helix-hq/blog/seo';
+import { compilePost } from '@helix-hq/blog/server/mdx';
+import { PostArticle, PostBreadcrumb, PostUnavailable, RelatedPosts } from '@helix-hq/blog/ui';
+import { logger } from '@helix-hq/logger';
 
 import { Section } from '@/components/marketing/section';
 import { blogMdxComponents, blogSeo } from '@/lib/blog';

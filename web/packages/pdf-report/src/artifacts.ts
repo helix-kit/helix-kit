@@ -1,4 +1,4 @@
-import type { ArtifactSpec } from '@helix/ai-kit';
+import type { ArtifactSpec } from '@helix-hq/ai-kit';
 
 /**
  * The parts of a template, as the model addresses them.

@@ -6,8 +6,8 @@ import {
   composeAssistant,
   createArtifactCollector,
   type ArtifactEvent,
-} from '@helix/ai-kit';
-import { toToolSet } from '@helix/ai-kit/ai-sdk';
+} from '@helix-hq/ai-kit';
+import { toToolSet } from '@helix-hq/ai-kit/ai-sdk';
 import { gateway, stepCountIs, streamText } from 'ai';
 import { describe, expect, it } from 'vitest';
 
@@ -30,7 +30,7 @@ import type { ReportTemplate } from './types';
  * it per model is how one model is compared with another.
  *
  *   AI_GATEWAY_API_KEY=... HELIX_AI_MODEL=deepseek/deepseek-v4-flash-0731 \
- *     pnpm --filter @helix/pdf-report test ai.live
+ *     pnpm --filter @helix-hq/pdf-report test ai.live
  */
 
 const readEnvFile = (): Record<string, string> => {

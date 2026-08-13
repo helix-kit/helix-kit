@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useMqttGatewayTransport } from '@helix/protocol/mqtt/react';
-import { useTypedDeviceService, useTypedDeviceServiceQuery } from '@helix/protocol/service/react';
+import { useMqttGatewayTransport } from '@helix-hq/protocol/mqtt/react';
+import {
+  useTypedDeviceService,
+  useTypedDeviceServiceQuery,
+} from '@helix-hq/protocol/service/react';
 import { ChevronUp, Download, File as FileIcon, Folder, RefreshCw, Upload } from 'lucide-react';
 
 import { filesControlContract, type FileEntry } from './contract';

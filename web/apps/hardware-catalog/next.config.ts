@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  transpilePackages: ['@helix/design-system', '@helix/web-core'],
+  transpilePackages: ['@helix-hq/design-system', '@helix-hq/web-core'],
   /**
    * The dev server is reached through a Cloudflare tunnel rather than on localhost, and Next
    * blocks cross-origin requests to `/_next/*` dev resources by default. Without this the

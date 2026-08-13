@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@helix/design-system/components/card';
-import { ThemeToggleButton } from '@helix/design-system/components/theme-toggle-button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@helix-hq/design-system/components/card';
+import { ThemeToggleButton } from '@helix-hq/design-system/components/theme-toggle-button';
 
 import { HelixMark } from '@/components/logo';
 import { fetchQuery } from '@/server/server';

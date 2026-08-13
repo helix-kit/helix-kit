@@ -1,5 +1,5 @@
-import { codeExecutorAuthoring } from '@helix/code-executor/ai';
-import { jsonSchemaAuthoring } from '@helix/json-schema/ai';
+import { codeExecutorAuthoring } from '@helix-hq/code-executor/ai';
+import { jsonSchemaAuthoring } from '@helix-hq/json-schema/ai';
 
 import { REPORT_ARTIFACTS } from './artifacts';
 import { reportCatalog } from './catalog';
@@ -8,7 +8,7 @@ import { renderReportToBuffer } from './server';
 import { formatReportSpecIssues, validateReportSpec } from './validate';
 
 import type { ReportTemplate } from './types';
-import type { AiCapability, PromptSection } from '@helix/ai-kit';
+import type { AiCapability, PromptSection } from '@helix-hq/ai-kit';
 
 const TWO_TIER = `A report template is two tiers, and keeping them apart is the whole design.
 
@@ -46,7 +46,7 @@ export type ReportAssistantOptions = {
  * Everything an assistant needs to author a report template.
  *
  * Composed from the pieces that own each half — the executor explains writing
- * code, `@helix/json-schema` explains schemas, the catalog explains components —
+ * code, `@helix-hq/json-schema` explains schemas, the catalog explains components —
  * with this capability supplying only what is genuinely its own: how the two
  * tiers meet, and the checks that span them.
  *

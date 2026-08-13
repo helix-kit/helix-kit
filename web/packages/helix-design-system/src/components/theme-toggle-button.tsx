@@ -1,14 +1,14 @@
 'use client';
 
-import { Button, type ButtonProps } from '@helix/design-system/components/button';
+import { Button, type ButtonProps } from '@helix-hq/design-system/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
-import { useTheme } from '@helix/design-system/components/theme-provider';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/dropdown-menu';
+import { useTheme } from '@helix-hq/design-system/components/theme-provider';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { MoonIcon, SunIcon } from 'lucide-react';
 
 type ThemeToggleButtonProps = Readonly<{

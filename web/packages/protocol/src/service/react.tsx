@@ -20,7 +20,7 @@ import {
   type ServiceContract,
 } from '.';
 
-import type { HelixTransport } from '@helix/protocol';
+import type { HelixTransport } from '@helix-hq/protocol';
 
 export type HelixTransportContextValue = Readonly<{
   isConnected: boolean;

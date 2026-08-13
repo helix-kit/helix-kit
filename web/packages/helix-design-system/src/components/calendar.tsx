@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 
-import { Button, buttonVariants } from '@helix/design-system/components/button';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button, buttonVariants } from '@helix-hq/design-system/components/button';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
 import { DayPicker, getDefaultClassNames, type DayButton, type Locale } from 'react-day-picker';
 

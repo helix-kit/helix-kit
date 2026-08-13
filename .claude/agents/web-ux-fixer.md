@@ -70,7 +70,7 @@ server **must** use the same port. The heap cap avoids an OOM under Turbopack. W
 
 ### 5. Make the smallest correct fix
 Be surgical — resolve the root cause, don't refactor unrelated things. The web app lives
-under `web/apps/helix/src/app` (note the **`src/`**), backend in `@helix/backend`. Follow
+under `web/apps/helix/src/app` (note the **`src/`**), backend in `@helix-hq/backend`. Follow
 the `nextjs-web-app` skill for app conventions.
 
 ### 6. Verify against the running server (before any polishing)

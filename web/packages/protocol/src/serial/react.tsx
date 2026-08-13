@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { HelixTransportProvider } from '@helix/protocol/service/react';
+import { HelixTransportProvider } from '@helix-hq/protocol/service/react';
 
 import {
   isWebSerialSupported,

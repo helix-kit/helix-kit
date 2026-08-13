@@ -1,4 +1,4 @@
-# @helix/ai-kit
+# @helix-hq/ai-kit
 
 Contracts for composing AI assistants out of the pieces they work with.
 
@@ -51,7 +51,7 @@ establishes context before the parts that depend on it.
 A descriptor is `{ name, description, parameters, execute }` — the host adapts it
 to whichever SDK it runs. Model invocation, auth and metering belong to the
 application, not to the package describing what can be done. This is the same
-shape `@helix/backend/agent` already uses for tRPC procedures.
+shape `@helix-hq/backend/agent` already uses for tRPC procedures.
 
 Duplicate tool names and duplicate artifact kinds are errors, naming both
 culprits. Both are addressed by name and a model has no way to tell two apart, so
@@ -74,7 +74,7 @@ should not silently write somewhere.
 
 ## Turns can be recorded and replayed
 
-`@helix/ai-kit/fixtures` records a real turn to a file and replays it in place of
+`@helix-hq/ai-kit/fixtures` records a real turn to a file and replays it in place of
 the provider, so work on the UI a turn drives costs nothing and takes seconds
 rather than a minute.
 

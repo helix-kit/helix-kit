@@ -1,4 +1,4 @@
-import { defineFeature } from '@helix/backend/features';
+import { defineFeature } from '@helix-hq/backend/features';
 
 // Linux port forwarding (experimental) — tunnel a device-local port to the cloud.
 // Declared here for now; moves to live beside the port-forward UI/route when built.

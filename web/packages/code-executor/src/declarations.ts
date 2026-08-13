@@ -1,4 +1,4 @@
-import { jsonSchemaToTypeString } from '@helix/json-schema';
+import { jsonSchemaToTypeString } from '@helix-hq/json-schema';
 
 import type { HostFunctions } from './types';
 import type { JSONSchema } from 'zod/v4/core';

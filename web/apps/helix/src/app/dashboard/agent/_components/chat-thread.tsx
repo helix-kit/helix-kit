@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useChat } from '@ai-sdk/react';
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { DefaultChatTransport, getToolName, isToolUIPart, type UIMessage } from 'ai';
 import { ArrowUp, Bot, User } from 'lucide-react';
 

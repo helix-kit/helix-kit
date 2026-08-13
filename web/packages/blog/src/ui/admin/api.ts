@@ -1,6 +1,6 @@
 'use client';
 
-import { useFeatureApi } from '@helix/web-core/trpc/feature';
+import { useFeatureApi } from '@helix-hq/web-core/trpc/feature';
 
 import type { BlogAdminRouter } from '../../server/router';
 

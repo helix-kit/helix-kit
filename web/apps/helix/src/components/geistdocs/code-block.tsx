@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { toast } from 'sonner';
 

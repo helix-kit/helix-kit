@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@helix/design-system/components/dialog';
+} from '@helix-hq/design-system/components/dialog';
 import {
   Drawer,
   DrawerContent,
@@ -15,9 +15,9 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from '@helix/design-system/components/drawer';
-import { useIsMobile } from '@helix/design-system/hooks/use-mobile';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/drawer';
+import { useIsMobile } from '@helix-hq/design-system/hooks/use-mobile';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 type ResponsiveModalProps = {
   open: boolean;

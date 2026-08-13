@@ -1,4 +1,4 @@
-import { TRPCError } from '@helix/backend/trpc';
+import { TRPCError } from '@helix-hq/backend/trpc';
 import { eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 

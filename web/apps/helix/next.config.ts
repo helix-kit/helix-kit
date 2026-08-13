@@ -33,12 +33,12 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['@react-pdf/renderer', '@json-render/react-pdf'],
   transpilePackages: [
-    '@helix/blog',
-    '@helix/design-system',
-    '@helix/device-apps',
-    '@helix/pdf-report',
-    '@helix/protocol',
-    '@helix/web-core',
+    '@helix-hq/blog',
+    '@helix-hq/design-system',
+    '@helix-hq/device-apps',
+    '@helix-hq/pdf-report',
+    '@helix-hq/protocol',
+    '@helix-hq/web-core',
   ],
 };
 

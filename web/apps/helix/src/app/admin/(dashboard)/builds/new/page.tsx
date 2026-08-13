@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
-import { type BuildCatalog } from '@helix/backend/releases';
-import { Button } from '@helix/design-system/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@helix/design-system/components/card';
+import { type BuildCatalog } from '@helix-hq/backend/releases';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@helix-hq/design-system/components/card';
 import { ArrowLeft } from 'lucide-react';
 
 import { fetchQuery } from '@/server/server';

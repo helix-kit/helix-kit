@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 

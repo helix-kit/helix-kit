@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@helix/design-system/components/button';
-import { GpioControls } from '@helix/device-apps';
-import { HelixEsp32BleProvider, useBleTransport } from '@helix/protocol/ble';
+import { Button } from '@helix-hq/design-system/components/button';
+import { GpioControls } from '@helix-hq/device-apps';
+import { HelixEsp32BleProvider, useBleTransport } from '@helix-hq/protocol/ble';
 import { Bluetooth, Unplug } from 'lucide-react';
 
 const ICON_CLASS_NAME = 'h-4 w-4';

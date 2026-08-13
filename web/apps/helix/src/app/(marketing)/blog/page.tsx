@@ -1,4 +1,4 @@
-import { PostGrid } from '@helix/blog/ui';
+import { PostGrid } from '@helix-hq/blog/ui';
 
 import { Section, SectionHeading } from '@/components/marketing/section';
 import { blogSeo } from '@/lib/blog';

@@ -1,4 +1,4 @@
-# @helix/backend
+# @helix-hq/backend
 
 Composable backend building blocks for Helix server runtimes.
 

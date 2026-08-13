@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import * as ResizablePrimitive from 'react-resizable-panels';
 
 const ResizablePanelGroup = ({ className, ...props }: ResizablePrimitive.GroupProps) => (

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { Hammer } from 'lucide-react';
 import { createLoader, type SearchParams } from 'nuqs/server';
 

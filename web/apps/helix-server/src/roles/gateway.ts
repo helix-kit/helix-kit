@@ -19,8 +19,8 @@ import {
   type DeviceEventQueue,
   type FsStorageHttpOptions,
   type StepCaSettings,
-} from '@helix/backend';
-import { fileRouter, type DeviceMtlsContext } from '@helix/backend/device-mtls/fileRouter';
+} from '@helix-hq/backend';
+import { fileRouter, type DeviceMtlsContext } from '@helix-hq/backend/device-mtls/fileRouter';
 import {
   certSerialFromSocket,
   createDeviceMtlsServer,
@@ -28,9 +28,9 @@ import {
   isDeviceCertRevoked,
   readDeviceMtlsMaterial,
   type DeviceMtlsMaterial,
-} from '@helix/backend/device-mtls/tls';
-import { createRootRouter, TRPCError } from '@helix/backend/trpc';
-import { logger } from '@helix/logger';
+} from '@helix-hq/backend/device-mtls/tls';
+import { createRootRouter, TRPCError } from '@helix-hq/backend/trpc';
+import { logger } from '@helix-hq/logger';
 import { createOpenApiHttpHandler } from 'trpc-to-openapi';
 
 import { type RoleCloser } from './roles';

@@ -4,17 +4,17 @@ import { useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Input } from '@helix/design-system/components/input';
-import { Switch } from '@helix/design-system/components/switch';
+} from '@helix-hq/design-system/components/card';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Switch } from '@helix-hq/design-system/components/switch';
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@helix/design-system/components/table';
+} from '@helix-hq/design-system/components/table';
 import { toast } from 'sonner';
 
 import { useTRPCMutation } from '@/server/react';

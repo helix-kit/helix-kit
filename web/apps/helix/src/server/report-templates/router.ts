@@ -1,19 +1,17 @@
 import { randomUUID } from 'node:crypto';
 
-import { createRouterFactory, TRPCError } from '@helix/backend/trpc';
+import { createRouterFactory, TRPCError } from '@helix-hq/backend/trpc';
+import { defaultReportTemplate, type ReportTemplate } from '@helix-hq/pdf-report';
 import { asc, desc, eq, ilike, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { reportTemplate } from './schema';
 
-import type { ReportTemplate } from '../types';
-import type { DatabaseClient } from '@helix/backend/db';
+import type { DatabaseClient } from '@helix-hq/backend/db';
 
-import { defaultReportTemplate } from '../defaults';
+type ReportTemplateSessionUser = Readonly<{ id: string; role: string | null }>;
 
-export type ReportTemplateSessionUser = Readonly<{ id: string; role: string | null }>;
-
-export type ReportTemplateContext = Readonly<{
+type ReportTemplateContext = Readonly<{
   db: DatabaseClient;
   user: ReportTemplateSessionUser | null;
   adminRoles: readonly string[];
@@ -169,5 +167,3 @@ export const reportTemplatesRouter = createRouterFactory<ReportTemplateContext>(
     }),
   });
 });
-
-export type ReportTemplatesRouter = ReturnType<typeof reportTemplatesRouter>;

@@ -1,12 +1,34 @@
 {
-  "name": "@helix/ai-kit",
-  "version": "0.0.1",
-  "license": "AGPL-3.0-only",
+  "name": "@helix-hq/ai-kit",
+  "version": "0.1.0",
+  "description": "Contracts for composing AI assistants: prompt sections, tool sets and streamed artifacts, contributed by independent packages.",
+  "keywords": [
+    "ai",
+    "llm",
+    "assistant",
+    "tools",
+    "prompt",
+    "artifacts",
+    "vercel-ai-sdk"
+  ],
+  "license": "MIT",
+  "author": "Hardik Jain",
+  "homepage": "https://github.com/helix-kit/helix-kit/tree/main/web/packages/ai-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helix-kit/helix-kit.git",
+    "directory": "web/packages/ai-kit"
+  },
+  "bugs": {
+    "url": "https://github.com/helix-kit/helix-kit/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "files": [
+    "LICENSE",
+    "README.md",
     "dist",
-    "README.md"
+    "src"
   ],
   "scripts": {
     "build": "tsdown && pnpm run build:types",

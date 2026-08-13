@@ -1,8 +1,8 @@
 'use client';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
-import { Input } from '@helix/design-system/components/input';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Input } from '@helix-hq/design-system/components/input';
 import { useQueryStates } from 'nuqs';
 import { useDebouncedCallback } from 'use-debounce';
 

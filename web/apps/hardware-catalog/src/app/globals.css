@@ -1,4 +1,4 @@
-@import '@helix/design-system/globals.css';
+@import '@helix-hq/design-system/globals.css';
 
 @source './**/*.{ts,tsx}';
 @source '../components/**/*.{ts,tsx}';

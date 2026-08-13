@@ -3,10 +3,10 @@
 import { useRef, useState } from 'react';
 
 import { useChat } from '@ai-sdk/react';
-import { createArtifactCollector, type ArtifactEvent } from '@helix/ai-kit';
-import { Button } from '@helix/design-system/components/button';
-import { Textarea } from '@helix/design-system/components/textarea';
-import { applyReportPatchLine, REPORT_ARTIFACTS, type ReportTemplate } from '@helix/pdf-report';
+import { createArtifactCollector, type ArtifactEvent } from '@helix-hq/ai-kit';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Textarea } from '@helix-hq/design-system/components/textarea';
+import { applyReportPatchLine, REPORT_ARTIFACTS, type ReportTemplate } from '@helix-hq/pdf-report';
 import { DefaultChatTransport } from 'ai';
 import { Brain, Check, History, Loader2, Sparkles, Square, Wrench, X } from 'lucide-react';
 

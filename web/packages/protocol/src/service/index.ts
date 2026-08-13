@@ -3,7 +3,7 @@ import {
   createRequestId,
   type HelixPacket,
   type RequestIdFactory,
-} from '@helix/protocol';
+} from '@helix-hq/protocol';
 
 export type Schema<TValue> = Readonly<{
   parse: (value: unknown) => TValue;

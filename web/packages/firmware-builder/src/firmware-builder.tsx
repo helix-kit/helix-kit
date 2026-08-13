@@ -2,25 +2,25 @@
 
 import { useMemo, useRef, useState } from 'react';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Checkbox } from '@helix/design-system/components/checkbox';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
-import { NativeSelect, NativeSelectOption } from '@helix/design-system/components/native-select';
-import { Separator } from '@helix/design-system/components/separator';
-import { Switch } from '@helix/design-system/components/switch';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/card';
+import { Checkbox } from '@helix-hq/design-system/components/checkbox';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
+import { NativeSelect, NativeSelectOption } from '@helix-hq/design-system/components/native-select';
+import { Separator } from '@helix-hq/design-system/components/separator';
+import { Switch } from '@helix-hq/design-system/components/switch';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { Hammer, Loader2, Plus, Trash2 } from 'lucide-react';
 
-import type { BuildCatalog } from '@helix/backend/releases';
+import type { BuildCatalog } from '@helix-hq/backend/releases';
 
 export type FirmwareBuildValues = {
   name: string;

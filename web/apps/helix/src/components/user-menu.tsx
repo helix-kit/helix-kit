@@ -10,12 +10,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
+} from '@helix-hq/design-system/components/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@helix/design-system/components/sidebar';
+} from '@helix-hq/design-system/components/sidebar';
 import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 
 import { signOut } from '@/lib/auth-client';

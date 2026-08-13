@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react';
 
-import { TooltipProvider } from '@helix/design-system/components/tooltip';
+import { TooltipProvider } from '@helix-hq/design-system/components/tooltip';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 
 import { SearchDialog } from './search';

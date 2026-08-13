@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
-import { assertHelixPacket, jsonPacketCodec, type HelixPacket } from '@helix/protocol';
-import { isServiceMessage, type HelixMessage } from '@helix/protocol/service';
+import { assertHelixPacket, jsonPacketCodec, type HelixPacket } from '@helix-hq/protocol';
+import { isServiceMessage, type HelixMessage } from '@helix-hq/protocol/service';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { GatewayRouter, type GatewayClient } from './router';

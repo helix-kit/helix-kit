@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@helix/design-system/components/tabs';
-import { cn } from '@helix/design-system/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@helix-hq/design-system/components/tabs';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 export const CodeBlockTabsList = (props: ComponentProps<typeof TabsList>) => (
   <TabsList

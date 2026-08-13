@@ -1,4 +1,4 @@
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { Package, Scale, Server } from 'lucide-react';
 
 import { GithubIcon } from '@/components/icons';

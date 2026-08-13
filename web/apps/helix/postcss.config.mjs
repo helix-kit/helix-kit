@@ -1,1 +1,1 @@
-export { default } from '@helix/design-system/postcss.config';
+export { default } from '@helix-hq/design-system/postcss.config';

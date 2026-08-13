@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Switch } from '@helix/design-system/components/switch';
+} from '@helix-hq/design-system/components/card';
+import { Switch } from '@helix-hq/design-system/components/switch';
 import { toast } from 'sonner';
 
 import { useTRPCMutation, useTRPCQuery } from '@/server/react';

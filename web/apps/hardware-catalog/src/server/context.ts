@@ -1,4 +1,4 @@
-import { createRouterFactory } from '@helix/backend/trpc';
+import { createRouterFactory } from '@helix-hq/backend/trpc';
 
 import type { CatalogDatabase } from './db';
 

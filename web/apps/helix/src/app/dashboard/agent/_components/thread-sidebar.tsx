@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@helix/design-system/components/button';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { MessageSquarePlus, Trash2 } from 'lucide-react';
 
 import type { Conversations } from './agent-app';

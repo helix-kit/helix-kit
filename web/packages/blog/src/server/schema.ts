@@ -1,4 +1,4 @@
-import { user } from '@helix/backend/db/auth-schema';
+import { user } from '@helix-hq/backend/db/auth-schema';
 import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const post = pgTable(

@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Sheet,
   SheetContent,
   SheetTitle,
   SheetTrigger,
-} from '@helix/design-system/components/sheet';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/sheet';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { Menu, Star } from 'lucide-react';
 
 import { nav, site } from '@/lib/site';

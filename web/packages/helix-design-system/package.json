@@ -1,19 +1,41 @@
 {
-  "name": "@helix/design-system",
-  "version": "0.0.1",
-  "license": "AGPL-3.0-only",
+  "name": "@helix-hq/design-system",
+  "version": "0.1.0",
+  "description": "Helix's React component library: shadcn/Radix primitives on Tailwind v4, plus a data table, dialogs and charts.",
+  "keywords": [
+    "react",
+    "components",
+    "design-system",
+    "tailwind",
+    "shadcn",
+    "radix",
+    "ui"
+  ],
+  "license": "MIT",
+  "author": "Hardik Jain",
+  "homepage": "https://github.com/helix-kit/helix-kit/tree/main/web/packages/helix-design-system#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helix-kit/helix-kit.git",
+    "directory": "web/packages/helix-design-system"
+  },
+  "bugs": {
+    "url": "https://github.com/helix-kit/helix-kit/issues"
+  },
   "type": "module",
   "sideEffects": [
     "*.css"
   ],
   "files": [
+    "LICENSE",
+    "README.md",
     "dist",
     "postcss.config.mjs",
-    "README.md"
+    "src"
   ],
   "scripts": {
     "build": "tsdown && pnpm run build:types && pnpm run build:css",
-    "build:css": "pnpm exec tailwindcss -i ./src/styles/globals.css -o ./dist/globals.css --minify",
+    "build:css": "pnpm exec tailwindcss -i ./src/styles/globals.css -o ./dist/styles/globals.css --minify",
     "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",

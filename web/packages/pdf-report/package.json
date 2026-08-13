@@ -1,22 +1,45 @@
 {
-  "name": "@helix/pdf-report",
-  "version": "0.0.1",
-  "license": "AGPL-3.0-only",
+  "name": "@helix-hq/pdf-report",
+  "version": "0.1.0",
+  "description": "JSON-defined PDF reports: a sandboxed code step computes the values, a json-render layout places them.",
+  "keywords": [
+    "pdf",
+    "reports",
+    "react-pdf",
+    "json-render",
+    "report-builder",
+    "template-editor",
+    "react"
+  ],
+  "license": "MIT",
+  "author": "Hardik Jain",
+  "homepage": "https://github.com/helix-kit/helix-kit/tree/main/web/packages/pdf-report#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helix-kit/helix-kit.git",
+    "directory": "web/packages/pdf-report"
+  },
+  "bugs": {
+    "url": "https://github.com/helix-kit/helix-kit/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "files": [
+    "LICENSE",
+    "README.md",
     "dist",
-    "README.md"
+    "src"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
+    "build": "tsdown && pnpm run build:types && pnpm run build:css",
     "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run --exclude \"**/*.live.test.ts\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "test:live": "vitest run ai.live"
+    "test:live": "vitest run ai.live",
+    "build:css": "pnpm exec tailwindcss -i ./src/styles/editor.css -o ./dist/styles/editor.css --minify"
   },
   "exports": {
     ".": {
@@ -26,14 +49,6 @@
     "./ai": {
       "import": "./src/ai.ts",
       "types": "./src/ai.ts"
-    },
-    "./backend": {
-      "import": "./src/backend/index.ts",
-      "types": "./src/backend/index.ts"
-    },
-    "./backend/schema": {
-      "import": "./src/backend/schema.ts",
-      "types": "./src/backend/schema.ts"
     },
     "./browser": {
       "import": "./src/browser.tsx",
@@ -47,6 +62,7 @@
       "import": "./src/editor.tsx",
       "types": "./src/editor.tsx"
     },
+    "./editor.css": "./src/styles/editor.css",
     "./server": {
       "import": "./src/server.ts",
       "types": "./src/server.ts"
@@ -63,14 +79,6 @@
         "import": "./dist/ai.js",
         "types": "./dist/ai.d.ts"
       },
-      "./backend": {
-        "import": "./dist/backend/index.js",
-        "types": "./dist/backend/index.d.ts"
-      },
-      "./backend/schema": {
-        "import": "./dist/backend/schema.js",
-        "types": "./dist/backend/schema.d.ts"
-      },
       "./browser": {
         "import": "./dist/browser.js",
         "types": "./dist/browser.d.ts"
@@ -83,6 +91,7 @@
         "import": "./dist/editor.js",
         "types": "./dist/editor.d.ts"
       },
+      "./editor.css": "./dist/styles/editor.css",
       "./server": {
         "import": "./dist/server.js",
         "types": "./dist/server.d.ts"
@@ -90,14 +99,12 @@
     }
   },
   "dependencies": {
-    "@helix/ai-kit": "workspace:*",
-    "@helix/backend": "workspace:*",
-    "@helix/code-executor": "workspace:*",
-    "@helix/json-schema": "workspace:*",
+    "@helix-hq/ai-kit": "workspace:*",
+    "@helix-hq/code-executor": "workspace:*",
+    "@helix-hq/json-schema": "workspace:*",
     "@json-render/core": "^0.19.0",
     "@json-render/react-pdf": "^0.19.0",
     "@react-pdf/renderer": "^4.5.1",
-    "drizzle-orm": "1.0.0-beta.15-859cf75",
     "zod": "4.4.3"
   },
   "peerDependencies": {
@@ -105,6 +112,8 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "@helix-hq/design-system": "workspace:*",
+    "@tailwindcss/cli": "^4.3.2",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -112,6 +121,7 @@
     "@workspace/typescript-config": "workspace:*",
     "ai": "^7.0.42",
     "eslint": "^10.6.0",
+    "tailwindcss": "^4.3.2",
     "tsdown": "^0.22.4",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"

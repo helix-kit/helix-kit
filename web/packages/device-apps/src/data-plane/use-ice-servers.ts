@@ -1,10 +1,10 @@
 'use client';
 
-import { useFeatureApi } from '@helix/web-core/trpc/feature';
+import { useFeatureApi } from '@helix-hq/web-core/trpc/feature';
 import { useQuery } from '@tanstack/react-query';
 
-import type { iceRouter } from '@helix/backend/ice';
-import type { IceServer } from '@helix/protocol/peer';
+import type { iceRouter } from '@helix-hq/backend/ice';
+import type { IceServer } from '@helix-hq/protocol/peer';
 
 type IceRouter = ReturnType<typeof iceRouter>;
 

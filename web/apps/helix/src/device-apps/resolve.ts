@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { resolveDeviceFeatures } from '@helix/backend/features';
-import { createDeviceFeatureSet, type DeviceFeatureSet } from '@helix/device-apps';
+import { resolveDeviceFeatures } from '@helix-hq/backend/features';
+import { createDeviceFeatureSet, type DeviceFeatureSet } from '@helix-hq/device-apps';
 
 import { db } from '@/server/db';
 

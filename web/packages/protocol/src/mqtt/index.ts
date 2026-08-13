@@ -4,7 +4,7 @@ import {
   type HelixPacket,
   type HelixPacketHandler,
   type HelixTransport,
-} from '@helix/protocol';
+} from '@helix-hq/protocol';
 
 export type MqttPacketAdapter = Readonly<{
   close?: () => void | Promise<void>;

@@ -1,5 +1,5 @@
 {
-  "name": "@helix/backend",
+  "name": "@helix-hq/backend",
   "version": "0.0.1",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -269,8 +269,8 @@
     "@aws-sdk/s3-request-presigner": "^3.1083.0",
     "@azure/storage-blob": "^12.33.0",
     "@dbos-inc/dbos-sdk": "^4.23.6",
-    "@helix/logger": "workspace:*",
-    "@helix/protocol": "workspace:*",
+    "@helix-hq/logger": "workspace:*",
+    "@helix-hq/protocol": "workspace:*",
     "@trpc/server": "^11.18.0",
     "drizzle-orm": "1.0.0-beta.15-859cf75",
     "inngest": "^4.12.0",

@@ -1,4 +1,4 @@
-import { createBlogSeo } from '@helix/blog/seo';
+import { createBlogSeo } from '@helix-hq/blog/seo';
 
 import { CodeBlock } from '@/components/geistdocs/code-block';
 import { Mermaid } from '@/components/geistdocs/mermaid';

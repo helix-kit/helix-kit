@@ -1,4 +1,4 @@
-import type { HelixStreamSession } from '@helix/protocol/stream';
+import type { HelixStreamSession } from '@helix-hq/protocol/stream';
 
 // One duplex byte channel to a device app, satisfied by both data-plane transports
 // (relay WebSocket and p2p DataChannel) so a surface is written once and runs either way.

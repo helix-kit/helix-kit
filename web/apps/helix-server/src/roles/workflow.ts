@@ -4,8 +4,8 @@ import {
   type ServerResponse,
 } from 'node:http';
 
-import { createWorkflowFunction, type DatabaseClient } from '@helix/backend';
-import { logger } from '@helix/logger';
+import { createWorkflowFunction, type DatabaseClient } from '@helix-hq/backend';
+import { logger } from '@helix-hq/logger';
 import { serve } from 'inngest/node';
 
 import { type RoleCloser } from './roles';

@@ -17,8 +17,8 @@ import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { createDatabasePool, createDb } from '@helix/backend/db';
-import { featureRegistry, seedFeatures } from '@helix/backend/features';
+import { createDatabasePool, createDb } from '@helix-hq/backend/db';
+import { featureRegistry, seedFeatures } from '@helix-hq/backend/features';
 
 const FEATURES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/features');
 

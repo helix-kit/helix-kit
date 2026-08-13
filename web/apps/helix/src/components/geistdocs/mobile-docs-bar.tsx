@@ -8,8 +8,8 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@helix/design-system/components/sheet';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/sheet';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 import { useSidebarContext } from '@/hooks/geistdocs/use-sidebar';
 

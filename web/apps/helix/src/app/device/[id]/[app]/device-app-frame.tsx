@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 
-import { Button } from '@helix/design-system/components/button';
-import { ThemeToggleButton } from '@helix/design-system/components/theme-toggle-button';
-import { HeaderPortalProvider, HeaderPortalTarget } from '@helix/device-apps/header-portal';
+import { Button } from '@helix-hq/design-system/components/button';
+import { ThemeToggleButton } from '@helix-hq/design-system/components/theme-toggle-button';
+import { HeaderPortalProvider, HeaderPortalTarget } from '@helix-hq/device-apps/header-portal';
 import { ArrowLeft } from 'lucide-react';
 
 import { HelixMark } from '@/components/logo';

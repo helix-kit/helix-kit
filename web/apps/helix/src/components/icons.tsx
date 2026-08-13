@@ -1,4 +1,4 @@
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 /** GitHub mark — inlined because lucide-react v1 removed brand glyphs. */
 export const GithubIcon = ({ className }: { className?: string }) => (

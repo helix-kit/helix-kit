@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { isObjectRecord } from '@helix/pdf-report';
+import { isObjectRecord } from '@helix-hq/pdf-report';
 
 // @react-pdf/renderer needs Node built-ins, and every render is data-dependent.
 export const runtime = 'nodejs';
@@ -16,8 +16,8 @@ export const POST = async (request: Request) => {
     // Loaded lazily so the PDF renderer and the code sandbox are not pulled into
     // the route's cold path until a render is actually requested.
     const [{ resolveReportTemplate }, { renderReportToBuffer }] = await Promise.all([
-      import('@helix/pdf-report'),
-      import('@helix/pdf-report/server'),
+      import('@helix-hq/pdf-report'),
+      import('@helix-hq/pdf-report/server'),
     ]);
 
     const rawBody = (await request.json().catch(() => ({}))) as unknown;

@@ -2,19 +2,22 @@
 
 import { useCallback, useState } from 'react';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
-import { MqttGatewayProvider } from '@helix/protocol/mqtt/react';
-import { useTypedDeviceService, useTypedDeviceServiceQuery } from '@helix/protocol/service/react';
+} from '@helix-hq/design-system/components/card';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
+import { MqttGatewayProvider } from '@helix-hq/protocol/mqtt/react';
+import {
+  useTypedDeviceService,
+  useTypedDeviceServiceQuery,
+} from '@helix-hq/protocol/service/react';
 import { ExternalLink, Play, RefreshCw, Square } from 'lucide-react';
 
 import { portForwardControlContract } from './contract';

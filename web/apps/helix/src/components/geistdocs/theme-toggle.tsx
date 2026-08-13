@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import { MoonIcon, SunIcon } from 'lucide-react';
 
 import { useTheme } from '@/components/theme-provider';

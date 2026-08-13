@@ -10,7 +10,7 @@
  * Builds its own pool and storage provider rather than importing `src/server/*`, which is
  * marked `server-only` and throws outside the Next runtime.
  */
-import { createStorageProviderFromEnv } from '@helix/backend/storage/factory';
+import { createStorageProviderFromEnv } from '@helix-hq/backend/storage/factory';
 import { Pool } from 'pg';
 
 const LIST_LIMIT = 1000;

@@ -1,4 +1,4 @@
-# @helix/firmware-builder
+# @helix-hq/firmware-builder
 
 User-facing UI for requesting **custom ESP32 firmware builds**.
 
@@ -6,7 +6,7 @@ This package is presentational: it renders the build-options catalog (apps,
 feature fragments, chips, flash sizes, sdkconfig knobs) as a form and reports a
 build's live status. It is deliberately decoupled from any backend wiring — the
 consuming app passes in the `catalog` and handles the request/poll via its own
-tRPC surface (`@helix/backend/releases`).
+tRPC surface (`@helix-hq/backend/releases`).
 
 - `FirmwareBuilderForm` — the build configuration form. Given a `BuildCatalog`,
   it lets a user pick apps, toggle feature fragments (auto-enabling those an app

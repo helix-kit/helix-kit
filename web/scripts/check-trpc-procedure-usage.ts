@@ -379,7 +379,7 @@ const getProcedureOpenApiMeta = (expression: ts.Expression): OpenApiMeta | null 
   return null;
 };
 
-// Resolve a module specifier (relative, `@/*` alias, or `@helix/*` package) to
+// Resolve a module specifier (relative, `@/*` alias, or `@helix-hq/*` package) to
 // candidate absolute file paths.
 const resolveImportPath = (
   fromFile: string,
@@ -469,7 +469,7 @@ const findExistingFile = async (candidates: string[]): Promise<string | null> =>
   return null;
 };
 
-// Index every `@helix/*` package's `exports` map so bare-specifier imports
+// Index every `@helix-hq/*` package's `exports` map so bare-specifier imports
 // resolve to source files.
 const buildPackageIndex = async (): Promise<Map<string, PackageInfo>> => {
   const index = new Map<string, PackageInfo>();

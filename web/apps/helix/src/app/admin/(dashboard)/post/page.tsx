@@ -1,5 +1,5 @@
-import { CreatePostButton, PostsTable } from '@helix/blog/ui/admin';
-import { postsSearchParsers } from '@helix/blog/ui/admin/search-params';
+import { CreatePostButton, PostsTable } from '@helix-hq/blog/ui/admin';
+import { postsSearchParsers } from '@helix-hq/blog/ui/admin/search-params';
 import { createLoader, type SearchParams } from 'nuqs/server';
 
 import { fetchQuery } from '@/server/server';

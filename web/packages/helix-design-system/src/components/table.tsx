@@ -2,7 +2,7 @@
 
 import type * as React from 'react';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 const Table = ({ className, ...props }: React.ComponentProps<'table'>) => (
   <div className="relative w-full overflow-x-auto" data-slot="table-container">

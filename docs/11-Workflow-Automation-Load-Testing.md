@@ -26,7 +26,7 @@ and its state store end to end.
 
 ## The workflow under test
 
-A hardcoded graph (`@helix/backend` → `src/workflows/graph.ts`) modelling a
+A hardcoded graph (`@helix-hq/backend` → `src/workflows/graph.ts`) modelling a
 realistic automation, six nodes:
 
 ```

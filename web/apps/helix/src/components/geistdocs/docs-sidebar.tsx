@@ -11,8 +11,8 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@helix/design-system/components/sheet';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/sheet';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { ChevronDownIcon } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';

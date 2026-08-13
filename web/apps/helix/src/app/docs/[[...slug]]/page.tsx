@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { Separator } from '@helix/design-system/components/separator';
+import { Separator } from '@helix-hq/design-system/components/separator';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from '@/components/geistdocs/docs-page';

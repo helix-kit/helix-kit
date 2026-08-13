@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createRootRouter } from '@helix/backend/trpc';
+import { createRootRouter } from '@helix-hq/backend/trpc';
 
 import { ANONYMOUS_ACTOR, type CatalogContext } from './context';
 import { db } from './db';

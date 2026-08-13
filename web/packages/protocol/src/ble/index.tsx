@@ -8,9 +8,9 @@ import {
   type HelixPacket,
   type HelixPacketHandler,
   type HelixTransport,
-} from '@helix/protocol';
-import { isServiceMessage, type HelixMessage } from '@helix/protocol/service';
-import { HelixTransportProvider } from '@helix/protocol/service/react';
+} from '@helix-hq/protocol';
+import { isServiceMessage, type HelixMessage } from '@helix-hq/protocol/service';
+import { HelixTransportProvider } from '@helix-hq/protocol/service/react';
 
 export type BluetoothServiceUUID = number | string;
 export type BluetoothCharacteristicUUID = number | string;

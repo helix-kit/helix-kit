@@ -6,7 +6,7 @@ import type { OpenApiMeta } from 'trpc-to-openapi';
 
 /**
  * Agent/MCP tool metadata attached to a procedure's `.meta()`. Every procedure is
- * auto-exposed as a tool; this refines or hides it. See `@helix/backend/agent`.
+ * auto-exposed as a tool; this refines or hides it. See `@helix-hq/backend/agent`.
  */
 export type ToolMeta = {
   /** Set `false` to hide this procedure from the agent/MCP tool surface. Default: exposed. */

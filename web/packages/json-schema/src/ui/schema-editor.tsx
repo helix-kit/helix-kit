@@ -6,8 +6,8 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from '@helix/design-system/components/resizable';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/resizable';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 import type { PanelImperativeHandle } from 'react-resizable-panels';

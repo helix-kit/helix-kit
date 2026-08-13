@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { MutationModal } from '@helix/design-system/components/mutation-modal';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { MutationModal } from '@helix-hq/design-system/components/mutation-modal';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 

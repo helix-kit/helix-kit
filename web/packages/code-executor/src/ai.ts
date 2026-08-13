@@ -3,7 +3,7 @@ import { executeCode } from './execute';
 import { DEFAULT_LIMITS } from './limits';
 
 import type { ExecutionLimits, HostFunctions } from './types';
-import type { AiCapability, AiToolDescriptor, PromptSection } from '@helix/ai-kit';
+import type { AiCapability, AiToolDescriptor, PromptSection } from '@helix-hq/ai-kit';
 import type { JSONSchema } from 'zod/v4/core';
 
 const GUEST_CONTRACT = `Code is the **body of a function**. \`return\` produces the result; there is no \`module.exports\`, no \`export default\` and no \`main()\`.

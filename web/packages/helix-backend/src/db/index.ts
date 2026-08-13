@@ -44,7 +44,7 @@ export const createDb = (options: {
   pool: Pool;
   logQuery?: (query: string, params: unknown[]) => void;
   /**
-   * Tables contributed by optional feature packages (e.g. `@helix/blog`). Core stays
+   * Tables contributed by optional feature packages (e.g. `@helix-hq/blog`). Core stays
    * unaware of them; they are registered so drizzle's relational API and migrations see
    * them, while `DatabaseClient` keeps describing the core schema.
    */

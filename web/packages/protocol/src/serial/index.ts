@@ -4,8 +4,8 @@ import {
   type HelixPacket,
   type HelixPacketHandler,
   type HelixTransport,
-} from '@helix/protocol';
-import { isServiceMessage, type HelixMessage } from '@helix/protocol/service';
+} from '@helix-hq/protocol';
+import { isServiceMessage, type HelixMessage } from '@helix-hq/protocol/service';
 
 export type SerialPortInfo = Readonly<{
   usbProductId?: number;

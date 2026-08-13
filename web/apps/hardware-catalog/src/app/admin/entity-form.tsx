@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import type { AdminRow, FieldMeta } from '@/lib/field-meta';
 
-import type { FormField } from '@helix/design-system/components/dynamic-form-fields';
+import type { FormField } from '@helix-hq/design-system/components/dynamic-form-fields';
 
 /**
  * The client half of the derived form: turns the server's field descriptors into a zod schema

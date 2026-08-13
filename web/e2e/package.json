@@ -1,5 +1,5 @@
 {
-  "name": "@helix/e2e",
+  "name": "@helix-hq/e2e",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@helix/protocol": "workspace:*",
+    "@helix-hq/protocol": "workspace:*",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

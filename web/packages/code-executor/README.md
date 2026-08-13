@@ -1,4 +1,4 @@
-# @helix/code-executor
+# @helix-hq/code-executor
 
 Runs untrusted TypeScript in a QuickJS WASM sandbox.
 
@@ -65,7 +65,7 @@ returned normally.
 for exactly what a run binds — `declare const input: …` plus a signature per
 function.
 
-`@helix/code-executor/editor` is Monaco already wired to it:
+`@helix-hq/code-executor/editor` is Monaco already wired to it:
 
 ```tsx
 <CodeEditor inputSchema={inputSchema} functions={functions} value={code} onChange={setCode} … />

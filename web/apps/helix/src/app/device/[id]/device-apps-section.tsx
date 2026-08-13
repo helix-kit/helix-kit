@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { isDeviceAppAvailable } from '@helix/device-apps';
+} from '@helix-hq/design-system/components/card';
+import { isDeviceAppAvailable } from '@helix-hq/device-apps';
 import { ChevronRight } from 'lucide-react';
 
 import { deviceApps } from '@/device-apps/registry';

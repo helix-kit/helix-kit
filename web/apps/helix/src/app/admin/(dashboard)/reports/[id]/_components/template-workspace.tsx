@@ -4,10 +4,10 @@ import { useCallback, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { useTheme } from '@helix/design-system/components/theme-provider';
-import { fetchReportPdf, type ReportTemplate } from '@helix/pdf-report';
-import { ReportTemplateEditor } from '@helix/pdf-report/editor';
+import { Button } from '@helix-hq/design-system/components/button';
+import { useTheme } from '@helix-hq/design-system/components/theme-provider';
+import { fetchReportPdf, type ReportTemplate } from '@helix-hq/pdf-report';
+import { ReportTemplateEditor } from '@helix-hq/pdf-report/editor';
 import { Check, Download, Loader2, MessagesSquare, Plus, Trash2 } from 'lucide-react';
 import { useDebouncedCallback } from 'use-debounce';
 

@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { Textarea } from '@helix/design-system/components/textarea';
-import { GpioControls } from '@helix/device-apps';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Textarea } from '@helix-hq/design-system/components/textarea';
+import { GpioControls } from '@helix-hq/device-apps';
 import {
   ESP32_LINUX_SERIAL_PREP_COMMAND,
   ESP32_SERIAL_PORT_FILTERS,
-} from '@helix/device-apps/esp32-flasher';
-import { SerialTransportProvider, useSerialTransport } from '@helix/protocol/serial/react';
+} from '@helix-hq/device-apps/esp32-flasher';
+import { SerialTransportProvider, useSerialTransport } from '@helix-hq/protocol/serial/react';
 import { Check, Copy, PlugZap, RotateCw, Unplug } from 'lucide-react';
 
 const ICON_CLASS_NAME = 'h-4 w-4';

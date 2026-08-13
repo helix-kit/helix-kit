@@ -11,8 +11,8 @@ import {
   type DeviceEventQueue,
   type WorkflowRunOutcome,
   type WorkflowTriggerData,
-} from '@helix/backend';
-import { logger } from '@helix/logger';
+} from '@helix-hq/backend';
+import { logger } from '@helix-hq/logger';
 
 import { type RoleCloser } from './roles';
 import { buildInngestClient, buildWorkflowDeps } from './workflow-runtime';

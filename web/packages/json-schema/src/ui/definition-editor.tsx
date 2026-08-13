@@ -1,15 +1,15 @@
 'use client';
 
 /* eslint-disable react/no-array-index-key -- see the note in property-editor.tsx */
-import { Button } from '@helix/design-system/components/button';
-import { Input } from '@helix/design-system/components/input';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Input } from '@helix-hq/design-system/components/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@helix/design-system/components/select';
+} from '@helix-hq/design-system/components/select';
 import { Plus, Trash2 } from 'lucide-react';
 
 import {

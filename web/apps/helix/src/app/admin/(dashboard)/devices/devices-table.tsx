@@ -5,22 +5,22 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { DialogFooter } from '@helix/design-system/components/dialog';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { DialogFooter } from '@helix-hq/design-system/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
-import { MutationModal } from '@helix/design-system/components/mutation-modal';
-import { ResponsiveModal } from '@helix/design-system/components/responsive-modal';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+} from '@helix-hq/design-system/components/dropdown-menu';
+import { MutationModal } from '@helix-hq/design-system/components/mutation-modal';
+import { ResponsiveModal } from '@helix-hq/design-system/components/responsive-modal';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 import { type ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Copy, KeyRound, MoreHorizontal, Plus, Power, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';

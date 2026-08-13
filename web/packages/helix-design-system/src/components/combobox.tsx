@@ -3,14 +3,14 @@
 import * as React from 'react';
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from '@helix/design-system/components/input-group';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/input-group';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { ChevronDownIcon, XIcon, CheckIcon } from 'lucide-react';
 
 const Combobox = ComboboxPrimitive.Root;

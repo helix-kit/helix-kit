@@ -10,7 +10,7 @@ supervised. It replaces the earlier bring-up model (one Docker container, a bash
 supervisor with a hardcoded app list, and a single hand-written `config.json`)
 with a systemd-native runtime, an FHS-standard config system, and an apt/dpkg-
 inspired package manager. It ports the mature model from a prior production device tree,
-adapted to Helix's principles: reuse `helixd` and the existing `@helix/backend`
+adapted to Helix's principles: reuse `helixd` and the existing `@helix-hq/backend`
 release/OTA control plane, one `helix` CLI, no legacy shims.
 
 The scope here is the **foundation slice**. `cloud-transfer`, migrating the other
@@ -206,7 +206,7 @@ rolled up into helixd's heartbeat.
 
 ## 6. Release/OTA backend reuse
 
-Packages flow through the existing `@helix/backend` release/artifact/OTA control
+Packages flow through the existing `@helix-hq/backend` release/artifact/OTA control
 plane rather than a new repository — a new artifact `typeKey`
 (`helix-linux-package`). Publish uses the existing content-addressed ingest
 (dedup by sha256); a device pulls a package via the existing

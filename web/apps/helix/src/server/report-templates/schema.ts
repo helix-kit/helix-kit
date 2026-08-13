@@ -10,6 +10,10 @@ import { index, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
  *
  * `createdBy` records the author and nothing more: templates are platform
  * configuration, visible to every admin, not private documents.
+ *
+ * This lives in the app, not in `@helix-hq/pdf-report`: that package is a
+ * published rendering framework and owns no storage, so where a template is
+ * kept is the adopter's decision. Here, it is Postgres.
  */
 // Untyped jsonb on purpose: naming the schema types here drags zod's internal
 // JSON-Schema types into the emitted declaration, which is not portable. The
@@ -34,6 +38,3 @@ export const reportTemplate = pgTable(
   },
   (table) => [index('report_template_updated_idx').on(table.updatedAt)],
 );
-
-export type ReportTemplateRow = typeof reportTemplate.$inferSelect;
-export type NewReportTemplateRow = typeof reportTemplate.$inferInsert;

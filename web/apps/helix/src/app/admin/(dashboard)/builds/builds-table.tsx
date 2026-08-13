@@ -4,11 +4,11 @@ import { useMemo } from 'react';
 
 import Link from 'next/link';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
-import { DataTable } from '@helix/design-system/components/data-table';
-import { DataTableToolbar } from '@helix/design-system/components/data-table/data-table-toolbar';
-import { useDataTable } from '@helix/design-system/hooks/use-data-table';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DataTable } from '@helix-hq/design-system/components/data-table';
+import { DataTableToolbar } from '@helix-hq/design-system/components/data-table/data-table-toolbar';
+import { useDataTable } from '@helix-hq/design-system/hooks/use-data-table';
 import { type ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
 

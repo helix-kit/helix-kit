@@ -2,10 +2,10 @@
 
 import type * as React from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { Input } from '@helix/design-system/components/input';
-import { Textarea } from '@helix/design-system/components/textarea';
-import { cn } from '@helix/design-system/lib/utils';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Textarea } from '@helix-hq/design-system/components/textarea';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const InputGroup = ({ className, ...props }: React.ComponentProps<'div'>) => (

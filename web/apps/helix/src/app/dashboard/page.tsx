@@ -7,7 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
+} from '@helix-hq/design-system/components/card';
 import { BookOpen, Cpu, Shield } from 'lucide-react';
 
 import { getSessionUser } from '@/server/require-admin';

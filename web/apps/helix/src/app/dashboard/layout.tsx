@@ -5,8 +5,8 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from '@helix/design-system/components/sidebar';
-import { ThemeToggleButton } from '@helix/design-system/components/theme-toggle-button';
+} from '@helix-hq/design-system/components/sidebar';
+import { ThemeToggleButton } from '@helix-hq/design-system/components/theme-toggle-button';
 
 import { getSessionUser } from '@/server/require-admin';
 

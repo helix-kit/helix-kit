@@ -1,6 +1,6 @@
-import { SerialTransportProvider, useSerialTransport } from '@helix/protocol/serial/react';
+import { SerialTransportProvider, useSerialTransport } from '@helix-hq/protocol/serial/react';
 
-import type { SerialPortFilter, SerialSignalState } from '@helix/protocol/serial';
+import type { SerialPortFilter, SerialSignalState } from '@helix-hq/protocol/serial';
 
 import { RawMessagePanel } from '../raw-message-panel';
 

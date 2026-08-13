@@ -8,10 +8,10 @@
  */
 import { useState } from 'react';
 
-import { Checkbox } from '@helix/design-system/components/checkbox';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
-import { cn } from '@helix/design-system/lib/utils';
+import { Checkbox } from '@helix-hq/design-system/components/checkbox';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 import {

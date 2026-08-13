@@ -161,7 +161,7 @@ jobs:
       - name: Build the apps
         if: steps.plan.outputs.do_build == 'true'
         working-directory: web
-        run: pnpm exec turbo run build --filter=helix --filter=@helix/server-app
+        run: pnpm exec turbo run build --filter=helix --filter=@helix-hq/server-app
 
       # ---- PACKAGE: zip only. Everything expensive already happened. ---------
       - name: Package bundles

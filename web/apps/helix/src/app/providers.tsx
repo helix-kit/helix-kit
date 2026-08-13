@@ -4,7 +4,7 @@ import { useRef, useState, type ReactNode } from 'react';
 
 import { useServerInsertedHTML } from 'next/navigation';
 
-import { Toaster } from '@helix/design-system/components/sonner';
+import { Toaster } from '@helix-hq/design-system/components/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 

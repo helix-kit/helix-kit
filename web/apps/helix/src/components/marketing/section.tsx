@@ -1,4 +1,4 @@
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 
 export const Section = ({ className, children, ...props }: React.ComponentProps<'section'>) => (
   <section className={cn('border-border/60 border-b', className)} {...props}>

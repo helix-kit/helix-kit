@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { Badge } from '@helix/design-system/components/badge';
+import { Badge } from '@helix-hq/design-system/components/badge';
 
 import { ProductGallery, ProductLinks } from '@/components/product-media';
 import { SpecSection, SpecTable } from '@/components/spec-section';

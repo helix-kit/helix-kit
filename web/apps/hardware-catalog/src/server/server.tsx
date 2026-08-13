@@ -2,7 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import { createServerTRPC } from '@helix/web-core/trpc/server';
+import { createServerTRPC } from '@helix-hq/web-core/trpc/server';
 
 import { appRouter, createTRPCContext } from '@/server/trpc';
 import { createQueryClient } from '@/server/utils';

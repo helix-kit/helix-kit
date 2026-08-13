@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 
-import { cn } from '@helix/design-system/lib/utils';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import {
   DocsBody as FumadocsDocsBody,
   DocsDescription as FumadocsDocsDescription,

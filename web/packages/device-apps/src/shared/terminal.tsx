@@ -2,10 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Popover, PopoverContent, PopoverTrigger } from '@helix/design-system/components/popover';
-import { useMqttGatewayTransport } from '@helix/protocol/mqtt/react';
-import { method, type ServiceContract } from '@helix/protocol/service';
-import { useTypedDeviceService, useTypedDeviceServiceQuery } from '@helix/protocol/service/react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@helix-hq/design-system/components/popover';
+import { useMqttGatewayTransport } from '@helix-hq/protocol/mqtt/react';
+import { method, type ServiceContract } from '@helix-hq/protocol/service';
+import {
+  useTypedDeviceService,
+  useTypedDeviceServiceQuery,
+} from '@helix-hq/protocol/service/react';
 import { Minus, Monitor, Plus, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { z } from 'zod';
 

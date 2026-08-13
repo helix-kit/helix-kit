@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 
-import { Button } from '@helix/design-system/components/button';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
-import { DialogFooter } from '@helix/design-system/components/dialog';
-import { Input } from '@helix/design-system/components/input';
-import { ResponsiveModal } from '@helix/design-system/components/responsive-modal';
+} from '@helix-hq/design-system/components/card';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
+import { DialogFooter } from '@helix-hq/design-system/components/dialog';
+import { Input } from '@helix-hq/design-system/components/input';
+import { ResponsiveModal } from '@helix-hq/design-system/components/responsive-modal';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';

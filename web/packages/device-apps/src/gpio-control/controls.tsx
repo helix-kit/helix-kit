@@ -2,28 +2,28 @@
 
 import { useCallback, useState } from 'react';
 
-import { Badge } from '@helix/design-system/components/badge';
-import { Button } from '@helix/design-system/components/button';
+import { Badge } from '@helix-hq/design-system/components/badge';
+import { Button } from '@helix-hq/design-system/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@helix/design-system/components/card';
-import { Input } from '@helix/design-system/components/input';
-import { Label } from '@helix/design-system/components/label';
+} from '@helix-hq/design-system/components/card';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Label } from '@helix-hq/design-system/components/label';
 import {
   useTypedDeviceService,
   useTypedDeviceServiceMutation,
   useTypedDeviceServiceSubscription,
-} from '@helix/protocol/service/react';
+} from '@helix-hq/protocol/service/react';
 import { Power, RefreshCw, ToggleLeft, ToggleRight } from 'lucide-react';
 
 import { MAX_GPIO_PIN, MIN_GPIO_PIN, gpioControlContract, type GpioStatePayload } from './contract';
 
-import type { HelixPacket } from '@helix/protocol';
-import type { HelixMessage } from '@helix/protocol/service';
+import type { HelixPacket } from '@helix-hq/protocol';
+import type { HelixMessage } from '@helix-hq/protocol/service';
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_LOG_ENTRIES = 12;

@@ -1,7 +1,7 @@
 import type * as React from 'react';
 
-import { Separator } from '@helix/design-system/components/separator';
-import { cn } from '@helix/design-system/lib/utils';
+import { Separator } from '@helix-hq/design-system/components/separator';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
 

@@ -140,7 +140,7 @@ verified working under Preact. See `minimal-floor/README.md`.
 **Adopt Approach A**, evolved along the grain of the existing architecture:
 
 1. **Feature manifest is the source of truth.** Each feature already maps cleanly
-   to a `@app/*-ui` / `@helix/*` workspace package. Give each a manifest
+   to a `@app/*-ui` / `@helix-hq/*` workspace package. Give each a manifest
    (`route`, `label`, `deps`, `nav group`, `requiresComponents`). The device's
    enabled set (which already exists conceptually — `services.json`
    `local.defaultEnabled`, `requiresComponents`) selects features.

@@ -35,7 +35,7 @@ form your candidate findings from what the UI actually does.
 
 **Phase 2 — Validate against the code (only for a candidate finding).** Once Phase 1
 surfaces a suspected problem, **then** go read the relevant source (`web/apps/helix`,
-`@helix/backend`, etc.) to answer: *what is this actually supposed to do?* You are checking
+`@helix-hq/backend`, etc.) to answer: *what is this actually supposed to do?* You are checking
 for a **mismatch/gap between intended behavior and what the UI delivers** — and, just as
 important, ruling out that the "bug" is really **your own misunderstanding** (wrong route,
 a feature that isn't built/deployed yet, an intended demo). **File only when there is a

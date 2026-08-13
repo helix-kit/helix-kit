@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { createTRPCReactContext } from '@helix/web-core/trpc/client';
-import { FeatureTRPCProvider } from '@helix/web-core/trpc/feature';
+import { createTRPCReactContext } from '@helix-hq/web-core/trpc/client';
+import { FeatureTRPCProvider } from '@helix-hq/web-core/trpc/feature';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { createTRPCClient } from '@trpc/client';
 
@@ -24,8 +24,8 @@ const getQueryClient = (): QueryClient => {
 };
 
 /**
- * The app's typed context plus the untyped context that feature packages (`@helix/blog`,
- * `@helix/device-apps`) resolve their own routers from — both on one QueryClient, both
+ * The app's typed context plus the untyped context that feature packages (`@helix-hq/blog`,
+ * `@helix-hq/device-apps`) resolve their own routers from — both on one QueryClient, both
  * hitting /api/trpc, so mounting a feature needs no extra provider wiring.
  */
 export const TRPCReactProvider = (props: { readonly children: React.ReactNode }) => {

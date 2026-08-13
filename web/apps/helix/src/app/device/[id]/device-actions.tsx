@@ -2,15 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@helix/design-system/components/button';
-import { DeleteConfirmDialog } from '@helix/design-system/components/delete-confirm-dialog';
+import { Button } from '@helix-hq/design-system/components/button';
+import { DeleteConfirmDialog } from '@helix-hq/design-system/components/delete-confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@helix/design-system/components/dropdown-menu';
+} from '@helix-hq/design-system/components/dropdown-menu';
 import { MoreHorizontal, Power, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 

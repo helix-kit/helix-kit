@@ -1,4 +1,4 @@
-import type { StreamTransport } from '@helix/protocol/stream';
+import type { StreamTransport } from '@helix-hq/protocol/stream';
 
 // Backpressure ceiling across all streams: RTCDataChannel.send() never blocks, so a
 // fast producer would otherwise grow bufferedAmount without bound.

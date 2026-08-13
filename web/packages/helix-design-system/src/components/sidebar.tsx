@@ -2,25 +2,25 @@
 
 import * as React from 'react';
 
-import { Button } from '@helix/design-system/components/button';
-import { Input } from '@helix/design-system/components/input';
-import { Separator } from '@helix/design-system/components/separator';
+import { Button } from '@helix-hq/design-system/components/button';
+import { Input } from '@helix-hq/design-system/components/input';
+import { Separator } from '@helix-hq/design-system/components/separator';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@helix/design-system/components/sheet';
-import { Skeleton } from '@helix/design-system/components/skeleton';
+} from '@helix-hq/design-system/components/sheet';
+import { Skeleton } from '@helix-hq/design-system/components/skeleton';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@helix/design-system/components/tooltip';
-import { useIsMobile } from '@helix/design-system/hooks/use-mobile';
-import { cn } from '@helix/design-system/lib/utils';
+} from '@helix-hq/design-system/components/tooltip';
+import { useIsMobile } from '@helix-hq/design-system/hooks/use-mobile';
+import { cn } from '@helix-hq/design-system/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { PanelLeftIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';

@@ -1,4 +1,4 @@
-import { PostEditor } from '@helix/blog/ui/admin';
+import { PostEditor } from '@helix-hq/blog/ui/admin';
 
 const EditPostPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;

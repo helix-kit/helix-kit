@@ -154,7 +154,7 @@ Recommended TypeScript shape:
 
 ```ts
 import { z } from 'zod';
-import { defineServiceContract, method, message } from '@helix/protocol/service';
+import { defineServiceContract, method, message } from '@helix-hq/protocol/service';
 
 const SetGpioInput = z.object({
   pin: z.number().int(),
@@ -203,10 +203,10 @@ export const gpioControl = defineServiceContract({
 
 TypeScript packages:
 
-- `@helix/protocol`
-- `@helix/protocol/service`
-- transport packages such as `@helix/protocol/ble`
-- `@helix/gateway`
+- `@helix-hq/protocol`
+- `@helix-hq/protocol/service`
+- transport packages such as `@helix-hq/protocol/ble`
+- `@helix-hq/backend/gateway/router`
 
 Python packages:
 

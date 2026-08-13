@@ -1,0 +1,20 @@
+/* The editor's stylesheet, compiled at publish time.
+ *
+ * An installed consumer cannot generate these classes themselves: Tailwind does
+ * not scan `node_modules`, so pointing `@source` at the installed package is
+ * silently a no-op and every pane renders unstyled. Building the CSS here, where
+ * the sources are on disk, is the only thing that works for an adopter.
+ *
+ * Utilities only — no preflight, no theme. The tokens come from the consumer's
+ * own theme layer (`@helix-hq/design-system/globals.css` supplies the shadcn set
+ * these classes expect), and re-emitting them here would override whatever the
+ * consumer imported before it. */
+@reference '@helix-hq/design-system/globals.css';
+
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@source '../**/*.{ts,tsx}';
+/* The editor embeds the schema and code panes, so their classes are part of this
+   surface even though they live in sibling packages. */
+@source '../../../json-schema/src/**/*.{ts,tsx}';
+@source '../../../code-executor/src/**/*.{ts,tsx}';

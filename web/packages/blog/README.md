@@ -1,7 +1,7 @@
-# @helix/blog
+# @helix-hq/blog
 
 A self-contained blog feature: its own database table, tRPC routers, and UI. Blog is not
-core Helix capability, so it lives outside `@helix/backend` and outside the app — an
+core Helix capability, so it lives outside `@helix-hq/backend` and outside the app — an
 adopter who does not want a blog simply does not install this package, and nothing in the
 platform references it.
 
@@ -15,7 +15,7 @@ composition.**
 
 ```ts
 // db.ts
-import * as blogSchema from '@helix/blog/server/schema';
+import * as blogSchema from '@helix-hq/blog/server/schema';
 
 export const db = createDb({ pool, extraSchema: blogSchema });
 ```
@@ -26,14 +26,14 @@ and add `packages/blog/src/server/schema.ts` to the `schema` list in `drizzle.co
 (`BLOG_ADMIN_ROUTER_KEY` / `BLOG_PUBLIC_ROUTER_KEY`):
 
 ```ts
-import { blogAdminRouter, blogPublicRouter } from '@helix/blog/server';
+import { blogAdminRouter, blogPublicRouter } from '@helix-hq/blog/server';
 
 createRootRouter({ blog: blogAdminRouter, blogPublic: blogPublicRouter, ... });
 ```
 
 The context must satisfy `BlogContext` (`db`, `user`, `adminRoles`).
 
-**3. Mount `FeatureTRPCProvider`** from `@helix/web-core/trpc/feature` somewhere above the
+**3. Mount `FeatureTRPCProvider`** from `@helix-hq/web-core/trpc/feature` somewhere above the
 admin UI. The package never imports the host's `AppRouter`: its client components resolve
 their own router out of the root router by mount key, which is what keeps the dependency
 one-directional.

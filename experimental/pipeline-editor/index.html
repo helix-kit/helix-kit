@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- HELIX-148 — visual pipeline editor (xyflow). Fully editable graph → compile/deploy to Radxa NPU
+     or NVIDIA DeepStream, both ending at MediaMTX→WebRTC. Served by server.py; no build step. -->
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Helix Pipeline Editor</title>
+<link rel="stylesheet" href="https://esm.sh/@xyflow/react@12.3.5/dist/style.css"/>
+<style>
+  :root { color-scheme: dark; }
+  html,body,#root { height:100%; margin:0; font-family:ui-sans-serif,system-ui,sans-serif; background:#0d1117; color:#e6edf3; }
+  #root { display:flex; flex-direction:column; }
+  .bar { display:flex; gap:8px; align-items:center; padding:8px 12px; background:#161b22; border-bottom:1px solid #30363d; }
+  .bar b { color:#f0883e; margin-right:6px; }
+  .bar button, .bar select { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:13px; }
+  .bar button:hover { border-color:#f0883e; }
+  .bar button.go { background:#238636; border-color:#2ea043; }
+  .bar button.stop { background:#b62324; border-color:#da3633; }
+  .main { flex:1; display:flex; min-height:0; }
+  .flow { flex:1; }
+  .side { width:300px; background:#161b22; border-left:1px solid #30363d; padding:12px; overflow:auto; font-size:13px; }
+  .side h3 { margin:6px 0; color:#f0883e; font-size:13px; }
+  .side label { display:block; margin:8px 0 2px; color:#8b949e; font-size:11px; text-transform:uppercase; }
+  .side input, .side select { width:100%; box-sizing:border-box; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:5px; padding:5px; }
+  .node { padding:8px 10px; border-radius:8px; border:2px solid; background:#161b22; min-width:120px; font-size:12px; text-align:center; }
+  .node .r { font-weight:700; } .node .p { color:#8b949e; font-size:10px; margin-top:2px; }
+  .log { font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap; background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:8px; margin-top:8px; max-height:38vh; overflow:auto; }
+  .palette button { display:block; width:100%; margin:4px 0; text-align:left; }
+  a.link { color:#58a6ff; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "react": "https://esm.sh/react@18.3.1",
+  "react-dom": "https://esm.sh/react-dom@18.3.1",
+  "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+  "@xyflow/react": "https://esm.sh/@xyflow/react@12.3.5?deps=react@18.3.1,react-dom@18.3.1"
+}}
+</script>
+</head>
+<body><div id="root"></div>
+<script type="module">
+import React, { useState, useCallback, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { ReactFlow, Background, Controls, MiniMap, addEdge,
+         applyNodeChanges, applyEdgeChanges, Handle, Position } from "@xyflow/react";
+const h = React.createElement;
+
+// role → colour + which params to expose in the side panel
+const ROLES = {
+  source:  { c:"#3fb950", params:{ streams:4 } },
+  detect:  { c:"#f0883e", params:{ model:"yolo11s", conf:0.35, nms:0.45, fps:15 } },
+  overlay: { c:"#a371f7", params:{ color:"orange" } },
+  tile:    { c:"#58a6ff", params:{ cols:2, rows:2, width:1280, height:720 } },
+  sink:    { c:"#db61a2", params:{ kind:"webrtc", name:"detgrid", bitrate:1500 } },
+  track:   { c:"#e3b341", params:{} },
+  record:  { c:"#8b949e", params:{ name:"rec" } },
+};
+const PALETTE = ["detect","overlay","track","tile","sink","record"];
+
+function HxNode({ data, selected }) {
+  const col = ROLES[data.role]?.c || "#888";
+  const key = data.role==="detect"?data.params.model : data.role==="tile"?`${data.params.cols}x${data.params.rows}`
+            : data.role==="sink"?data.params.kind : data.role==="source"?`${data.params.streams} cams`:"";
+  return h("div",{className:"node",style:{borderColor:selected?"#fff":col}},
+    h(Handle,{type:"target",position:Position.Left}),
+    h("div",{className:"r",style:{color:col}},data.role),
+    h("div",{className:"p"},key),
+    h(Handle,{type:"source",position:Position.Right}));
+}
+const nodeTypes = { hx: HxNode };
+
+const START = {
+  nodes:[
+    {id:"src", type:"hx", position:{x:20,y:180},  data:{role:"source", params:{...ROLES.source.params}}},
+    {id:"det", type:"hx", position:{x:200,y:180}, data:{role:"detect", params:{...ROLES.detect.params}}},
+    {id:"ovl", type:"hx", position:{x:390,y:180}, data:{role:"overlay",params:{...ROLES.overlay.params}}},
+    {id:"tile",type:"hx", position:{x:560,y:180}, data:{role:"tile",   params:{...ROLES.tile.params}}},
+    {id:"sink",type:"hx", position:{x:740,y:180}, data:{role:"sink",   params:{...ROLES.sink.params}}},
+  ],
+  edges:[
+    {id:"e1",source:"src",target:"det"},{id:"e2",source:"det",target:"ovl"},
+    {id:"e3",source:"ovl",target:"tile"},{id:"e4",source:"tile",target:"sink"},
+  ],
+};
+
+// editor graph → the portable schema server.py consumes
+function toGraph(nodes, edges, host) {
+  const src = nodes.find(n=>n.data.role==="source");
+  const n = src ? src.data.params.streams : 4;
+  const streams = Array.from({length:n},(_,i)=>`rtsp://\${HOST}:8554/stream${i+1}`);
+  return {
+    name:"editor-graph", host,
+    streams,
+    nodes: nodes.filter(x=>x.data.role!=="source").map(x=>({id:x.id, role:x.data.role, params:x.data.params}))
+            .concat([{id:"src", role:"source", params:{streams:n}}]),
+    edges: edges.map(e=>[e.source,e.target]),
+  };
+}
+
+function App() {
+  const [nodes,setNodes]=useState(START.nodes);
+  const [edges,setEdges]=useState(START.edges);
+  const [sel,setSel]=useState(null);
+  const [target,setTarget]=useState("radxa");
+  const [log,setLog]=useState("Ready. Edit the graph, pick a target, Deploy.");
+  const [webrtc,setWebrtc]=useState(null);
+
+  const onNodesChange=useCallback(c=>setNodes(n=>applyNodeChanges(c,n)),[]);
+  const onEdgesChange=useCallback(c=>setEdges(e=>applyEdgeChanges(c,e)),[]);
+  const onConnect=useCallback(p=>setEdges(e=>addEdge(p,e)),[]);
+  const onSelectionChange=useCallback(({nodes:ns})=>setSel(ns&&ns[0]?ns[0].id:null),[]);
+  const selNode = nodes.find(n=>n.id===sel);
+
+  const setParam=(k,v)=>setNodes(ns=>ns.map(n=>n.id===sel
+    ?{...n,data:{...n.data,params:{...n.data.params,[k]:(isNaN(v)||v==="")?v:Number(v)}}}:n));
+  const addNode=(role)=>{ const id=role+Math.random().toString(36).slice(2,6);
+    setNodes(ns=>ns.concat([{id,type:"hx",position:{x:300+Math.random()*200,y:340},
+      data:{role,params:{...ROLES[role].params}}}])); };
+
+  async function api(path){
+    const graph=toGraph(nodes,edges,"192.168.1.35");
+    setLog(`POST ${path} (target=${target}) …`); setWebrtc(null);
+    try{ const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},
+           body:JSON.stringify({target,graph})}); const j=await r.json();
+      if(j.webrtc) setWebrtc(j.webrtc);
+      setLog(JSON.stringify(j,null,2));
+    }catch(e){ setLog("ERROR: "+e+"\n(is server.py running? `python3 server.py`)"); }
+  }
+
+  return h("div",{style:{height:"100%",display:"flex",flexDirection:"column"}},
+    h("div",{className:"bar"},
+      h("b",null,"Helix Pipeline Editor"),
+      h("span",{style:{color:"#8b949e",fontSize:12}},"target:"),
+      h("select",{value:target,onChange:e=>setTarget(e.target.value)},
+        h("option",{value:"radxa"},"Radxa A733 (NPU)"),
+        h("option",{value:"nvidia"},"NVIDIA GTX 1650 (DeepStream)")),
+      h("button",{onClick:()=>api("/api/compile")},"Compile"),
+      h("button",{className:"go",onClick:()=>api("/api/deploy")},"▶ Deploy & Run"),
+      h("button",{className:"stop",onClick:()=>api("/api/stop")},"■ Stop"),
+      webrtc && h("a",{className:"link",href:webrtc,target:"_blank"},"open WebRTC ↗")),
+    h("div",{className:"main"},
+      h("div",{className:"flow"},
+        h(ReactFlow,{nodes,edges,nodeTypes,onNodesChange,onEdgesChange,onConnect,
+          onSelectionChange,fitView:true,defaultEdgeOptions:{animated:true}},
+          h(Background,null),h(Controls,null),h(MiniMap,{pannable:true}))),
+      h("div",{className:"side"},
+        h("h3",null,"Add node"),
+        h("div",{className:"palette"},PALETTE.map(r=>h("button",{key:r,onClick:()=>addNode(r)},"+ "+r))),
+        h("h3",null,selNode?`Edit: ${selNode.data.role}`:"Select a node"),
+        selNode && Object.entries(selNode.data.params).map(([k,v])=>
+          h("div",{key:k},
+            h("label",null,k),
+            h("input",{value:v,onChange:e=>setParam(k,e.target.value)}))),
+        h("h3",null,"Result"),
+        h("div",{className:"log"},log)));
+}
+createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body></html>

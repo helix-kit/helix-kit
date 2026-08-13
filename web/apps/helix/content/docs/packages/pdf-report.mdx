@@ -1,0 +1,273 @@
+---
+title: PDF Reports
+description: Define a PDF report as data — a sandboxed code step for the values, a JSON layout for the page — and render it on a server or in the browser.
+type: guide
+---
+
+`@helix-hq/pdf-report` turns a report into **data you can store, version and
+generate**, instead of a React component someone has to redeploy to change.
+
+It owns rendering and authoring, and nothing else: no database, no tRPC, no auth,
+no scheduling, no delivery. That is what makes it droppable into any backend — or
+none at all, since it renders in the browser too.
+
+```sh
+pnpm add @helix-hq/pdf-report
+```
+
+Peers you supply: `react` and `react-dom`. If you use the template **editor**,
+also install `@helix-hq/design-system` — an optional peer, so a render-only
+install never pulls it in.
+
+## The two tiers
+
+A template is a code step and a layout, and the two schemas between them are the
+whole contract:
+
+```ts
+type ReportTemplate = {
+  inputSchema: JSONSchema; // what the report is handed
+  code: string; // TypeScript over `input`, returning display values
+  outputSchema: JSONSchema; // what the code produces, and what `spec` may bind to
+  spec: ReportSpec; // presentation only
+  demoInput: unknown; // sample input for the editor preview
+};
+```
+
+Rendering runs that contract end to end:
+
+```
+input → validate(inputSchema) → run code → validate(outputSchema) → bind into spec → PDF
+```
+
+**Why split them.** The alternative — components that compute their own values —
+means a table column that can coalesce dot-paths, sum fields, subtract one from
+another, apply a scale, match rules and format the result. That is a small
+untyped programming language expressed in JSON: less capable than code, and
+harder to read than a template. Here, aggregation, filtering, grouping, sorting
+and formatting are ordinary TypeScript, and the components place values and
+compute nothing.
+
+The code runs in [`@helix-hq/code-executor`](https://www.npmjs.com/package/@helix-hq/code-executor)'s
+QuickJS WASM sandbox: no network, no filesystem, bounded CPU and memory. It runs
+the same way on the server and in the browser, so a preview matches what gets
+delivered.
+
+## Rendering
+
+Two entry points, one pipeline.
+
+<CodeBlockTabs defaultValue="server">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="server">Server (Node)</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="browser">Browser</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="server">
+
+```ts
+import { renderReportToBuffer } from '@helix-hq/pdf-report/server';
+
+const pdf = await renderReportToBuffer(template, {
+  input: { reportTitle: 'Fleet health', devices },
+  branding: { title: 'Fleet report', generatedAt: new Date().toUTCString() },
+});
+// → Uint8Array
+```
+
+  </CodeBlockTab>
+
+  <CodeBlockTab value="browser">
+
+```ts
+import { renderReportToBlob } from '@helix-hq/pdf-report/browser';
+
+const blob = await renderReportToBlob(template, { input });
+window.open(URL.createObjectURL(blob));
+// → Blob, no server involved
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+Both take `PrepareReportOptions`: `input` (defaults to the template's
+`demoInput`), `branding`, and `limits` for the sandbox. Need the intermediate
+values — to debug a template, or to render something other than a PDF? Call
+`prepareReport(template, options)` directly; it returns `{ spec, data, logs }`.
+
+### Branding is the caller's, not the author's
+
+`renderReportToBuffer` rewrites every `Page` element in the spec to `ReportPage`
+and stamps your branding onto it. A template author cannot drop the header and
+footer, and cannot set them either — they always come from whoever renders.
+
+```ts
+type ReportBranding = {
+  title?: string; // shown top-right of every page
+  subtitle?: string; // secondary line under the title
+  generatedAt?: string; // human-readable timestamp for the footer
+  footerNote?: string; // overrides the default "Generated <generatedAt>"
+};
+```
+
+## The component catalog
+
+The catalog is the single source of truth for what a template may say. Every
+component is declared with a zod props schema, slots, a description and an
+example — and that one declaration drives typed components, spec validation,
+editor completion, and the AI system prompt.
+
+| Component                             | Takes                                                                             |
+| ------------------------------------- | --------------------------------------------------------------------------------- |
+| `ReportPage`                          | Branded page with a repeating header/footer. Injected automatically.              |
+| `Section`                             | Titled panel that groups content.                                                 |
+| `MetricGrid` / `MetricCard`           | A KPI tile; `value` is already formatted.                                         |
+| `DataTable`                           | `headers: string[]`, `rows: string[][]`, and the `rowColors` your code decided.   |
+| `Callout`                             | `text` and `tone`. Empty text renders nothing — that is how a template hides one. |
+| `BarChart` / `LineChart` / `PieChart` | `series: { label, value }[]`, pre-aggregated.                                     |
+| `KeepTogether`                        | Stops its children being split across a page break.                               |
+
+These sit on top of the stock `@json-render/react-pdf` catalog — `Document`,
+`Page`, `View`, `Row`, `Column`, `Heading`, `Text`, `Image`, `Link`, `Table`,
+`List`, `Divider`, `Spacer`, `PageNumber` — which stays available.
+
+### Validation
+
+`validateReportSpec(spec)` runs before anything reaches react-pdf, and checks:
+
+- unknown component names, reported with the available set;
+- props against each component's zod schema, including nested shapes;
+- every `{"$state": "/x"}` binding against `outputSchema`, so a typo'd path is an
+  error rather than a silently empty cell;
+- structural problems — missing root, dangling child references.
+
+What it deliberately does not check is the _shape_ of a bound prop: that value
+only exists at render time. It verifies the path is produced, not what it holds.
+
+## The editor
+
+`ReportTemplateEditor` is the authoring UI: schema, code, layout and live preview
+panes, with Monaco typed from `inputSchema` so an author gets completion on
+`input.devices[0].faults`.
+
+```tsx
+'use client';
+
+import { ReportTemplateEditor } from '@helix-hq/pdf-report/editor';
+
+<ReportTemplateEditor
+  defaultValue={template}
+  renderMode="client" // 'server' proves what a delivered document contains
+  theme="light"
+  onChange={setTemplate} // fires when every pane parses cleanly
+  onError={setError}
+/>;
+```
+
+It is a Tailwind v4 UI, and it ships **two prebuilt stylesheets** you must
+import — one for the classes, one for the tokens they read:
+
+```css
+@import '@helix-hq/design-system/globals.css'; /* theme tokens */
+@import '@helix-hq/pdf-report/editor.css'; /* the editor's classes */
+```
+
+<Callout type="warn">
+  Do not try to generate these yourself with `@source`. Tailwind does not scan `node_modules`, so
+  pointing it at the installed package silently produces nothing and every pane renders unstyled.
+  That is why the stylesheet is compiled at publish time and shipped.
+</Callout>
+
+<Callout type="info">
+  `@monaco-editor/react` loads Monaco from a CDN by default. Call
+  `loader.config({ paths: { vs: … } })` in your app to self-host it.
+</Callout>
+
+## Wiring into Next.js
+
+```ts
+// next.config.ts
+transpilePackages: ['@helix-hq/pdf-report'],
+serverExternalPackages: ['@react-pdf/renderer', '@json-render/react-pdf'],
+```
+
+`serverExternalPackages` is **not** optional. `defineRegistry` ships only from
+`@json-render/react-pdf`'s root, which builds four React contexts at module
+scope; under Next's `react-server` condition `createContext` does not exist and
+the render throws. Externalising the package resolves it outside those
+conditions — the same wiring upstream's own example ships
+([json-render#317](https://github.com/vercel-labs/json-render/issues/317)).
+
+Then provide the render route. It is yours, because it is where auth, rate
+limits and branding are decided:
+
+```ts
+// app/api/pdf-report/route.ts
+export const runtime = 'nodejs';
+
+export const POST = async (request: Request) => {
+  const { resolveReportTemplate } = await import('@helix-hq/pdf-report');
+  const { renderReportToBuffer } = await import('@helix-hq/pdf-report/server');
+
+  const body = await request.json();
+  const template = resolveReportTemplate(body.template);
+
+  const pdf = await renderReportToBuffer(template, {
+    input: body.input,
+    branding: { title: 'Fleet report', generatedAt: new Date().toUTCString() },
+  });
+
+  return new Response(Buffer.from(pdf), {
+    headers: { 'content-type': 'application/pdf' },
+  });
+};
+```
+
+The editor preview and `fetchReportPdf` both post here — `/api/pdf-report` by
+default, overridable with the `endpoint` prop, so the package never hardcodes one
+app's routing.
+
+## Storing templates
+
+The package stores nothing, on purpose: a template is five JSON-serialisable
+fields, and where they live is your decision. Postgres, SQLite, S3, a git repo,
+a CMS — all fine.
+
+Helix's own console keeps them in Postgres. That code is in the **app**, not in
+this package: a `report_template` table with a column per part, so each pane
+saves on its own and a stale pane cannot overwrite a fresh one, plus a tRPC
+router for CRUD. Copy the shape if it suits you.
+
+<Callout type="warn">
+  Template `code` runs in a sandbox, but a template is still privileged content — whoever can write
+  one controls what every reader's report says. Gate authoring behind an admin role, as Helix does.
+</Callout>
+
+## AI authoring
+
+`@helix-hq/pdf-report/ai` exports `reportAuthoring` and `reportCapabilities`,
+which describe the whole vocabulary — component names, prop shapes, the two-tier
+model — as an
+[`AiCapability`](https://www.npmjs.com/package/@helix-hq/ai-kit). Compose them
+into an assistant and it can generate a template from a prompt, or patch an
+existing one:
+
+```ts
+import { composeAssistant } from '@helix-hq/ai-kit';
+import { reportCapabilities } from '@helix-hq/pdf-report/ai';
+
+const assistant = composeAssistant(reportCapabilities(), {
+  intro: 'You author PDF report templates.',
+});
+```
+
+## Examples
+
+- [`pdf-report-nextjs-example`](https://github.com/helix-kit/pdf-report-nextjs-example)
+  — Next.js: server render route, the editor, and a download flow.
+- [`pdf-report-react-example`](https://github.com/helix-kit/pdf-report-react-example)
+  — Vite + React SPA: entirely client-side, no server at all.
+
+## License
+
+MIT.

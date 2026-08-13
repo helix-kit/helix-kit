@@ -1,9 +1,9 @@
 # TRPC Procedure Usage
 
-Total procedures: 87
+Total procedures: 86
 Used procedures: 80
 Ignored procedures: 6
-Unused procedures: 1
+Unused procedures: 0
 
 ## Analyzer Diagnostics
 
@@ -86,8 +86,7 @@ Unused procedures: 1
 | conversations.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:106:7 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:38:55 (mutationOptions) |
 | conversations.get | query |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:85:7 | apps/helix/src/app/dashboard/agent/page.tsx:35:9 (queryOptions) |
 | conversations.list | query |  | used | 2 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:68:7 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:33:8 (queryOptions)<br>apps/helix/src/app/dashboard/agent/page.tsx:28:52 (queryOptions) |
-| conversations.remove | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:158:7 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:39:55 (mutationOptions) |
-| conversations.rename | mutation |  | unused | 0 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:137:7 |  |
+| conversations.remove | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/conversations/router.ts:137:7 | apps/helix/src/app/dashboard/agent/_components/agent-app.tsx:39:55 (mutationOptions) |
 | deviceCertificates.list | query |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/pki/admin-router.ts:45:5 | apps/helix/src/app/device/[id]/device-certificates.tsx:42:8 (queryOptions) |
 | deviceCertificates.revoke | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/pki/admin-router.ts:73:5 | apps/helix/src/app/device/[id]/device-certificates.tsx:46:5 (mutationOptions) |
 | devices.create | mutation |  | used | 1 | apps/helix/src/server/trpc.ts:62:38 | packages/helix-backend/src/devices/admin-router.ts:152:5 | apps/helix/src/app/admin/(dashboard)/devices/devices-table.tsx:100:43 (mutationOptions) |
@@ -169,7 +168,3 @@ Unused procedures: 1
 | releases.ciArtifactUploadUrl | POST /api/ci/artifacts/upload-url | ../tooling/release/sim.py:213:18<br>packages/helix-backend/src/releases/api-router.ts:143:49 |
 | releases.ciRegisterRelease | POST /api/ci/releases | ../tooling/release/sim.py:236:14<br>packages/helix-backend/src/releases/api-router.ts:159:49 |
 | releases.otaTrigger | POST /api/ota/trigger | ../tooling/release/sim.py:382:28<br>packages/helix-backend/src/releases/api-router.ts:264:49 |
-
-## Unused Procedures
-
-- conversations.rename (mutation) at packages/helix-backend/src/conversations/router.ts:137:7

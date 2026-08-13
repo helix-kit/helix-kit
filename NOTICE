@@ -2,7 +2,9 @@ Helix
 Copyright (c) 2026 Hardik Jain
 
 Helix software is licensed under AGPL-3.0-only. Original documentation and
-non-code media are licensed under CC-BY-SA-4.0 unless otherwise stated.
+non-code media are licensed under CC-BY-SA-4.0 unless otherwise stated. The SDK
+packages published to npm under the @helix-hq scope are licensed under MIT; see
+LICENSING.md for the list and LICENSES/MIT.txt for the text.
 
 This repository uses third-party dependencies and may include files derived
 from third-party projects. Those materials retain their original copyright,

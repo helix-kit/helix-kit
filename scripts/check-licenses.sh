@@ -8,12 +8,34 @@ required_files=(
   LICENSE
   LICENSES/AGPL-3.0-only.txt
   LICENSES/CC-BY-SA-4.0.txt
+  LICENSES/MIT.txt
   LICENSING.md
   NOTICE
   CONTRIBUTING.md
   DCO
   TRADEMARKS.md
 )
+
+# Packages published to npm for other people to install are MIT; copyleft would
+# stop them being adopted. Everything else in the repo stays AGPL-3.0-only.
+mit_packages=(
+  web/packages/ai-kit
+  web/packages/code-executor
+  web/packages/helix-design-system
+  web/packages/json-schema
+  web/packages/pdf-report
+)
+
+is_mit_package() {
+  local candidate="${1#./}"
+  local package
+  for package in "${mit_packages[@]}"; do
+    if [[ "${candidate}" == "${package}"/* || "${candidate}" == "${package}" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
 
 for path in "${required_files[@]}"; do
   if [[ ! -s "${path}" ]]; then
@@ -33,10 +55,17 @@ while IFS= read -r path; do
     exit 1
   fi
 done < <(
-  find embedded/protocol embedded/esp32/transports embedded/esp32/platform web/packages/core -type f -name LICENSE \
+  find embedded/protocol embedded/esp32/transports embedded/esp32/platform -type f -name LICENSE \
     -not -path '*/node_modules/*' \
     -not -path '*/.next/*'
 )
+
+for package in "${mit_packages[@]}"; do
+  if ! cmp -s LICENSES/MIT.txt "${package}/LICENSE"; then
+    printf '%s/LICENSE: published package license does not match LICENSES/MIT.txt\n' "${package}" >&2
+    exit 1
+  fi
+done
 
 mapfile -d '' package_files < <(
   find . -type f -name package.json \
@@ -49,15 +78,20 @@ mapfile -d '' package_files < <(
 )
 
 for path in "${package_files[@]}"; do
+  expected='AGPL-3.0-only'
+  if is_mit_package "${path}"; then
+    expected='MIT'
+  fi
+
   node -e '
     const fs = require("node:fs");
-    const path = process.argv[1];
+    const [path, expected] = process.argv.slice(1);
     const manifest = JSON.parse(fs.readFileSync(path, "utf8"));
-    if (manifest.license !== "AGPL-3.0-only") {
-      console.error(`${path}: expected license AGPL-3.0-only`);
+    if (manifest.license !== expected) {
+      console.error(`${path}: expected license ${expected}`);
       process.exit(1);
     }
-  ' "${path}"
+  ' "${path}" "${expected}"
 done
 
 mapfile -d '' python_projects < <(

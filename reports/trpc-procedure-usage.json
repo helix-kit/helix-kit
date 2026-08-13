@@ -1001,7 +1001,7 @@
       "surface": "apps/helix/src/server/trpc.ts:62:38",
       "definedAt": {
         "file": "packages/helix-backend/src/conversations/router.ts",
-        "line": 158,
+        "line": 137,
         "column": 7
       },
       "ignoreReason": null,
@@ -1017,21 +1017,6 @@
           }
         }
       ]
-    },
-    {
-      "kind": "mutation",
-      "openapi": null,
-      "path": "conversations.rename",
-      "surface": "apps/helix/src/server/trpc.ts:62:38",
-      "definedAt": {
-        "file": "packages/helix-backend/src/conversations/router.ts",
-        "line": 137,
-        "column": 7
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
     },
     {
       "kind": "query",
@@ -2782,21 +2767,5 @@
       ]
     }
   ],
-  "unusedProcedures": [
-    {
-      "kind": "mutation",
-      "openapi": null,
-      "path": "conversations.rename",
-      "surface": "apps/helix/src/server/trpc.ts:62:38",
-      "definedAt": {
-        "file": "packages/helix-backend/src/conversations/router.ts",
-        "line": 137,
-        "column": 7
-      },
-      "ignoreReason": null,
-      "status": "unused",
-      "usageCount": 0,
-      "usages": []
-    }
-  ]
+  "unusedProcedures": []
 }

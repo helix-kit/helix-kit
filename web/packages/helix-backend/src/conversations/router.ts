@@ -134,27 +134,6 @@ export const conversationsRouter = (options: ConversationsRouterOptions) =>
           return row;
         }),
 
-      rename: protectedProcedure
-        .meta(NOT_A_TOOL)
-        .input(z.object({ id: z.string(), title: z.string().max(TITLE_MAX_LENGTH) }))
-        .mutation(async ({ ctx, input }) => {
-          const updated = await ctx.db
-            .update(conversation)
-            .set({ title: input.title })
-            .where(
-              and(
-                eq(conversation.id, input.id),
-                eq(conversation.userId, ctx.user.id),
-                eq(conversation.surface, options.surface),
-              ),
-            )
-            .returning({ id: conversation.id });
-          if (updated.length === 0) {
-            throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversation not found' });
-          }
-          return { id: input.id };
-        }),
-
       remove: protectedProcedure
         .meta(NOT_A_TOOL)
         .input(z.object({ id: z.string() }))

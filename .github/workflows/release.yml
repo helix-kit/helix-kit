@@ -62,16 +62,17 @@ jobs:
             echo "$count changeset(s) pending."
           fi
 
-      - name: Build
+      # Only the packages. The Next apps need production env to build and are
+      # already gated by the deploy pipeline on every push; a release has no
+      # business building them.
+      - name: Build the packages
         if: steps.pending.outputs.count != '0'
-        run: pnpm build
+        run: pnpm exec turbo run build --filter='./packages/*'
 
       # ---- Gates. A release is the one moment these genuinely matter. --------
       - name: Lint & typecheck
         if: steps.pending.outputs.count != '0'
-        run: |
-          pnpm lint
-          pnpm typecheck
+        run: pnpm exec turbo run lint typecheck --filter='./packages/*'
 
       - name: API contracts
         if: steps.pending.outputs.count != '0'
@@ -94,7 +95,7 @@ jobs:
         if: steps.pending.outputs.count != '0'
         run: |
           pnpm install --no-frozen-lockfile
-          pnpm build
+          pnpm exec turbo run build --filter='./packages/*'
 
       - name: Summarise
         if: steps.pending.outputs.count != '0'

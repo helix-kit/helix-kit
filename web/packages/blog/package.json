@@ -11,8 +11,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "typecheck": "tsc --noEmit",
@@ -20,64 +19,64 @@
   },
   "exports": {
     "./seo": {
-      "import": "./src/seo.ts",
-      "types": "./src/seo.ts"
+      "types": "./src/seo.ts",
+      "import": "./src/seo.ts"
     },
     "./server": {
-      "import": "./src/server/index.ts",
-      "types": "./src/server/index.ts"
+      "types": "./src/server/index.ts",
+      "import": "./src/server/index.ts"
     },
     "./server/mdx": {
-      "import": "./src/server/mdx.ts",
-      "types": "./src/server/mdx.ts"
+      "types": "./src/server/mdx.ts",
+      "import": "./src/server/mdx.ts"
     },
     "./server/schema": {
-      "import": "./src/server/schema.ts",
-      "types": "./src/server/schema.ts"
+      "types": "./src/server/schema.ts",
+      "import": "./src/server/schema.ts"
     },
     "./ui": {
-      "import": "./src/ui/index.ts",
-      "types": "./src/ui/index.ts"
+      "types": "./src/ui/index.ts",
+      "import": "./src/ui/index.ts"
     },
     "./ui/admin": {
-      "import": "./src/ui/admin/index.ts",
-      "types": "./src/ui/admin/index.ts"
+      "types": "./src/ui/admin/index.ts",
+      "import": "./src/ui/admin/index.ts"
     },
     "./ui/admin/search-params": {
-      "import": "./src/ui/admin/search-params.ts",
-      "types": "./src/ui/admin/search-params.ts"
+      "types": "./src/ui/admin/search-params.ts",
+      "import": "./src/ui/admin/search-params.ts"
     }
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       "./seo": {
-        "import": "./dist/seo.js",
-        "types": "./dist/seo.d.ts"
+        "types": "./dist/seo.d.ts",
+        "import": "./dist/seo.js"
       },
       "./server": {
-        "import": "./dist/server/index.js",
-        "types": "./dist/server/index.d.ts"
+        "types": "./dist/server/index.d.ts",
+        "import": "./dist/server/index.js"
       },
       "./server/mdx": {
-        "import": "./dist/server/mdx.js",
-        "types": "./dist/server/mdx.d.ts"
+        "types": "./dist/server/mdx.d.ts",
+        "import": "./dist/server/mdx.js"
       },
       "./server/schema": {
-        "import": "./dist/server/schema.js",
-        "types": "./dist/server/schema.d.ts"
+        "types": "./dist/server/schema.d.ts",
+        "import": "./dist/server/schema.js"
       },
       "./ui": {
-        "import": "./dist/ui/index.js",
-        "types": "./dist/ui/index.d.ts"
+        "types": "./dist/ui/index.d.ts",
+        "import": "./dist/ui/index.js"
       },
       "./ui/admin": {
-        "import": "./dist/ui/admin/index.js",
-        "types": "./dist/ui/admin/index.d.ts"
+        "types": "./dist/ui/admin/index.d.ts",
+        "import": "./dist/ui/admin/index.js"
       },
       "./ui/admin/search-params": {
-        "import": "./dist/ui/admin/search-params.js",
-        "types": "./dist/ui/admin/search-params.d.ts"
+        "types": "./dist/ui/admin/search-params.d.ts",
+        "import": "./dist/ui/admin/search-params.js"
       }
     }
   },

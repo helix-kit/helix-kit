@@ -52,3 +52,8 @@ apps/helix/.dev-pki/
 apps/helix/.dev-storage/
 apps/helix-server/.dev-pki/
 apps/helix-server/.dev-storage/
+
+# tsdown's declaration bundler emits alongside the source for the shared script
+# each package's tsdown.config.ts imports.
+scripts/*.d.ts
+scripts/*.d.ts.map

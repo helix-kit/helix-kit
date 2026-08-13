@@ -9,8 +9,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown",
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
@@ -18,36 +17,36 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./esp32-flasher": {
-      "import": "./src/esp32-flasher/flash.ts",
-      "types": "./src/esp32-flasher/flash.ts"
+      "types": "./src/esp32-flasher/flash.ts",
+      "import": "./src/esp32-flasher/flash.ts"
     },
     "./esp32-flasher/router": {
-      "import": "./src/esp32-flasher/router.ts",
-      "types": "./src/esp32-flasher/router.ts"
+      "types": "./src/esp32-flasher/router.ts",
+      "import": "./src/esp32-flasher/router.ts"
     },
     "./header-portal": {
-      "import": "./src/header-portal.tsx",
-      "types": "./src/header-portal.tsx"
+      "types": "./src/header-portal.tsx",
+      "import": "./src/header-portal.tsx"
     }
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
       },
       "./header-portal": {
-        "import": "./dist/header-portal.js",
-        "types": "./dist/header-portal.d.ts"
+        "types": "./dist/header-portal.d.ts",
+        "import": "./dist/header-portal.js"
       },
       "./esp32-flasher/router": {
-        "import": "./dist/esp32-flasher/router.js",
-        "types": "./dist/esp32-flasher/router.d.ts"
+        "types": "./dist/esp32-flasher/router.d.ts",
+        "import": "./dist/esp32-flasher/router.js"
       }
     }
   },

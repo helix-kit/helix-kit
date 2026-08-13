@@ -31,8 +31,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types && pnpm run build:css",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown && pnpm run build:css",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run --exclude \"**/*.live.test.ts\"",
@@ -43,58 +42,58 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./ai": {
-      "import": "./src/ai.ts",
-      "types": "./src/ai.ts"
+      "types": "./src/ai.ts",
+      "import": "./src/ai.ts"
     },
     "./browser": {
-      "import": "./src/browser.tsx",
-      "types": "./src/browser.tsx"
+      "types": "./src/browser.tsx",
+      "import": "./src/browser.tsx"
     },
     "./components": {
-      "import": "./src/components/registry.ts",
-      "types": "./src/components/registry.ts"
+      "types": "./src/components/registry.ts",
+      "import": "./src/components/registry.ts"
     },
     "./editor": {
-      "import": "./src/editor.tsx",
-      "types": "./src/editor.tsx"
+      "types": "./src/editor.tsx",
+      "import": "./src/editor.tsx"
     },
     "./editor.css": "./src/styles/editor.css",
     "./server": {
-      "import": "./src/server.ts",
-      "types": "./src/server.ts"
+      "types": "./src/server.ts",
+      "import": "./src/server.ts"
     }
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
       },
       "./ai": {
-        "import": "./dist/ai.js",
-        "types": "./dist/ai.d.ts"
+        "types": "./dist/ai.d.ts",
+        "import": "./dist/ai.js"
       },
       "./browser": {
-        "import": "./dist/browser.js",
-        "types": "./dist/browser.d.ts"
+        "types": "./dist/browser.d.ts",
+        "import": "./dist/browser.js"
       },
       "./components": {
-        "import": "./dist/components/registry.js",
-        "types": "./dist/components/registry.d.ts"
+        "types": "./dist/components/registry.d.ts",
+        "import": "./dist/components/registry.js"
       },
       "./editor": {
-        "import": "./dist/editor.js",
-        "types": "./dist/editor.d.ts"
+        "types": "./dist/editor.d.ts",
+        "import": "./dist/editor.js"
       },
       "./editor.css": "./dist/styles/editor.css",
       "./server": {
-        "import": "./dist/server.js",
-        "types": "./dist/server.d.ts"
+        "types": "./dist/server.d.ts",
+        "import": "./dist/server.js"
       }
     }
   },

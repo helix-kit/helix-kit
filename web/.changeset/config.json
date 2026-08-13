@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "helix-kit/helix-kit" }],
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "@helix-hq/backend",
+    "@helix-hq/blog",
+    "@helix-hq/device-apps",
+    "@helix-hq/firmware-builder",
+    "@helix-hq/logger",
+    "@helix-hq/protocol",
+    "@helix-hq/web-core"
+  ]
+}

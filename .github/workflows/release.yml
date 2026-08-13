@@ -1,0 +1,143 @@
+# Publishing the @helix-hq packages to npm.
+#
+# Deliberately NOT on push. Pushing `main` already deploys the site, and an npm
+# publish cannot be undone (only deprecated), so releasing is a separate,
+# explicit act. Run it from the Actions tab or `gh workflow run release.yml`.
+#
+# Versions and changelogs come from the changesets accumulated since the last
+# release (`web/.changeset/*.md`); if there are none, the run stops before
+# publishing anything.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Validate and version, but do not publish or push'
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the version commit and tags
+      id-token: write # npm provenance attestation
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Changesets reads history to work out what changed since the last
+          # release; a shallow clone hides it.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Is there anything to release?
+        id: pending
+        run: |
+          count=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" -eq 0 ]; then
+            echo "No changesets pending — nothing to release."
+          else
+            echo "$count changeset(s) pending."
+          fi
+
+      - name: Build
+        if: steps.pending.outputs.count != '0'
+        run: pnpm build
+
+      # ---- Gates. A release is the one moment these genuinely matter. --------
+      - name: Lint & typecheck
+        if: steps.pending.outputs.count != '0'
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      - name: API contracts
+        if: steps.pending.outputs.count != '0'
+        run: pnpm api:check
+
+      - name: Packaging (publint + are-the-types-wrong)
+        if: steps.pending.outputs.count != '0'
+        run: pnpm publint
+
+      # ---- Version, publish, record. ----------------------------------------
+      - name: Apply versions and changelogs
+        if: steps.pending.outputs.count != '0'
+        run: pnpm changeset version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # The version bump changes package.json files, so dist must be rebuilt
+      # from them before anything is packed.
+      - name: Rebuild at the release version
+        if: steps.pending.outputs.count != '0'
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm build
+
+      - name: Summarise
+        if: steps.pending.outputs.count != '0'
+        run: |
+          {
+            echo '### Releasing'
+            echo
+            echo '| Package | Version |'
+            echo '| --- | --- |'
+            node -e "
+              const { readdirSync, readFileSync, existsSync } = require('node:fs');
+              for (const dir of readdirSync('packages')) {
+                const file = \`packages/\${dir}/package.json\`;
+                if (!existsSync(file)) continue;
+                const pkg = JSON.parse(readFileSync(file, 'utf8'));
+                if (pkg.private || !pkg.name.startsWith('@helix-hq/')) continue;
+                console.log(\`| \${pkg.name} | \${pkg.version} |\`);
+              }
+            "
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Committed before publishing, not after: `changeset publish` tags HEAD,
+      # so if the version bump is still uncommitted the tags land on the
+      # previous commit and point at the wrong tree.
+      - name: Commit the version bump
+        if: steps.pending.outputs.count != '0' && inputs.dry-run == false
+        run: |
+          git config user.name 'Hardik Jain'
+          git config user.email 'jainhardik120@gmail.com'
+          git add -A
+          git commit -s -m "HELIX-203: release @helix-hq packages [skip ci]" || echo 'nothing to commit'
+
+      - name: Publish
+        if: steps.pending.outputs.count != '0' && inputs.dry-run == false
+        run: pnpm changeset publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Signs each tarball with a sigstore attestation tying it to this
+          # workflow run and commit, which is why publishing belongs in CI.
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      # Last, so a failed publish leaves `main` untouched and the run can simply
+      # be retried rather than unpicked.
+      - name: Push the version commit and tags
+        if: steps.pending.outputs.count != '0' && inputs.dry-run == false
+        run: git push --follow-tags origin HEAD:main

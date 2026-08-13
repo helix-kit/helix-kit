@@ -31,8 +31,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run",
@@ -41,32 +40,32 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./ai-sdk": {
-      "import": "./src/ai-sdk.ts",
-      "types": "./src/ai-sdk.ts"
+      "types": "./src/ai-sdk.ts",
+      "import": "./src/ai-sdk.ts"
     },
     "./fixtures": {
-      "import": "./src/fixtures.ts",
-      "types": "./src/fixtures.ts"
+      "types": "./src/fixtures.ts",
+      "import": "./src/fixtures.ts"
     }
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
       },
       "./ai-sdk": {
-        "import": "./dist/ai-sdk.js",
-        "types": "./dist/ai-sdk.d.ts"
+        "types": "./dist/ai-sdk.d.ts",
+        "import": "./dist/ai-sdk.js"
       },
       "./fixtures": {
-        "import": "./dist/fixtures.js",
-        "types": "./dist/fixtures.d.ts"
+        "types": "./dist/fixtures.d.ts",
+        "import": "./dist/fixtures.js"
       }
     }
   },

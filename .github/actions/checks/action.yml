@@ -1,7 +1,7 @@
 name: Web checks
 description: >-
-  Lint / typecheck / unused / format / deps for the web/ monorepo, run ALL IN
-  PARALLEL as background jobs. Publishes one Check Run per check. Assumes the
+  Lint / typecheck / unused / format / deps / package contracts for the web/
+  monorepo, run ALL IN PARALLEL as background jobs. Publishes one Check Run per check. Assumes the
   caller already did checkout + pnpm/setup-node + `pnpm install`, and — for the
   turbo cache to actually hit — that it set the same globalEnv vars the build
   step used. Reads $CI_LOG_DIR. Outputs any_failed.
@@ -32,6 +32,10 @@ runs:
           [exports]="pnpm run exports:check"
           [typecheck-scripts]="pnpm run typecheck:scripts"
           [unused]="pnpm run unused"
+          # Both read `dist`, so they build first. In the deploy pipeline that
+          # is a turbo cache hit off the build that just ran; on a PR, where
+          # nothing has been built, it is a real build.
+          [packages]="pnpm build --output-logs=errors-only && pnpm run api:check && pnpm run publint"
         )
         # ADVISORY: reported as a Check Run, but does NOT fail the pipeline.
         # (none — `unused` (knip + unused-tRPC-procedure scan) was promoted to CHECKS
@@ -49,7 +53,7 @@ runs:
         printf '%s\n' "${!ADVISORY[@]}" > "$CI_LOG_DIR/advisory.txt"
 
         # Surface every check's output in the job log, grouped, in a stable order.
-        for slug in turbo format exports typecheck-scripts unused; do
+        for slug in turbo format exports typecheck-scripts unused packages; do
           rc=$(cat "$CI_LOG_DIR/$slug.exit" 2>/dev/null || echo 1)
           [ "$rc" = "0" ] && icon="✅" || icon="❌"
           echo "::group::$icon $slug (exit $rc)"
@@ -68,6 +72,7 @@ runs:
           unused|Unused exports
           exports|Package exports
           typecheck-scripts|Script typecheck
+          packages|API contracts & packaging
       with:
         script: |
           const fs = require('fs');
@@ -103,7 +108,7 @@ runs:
       run: |
         any_failed=false
         advisory=$(cat "$CI_LOG_DIR/advisory.txt" 2>/dev/null || true)
-        for slug in turbo format exports typecheck-scripts unused; do
+        for slug in turbo format exports typecheck-scripts unused packages; do
           rc=$(cat "$CI_LOG_DIR/$slug.exit" 2>/dev/null || echo 1)
           if [ "$rc" != "0" ]; then
             if grep -qx "$slug" <<<"$advisory"; then

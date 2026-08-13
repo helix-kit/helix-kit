@@ -337,6 +337,18 @@ drops an individual check.
   (`android/gradle.properties`, `org.gradle.java.home`) because AGP cannot run on
   the system's newer JVM; adjust that path per machine. Code compiles to JVM 17.
   Build/test with `./gradlew :helix:testDebugUnitTest`, `./gradlew :app:assembleDebug`.
+- **Publishing an npm package:** the five `@helix-hq` packages are released with
+  **Changesets**. Any change to one needs `pnpm changeset` committed alongside it —
+  that file is what produces the version bump and the `CHANGELOG.md` entry. Two gates
+  run on every push and again at release: `pnpm api:check` (an api-extractor report
+  per published entry point, in `packages/*/etc/*.api.md` — a diff there *is* the
+  semver signal, so run `pnpm api:update` and review it after an intentional API
+  change) and `pnpm publint` (publint + are-the-types-wrong against a real `pnpm pack`
+  tarball, since the workspace `exports` resolve to `src` and only the tarball
+  exercises `dist`). Releasing is deliberate and never happens on push:
+  `gh workflow run release.yml`. Internal deps use `workspace:^`, never
+  `workspace:*` — the latter publishes as an exact pin. Full write-up:
+  `docs/21-Release-Engineering.md`.
 - **Licensing:** code is `AGPL-3.0-only`; docs and media are `CC-BY-SA-4.0`.
   Every file carries the appropriate SPDX identifier, tracked via REUSE
   (`.reuse/dep5`). Do not replace a third-party license with the Helix license,

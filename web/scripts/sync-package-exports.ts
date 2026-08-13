@@ -274,9 +274,12 @@ const createSourceExport = (sourcePath: string): ExportTarget => {
     return sourcePath;
   }
 
+  // `types` first: export conditions are matched in declaration order, so a
+  // `types` listed after `import` is never reached and TypeScript falls back to
+  // guessing. publint flags this.
   return {
-    import: sourcePath,
     types: sourcePath,
+    import: sourcePath,
   };
 };
 
@@ -295,8 +298,8 @@ const toPublishPath = (sourcePath: string) => {
     if (/\.(?:[cm]?ts|tsx)$/.test(relativePath)) {
       const compiledBasePath = relativePath.replace(/\.(?:[cm]?ts|tsx)$/, '');
       return {
-        import: `./dist/${compiledBasePath}.js`,
         types: `./dist/${compiledBasePath}.d.ts`,
+        import: `./dist/${compiledBasePath}.js`,
       } satisfies ExportTarget;
     }
   }

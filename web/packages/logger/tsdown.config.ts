@@ -4,7 +4,10 @@ import { createEntriesFromPackageExports } from '../../scripts/package-exports.t
 
 export default defineConfig({
   clean: true,
-  dts: false,
+  // Bundled declarations, not `tsc` output: tsc emits extensionless
+  // relative imports in .d.ts, which fail to resolve under node16 /
+  // nodenext and silently break types for Node ESM consumers.
+  dts: true,
   entry: createEntriesFromPackageExports(import.meta.url),
   format: ['esm'],
   outDir: 'dist',

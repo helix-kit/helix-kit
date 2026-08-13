@@ -12,6 +12,9 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       project: ['*.{js,mjs,cjs,ts,mts,cts}', 'scripts/**/*.ts'],
+      // Run as binaries from inside scripts/check-packaging.ts (`pnpm exec attw`,
+      // `pnpm exec publint`) rather than imported, so knip cannot see the use.
+      ignoreDependencies: ['@arethetypeswrong/cli', 'publint'],
     },
     'apps/helix': {
       entry: [...nextSrcAppRouterEntries, 'drizzle.config.ts'],

@@ -37,7 +37,10 @@ const useClientBanner = "'use client';";
 export default defineConfig({
   entry: createEntriesFromPackageExports(import.meta.url),
   format: ['esm'],
-  dts: false,
+  // Bundled declarations, not `tsc` output: tsc emits extensionless
+  // relative imports in .d.ts, which fail to resolve under node16 /
+  // nodenext and silently break types for Node ESM consumers.
+  dts: true,
   sourcemap: true,
   // Everything listed here stays an external import. Every peer belongs in it:
   // bundling one would ship a second copy of a library the consumer already

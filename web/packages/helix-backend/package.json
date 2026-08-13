@@ -9,8 +9,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown",
     "dev": "tsdown --watch",
     "lint": "eslint --max-warnings=0 .",
     "typecheck": "tsc --noEmit",
@@ -19,248 +18,248 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./account": {
-      "import": "./src/account/index.ts",
-      "types": "./src/account/index.ts"
+      "types": "./src/account/index.ts",
+      "import": "./src/account/index.ts"
     },
     "./agent": {
-      "import": "./src/agent/index.ts",
-      "types": "./src/agent/index.ts"
+      "types": "./src/agent/index.ts",
+      "import": "./src/agent/index.ts"
     },
     "./ai-usage": {
-      "import": "./src/ai-usage/index.ts",
-      "types": "./src/ai-usage/index.ts"
+      "types": "./src/ai-usage/index.ts",
+      "import": "./src/ai-usage/index.ts"
     },
     "./conversations": {
-      "import": "./src/conversations/index.ts",
-      "types": "./src/conversations/index.ts"
+      "types": "./src/conversations/index.ts",
+      "import": "./src/conversations/index.ts"
     },
     "./db": {
-      "import": "./src/db/index.ts",
-      "types": "./src/db/index.ts"
+      "types": "./src/db/index.ts",
+      "import": "./src/db/index.ts"
     },
     "./db/auth-schema": {
-      "import": "./src/db/auth-schema.ts",
-      "types": "./src/db/auth-schema.ts"
+      "types": "./src/db/auth-schema.ts",
+      "import": "./src/db/auth-schema.ts"
     },
     "./device-mtls/fileRouter": {
-      "import": "./src/device-mtls/fileRouter.ts",
-      "types": "./src/device-mtls/fileRouter.ts"
+      "types": "./src/device-mtls/fileRouter.ts",
+      "import": "./src/device-mtls/fileRouter.ts"
     },
     "./device-mtls/tls": {
-      "import": "./src/device-mtls/tls.ts",
-      "types": "./src/device-mtls/tls.ts"
+      "types": "./src/device-mtls/tls.ts",
+      "import": "./src/device-mtls/tls.ts"
     },
     "./devices": {
-      "import": "./src/devices/index.ts",
-      "types": "./src/devices/index.ts"
+      "types": "./src/devices/index.ts",
+      "import": "./src/devices/index.ts"
     },
     "./events": {
-      "import": "./src/events/index.ts",
-      "types": "./src/events/index.ts"
+      "types": "./src/events/index.ts",
+      "import": "./src/events/index.ts"
     },
     "./features": {
-      "import": "./src/features/index.ts",
-      "types": "./src/features/index.ts"
+      "types": "./src/features/index.ts",
+      "import": "./src/features/index.ts"
     },
     "./gateway/mqtt-bridge": {
-      "import": "./src/gateway/mqtt-bridge.ts",
-      "types": "./src/gateway/mqtt-bridge.ts"
+      "types": "./src/gateway/mqtt-bridge.ts",
+      "import": "./src/gateway/mqtt-bridge.ts"
     },
     "./gateway/router": {
-      "import": "./src/gateway/router.ts",
-      "types": "./src/gateway/router.ts"
+      "types": "./src/gateway/router.ts",
+      "import": "./src/gateway/router.ts"
     },
     "./ice": {
-      "import": "./src/ice/index.ts",
-      "types": "./src/ice/index.ts"
+      "types": "./src/ice/index.ts",
+      "import": "./src/ice/index.ts"
     },
     "./pki/admin-router": {
-      "import": "./src/pki/admin-router.ts",
-      "types": "./src/pki/admin-router.ts"
+      "types": "./src/pki/admin-router.ts",
+      "import": "./src/pki/admin-router.ts"
     },
     "./pki/router": {
-      "import": "./src/pki/router.ts",
-      "types": "./src/pki/router.ts"
+      "types": "./src/pki/router.ts",
+      "import": "./src/pki/router.ts"
     },
     "./pki/step-ca": {
-      "import": "./src/pki/step-ca.ts",
-      "types": "./src/pki/step-ca.ts"
+      "types": "./src/pki/step-ca.ts",
+      "import": "./src/pki/step-ca.ts"
     },
     "./profiles": {
-      "import": "./src/profiles/index.ts",
-      "types": "./src/profiles/index.ts"
+      "types": "./src/profiles/index.ts",
+      "import": "./src/profiles/index.ts"
     },
     "./releases": {
-      "import": "./src/releases/index.ts",
-      "types": "./src/releases/index.ts"
+      "types": "./src/releases/index.ts",
+      "import": "./src/releases/index.ts"
     },
     "./storage/azure-provider": {
-      "import": "./src/storage/azure-provider.ts",
-      "types": "./src/storage/azure-provider.ts"
+      "types": "./src/storage/azure-provider.ts",
+      "import": "./src/storage/azure-provider.ts"
     },
     "./storage/factory": {
-      "import": "./src/storage/factory.ts",
-      "types": "./src/storage/factory.ts"
+      "types": "./src/storage/factory.ts",
+      "import": "./src/storage/factory.ts"
     },
     "./storage/filesystem-http": {
-      "import": "./src/storage/filesystem-http.ts",
-      "types": "./src/storage/filesystem-http.ts"
+      "types": "./src/storage/filesystem-http.ts",
+      "import": "./src/storage/filesystem-http.ts"
     },
     "./storage/filesystem-provider": {
-      "import": "./src/storage/filesystem-provider.ts",
-      "types": "./src/storage/filesystem-provider.ts"
+      "types": "./src/storage/filesystem-provider.ts",
+      "import": "./src/storage/filesystem-provider.ts"
     },
     "./storage/filesystem-shared": {
-      "import": "./src/storage/filesystem-shared.ts",
-      "types": "./src/storage/filesystem-shared.ts"
+      "types": "./src/storage/filesystem-shared.ts",
+      "import": "./src/storage/filesystem-shared.ts"
     },
     "./storage/interface": {
-      "import": "./src/storage/interface.ts",
-      "types": "./src/storage/interface.ts"
+      "types": "./src/storage/interface.ts",
+      "import": "./src/storage/interface.ts"
     },
     "./storage/object-keys": {
-      "import": "./src/storage/object-keys.ts",
-      "types": "./src/storage/object-keys.ts"
+      "types": "./src/storage/object-keys.ts",
+      "import": "./src/storage/object-keys.ts"
     },
     "./storage/s3-compatible-provider": {
-      "import": "./src/storage/s3-compatible-provider.ts",
-      "types": "./src/storage/s3-compatible-provider.ts"
+      "types": "./src/storage/s3-compatible-provider.ts",
+      "import": "./src/storage/s3-compatible-provider.ts"
     },
     "./trpc": {
-      "import": "./src/trpc/index.ts",
-      "types": "./src/trpc/index.ts"
+      "types": "./src/trpc/index.ts",
+      "import": "./src/trpc/index.ts"
     },
     "./users": {
-      "import": "./src/users/index.ts",
-      "types": "./src/users/index.ts"
+      "types": "./src/users/index.ts",
+      "import": "./src/users/index.ts"
     }
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
       },
       "./account": {
-        "import": "./dist/account/index.js",
-        "types": "./dist/account/index.d.ts"
+        "types": "./dist/account/index.d.ts",
+        "import": "./dist/account/index.js"
       },
       "./agent": {
-        "import": "./dist/agent/index.js",
-        "types": "./dist/agent/index.d.ts"
+        "types": "./dist/agent/index.d.ts",
+        "import": "./dist/agent/index.js"
       },
       "./ai-usage": {
-        "import": "./dist/ai-usage/index.js",
-        "types": "./dist/ai-usage/index.d.ts"
+        "types": "./dist/ai-usage/index.d.ts",
+        "import": "./dist/ai-usage/index.js"
       },
       "./conversations": {
-        "import": "./dist/conversations/index.js",
-        "types": "./dist/conversations/index.d.ts"
+        "types": "./dist/conversations/index.d.ts",
+        "import": "./dist/conversations/index.js"
       },
       "./db": {
-        "import": "./dist/db/index.js",
-        "types": "./dist/db/index.d.ts"
+        "types": "./dist/db/index.d.ts",
+        "import": "./dist/db/index.js"
       },
       "./db/auth-schema": {
-        "import": "./dist/db/auth-schema.js",
-        "types": "./dist/db/auth-schema.d.ts"
+        "types": "./dist/db/auth-schema.d.ts",
+        "import": "./dist/db/auth-schema.js"
       },
       "./device-mtls/fileRouter": {
-        "import": "./dist/device-mtls/fileRouter.js",
-        "types": "./dist/device-mtls/fileRouter.d.ts"
+        "types": "./dist/device-mtls/fileRouter.d.ts",
+        "import": "./dist/device-mtls/fileRouter.js"
       },
       "./device-mtls/tls": {
-        "import": "./dist/device-mtls/tls.js",
-        "types": "./dist/device-mtls/tls.d.ts"
+        "types": "./dist/device-mtls/tls.d.ts",
+        "import": "./dist/device-mtls/tls.js"
       },
       "./devices": {
-        "import": "./dist/devices/index.js",
-        "types": "./dist/devices/index.d.ts"
+        "types": "./dist/devices/index.d.ts",
+        "import": "./dist/devices/index.js"
       },
       "./events": {
-        "import": "./dist/events/index.js",
-        "types": "./dist/events/index.d.ts"
+        "types": "./dist/events/index.d.ts",
+        "import": "./dist/events/index.js"
       },
       "./features": {
-        "import": "./dist/features/index.js",
-        "types": "./dist/features/index.d.ts"
+        "types": "./dist/features/index.d.ts",
+        "import": "./dist/features/index.js"
       },
       "./gateway/mqtt-bridge": {
-        "import": "./dist/gateway/mqtt-bridge.js",
-        "types": "./dist/gateway/mqtt-bridge.d.ts"
+        "types": "./dist/gateway/mqtt-bridge.d.ts",
+        "import": "./dist/gateway/mqtt-bridge.js"
       },
       "./gateway/router": {
-        "import": "./dist/gateway/router.js",
-        "types": "./dist/gateway/router.d.ts"
+        "types": "./dist/gateway/router.d.ts",
+        "import": "./dist/gateway/router.js"
       },
       "./ice": {
-        "import": "./dist/ice/index.js",
-        "types": "./dist/ice/index.d.ts"
+        "types": "./dist/ice/index.d.ts",
+        "import": "./dist/ice/index.js"
       },
       "./pki/admin-router": {
-        "import": "./dist/pki/admin-router.js",
-        "types": "./dist/pki/admin-router.d.ts"
+        "types": "./dist/pki/admin-router.d.ts",
+        "import": "./dist/pki/admin-router.js"
       },
       "./pki/router": {
-        "import": "./dist/pki/router.js",
-        "types": "./dist/pki/router.d.ts"
+        "types": "./dist/pki/router.d.ts",
+        "import": "./dist/pki/router.js"
       },
       "./pki/step-ca": {
-        "import": "./dist/pki/step-ca.js",
-        "types": "./dist/pki/step-ca.d.ts"
+        "types": "./dist/pki/step-ca.d.ts",
+        "import": "./dist/pki/step-ca.js"
       },
       "./profiles": {
-        "import": "./dist/profiles/index.js",
-        "types": "./dist/profiles/index.d.ts"
+        "types": "./dist/profiles/index.d.ts",
+        "import": "./dist/profiles/index.js"
       },
       "./releases": {
-        "import": "./dist/releases/index.js",
-        "types": "./dist/releases/index.d.ts"
+        "types": "./dist/releases/index.d.ts",
+        "import": "./dist/releases/index.js"
       },
       "./storage/azure-provider": {
-        "import": "./dist/storage/azure-provider.js",
-        "types": "./dist/storage/azure-provider.d.ts"
+        "types": "./dist/storage/azure-provider.d.ts",
+        "import": "./dist/storage/azure-provider.js"
       },
       "./storage/factory": {
-        "import": "./dist/storage/factory.js",
-        "types": "./dist/storage/factory.d.ts"
+        "types": "./dist/storage/factory.d.ts",
+        "import": "./dist/storage/factory.js"
       },
       "./storage/filesystem-http": {
-        "import": "./dist/storage/filesystem-http.js",
-        "types": "./dist/storage/filesystem-http.d.ts"
+        "types": "./dist/storage/filesystem-http.d.ts",
+        "import": "./dist/storage/filesystem-http.js"
       },
       "./storage/filesystem-provider": {
-        "import": "./dist/storage/filesystem-provider.js",
-        "types": "./dist/storage/filesystem-provider.d.ts"
+        "types": "./dist/storage/filesystem-provider.d.ts",
+        "import": "./dist/storage/filesystem-provider.js"
       },
       "./storage/filesystem-shared": {
-        "import": "./dist/storage/filesystem-shared.js",
-        "types": "./dist/storage/filesystem-shared.d.ts"
+        "types": "./dist/storage/filesystem-shared.d.ts",
+        "import": "./dist/storage/filesystem-shared.js"
       },
       "./storage/interface": {
-        "import": "./dist/storage/interface.js",
-        "types": "./dist/storage/interface.d.ts"
+        "types": "./dist/storage/interface.d.ts",
+        "import": "./dist/storage/interface.js"
       },
       "./storage/object-keys": {
-        "import": "./dist/storage/object-keys.js",
-        "types": "./dist/storage/object-keys.d.ts"
+        "types": "./dist/storage/object-keys.d.ts",
+        "import": "./dist/storage/object-keys.js"
       },
       "./storage/s3-compatible-provider": {
-        "import": "./dist/storage/s3-compatible-provider.js",
-        "types": "./dist/storage/s3-compatible-provider.d.ts"
+        "types": "./dist/storage/s3-compatible-provider.d.ts",
+        "import": "./dist/storage/s3-compatible-provider.js"
       },
       "./trpc": {
-        "import": "./dist/trpc/index.js",
-        "types": "./dist/trpc/index.d.ts"
+        "types": "./dist/trpc/index.d.ts",
+        "import": "./dist/trpc/index.js"
       },
       "./users": {
-        "import": "./dist/users/index.js",
-        "types": "./dist/users/index.d.ts"
+        "types": "./dist/users/index.d.ts",
+        "import": "./dist/users/index.js"
       }
     }
   },

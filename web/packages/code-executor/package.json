@@ -1,6 +1,6 @@
 {
   "name": "@helix-hq/code-executor",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Run untrusted TypeScript in a QuickJS WASM sandbox, typed by JSON Schema, with a Monaco editor for authoring it.",
   "keywords": [
     "sandbox",

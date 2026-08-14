@@ -1,6 +1,6 @@
 {
   "name": "@helix-hq/json-schema",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Author JSON Schemas in React \u2014 a property-list builder, a schema-aware Monaco editor, and a TypeScript emitter.",
   "keywords": [
     "json-schema",

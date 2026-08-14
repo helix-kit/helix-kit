@@ -1,0 +1,52 @@
+---
+title: 'types'
+description: 'Public API of @helix-hq/code-executor/types.'
+---
+
+The complete public surface of `@helix-hq/code-executor/types`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSONSchema } from 'zod/v4/core';
+
+// @public
+export type ExecutionLimits = {
+    memoryBytes?: number;
+    cpuMs?: number;
+    wallClockMs?: number;
+    maxCalls?: number;
+    maxLogs?: number;
+};
+
+// @public (undocumented)
+export type ExecutionOptions = {
+    input?: unknown;
+    inputSchema?: JSONSchema._JSONSchema;
+    outputSchema?: JSONSchema._JSONSchema;
+    functions?: HostFunctions;
+    limits?: ExecutionLimits;
+};
+
+// @public (undocumented)
+export type ExecutionResult<T = unknown> = {
+    success: boolean;
+    data?: T;
+    error?: string;
+    logs: string[];
+    calls: number;
+    durationMs: number;
+};
+
+// @public
+export type HostFunction = {
+    handler: (argument: unknown) => unknown;
+    description?: string;
+    parameters?: JSONSchema._JSONSchema;
+    returns?: JSONSchema._JSONSchema;
+};
+
+// @public (undocumented)
+export type HostFunctions = Record<string, HostFunction>;
+
+// (No @packageDocumentation comment for this package)
+```

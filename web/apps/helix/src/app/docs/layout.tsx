@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: ReactNode }) => (
   <div className="bg-background">
     <GeistdocsProvider>
       <Navbar />
-      <DocsSidebar />
+      <DocsSidebar tree={source.pageTree} />
       <DocsLayout tree={source.pageTree}>{children}</DocsLayout>
     </GeistdocsProvider>
   </div>

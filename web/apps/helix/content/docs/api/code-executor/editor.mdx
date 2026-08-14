@@ -1,0 +1,24 @@
+---
+title: 'editor'
+description: 'Public API of @helix-hq/code-executor/editor.'
+---
+
+The complete public surface of `@helix-hq/code-executor/editor`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSONSchema } from 'zod/v4/core';
+import { JSX } from 'react';
+
+// @public
+export const CodeEditor: (input: {
+    className?: string;
+    inputSchema?: JSONSchema._JSONSchema;
+    functions?: HostFunctions;
+    theme: 'light' | 'vs-dark';
+    value: string;
+    onChange: (value: string) => void;
+}) => JSX.Element;
+
+// (No @packageDocumentation comment for this package)
+```

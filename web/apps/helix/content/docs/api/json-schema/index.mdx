@@ -1,0 +1,82 @@
+---
+title: '@helix-hq/json-schema'
+description: 'Public API of @helix-hq/json-schema.'
+---
+
+The complete public surface of `@helix-hq/json-schema`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSONSchema } from 'zod/v4/core';
+import { z } from 'zod';
+
+// @public (undocumented)
+export const createDefaultDefinition: (type: SchemaType) => SchemaDefinition;
+
+// @public (undocumented)
+export const createDefaultProperty: (name: string) => PropertyDescriptor_2;
+
+// @public (undocumented)
+export const definitionToJsonSchema: (definition: SchemaDefinition) => JSONSchema.JSONSchema;
+
+// @public (undocumented)
+export const jsonSchemaToDefinition: (schema: JSONSchema._JSONSchema) => SchemaDefinition;
+
+// @public
+export const jsonSchemaToTypeString: (root: JSONSchema._JSONSchema, defs?: Record<string, JSONSchema._JSONSchema>) => string;
+
+// @public (undocumented)
+type PropertyDescriptor_2 = {
+    name: string;
+    required: boolean;
+    nullable: boolean;
+    schema: SchemaDefinition;
+};
+export { PropertyDescriptor_2 as PropertyDescriptor }
+
+// @public
+export type ResolvedObjectSchema = z.core.JSONSchema.JSONSchema & {
+    type: 'object';
+    properties: Record<string, z.core.JSONSchema._JSONSchema>;
+};
+
+// @public (undocumented)
+export const SCHEMA_TYPE_OPTIONS: {
+    value: SchemaType;
+    label: string;
+}[];
+
+// @public
+export type SchemaDefinition = {
+    type: 'string';
+} | {
+    type: 'number';
+} | {
+    type: 'boolean';
+} | {
+    type: 'null';
+} | {
+    type: 'object';
+    properties: PropertyDescriptor_2[];
+} | {
+    type: 'array';
+    items: SchemaDefinition;
+} | {
+    type: 'enum';
+    values: string[];
+} | {
+    type: 'literal';
+    value: string | number | boolean;
+} | {
+    type: 'union';
+    variants: SchemaDefinition[];
+};
+
+// @public
+export type SchemaType = 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array' | 'enum' | 'literal' | 'union';
+
+// @public
+export const toObjectSchema: (schema: z.ZodType | z.core.JSONSchema._JSONSchema | undefined) => ResolvedObjectSchema;
+
+// (No @packageDocumentation comment for this package)
+```

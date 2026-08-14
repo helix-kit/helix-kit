@@ -1,0 +1,25 @@
+---
+title: 'components/toggle-group'
+description: 'Public API of @helix-hq/design-system/components/toggle-group.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/toggle-group`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ClassProp } from 'class-variance-authority/types';
+import * as React_2 from 'react';
+import { ToggleGroup as ToggleGroup_2 } from 'radix-ui';
+import { VariantProps } from 'class-variance-authority';
+
+// @public (undocumented)
+export const ToggleGroup: (input: React_2.ComponentProps<typeof ToggleGroup_2.Root> & VariantProps<typeof toggleVariants> & {
+    spacing?: number;
+    orientation?: 'horizontal' | 'vertical';
+}) => React_2.JSX.Element;
+
+// @public (undocumented)
+export const ToggleGroupItem: (input: React_2.ComponentProps<typeof ToggleGroup_2.Item> & VariantProps<typeof toggleVariants>) => React_2.JSX.Element;
+
+// (No @packageDocumentation comment for this package)
+```

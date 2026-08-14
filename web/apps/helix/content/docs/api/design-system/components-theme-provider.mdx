@@ -1,0 +1,44 @@
+---
+title: 'components/theme-provider'
+description: 'Public API of @helix-hq/design-system/components/theme-provider.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/theme-provider`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSX } from 'react';
+import { ReactNode } from 'react';
+
+// @public (undocumented)
+export type ResolvedTheme = 'light' | 'dark';
+
+// @public (undocumented)
+export type Theme = 'light' | 'dark' | 'system';
+
+// @public (undocumented)
+export type ThemeContextValue = {
+    theme: Theme | undefined;
+    setTheme: (theme: Theme) => void;
+    resolvedTheme: ResolvedTheme | undefined;
+    systemTheme: ResolvedTheme | undefined;
+    themes: Theme[];
+};
+
+// @public
+export const ThemeProvider: (input: ThemeProviderProps) => JSX.Element;
+
+// @public (undocumented)
+export type ThemeProviderProps = Readonly<{
+    children: ReactNode;
+    defaultTheme?: Theme;
+    enableSystem?: boolean;
+    storageKey?: string;
+    disableTransitionOnChange?: boolean;
+}>;
+
+// @public (undocumented)
+export const useTheme: () => ThemeContextValue;
+
+// (No @packageDocumentation comment for this package)
+```

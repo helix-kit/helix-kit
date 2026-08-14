@@ -1,0 +1,993 @@
+---
+title: '@helix-hq/pdf-report'
+description: 'Public API of @helix-hq/pdf-report.'
+---
+
+The complete public surface of `@helix-hq/pdf-report`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ArtifactSpec } from '@helix-hq/ai-kit';
+import { Catalog } from '@json-render/core';
+import { ExecutionLimits } from '@helix-hq/code-executor';
+import { JSONSchema } from 'zod/v4/core';
+import { SchemaType } from '@json-render/core';
+import { Spec } from '@json-render/core';
+import { z } from 'zod';
+
+// @public
+export const applyReportPatchLine: (spec: Spec, line: string) => Spec;
+
+// @public
+export type ChartPoint = {
+    label: string;
+    value: number;
+};
+
+// @public (undocumented)
+export const cloneJson: <T>(value: T) => T;
+
+// @public
+export const DEFAULT_RENDER_ENDPOINT = "/api/pdf-report";
+
+// @public
+export const defaultReportTemplate: ReportTemplate;
+
+// @public
+export const fetchReportPdf: (input: FetchReportPdfOptions) => Promise<Blob>;
+
+// @public (undocumented)
+export type FetchReportPdfOptions = {
+    template: ReportTemplate;
+    input?: unknown;
+    branding?: ReportBranding;
+    filename?: string;
+    endpoint?: string;
+    signal?: AbortSignal;
+};
+
+// @public
+export const formatReportSpecIssues: (issues: ReportSpecIssue[]) => string;
+
+// @public
+export const helixComponentDefinitions: {
+    ReportPage: {
+        props: z.ZodObject<{
+            size: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+                A3: "A3";
+                A4: "A4";
+                A5: "A5";
+                LEGAL: "LEGAL";
+                LETTER: "LETTER";
+                TABLOID: "TABLOID";
+            }>>>;
+            orientation: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+                landscape: "landscape";
+                portrait: "portrait";
+            }>>>;
+            backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>;
+        slots: string[];
+        description: string;
+    };
+    Section: {
+        props: z.ZodObject<{
+            title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            subtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>;
+        slots: string[];
+        description: string;
+        example: {
+            title: string;
+            subtitle: null;
+        };
+    };
+    MetricGrid: {
+        props: z.ZodObject<{}, z.core.$strip>;
+        slots: string[];
+        description: string;
+    };
+    MetricCard: {
+        props: z.ZodObject<{
+            label: z.ZodString;
+            value: z.ZodString;
+            tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+                accent: "accent";
+                danger: "danger";
+                default: "default";
+                success: "success";
+                warning: "warning";
+            }>>>;
+            hint: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            width: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+        example: {
+            label: string;
+            value: string;
+            tone: string;
+        };
+    };
+    DataTable: {
+        props: z.ZodObject<{
+            headers: z.ZodArray<z.ZodString>;
+            rows: z.ZodArray<z.ZodArray<z.ZodString>>;
+            columnWidths: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
+            align: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodEnum<{
+                center: "center";
+                left: "left";
+                right: "right";
+            }>>>>;
+            rowColors: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNullable<z.ZodString>>>>;
+            striped: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+            fontSize: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            headerBackgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            emptyText: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+        example: {
+            headers: string[];
+            rows: string[][];
+        };
+    };
+    Callout: {
+        props: z.ZodObject<{
+            text: z.ZodString;
+            tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+                danger: "danger";
+                info: "info";
+                success: "success";
+                warning: "warning";
+            }>>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+        example: {
+            text: string;
+            tone: string;
+        };
+    };
+    BarChart: {
+        props: z.ZodObject<{
+            series: z.ZodArray<z.ZodObject<{
+                label: z.ZodString;
+                value: z.ZodNumber;
+            }, z.core.$strip>>;
+            title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+            showValues: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+        example: {
+            series: {
+                label: string;
+                value: number;
+            }[];
+        };
+    };
+    LineChart: {
+        props: z.ZodObject<{
+            series: z.ZodArray<z.ZodObject<{
+                label: z.ZodString;
+                value: z.ZodNumber;
+            }, z.core.$strip>>;
+            title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+            area: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+    };
+    PieChart: {
+        props: z.ZodObject<{
+            series: z.ZodArray<z.ZodObject<{
+                label: z.ZodString;
+                value: z.ZodNumber;
+            }, z.core.$strip>>;
+            title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            showLegend: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+            innerRadius: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        }, z.core.$strip>;
+        slots: never[];
+        description: string;
+    };
+    KeepTogether: {
+        props: z.ZodObject<{
+            gap: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            padding: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            marginTop: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            marginBottom: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            borderWidth: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        }, z.core.$strip>;
+        slots: string[];
+        description: string;
+    };
+};
+
+// @public (undocumented)
+export type HelixPackCatalog = typeof helixPackCatalog;
+
+// @public
+export const helixPackCatalog: Catalog<    {
+spec: SchemaType<"object", {
+root: SchemaType<"string", unknown>;
+elements: SchemaType<"record", SchemaType<"object", {
+type: SchemaType<"ref", string>;
+props: SchemaType<"propsOf", string>;
+children: SchemaType<"array", SchemaType<"string", unknown>>;
+visible: SchemaType<"any", unknown>;
+}>>;
+}>;
+catalog: SchemaType<"object", {
+components: SchemaType<"map", {
+props: SchemaType<"zod", unknown>;
+slots: SchemaType<"array", SchemaType<"string", unknown>>;
+description: SchemaType<"string", unknown>;
+example: SchemaType<"any", unknown>;
+}>;
+}>;
+}, {
+components: {
+ReportPage: {
+props: z.ZodObject<{
+size: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+A3: "A3";
+A4: "A4";
+A5: "A5";
+LEGAL: "LEGAL";
+LETTER: "LETTER";
+TABLOID: "TABLOID";
+}>>>;
+orientation: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+landscape: "landscape";
+portrait: "portrait";
+}>>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+Section: {
+props: z.ZodObject<{
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+subtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+title: string;
+subtitle: null;
+};
+};
+MetricGrid: {
+props: z.ZodObject<{}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+MetricCard: {
+props: z.ZodObject<{
+label: z.ZodString;
+value: z.ZodString;
+tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+accent: "accent";
+danger: "danger";
+default: "default";
+success: "success";
+warning: "warning";
+}>>>;
+hint: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+label: string;
+value: string;
+tone: string;
+};
+};
+DataTable: {
+props: z.ZodObject<{
+headers: z.ZodArray<z.ZodString>;
+rows: z.ZodArray<z.ZodArray<z.ZodString>>;
+columnWidths: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
+align: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>>>;
+rowColors: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNullable<z.ZodString>>>>;
+striped: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+fontSize: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+headerBackgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+emptyText: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+headers: string[];
+rows: string[][];
+};
+};
+Callout: {
+props: z.ZodObject<{
+text: z.ZodString;
+tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+danger: "danger";
+info: "info";
+success: "success";
+warning: "warning";
+}>>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+text: string;
+tone: string;
+};
+};
+BarChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+showValues: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+series: {
+label: string;
+value: number;
+}[];
+};
+};
+LineChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+area: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+};
+PieChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+showLegend: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+innerRadius: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+};
+KeepTogether: {
+props: z.ZodObject<{
+gap: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+padding: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+marginTop: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+marginBottom: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderWidth: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+};
+}>;
+
+// @public (undocumented)
+export const isObjectRecord: (value: unknown) => value is Record<string, unknown>;
+
+// @public (undocumented)
+export const isReportSpec: (value: unknown) => value is ReportTemplate['spec'];
+
+// @public (undocumented)
+export const parseJson: (value: string, label: string) => unknown;
+
+// @public (undocumented)
+export type PreparedReport = {
+    spec: ReportSpec;
+    data: Record<string, unknown>;
+    logs: string[];
+};
+
+// @public
+export const prepareReport: (template: ReportTemplate, options?: PrepareReportOptions) => Promise<PreparedReport>;
+
+// @public (undocumented)
+export type PrepareReportOptions = {
+    input?: unknown;
+    branding?: ReportBranding;
+    limits?: ExecutionLimits;
+};
+
+// @public (undocumented)
+export const prettyJson: (value: unknown) => string;
+
+// @public
+export const REPORT_ARTIFACTS: ArtifactSpec[];
+
+// @public
+export type ReportBranding = {
+    title?: string;
+    subtitle?: string;
+    generatedAt?: string;
+    footerNote?: string;
+};
+
+// @public (undocumented)
+export type ReportCatalog = typeof reportCatalog;
+
+// @public
+export const reportCatalog: Catalog<    {
+spec: SchemaType<"object", {
+root: SchemaType<"string", unknown>;
+elements: SchemaType<"record", SchemaType<"object", {
+type: SchemaType<"ref", string>;
+props: SchemaType<"propsOf", string>;
+children: SchemaType<"array", SchemaType<"string", unknown>>;
+visible: SchemaType<"any", unknown>;
+}>>;
+}>;
+catalog: SchemaType<"object", {
+components: SchemaType<"map", {
+props: SchemaType<"zod", unknown>;
+slots: SchemaType<"array", SchemaType<"string", unknown>>;
+description: SchemaType<"string", unknown>;
+example: SchemaType<"any", unknown>;
+}>;
+}>;
+}, {
+components: {
+Document: {
+props: z.ZodObject<{
+title: z.ZodNullable<z.ZodString>;
+author: z.ZodNullable<z.ZodString>;
+subject: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+title: string;
+author: string;
+};
+};
+Page: {
+props: z.ZodObject<{
+size: z.ZodNullable<z.ZodEnum<{
+A4: "A4";
+A3: "A3";
+A5: "A5";
+LETTER: "LETTER";
+LEGAL: "LEGAL";
+TABLOID: "TABLOID";
+}>>;
+orientation: z.ZodNullable<z.ZodEnum<{
+portrait: "portrait";
+landscape: "landscape";
+}>>;
+marginTop: z.ZodNullable<z.ZodNumber>;
+marginBottom: z.ZodNullable<z.ZodNumber>;
+marginLeft: z.ZodNullable<z.ZodNumber>;
+marginRight: z.ZodNullable<z.ZodNumber>;
+backgroundColor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+size: string;
+orientation: string;
+};
+};
+View: {
+props: z.ZodObject<{
+padding: z.ZodNullable<z.ZodNumber>;
+paddingTop: z.ZodNullable<z.ZodNumber>;
+paddingBottom: z.ZodNullable<z.ZodNumber>;
+paddingLeft: z.ZodNullable<z.ZodNumber>;
+paddingRight: z.ZodNullable<z.ZodNumber>;
+margin: z.ZodNullable<z.ZodNumber>;
+backgroundColor: z.ZodNullable<z.ZodString>;
+borderWidth: z.ZodNullable<z.ZodNumber>;
+borderColor: z.ZodNullable<z.ZodString>;
+borderRadius: z.ZodNullable<z.ZodNumber>;
+flex: z.ZodNullable<z.ZodNumber>;
+alignItems: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+stretch: "stretch";
+}>>;
+justifyContent: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+"space-between": "space-between";
+"space-around": "space-around";
+}>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+padding: number;
+backgroundColor: string;
+alignItems: string;
+};
+};
+Row: {
+props: z.ZodObject<{
+gap: z.ZodNullable<z.ZodNumber>;
+alignItems: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+stretch: "stretch";
+}>>;
+justifyContent: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+"space-between": "space-between";
+"space-around": "space-around";
+}>>;
+padding: z.ZodNullable<z.ZodNumber>;
+flex: z.ZodNullable<z.ZodNumber>;
+wrap: z.ZodNullable<z.ZodBoolean>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+gap: number;
+alignItems: string;
+};
+};
+Column: {
+props: z.ZodObject<{
+gap: z.ZodNullable<z.ZodNumber>;
+alignItems: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+stretch: "stretch";
+}>>;
+justifyContent: z.ZodNullable<z.ZodEnum<{
+"flex-start": "flex-start";
+center: "center";
+"flex-end": "flex-end";
+"space-between": "space-between";
+"space-around": "space-around";
+}>>;
+padding: z.ZodNullable<z.ZodNumber>;
+flex: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+gap: number;
+padding: number;
+};
+};
+Heading: {
+props: z.ZodObject<{
+text: z.ZodString;
+level: z.ZodNullable<z.ZodEnum<{
+h1: "h1";
+h2: "h2";
+h3: "h3";
+h4: "h4";
+}>>;
+color: z.ZodNullable<z.ZodString>;
+align: z.ZodNullable<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+text: string;
+level: string;
+};
+};
+Text: {
+props: z.ZodObject<{
+text: z.ZodString;
+fontSize: z.ZodNullable<z.ZodNumber>;
+color: z.ZodNullable<z.ZodString>;
+align: z.ZodNullable<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>;
+fontWeight: z.ZodNullable<z.ZodEnum<{
+normal: "normal";
+bold: "bold";
+}>>;
+fontStyle: z.ZodNullable<z.ZodEnum<{
+normal: "normal";
+italic: "italic";
+}>>;
+lineHeight: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+text: string;
+};
+};
+Image: {
+props: z.ZodObject<{
+src: z.ZodString;
+width: z.ZodNullable<z.ZodNumber>;
+height: z.ZodNullable<z.ZodNumber>;
+objectFit: z.ZodNullable<z.ZodEnum<{
+contain: "contain";
+cover: "cover";
+fill: "fill";
+none: "none";
+}>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+src: string;
+width: number;
+height: number;
+};
+};
+Link: {
+props: z.ZodObject<{
+text: z.ZodString;
+href: z.ZodString;
+fontSize: z.ZodNullable<z.ZodNumber>;
+color: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+text: string;
+href: string;
+};
+};
+Table: {
+props: z.ZodObject<{
+columns: z.ZodArray<z.ZodObject<{
+header: z.ZodString;
+width: z.ZodNullable<z.ZodString>;
+align: z.ZodNullable<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>;
+}, z.core.$strip>>;
+rows: z.ZodArray<z.ZodArray<z.ZodString>>;
+headerBackgroundColor: z.ZodNullable<z.ZodString>;
+headerTextColor: z.ZodNullable<z.ZodString>;
+borderColor: z.ZodNullable<z.ZodString>;
+fontSize: z.ZodNullable<z.ZodNumber>;
+striped: z.ZodNullable<z.ZodBoolean>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+columns: ({
+header: string;
+width: string;
+align?: undefined;
+} | {
+header: string;
+width: string;
+align: string;
+})[];
+rows: string[][];
+};
+};
+List: {
+props: z.ZodObject<{
+items: z.ZodArray<z.ZodString>;
+ordered: z.ZodNullable<z.ZodBoolean>;
+fontSize: z.ZodNullable<z.ZodNumber>;
+color: z.ZodNullable<z.ZodString>;
+spacing: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+items: string[];
+ordered: boolean;
+};
+};
+Divider: {
+props: z.ZodObject<{
+color: z.ZodNullable<z.ZodString>;
+thickness: z.ZodNullable<z.ZodNumber>;
+marginTop: z.ZodNullable<z.ZodNumber>;
+marginBottom: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+color: string;
+thickness: number;
+};
+};
+Spacer: {
+props: z.ZodObject<{
+height: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+height: number;
+};
+};
+PageNumber: {
+props: z.ZodObject<{
+format: z.ZodNullable<z.ZodString>;
+fontSize: z.ZodNullable<z.ZodNumber>;
+color: z.ZodNullable<z.ZodString>;
+align: z.ZodNullable<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+format: string;
+align: string;
+fontSize: number;
+};
+};
+ReportPage: {
+props: z.ZodObject<{
+size: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+A3: "A3";
+A4: "A4";
+A5: "A5";
+LEGAL: "LEGAL";
+LETTER: "LETTER";
+TABLOID: "TABLOID";
+}>>>;
+orientation: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+landscape: "landscape";
+portrait: "portrait";
+}>>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+Section: {
+props: z.ZodObject<{
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+subtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+example: {
+title: string;
+subtitle: null;
+};
+};
+MetricGrid: {
+props: z.ZodObject<{}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+MetricCard: {
+props: z.ZodObject<{
+label: z.ZodString;
+value: z.ZodString;
+tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+accent: "accent";
+danger: "danger";
+default: "default";
+success: "success";
+warning: "warning";
+}>>>;
+hint: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+label: string;
+value: string;
+tone: string;
+};
+};
+DataTable: {
+props: z.ZodObject<{
+headers: z.ZodArray<z.ZodString>;
+rows: z.ZodArray<z.ZodArray<z.ZodString>>;
+columnWidths: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
+align: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodEnum<{
+center: "center";
+left: "left";
+right: "right";
+}>>>>;
+rowColors: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNullable<z.ZodString>>>>;
+striped: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+fontSize: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+headerBackgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+emptyText: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+headers: string[];
+rows: string[][];
+};
+};
+Callout: {
+props: z.ZodObject<{
+text: z.ZodString;
+tone: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+danger: "danger";
+info: "info";
+success: "success";
+warning: "warning";
+}>>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+text: string;
+tone: string;
+};
+};
+BarChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+showValues: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+example: {
+series: {
+label: string;
+value: number;
+}[];
+};
+};
+LineChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+showGrid: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+area: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+};
+PieChart: {
+props: z.ZodObject<{
+series: z.ZodArray<z.ZodObject<{
+label: z.ZodString;
+value: z.ZodNumber;
+}, z.core.$strip>>;
+title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+width: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+height: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+showLegend: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+innerRadius: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+}, z.core.$strip>;
+slots: never[];
+description: string;
+};
+KeepTogether: {
+props: z.ZodObject<{
+gap: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+padding: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+marginTop: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+marginBottom: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+borderWidth: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+}, z.core.$strip>;
+slots: string[];
+description: string;
+};
+};
+}>;
+
+// @public
+export type ReportSpec = Spec;
+
+// @public (undocumented)
+export type ReportSpecIssue = {
+    elementKey?: string;
+    message: string;
+};
+
+// @public
+export const reportSpecJsonSchema: () => object;
+
+// @public
+export type ReportTemplate = {
+    inputSchema: JSONSchema._JSONSchema;
+    code: string;
+    outputSchema: JSONSchema._JSONSchema;
+    spec: ReportSpec;
+    demoInput: unknown;
+};
+
+// @public
+export const resolveReportTemplate: (value: unknown) => ReportTemplate;
+
+// @public
+export const validateReportSpec: (spec: Spec, outputSchema?: JSONSchema._JSONSchema) => ReportSpecIssue[];
+
+// (No @packageDocumentation comment for this package)
+```

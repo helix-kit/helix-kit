@@ -1,0 +1,10 @@
+{
+  "title": "API Reference",
+  "pages": [
+    "ai-kit",
+    "code-executor",
+    "design-system",
+    "json-schema",
+    "pdf-report"
+  ]
+}

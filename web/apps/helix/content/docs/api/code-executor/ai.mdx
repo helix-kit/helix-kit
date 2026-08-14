@@ -1,0 +1,43 @@
+---
+title: 'ai'
+description: 'Public API of @helix-hq/code-executor/ai.'
+---
+
+The complete public surface of `@helix-hq/code-executor/ai`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { AiCapability } from '@helix-hq/ai-kit';
+import { JSONSchema } from 'zod/v4/core';
+
+// @public (undocumented)
+export type CodeAuthoringOptions = CodeEnvironment & {
+    functions?: HostFunctions;
+    limits?: ExecutionLimits;
+    id?: string;
+    resolve?: () => CodeEnvironment;
+};
+
+// @public (undocumented)
+export type CodeEnvironment = {
+    inputSchema?: JSONSchema._JSONSchema;
+    outputSchema?: JSONSchema._JSONSchema;
+    sampleInput?: unknown;
+};
+
+// @public
+export const codeExecutorAuthoring: (options?: CodeAuthoringOptions) => AiCapability;
+
+// @public
+export const codeExecutorTool: (options?: CodeToolOptions) => AiCapability;
+
+// @public (undocumented)
+export type CodeToolOptions = {
+    functions?: HostFunctions;
+    limits?: ExecutionLimits;
+    id?: string;
+    guidance?: string;
+};
+
+// (No @packageDocumentation comment for this package)
+```

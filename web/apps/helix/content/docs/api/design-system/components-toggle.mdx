@@ -1,0 +1,25 @@
+---
+title: 'components/toggle'
+description: 'Public API of @helix-hq/design-system/components/toggle.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/toggle`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ClassProp } from 'class-variance-authority/types';
+import * as React_2 from 'react';
+import { Toggle as Toggle_2 } from 'radix-ui';
+import { VariantProps } from 'class-variance-authority';
+
+// @public (undocumented)
+export const Toggle: (input: React_2.ComponentProps<typeof Toggle_2.Root> & VariantProps<typeof toggleVariants>) => React_2.JSX.Element;
+
+// @public (undocumented)
+export const toggleVariants: (props?: ({
+    variant?: "default" | "outline" | null | undefined;
+    size?: "default" | "lg" | "sm" | null | undefined;
+} & ClassProp) | undefined) => string;
+
+// (No @packageDocumentation comment for this package)
+```

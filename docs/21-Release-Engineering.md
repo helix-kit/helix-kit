@@ -48,8 +48,9 @@ API-report and packaging scripts read it rather than keeping their own copy.
 ## The API contract
 
 `pnpm api:check` extracts the public type surface of **every published entry
-point** — 66 of them across the five packages — into `packages/*/etc/*.api.md`,
-and fails if any differs from what is committed.
+point** — 66 of them across the five packages — into
+`web/apps/helix/content/docs/api/`, and fails if any differs from what is
+committed.
 
 The point is that a breaking change cannot land invisibly. The report is a
 normal file in the diff, so removing an export shows up as a removed line during

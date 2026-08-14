@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -126,8 +134,11 @@ const collectEntries = (): Entry[] => {
   );
 };
 
-const runEntry = (entry: Entry, localBuild: boolean): { ok: boolean; warnings: number } => {
-  const reportFolder = path.join(entry.packageDirectory, 'etc');
+const runEntry = (entry: Entry): { ok: boolean; warnings: number; reportPath: string } => {
+  // Always a scratch directory: the committed artifact is the MDX page rendered
+  // from this, published on the docs site, rather than an `etc/` folder in each
+  // package that only ever existed to be diffed.
+  const reportFolder = path.join(tempRoot, 'reports', path.basename(entry.packageDirectory));
   mkdirSync(reportFolder, { recursive: true });
 
   const config = ExtractorConfig.prepare({
@@ -188,7 +199,9 @@ const runEntry = (entry: Entry, localBuild: boolean): { ok: boolean; warnings: n
   });
 
   const result = Extractor.invoke(config, {
-    localBuild,
+    // Always "local": api-extractor writes its report unconditionally, and the
+    // comparison that gates CI is done on the rendered MDX instead.
+    localBuild: true,
     showVerboseMessages: false,
     messageCallback: (message) => {
       // Reported per entry below; silence api-extractor's own console output so
@@ -199,10 +212,66 @@ const runEntry = (entry: Entry, localBuild: boolean): { ok: boolean; warnings: n
 
   // Deliberately not `result.succeeded`: that is false whenever there is any
   // warning, and warnings here are informational (`ae-forgotten-export` and
-  // friends). What this gate cares about is whether the public API drifted from
-  // the committed report, plus genuine extraction errors.
-  const ok = result.errorCount === 0 && (localBuild || !result.apiReportChanged);
-  return { ok, warnings: result.warningCount };
+  // friends). Only a genuine extraction error matters here; drift is detected
+  // by comparing the rendered MDX.
+  return {
+    ok: result.errorCount === 0,
+    warnings: result.warningCount,
+    reportPath: path.join(reportFolder, entry.reportFileName),
+  };
+};
+
+const docsApiRoot = path.join(workspaceRoot, 'apps', 'helix', 'content', 'docs', 'api');
+
+/** The folder each package's pages live under, e.g. `pdf-report`. */
+const docsFolderFor = (entry: Entry) => entry.packageName.replace('@helix-hq/', '');
+
+const docsPageName = (entry: Entry) =>
+  entry.reportFileName.replace(/\.api\.md$/, '').replace(/^index$/, 'index');
+
+/**
+ * Renders one api-extractor report as a docs page.
+ *
+ * The report is already a fenced TypeScript block wrapped in a heading and a
+ * "do not edit" note; only the block is worth publishing, so the frontmatter and
+ * the note are rebuilt for the site rather than passed through.
+ */
+const renderPage = (entry: Entry, report: string): string => {
+  const specifier = `${entry.packageName}${entry.subpath === '.' ? '' : entry.subpath.slice(1)}`;
+  // api-extractor writes CRLF; normalise before matching, and so the committed
+  // pages are identical whatever platform generated them.
+  const fenced = /```ts\n([\s\S]*?)```/.exec(report.replace(/\r\n/g, '\n'));
+  const body = (fenced?.[1] ?? '').trim();
+  if (body === '') {
+    throw new Error(`could not extract an API surface from the report for ${specifier}`);
+  }
+
+  // Both quoted: YAML treats a leading `@` as a reserved indicator, so an
+  // unquoted `@helix-hq/...` title fails to parse.
+  return `---
+title: '${entry.subpath === '.' ? entry.packageName : entry.subpath.replace(/^\.\//, '')}'
+description: 'Public API of ${specifier}.'
+---
+
+The complete public surface of \`${specifier}\`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+\`\`\`ts
+${body}
+\`\`\`
+`;
+};
+
+const writeIfChanged = (file: string, contents: string, write: boolean): boolean => {
+  const current = existsSync(file) ? readFileSync(file, 'utf8') : null;
+  if (current === contents) {
+    return false;
+  }
+  if (write) {
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, contents);
+  }
+  return true;
 };
 
 const main = () => {
@@ -224,16 +293,30 @@ const main = () => {
   }
 
   const failures: Entry[] = [];
+  const stale: string[] = [];
   let warnings = 0;
+  const pagesByFolder = new Map<string, string[]>();
+
   for (const entry of entries) {
     try {
-      const result = runEntry(entry, localBuild);
+      const result = runEntry(entry);
       warnings += result.warnings;
       if (!result.ok) {
         failures.push(entry);
+        continue;
+      }
+
+      const folder = docsFolderFor(entry);
+      const page = docsPageName(entry);
+      pagesByFolder.set(folder, [...(pagesByFolder.get(folder) ?? []), page]);
+
+      const file = path.join(docsApiRoot, folder, `${page}.mdx`);
+      const contents = renderPage(entry, readFileSync(result.reportPath, 'utf8'));
+      if (writeIfChanged(file, contents, localBuild)) {
+        stale.push(`${entry.packageName}${entry.subpath.slice(1)}`);
       }
     } catch (error) {
-      // One unanalysable entry should not hide the state of the other 90.
+      // One unanalysable entry should not hide the state of the other 65.
       failures.push(entry);
       console.error(
         `  ${entry.packageName}${entry.subpath.slice(1)}: ${
@@ -243,10 +326,44 @@ const main = () => {
     }
   }
 
+  // The nav is derived from these, so a package that gains an entry point shows
+  // up on the site without anyone editing a navigation file.
+  for (const [folder, pages] of [...pagesByFolder].sort(([a], [b]) => a.localeCompare(b))) {
+    const meta = {
+      title: `@helix-hq/${folder}`,
+      pages: [...pages].sort((a, b) =>
+        a === 'index' ? -1 : b === 'index' ? 1 : a.localeCompare(b),
+      ),
+    };
+    if (
+      writeIfChanged(
+        path.join(docsApiRoot, folder, 'meta.json'),
+        `${JSON.stringify(meta, null, 2)}\n`,
+        localBuild,
+      )
+    ) {
+      stale.push(`${folder}/meta.json`);
+    }
+  }
+
+  const rootMeta = {
+    title: 'API Reference',
+    pages: [...pagesByFolder.keys()].sort(),
+  };
+  if (
+    writeIfChanged(
+      path.join(docsApiRoot, 'meta.json'),
+      `${JSON.stringify(rootMeta, null, 2)}\n`,
+      localBuild,
+    )
+  ) {
+    stale.push('api/meta.json');
+  }
+
   const verb = localBuild ? 'Wrote' : 'Checked';
   const packageCount = new Set(entries.map((entry) => entry.packageName)).size;
   console.log(
-    `${verb} ${entries.length} API report(s) across ${packageCount} package(s)` +
+    `${verb} ${entries.length} API reference page(s) across ${packageCount} package(s)` +
       `${warnings === 0 ? '' : ` (${warnings} extractor warnings)`}.`,
   );
   // Say what is not covered rather than letting a silent skip read as coverage.
@@ -258,10 +375,18 @@ const main = () => {
 
   if (failures.length > 0) {
     console.error(
-      `\n${failures.length} API report(s) are out of date or failed to generate:\n` +
-        failures.map((entry) => `  ${entry.packageName}${entry.subpath.slice(1)}`).join('\n') +
+      `\n${failures.length} entry point(s) failed to extract:\n` +
+        failures.map((entry) => `  ${entry.packageName}${entry.subpath.slice(1)}`).join('\n'),
+    );
+    process.exit(1);
+  }
+
+  if (!localBuild && stale.length > 0) {
+    console.error(
+      `\n${stale.length} API reference page(s) are out of date:\n` +
+        stale.map((name) => `  ${name}`).join('\n') +
         '\n\nThe public API changed. Run `pnpm api:update`, review the diff — a removed or\n' +
-        'changed line means a major bump — and commit the updated reports.',
+        'changed line means a major bump — and commit the updated pages.',
     );
     process.exit(1);
   }

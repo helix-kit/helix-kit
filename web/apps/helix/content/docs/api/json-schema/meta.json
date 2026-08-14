@@ -1,0 +1,9 @@
+{
+  "title": "@helix-hq/json-schema",
+  "pages": [
+    "index",
+    "ai",
+    "builder",
+    "editor"
+  ]
+}

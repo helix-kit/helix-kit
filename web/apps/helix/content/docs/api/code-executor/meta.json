@@ -1,0 +1,9 @@
+{
+  "title": "@helix-hq/code-executor",
+  "pages": [
+    "index",
+    "ai",
+    "editor",
+    "types"
+  ]
+}

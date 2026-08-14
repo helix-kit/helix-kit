@@ -1,0 +1,11 @@
+{
+  "title": "@helix-hq/pdf-report",
+  "pages": [
+    "index",
+    "ai",
+    "browser",
+    "components",
+    "editor",
+    "server"
+  ]
+}

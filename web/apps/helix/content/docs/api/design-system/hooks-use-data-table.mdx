@@ -1,0 +1,25 @@
+---
+title: 'hooks/use-data-table'
+description: 'Public API of @helix-hq/design-system/hooks/use-data-table.'
+---
+
+The complete public surface of `@helix-hq/design-system/hooks/use-data-table`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ColumnSort } from '@tanstack/react-table';
+import * as React$1 from 'react';
+import { Table } from '@tanstack/react-table';
+import { TableOptions } from '@tanstack/react-table';
+import { TableState } from '@tanstack/react-table';
+
+// @public
+export const useDataTable: <TData>(props: UseDataTableProps<TData>) => {
+    table: Table<TData>;
+    shallow: boolean;
+    debounceMs: number;
+    throttleMs: number;
+};
+
+// (No @packageDocumentation comment for this package)
+```

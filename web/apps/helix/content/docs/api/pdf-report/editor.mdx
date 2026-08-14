@@ -1,0 +1,30 @@
+---
+title: 'editor'
+description: 'Public API of @helix-hq/pdf-report/editor.'
+---
+
+The complete public surface of `@helix-hq/pdf-report/editor`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSONSchema } from 'zod/v4/core';
+import { JSX } from 'react';
+import { Spec } from '@json-render/core';
+
+// @public
+export const ReportTemplateEditor: (input: ReportTemplateEditorProps) => JSX.Element;
+
+// @public (undocumented)
+export type ReportTemplateEditorProps = {
+    defaultValue?: ReportTemplate;
+    onChange?: (value: ReportTemplate) => void;
+    onError?: (error: string | null) => void;
+    endpoint?: string;
+    renderMode?: 'client' | 'server';
+    branding?: ReportBranding;
+    theme?: 'light' | 'dark';
+    previewDebounceMs?: number;
+};
+
+// (No @packageDocumentation comment for this package)
+```

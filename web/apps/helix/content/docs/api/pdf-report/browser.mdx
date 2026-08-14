@@ -1,0 +1,18 @@
+---
+title: 'browser'
+description: 'Public API of @helix-hq/pdf-report/browser.'
+---
+
+The complete public surface of `@helix-hq/pdf-report/browser`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ExecutionLimits } from '@helix-hq/code-executor';
+import { JSONSchema } from 'zod/v4/core';
+import { Spec } from '@json-render/core';
+
+// @public
+export const renderReportToBlob: (template: ReportTemplate, options?: PrepareReportOptions) => Promise<Blob>;
+
+// (No @packageDocumentation comment for this package)
+```

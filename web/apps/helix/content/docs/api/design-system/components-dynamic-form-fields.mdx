@@ -1,0 +1,51 @@
+---
+title: 'components/dynamic-form-fields'
+description: 'Public API of @helix-hq/design-system/components/dynamic-form-fields.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/dynamic-form-fields`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { Accept } from 'react-dropzone';
+import { ControllerRenderProps } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
+import { JSX } from 'react';
+import { Path } from 'react-hook-form';
+import { ReactNode } from 'react';
+
+// @public (undocumented)
+export type FormField<T extends FieldValues = FieldValues> = {
+    name: Path<T>;
+    label: string | ReactNode;
+    type: keyof typeof RenderedFormFields;
+    placeholder?: string;
+    description?: string;
+    options?: SelectOption[];
+    min?: number;
+    max?: number;
+    step?: number;
+    render?: (field: ControllerRenderProps<T, Path<T>>) => ReactNode;
+    displayCondition?: ((values: T) => boolean) | boolean;
+    maxFiles?: number;
+    accept?: Accept;
+};
+
+// @public (undocumented)
+export const RenderedFormFields: {
+    [key: string]: <T extends FieldValues>(props: FieldProps<T>) => ReactNode;
+};
+
+// @public (undocumented)
+export const RenderFormInput: <T extends FieldValues = FieldValues>(input: {
+    type: keyof typeof RenderedFormFields;
+    field: ControllerRenderProps<T, Path<T>>;
+    formField: FormField<T>;
+    id: string;
+}) => JSX.Element | null;
+
+// @public (undocumented)
+export const RenderLabelAfter: Partial<keyof typeof RenderedFormFields>;
+
+// (No @packageDocumentation comment for this package)
+```

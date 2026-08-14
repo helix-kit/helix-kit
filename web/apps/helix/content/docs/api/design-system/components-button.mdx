@@ -1,0 +1,30 @@
+---
+title: 'components/button'
+description: 'Public API of @helix-hq/design-system/components/button.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/button`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { ClassProp } from 'class-variance-authority/types';
+import { ComponentProps } from 'react';
+import { JSX } from 'react';
+import { VariantProps } from 'class-variance-authority';
+
+// @public (undocumented)
+export const Button: (input: ButtonProps) => JSX.Element;
+
+// @public (undocumented)
+export type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+};
+
+// @public (undocumented)
+export const buttonVariants: (props?: ({
+    variant?: "default" | "destructive" | "ghost" | "link" | "outline" | "secondary" | null | undefined;
+    size?: "default" | "icon" | "icon-lg" | "icon-sm" | "icon-xs" | "lg" | "sm" | "xs" | null | undefined;
+} & ClassProp) | undefined) => string;
+
+// (No @packageDocumentation comment for this package)
+```

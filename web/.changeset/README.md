@@ -32,7 +32,8 @@ it from **their** side, not from how big the diff felt:
   a raised minimum version, or a behavioural change someone could be relying on.
 
 If you are unsure between minor and major, look at the API report diff
-(`etc/*.api.md`) — if a line was removed or changed rather than added, it is
+(`web/apps/helix/content/docs/api/`) — if a line was removed or changed rather
+than added, it is
 major.
 
 ## Releasing

@@ -341,7 +341,8 @@ drops an individual check.
   **Changesets**. Any change to one needs `pnpm changeset` committed alongside it —
   that file is what produces the version bump and the `CHANGELOG.md` entry. Two gates
   run on every push and again at release: `pnpm api:check` (an api-extractor report
-  per published entry point, in `packages/*/etc/*.api.md` — a diff there *is* the
+  per published entry point, rendered into `web/apps/helix/content/docs/api/` and
+  published on helix-kit.com/docs — a diff there *is* the
   semver signal, so run `pnpm api:update` and review it after an intentional API
   change) and `pnpm publint` (publint + are-the-types-wrong against a real `pnpm pack`
   tarball, since the workspace `exports` resolve to `src` and only the tarball

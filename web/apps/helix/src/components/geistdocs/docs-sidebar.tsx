@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,15 +21,17 @@ import { useSidebarContext } from '@/hooks/geistdocs/use-sidebar';
 
 import { githubUrl } from './config';
 import { GithubIcon } from './icons';
-import { contents, type DocsSection } from './sidebar-content';
+import { buildSections, type DocsSection } from './sidebar-content';
 import { ThemeToggle } from './theme-toggle';
+
+import type * as PageTree from 'fumadocs-core/page-tree';
 
 const HELIX_VERSION = 'v0.1.0';
 
 const isItemActive = (pathname: string, href: string) =>
   pathname === href || (href !== '/docs' && pathname.startsWith(`${href}/`));
 
-const getDefaultOpen = (pathname: string): number => {
+const getDefaultOpen = (contents: DocsSection[], pathname: string): number => {
   const index = contents.findIndex((section) =>
     section.list.some((item) => isItemActive(pathname, item.href)),
   );
@@ -146,16 +148,22 @@ const SidebarFooter = () => (
   </div>
 );
 
-const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
+const SidebarBody = ({
+  contents,
+  onNavigate,
+}: {
+  contents: DocsSection[];
+  onNavigate?: () => void;
+}) => {
   const pathname = usePathname();
-  const [currentOpen, setCurrentOpen] = useState(() => getDefaultOpen(pathname));
+  const [currentOpen, setCurrentOpen] = useState(() => getDefaultOpen(contents, pathname));
   const [trackedPath, setTrackedPath] = useState(pathname);
   const navRef = useRef<HTMLElement>(null);
 
   // Re-open the active section on navigation via the "adjust state during render" pattern.
   if (pathname !== trackedPath) {
     setTrackedPath(pathname);
-    setCurrentOpen(getDefaultOpen(pathname));
+    setCurrentOpen(getDefaultOpen(contents, pathname));
   }
 
   return (
@@ -227,7 +235,10 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
   );
 };
 
-export const DocsSidebar = () => {
+export const DocsSidebar = ({ tree }: { tree: PageTree.Root }) => {
+  // Built here, not in the server layout: the section icons are component
+  // functions, which cannot be serialised across the RSC boundary.
+  const contents = useMemo(() => buildSections(tree), [tree]);
   const { isOpen, setIsOpen } = useSidebarContext();
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
@@ -242,7 +253,7 @@ export const DocsSidebar = () => {
   return (
     <>
       <aside className="bg-background border-foreground/5 fixed top-(--landing-topbar-height) bottom-0 left-0 z-30 hidden w-[22vw] max-w-[300px] flex-col border-r lg:flex">
-        <SidebarBody />
+        <SidebarBody contents={contents} />
       </aside>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent className="w-[300px] gap-0 p-0" side="left">
@@ -252,6 +263,7 @@ export const DocsSidebar = () => {
           </SheetHeader>
           <div className="flex h-full flex-col pt-6">
             <SidebarBody
+              contents={contents}
               onNavigate={() => {
                 setIsOpen(false);
               }}

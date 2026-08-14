@@ -1,0 +1,43 @@
+---
+title: 'components/app-header'
+description: 'Public API of @helix-hq/design-system/components/app-header.'
+---
+
+The complete public surface of `@helix-hq/design-system/components/app-header`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSX } from 'react';
+import { ReactNode } from 'react';
+import { ReactPortal } from 'react';
+
+// @public (undocumented)
+export const AppHeader: (input: AppHeaderProps) => JSX.Element;
+
+// @public (undocumented)
+export const HeaderLeftPortal: (input: {
+    children: ReactNode;
+}) => ReactPortal | null;
+
+// @public (undocumented)
+export const HeaderLeftPortalTarget: (input: {
+    className?: string;
+}) => JSX.Element;
+
+// @public (undocumented)
+export const HeaderPortalProvider: (input: {
+    children: ReactNode;
+}) => JSX.Element;
+
+// @public (undocumented)
+export const HeaderRightPortal: (input: {
+    children: ReactNode;
+}) => ReactPortal | null;
+
+// @public (undocumented)
+export const HeaderRightPortalTarget: (input: {
+    className?: string;
+}) => JSX.Element;
+
+// (No @packageDocumentation comment for this package)
+```

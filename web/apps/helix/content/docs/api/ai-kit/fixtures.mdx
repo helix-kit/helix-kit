@@ -1,0 +1,60 @@
+---
+title: 'fixtures'
+description: 'Public API of @helix-hq/ai-kit/fixtures.'
+---
+
+The complete public surface of `@helix-hq/ai-kit/fixtures`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { LanguageModel } from 'ai';
+
+// @public
+export type FixtureChoice = 'live' | 'replay';
+
+// @public (undocumented)
+export type FixtureEnv = {
+    record?: string | undefined;
+    replay?: string | undefined;
+    requested?: FixtureChoice | undefined;
+    slot?: string;
+    dir: string;
+    nodeEnv?: string | undefined;
+};
+
+// @public (undocumented)
+export type FixtureMode = {
+    mode: 'live';
+} | {
+    mode: 'record';
+    name: string;
+    path: string;
+} | {
+    mode: 'replay';
+    name: string;
+    path: string;
+};
+
+// @public
+export const fixtureModel: (options: FixtureModelOptions) => {
+    model: WrappableModel;
+    using: FixtureMode['mode'];
+};
+
+// @public (undocumented)
+export type FixtureModelOptions = {
+    live: () => WrappableModel;
+    modelId: string;
+    prompt: string;
+    fixture: FixtureMode;
+    chunkDelayMs?: number | undefined;
+};
+
+// @public
+export const LAST_TURN = "last-turn";
+
+// @public
+export const resolveFixtureMode: (env: FixtureEnv) => FixtureMode;
+
+// (No @packageDocumentation comment for this package)
+```

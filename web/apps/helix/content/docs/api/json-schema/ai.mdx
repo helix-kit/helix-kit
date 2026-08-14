@@ -1,0 +1,23 @@
+---
+title: 'ai'
+description: 'Public API of @helix-hq/json-schema/ai.'
+---
+
+The complete public surface of `@helix-hq/json-schema/ai`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { AiCapability } from '@helix-hq/ai-kit';
+import { ArtifactSpec } from '@helix-hq/ai-kit';
+
+// @public
+export const jsonSchemaAuthoring: (options?: SchemaAuthoringOptions) => AiCapability;
+
+// @public (undocumented)
+export type SchemaAuthoringOptions = {
+    id?: string;
+    artifacts?: ArtifactSpec[];
+};
+
+// (No @packageDocumentation comment for this package)
+```

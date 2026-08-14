@@ -1,0 +1,31 @@
+---
+title: 'builder'
+description: 'Public API of @helix-hq/json-schema/builder.'
+---
+
+The complete public surface of `@helix-hq/json-schema/builder`, generated from the published type
+declarations. Anything absent here is not part of the package's contract.
+
+```ts
+import { JSONSchema } from 'zod/v4/core';
+import { JSX } from 'react';
+
+// @public
+export const JsonSchemaBuilder: (input: {
+    value?: JSONSchema._JSONSchema;
+    onValueChange: (schema: JSONSchema.JSONSchema) => void;
+    className?: string;
+    maxHeight?: string;
+}) => JSX.Element;
+
+// @public (undocumented)
+type PropertyDescriptor_2 = {
+    name: string;
+    required: boolean;
+    nullable: boolean;
+    schema: SchemaDefinition;
+};
+export { PropertyDescriptor_2 as PropertyDescriptor }
+
+// (No @packageDocumentation comment for this package)
+```

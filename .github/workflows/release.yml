@@ -83,6 +83,25 @@ jobs:
               "Contents: read+write on this repository, owned by an account with the admin" \
               "role so it bypasses the branch ruleset, set on the Production environment."
             failed=true
+          else
+            # Not just "is it set": resolve who it acts as and whether it can
+            # write here. The ruleset bypasses the admin role, so a token owned
+            # by anyone else authenticates fine and is then rejected at the push
+            # — the last step, after the version bump is already committed.
+            owner=$(curl -sf -H "Authorization: Bearer $RELEASE_TOKEN" \
+              https://api.github.com/user | jq -r '.login // empty')
+            push=$(curl -sf -H "Authorization: Bearer $RELEASE_TOKEN" \
+              https://api.github.com/repos/${GITHUB_REPOSITORY} | jq -r '.permissions.push // false')
+            if [ -z "$owner" ]; then
+              echo "::error::RELEASE_TOKEN does not authenticate (expired or revoked?)."
+              failed=true
+            elif [ "$push" != "true" ]; then
+              echo "::error::RELEASE_TOKEN (owner: $owner) has no write access to" \
+                "${GITHUB_REPOSITORY}. It needs Contents: read and write."
+              failed=true
+            else
+              echo "Pushing to git as: $owner (write access confirmed)"
+            fi
           fi
           [ "$failed" = "false" ] || exit 1
 

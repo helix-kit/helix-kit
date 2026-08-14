@@ -16,6 +16,7 @@
     "api:update": "tsx ./scripts/api-report.ts --update",
     "publint": "tsx ./scripts/check-packaging.ts",
     "changeset": "changeset",
+    "publish:packages": "tsx ./scripts/publish-packages.ts",
     "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
     "unused": "tsx ./scripts/run-unused.ts",
     "unused:fix": "knip --fix --fix-type exports,types --format",

@@ -43,6 +43,12 @@ jobs:
           # Changesets reads history to work out what changed since the last
           # release; a shallow clone hides it.
           fetch-depth: 0
+          # Checked out with the release PAT so the later `git push` is
+          # authenticated as its owner. GITHUB_TOKEN cannot push to `main`: the
+          # ruleset requires a pull request and bypasses only the admin role, and
+          # the first-party Actions app cannot be added as a bypass actor.
+          # Falls back to the job token for dry runs, which never push.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -57,18 +63,28 @@ jobs:
       # Before any work, and before the version bump is committed: a real
       # release that reaches `changeset publish` without a token has already
       # spent five minutes and rewritten every package.json for nothing.
-      - name: Check the npm credential
+      - name: Check the credentials
         if: inputs.dry-run == false
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
+          failed=false
           if [ -z "$NPM_TOKEN" ]; then
             echo "::error::NPM_TOKEN is empty. It must be a granular access token with" \
               "read+write on the @helix-hq scope and 'bypass 2FA' enabled, set on the" \
-              "Production environment (repository-level secrets are not visible to this job)."
-            exit 1
+              "Production environment (repository-level secrets are not visible here)."
+            failed=true
+          else
+            echo "Publishing to npm as: $(NODE_AUTH_TOKEN="$NPM_TOKEN" npm whoami)"
           fi
-          echo "Publishing as: $(NODE_AUTH_TOKEN="$NPM_TOKEN" npm whoami)"
+          if [ -z "$RELEASE_TOKEN" ]; then
+            echo "::error::RELEASE_TOKEN is empty. It must be a fine-grained PAT with" \
+              "Contents: read+write on this repository, owned by an account with the admin" \
+              "role so it bypasses the branch ruleset, set on the Production environment."
+            failed=true
+          fi
+          [ "$failed" = "false" ] || exit 1
 
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -150,14 +166,16 @@ jobs:
           git add -A
           git commit -s -m "HELIX-203: release @helix-hq packages [skip ci]" || echo 'nothing to commit'
 
+      # Not `changeset publish`: it shells out to `pnpm publish`, and pnpm has
+      # no provenance support, so the first release published with no
+      # attestation despite NPM_CONFIG_PROVENANCE being set. This packs with
+      # pnpm (which resolves `workspace:^`) and publishes the tarball with npm,
+      # which does support it.
       - name: Publish
         if: steps.pending.outputs.count != '0' && inputs.dry-run == false
-        run: pnpm changeset publish
+        run: pnpm publish:packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # Signs each tarball with a sigstore attestation tying it to this
-          # workflow run and commit, which is why publishing belongs in CI.
-          NPM_CONFIG_PROVENANCE: 'true'
 
       # Last, so a failed publish leaves `main` untouched and the run can simply
       # be retried rather than unpicked.

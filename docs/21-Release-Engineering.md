@@ -129,9 +129,25 @@ The commit lands **before** the publish, because `changeset publish` tags `HEAD`
 comes last, so a failed publish leaves `main` untouched and the run can just be
 retried.
 
-Publishing from CI also buys [npm provenance](https://docs.npmjs.com/generating-provenance-statements):
-`NPM_CONFIG_PROVENANCE` attaches a sigstore attestation binding each tarball to
-the workflow run and commit that produced it. That is not possible from a laptop.
+### Publishing, and why not `changeset publish`
+
+The publish step is `scripts/publish-packages.ts`, not `changeset publish`.
+
+`changeset publish` shells out to **`pnpm publish`** — which it must, because
+pnpm is what rewrites the `workspace:^` protocol into real version ranges at
+pack time; `npm` does not understand the protocol and would publish it
+literally. But `pnpm publish` has no provenance support, so setting
+`NPM_CONFIG_PROVENANCE` did nothing and the first automated release shipped with
+`attestations: null` on the registry.
+
+The script gets both: `pnpm pack` produces a tarball with the workspace protocol
+already resolved, then `npm publish <tarball> --provenance` signs it with a
+[sigstore attestation](https://docs.npmjs.com/generating-provenance-statements)
+binding it to the commit and workflow run. That is not possible from a laptop.
+
+It also skips any version already on the registry, so a run retried after a
+partial failure does not die on the packages that already made it, and it
+creates the same `<name>@<version>` tags `changeset publish` used.
 
 ### What it needs
 
@@ -145,6 +161,21 @@ the workflow run and commit that produced it. That is not possible from a laptop
   unauthenticated `PUT` with **`E404 Not Found`**, which reads like the package
   does not exist rather than like a missing credential. The workflow now checks
   the token up front and says so plainly.
+- **`RELEASE_TOKEN`** — a fine-grained PAT with **Contents: read and write** on
+  this repository, also on the `Production` environment, owned by an account
+  with the **admin** role.
+
+  `GITHUB_TOKEN` cannot push to `main`: the `main: PR required for non-owners`
+  ruleset requires a pull request and bypasses only `RepositoryRole 5` (admin).
+  The obvious fix — adding the Actions bot as a bypass actor — is not possible:
+  the API rejects it with *"Actor GitHub Actions integration must be part of the
+  ruleset source or owner organization"*, because the first-party Actions app is
+  not an installable org app. A PAT works because it acts as its owner, and that
+  owner is an admin. It will expire eventually, so the workflow checks it up
+  front rather than failing at the last step.
+
+  Tags are unaffected either way — the ruleset targets `refs/heads/main`, and
+  tag pushes from CI succeed with the plain job token.
 - **`id-token: write`** permission, already set in the workflow, for provenance.
 
 ## Versioning between our own packages

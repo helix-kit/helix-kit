@@ -28,6 +28,12 @@ jobs:
     permissions:
       contents: write # push the version commit and tags
       id-token: write # npm provenance attestation
+    # NPM_TOKEN lives on this environment, alongside the deploy secrets. Without
+    # this block `secrets.NPM_TOKEN` silently resolves to an empty string and npm
+    # answers an unauthenticated PUT with a 404, which reads like a registry
+    # problem rather than a missing credential.
+    environment:
+      name: Production
     defaults:
       run:
         working-directory: web
@@ -47,6 +53,22 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
           registry-url: https://registry.npmjs.org
+
+      # Before any work, and before the version bump is committed: a real
+      # release that reaches `changeset publish` without a token has already
+      # spent five minutes and rewritten every package.json for nothing.
+      - name: Check the npm credential
+        if: inputs.dry-run == false
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::NPM_TOKEN is empty. It must be a granular access token with" \
+              "read+write on the @helix-hq scope and 'bypass 2FA' enabled, set on the" \
+              "Production environment (repository-level secrets are not visible to this job)."
+            exit 1
+          fi
+          echo "Publishing as: $(NODE_AUTH_TOKEN="$NPM_TOKEN" npm whoami)"
 
       - name: Install
         run: pnpm install --frozen-lockfile

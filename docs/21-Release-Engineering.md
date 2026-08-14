@@ -136,8 +136,15 @@ the workflow run and commit that produced it. That is not possible from a laptop
 ### What it needs
 
 - **`NPM_TOKEN`** — a granular access token with read+write on the `@helix-hq`
-  scope and "bypass 2FA" enabled, in the repository secrets. The account
-  enforces 2FA for publishing, so an ordinary token gets a 403.
+  scope and "bypass 2FA" enabled. The account enforces 2FA for publishing, so an
+  ordinary token gets a 403.
+
+  It lives on the **`Production` environment**, alongside the deploy secrets —
+  which is why the release job declares `environment: name: Production`. Without
+  that block `secrets.NPM_TOKEN` resolves to an empty string, and npm answers an
+  unauthenticated `PUT` with **`E404 Not Found`**, which reads like the package
+  does not exist rather than like a missing credential. The workflow now checks
+  the token up front and says so plainly.
 - **`id-token: write`** permission, already set in the workflow, for provenance.
 
 ## Versioning between our own packages

@@ -70,6 +70,10 @@ export const helixComponentDefinitions: {
             brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
             brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
             brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandWordmark: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandShowMark: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+            brandAccent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            brandChartPalette: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
         }, z.core.$strip>;
         slots: string[];
         description: string;
@@ -267,6 +271,10 @@ brandTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandWordmark: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandShowMark: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+brandAccent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandChartPalette: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
 }, z.core.$strip>;
 slots: string[];
 description: string;
@@ -460,6 +468,10 @@ export type ReportBranding = {
     subtitle?: string;
     generatedAt?: string;
     footerNote?: string;
+    wordmark?: string;
+    showMark?: boolean;
+    accent?: string;
+    chartPalette?: readonly string[];
 };
 
 // @public (undocumented)
@@ -807,6 +819,10 @@ brandTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandSubtitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandGeneratedAt: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 brandFooterNote: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandWordmark: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandShowMark: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+brandAccent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+brandChartPalette: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
 }, z.core.$strip>;
 slots: string[];
 description: string;

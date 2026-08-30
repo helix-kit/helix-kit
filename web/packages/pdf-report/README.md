@@ -127,9 +127,27 @@ They sit on top of the stock `@json-render/react-pdf` catalog (`Document`,
 ## Branding
 
 `renderReportToBuffer` rewrites every `Page` element in the spec to `ReportPage`
-and stamps the caller's branding onto it. A template author cannot drop the Helix
+and stamps the caller's branding onto it. A template author cannot drop the
 header/footer, and cannot set the branding either — it always comes from the
 caller.
+
+`ReportBranding` covers who the document is from and what it looks like:
+
+```ts
+branding: {
+  title: 'Money report',
+  subtitle: 'Hardik Jain',
+  generatedAt: new Date().toUTCString(),
+  wordmark: 'EXPENSE TRACKER',   // header text; defaults to HELIX
+  showMark: false,               // drop the Helix glyph
+  accent: '#e11d48',             // rules, section borders, default series
+  chartPalette: ['#e11d48', '#2563eb', /* … */],
+}
+```
+
+Only the brand colours are configurable. The neutrals — greys, borders, and the
+semantic danger/warning/success tones — stay fixed, because they are not
+identity and a report that lets every one of them move stops being legible.
 
 ## Wiring it into an app
 

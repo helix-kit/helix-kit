@@ -36,6 +36,10 @@ export const helixComponentDefinitions = {
       brandSubtitle: opt(z.string()),
       brandGeneratedAt: opt(z.string()),
       brandFooterNote: opt(z.string()),
+      brandWordmark: opt(z.string()),
+      brandShowMark: opt(z.boolean()),
+      brandAccent: opt(z.string()),
+      brandChartPalette: opt(z.array(z.string())),
     }),
     slots: ['default'],
     description:

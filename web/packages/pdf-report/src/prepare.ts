@@ -31,6 +31,10 @@ const applyReportBranding = (spec: Spec, branding: ReportBranding): Spec => {
       brandSubtitle: branding.subtitle ?? null,
       brandGeneratedAt: branding.generatedAt ?? null,
       brandFooterNote: branding.footerNote ?? null,
+      brandWordmark: branding.wordmark ?? null,
+      brandShowMark: branding.showMark ?? null,
+      brandAccent: branding.accent ?? null,
+      brandChartPalette: branding.chartPalette === undefined ? null : [...branding.chartPalette],
     };
   }
 

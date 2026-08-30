@@ -3,8 +3,9 @@ import type { ReactElement } from 'react';
 import { Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 import { BrandMark } from './brand-mark';
+import { ReportPaletteContext } from './palette-context';
 import { displayable } from './text';
-import { reportLayout, reportTheme } from './theme';
+import { reportLayout, reportTheme, resolveReportPalette } from './theme';
 
 import type { ReportPageProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -68,6 +69,15 @@ export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): R
   const subtitle = props.brandSubtitle ?? null;
   const generatedAt = props.brandGeneratedAt ?? null;
   const footerNote = props.brandFooterNote ?? null;
+  const wordmark = props.brandWordmark ?? 'HELIX';
+  const showMark = props.brandShowMark ?? true;
+  // Resolved here because this is where the caller's branding lands, and
+  // published below so every component on the page reads the same palette.
+  const palette = resolveReportPalette({
+    accent: props.brandAccent,
+    chartPalette: props.brandChartPalette,
+  });
+  const defaultFooter = generatedAt === null ? wordmark : `${wordmark}  -  Generated ${generatedAt}`;
 
   return (
     <Page
@@ -75,10 +85,10 @@ export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): R
       size={(props.size ?? 'A4') as never}
       style={[styles.page, { backgroundColor: props.backgroundColor ?? reportTheme.surface }]}
     >
-      <View fixed style={styles.header}>
+      <View fixed style={[styles.header, { borderBottomColor: palette.accentSoft }]}>
         <View style={styles.wordmark}>
-          <BrandMark size={16} />
-          <Text style={styles.wordmarkText}>HELIX</Text>
+          {showMark ? <BrandMark color={palette.accent} size={16} /> : null}
+          <Text style={styles.wordmarkText}>{displayable(wordmark)}</Text>
         </View>
         <View style={styles.headerRight}>
           {title === null ? null : <Text style={styles.headerTitle}>{displayable(title)}</Text>}
@@ -88,12 +98,10 @@ export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): R
         </View>
       </View>
 
-      {children}
+      <ReportPaletteContext value={palette}>{children}</ReportPaletteContext>
 
-      <View fixed style={styles.footer}>
-        <Text style={styles.footerText}>
-          {footerNote ?? (generatedAt === null ? 'Helix' : `Helix  -  Generated ${generatedAt}`)}
-        </Text>
+      <View fixed style={[styles.footer, { borderTopColor: palette.accentSoft }]}>
+        <Text style={styles.footerText}>{displayable(footerNote ?? defaultFooter)}</Text>
         <Text
           fixed
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}

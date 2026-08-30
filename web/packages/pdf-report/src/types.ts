@@ -39,4 +39,12 @@ export type ReportBranding = {
   generatedAt?: string;
   /** Overrides the default "Generated <generatedAt>" footer text. */
   footerNote?: string;
+  /** Header wordmark. Defaults to `HELIX`; pass your own product name. */
+  wordmark?: string;
+  /** Whether to draw the Helix glyph beside the wordmark. Defaults to true. */
+  showMark?: boolean;
+  /** Brand colour for rules, section borders and the default chart series. */
+  accent?: string;
+  /** Categorical series colours, in order. Defaults to the Helix palette. */
+  chartPalette?: readonly string[];
 };

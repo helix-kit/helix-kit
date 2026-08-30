@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
+import { useReportPalette } from './palette-context';
 import { displayable } from './text';
 import { reportTheme } from './theme';
 
@@ -39,23 +40,27 @@ const styles = StyleSheet.create({
   cardHint: { fontSize: 7, color: reportTheme.textMuted, marginTop: 2 },
 });
 
-const TONE_COLORS: Record<string, string> = {
+// `accent` is the caller's, so the map is built per render rather than frozen
+// at module scope like the rest.
+const toneColors = (accent: string): Record<string, string> => ({
   default: reportTheme.text,
   danger: reportTheme.danger,
   warning: reportTheme.warning,
   success: reportTheme.success,
-  accent: reportTheme.brandAccent,
-};
+  accent: accent,
+});
 
 /** A titled panel that groups report content. */
-export const Section = ({ props, children }: RenderProps<SectionProps>): ReactElement => (
+export const Section = ({ props, children }: RenderProps<SectionProps>): ReactElement => {
+  const palette = useReportPalette();
+  return (
   <View
     style={[
       styles.section,
       {
         backgroundColor: props.backgroundColor ?? reportTheme.surfaceMuted,
         borderColor: props.borderColor ?? reportTheme.border,
-        borderLeftColor: reportTheme.brandTurquoise,
+        borderLeftColor: palette.accentSoft,
       },
     ]}
   >
@@ -67,7 +72,8 @@ export const Section = ({ props, children }: RenderProps<SectionProps>): ReactEl
     )}
     {children}
   </View>
-);
+  );
+};
 
 /** Lays its `MetricCard` children out in an evenly sized grid. */
 export const MetricGrid = ({ children }: RenderProps<Record<string, never>>): ReactElement => (
@@ -75,17 +81,20 @@ export const MetricGrid = ({ children }: RenderProps<Record<string, never>>): Re
 );
 
 /** A KPI tile. `value` is already formatted, so it is drawn as given. */
-export const MetricCard = ({ props }: RenderProps<MetricCardProps>): ReactElement => (
+export const MetricCard = ({ props }: RenderProps<MetricCardProps>): ReactElement => {
+  const palette = useReportPalette();
+  return (
   <View style={[styles.card, { width: props.width ?? '32.3%' }]}>
     <Text style={styles.cardLabel}>{displayable(props.label)}</Text>
-    <Text style={[styles.cardValue, { color: TONE_COLORS[props.tone ?? 'default'] }]}>
+    <Text style={[styles.cardValue, { color: toneColors(palette.accent)[props.tone ?? 'default'] }]}>
       {displayable(props.value)}
     </Text>
     {props.hint === undefined || props.hint === null ? null : (
       <Text style={styles.cardHint}>{displayable(props.hint)}</Text>
     )}
   </View>
-);
+  );
+};
 
 /** Prevents its children from being split across a page boundary. */
 export const KeepTogether = ({ props, children }: RenderProps<KeepTogetherProps>): ReactElement => (

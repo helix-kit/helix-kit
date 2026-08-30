@@ -43,3 +43,42 @@ export const reportLayout = {
   headerOffset: 26,
   footerOffset: 26,
 } as const;
+
+/**
+ * The parts of the palette that carry brand identity.
+ *
+ * Split out from the neutrals because only these change between installers: a
+ * consumer wants their own accent and series colours, not their own grey.
+ */
+export type ReportPalette = {
+  accent: string;
+  accentSoft: string;
+  chartPalette: readonly string[];
+};
+
+export const defaultReportPalette: ReportPalette = {
+  accent: reportTheme.brandDeep,
+  accentSoft: reportTheme.brandTurquoise,
+  chartPalette,
+};
+
+/** Fills in whatever the caller left out. */
+export const resolveReportPalette = (
+  overrides: { accent?: string | null; chartPalette?: readonly string[] | null } = {},
+): ReportPalette => {
+  const accent = overrides.accent ?? defaultReportPalette.accent;
+  const series =
+    overrides.chartPalette === null ||
+    overrides.chartPalette === undefined ||
+    overrides.chartPalette.length === 0
+      ? defaultReportPalette.chartPalette
+      : overrides.chartPalette;
+  return {
+    accent,
+    // The soft tone is only used for rules and left borders. Deriving it would
+    // need colour maths react-pdf cannot help with, so an explicit accent
+    // doubles as its own soft tone unless the palette supplies one.
+    accentSoft: overrides.accent ?? defaultReportPalette.accentSoft,
+    chartPalette: series,
+  };
+};

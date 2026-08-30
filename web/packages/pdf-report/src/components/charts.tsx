@@ -15,8 +15,9 @@ import {
   View,
 } from '@react-pdf/renderer';
 
+import { useReportPalette } from './palette-context';
 import { displayable } from './text';
-import { chartPalette, reportTheme } from './theme';
+import { reportTheme } from './theme';
 
 import type { BarChartProps, LineChartProps, PieChartProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -93,11 +94,14 @@ const Grid = ({
   maxValue,
   plotWidth,
   plotHeight,
+  minValue = 0,
 }: {
   divisions: number;
   maxValue: number;
   plotWidth: number;
   plotHeight: number;
+  /** Bottom of the domain; below zero when a series contains negatives. */
+  minValue?: number;
 }) => (
   <>
     {Array.from({ length: divisions + 1 }, (unused, index) => {
@@ -119,7 +123,7 @@ const Grid = ({
             x={PAD_LEFT - 4}
             y={y + 2}
           >
-            {formatTick(maxValue - (maxValue / divisions) * index)}
+            {formatTick(maxValue - ((maxValue - minValue) / divisions) * index)}
           </SvgText>
         </G>
       );
@@ -127,19 +131,29 @@ const Grid = ({
   </>
 );
 
-const Baseline = ({ plotWidth, plotHeight }: { plotWidth: number; plotHeight: number }) => (
+const Baseline = ({
+  plotWidth,
+  plotHeight,
+  y,
+}: {
+  plotWidth: number;
+  plotHeight: number;
+  /** Where zero falls; defaults to the bottom, which is where it is when every value is positive. */
+  y?: number;
+}) => (
   <Line
     stroke={reportTheme.border}
     strokeWidth={0.75}
     x1={PAD_LEFT}
     x2={PAD_LEFT + plotWidth}
-    y1={PAD_TOP + plotHeight}
-    y2={PAD_TOP + plotHeight}
+    y1={y ?? PAD_TOP + plotHeight}
+    y2={y ?? PAD_TOP + plotHeight}
   />
 );
 
 /** Vertical bar chart over pre-aggregated points, drawn as vector SVG. */
 export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
+  const palette = useReportPalette();
   const { series } = props;
   if (series.length === 0) {
     return <Empty />;
@@ -149,37 +163,51 @@ export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
   const height = props.height ?? 200;
   const plotWidth = width - PAD_LEFT - PAD_RIGHT;
   const plotHeight = height - PAD_TOP - PAD_BOTTOM;
-  const maxValue = niceAxisMax(Math.max(...series.map((point) => point.value), 0));
+  // A signed domain: the zero line sits wherever it falls between the extremes,
+  // so a negative bar hangs below it instead of being drawn with a negative
+  // height and having its label land on the category axis. An all-positive
+  // series puts zero back on the baseline and renders exactly as before.
+  const highest = Math.max(...series.map((point) => point.value), 0);
+  const lowest = Math.min(...series.map((point) => point.value), 0);
+  const above = niceAxisMax(highest);
+  const below = niceAxisMax(Math.abs(lowest));
+  const span = above + below;
+  const zeroY = PAD_TOP + (span === 0 ? plotHeight : (above / span) * plotHeight);
+  const unit = span === 0 ? 0 : plotHeight / span;
   const slot = plotWidth / series.length;
   const barWidth = Math.max(Math.min(slot * 0.62, 46), 2);
-  const color = props.color ?? chartPalette[0];
+  const color = props.color ?? palette.chartPalette[0];
 
   return (
     <ChartFrame title={props.title}>
       <Svg height={height} width={width}>
         {(props.showGrid ?? true) ? (
           <Grid
-            divisions={axisDivisions(maxValue)}
-            maxValue={maxValue}
+            divisions={axisDivisions(span)}
+            maxValue={above}
+            minValue={-below}
             plotHeight={plotHeight}
             plotWidth={plotWidth}
           />
         ) : null}
 
         {series.map((point, index) => {
-          const barHeight = maxValue === 0 ? 0 : (point.value / maxValue) * plotHeight;
+          const magnitude = Math.abs(point.value) * unit;
+          const negative = point.value < 0;
           const x = PAD_LEFT + slot * index + (slot - barWidth) / 2;
-          const y = PAD_TOP + plotHeight - barHeight;
+          const y = negative ? zeroY : zeroY - magnitude;
+          // Labels sit outside the bar on whichever side it grows.
+          const labelY = negative ? y + magnitude + 8 : y - 3;
           return (
             <G key={`bar-${index}`}>
-              <Rect fill={color} height={barHeight} width={barWidth} x={x} y={y} />
+              <Rect fill={color} height={magnitude} width={barWidth} x={x} y={y} />
               {(props.showValues ?? false) ? (
                 <SvgText
                   fill={reportTheme.textSubtle}
                   style={{ fontSize: 7 }}
                   textAnchor="middle"
                   x={x + barWidth / 2}
-                  y={y - 3}
+                  y={labelY}
                 >
                   {String(point.value)}
                 </SvgText>
@@ -205,6 +233,7 @@ export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
 
 /** Line chart over pre-aggregated points, with an optional filled area. */
 export const LineChart = ({ props }: RenderProps<LineChartProps>) => {
+  const palette = useReportPalette();
   const { series } = props;
   if (series.length === 0) {
     return <Empty />;
@@ -216,7 +245,7 @@ export const LineChart = ({ props }: RenderProps<LineChartProps>) => {
   const plotHeight = height - PAD_TOP - PAD_BOTTOM;
   const maxValue = niceAxisMax(Math.max(...series.map((point) => point.value), 0));
   const stepX = series.length <= 1 ? 0 : plotWidth / (series.length - 1);
-  const color = props.color ?? chartPalette[0];
+  const color = props.color ?? palette.chartPalette[0];
 
   const points = series.map((point, index) => ({
     x: PAD_LEFT + stepX * index,
@@ -281,6 +310,7 @@ const polarPoint = (cx: number, cy: number, radius: number, angle: number) => ({
 
 /** Pie / donut chart over pre-aggregated points. */
 export const PieChart = ({ props }: RenderProps<PieChartProps>) => {
+  const palette = useReportPalette();
   const { series } = props;
   const total = series.reduce((sum, point) => sum + point.value, 0);
   if (series.length === 0 || total <= 0) {
@@ -328,7 +358,7 @@ export const PieChart = ({ props }: RenderProps<PieChartProps>) => {
 
     return {
       path,
-      color: chartPalette[index % chartPalette.length] ?? chartPalette[0],
+      color: palette.chartPalette[index % palette.chartPalette.length] ?? palette.chartPalette[0],
       label: point.label,
       value: point.value,
     };

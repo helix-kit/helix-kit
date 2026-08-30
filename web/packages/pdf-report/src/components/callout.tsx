@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
+import { useReportPalette } from './palette-context';
 import { displayable } from './text';
 import { reportTheme } from './theme';
 
@@ -19,14 +20,16 @@ const styles = StyleSheet.create({
   text: { fontSize: 8, color: reportTheme.text },
 });
 
-const FALLBACK = { fill: reportTheme.surfaceMuted, accent: reportTheme.brandAccent };
+// `info` borrows the caller's accent, so the map is built per render; the other
+// three are semantic and stay fixed.
+type Tone = { fill: string; accent: string };
 
-const TONES: Record<string, { fill: string; accent: string }> = {
-  info: FALLBACK,
+const tones = (accent: string): Record<string, Tone> => ({
+  info: { fill: reportTheme.surfaceMuted, accent: accent },
   warning: { fill: reportTheme.warningFill, accent: reportTheme.warning },
   danger: { fill: reportTheme.dangerFill, accent: reportTheme.danger },
   success: { fill: reportTheme.successFill, accent: reportTheme.success },
-};
+});
 
 /**
  * A short highlighted note.
@@ -35,11 +38,15 @@ const TONES: Record<string, { fill: string; accent: string }> = {
  * the code emits the message or an empty string.
  */
 export const Callout = ({ props }: RenderProps<CalloutProps>): ReactElement | null => {
+  // Read before the empty-text bail: a hook cannot sit behind an early return.
+  const palette = useReportPalette();
   if (props.text === '') {
     return null;
   }
 
-  const tone = TONES[props.tone ?? 'info'] ?? FALLBACK;
+  const byTone = tones(palette.accent);
+  const info: Tone = { fill: reportTheme.surfaceMuted, accent: palette.accent };
+  const tone = byTone[props.tone ?? 'info'] ?? info;
 
   return (
     <View style={[styles.callout, { backgroundColor: tone.fill, borderLeftColor: tone.accent }]}>

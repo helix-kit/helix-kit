@@ -12,19 +12,96 @@ import { JSX } from 'react';
 import { Spec } from '@json-render/core';
 
 // @public
+export const ReportCodeField: (input: {
+    className?: string;
+}) => JSX.Element;
+
+// @public
+export const ReportDemoInputField: (input: {
+    className?: string;
+}) => JSX.Element;
+
+// @public
+export const ReportInputSchemaField: () => JSX.Element;
+
+// @public
+export const ReportLayoutField: (input: {
+    className?: string;
+}) => JSX.Element;
+
+// @public
+export const ReportOutputSchemaField: () => JSX.Element;
+
+// @public
+export const ReportPreview: (input: ReportPreviewProps) => JSX.Element;
+
+// @public (undocumented)
+export type ReportPreviewOptions = {
+    input?: unknown;
+    branding?: ReportBranding;
+    endpoint?: string;
+    renderMode?: 'client' | 'server';
+    debounceMs?: number;
+};
+
+// @public (undocumented)
+export type ReportPreviewProps = ReportPreviewOptions & {
+    className?: string;
+    parseError?: string | null;
+};
+
+// @public (undocumented)
+export type ReportPreviewState = {
+    url: string | null;
+    error: string | null;
+    isRendering: boolean;
+};
+
+// @public
 export const ReportTemplateEditor: (input: ReportTemplateEditorProps) => JSX.Element;
 
 // @public (undocumented)
-export type ReportTemplateEditorProps = {
+export type ReportTemplateEditorProps = PreviewWiring & {
     defaultValue?: ReportTemplate;
     onChange?: (value: ReportTemplate) => void;
     onError?: (error: string | null) => void;
-    endpoint?: string;
-    renderMode?: 'client' | 'server';
-    branding?: ReportBranding;
     theme?: 'light' | 'dark';
-    previewDebounceMs?: number;
 };
+
+// @public
+export const ReportTemplateProvider: (input: ReportTemplateProviderProps) => JSX.Element;
+
+// @public (undocumented)
+export type ReportTemplateProviderProps = {
+    value: ReportTemplate;
+    onChange?: (template: ReportTemplate) => void;
+    onError?: (error: string | null) => void;
+    theme?: 'light' | 'dark';
+    children: React.ReactNode;
+};
+
+// @public
+export type ReportTemplateState = {
+    inputSchema: JSONSchema._JSONSchema;
+    setInputSchema: (value: JSONSchema._JSONSchema) => void;
+    code: string;
+    setCode: (value: string) => void;
+    outputSchema: JSONSchema._JSONSchema;
+    setOutputSchema: (value: JSONSchema._JSONSchema) => void;
+    specDraft: string;
+    setSpecDraft: (value: string) => void;
+    demoInputDraft: string;
+    setDemoInputDraft: (value: string) => void;
+    template: ReportTemplate | null;
+    error: string | null;
+    monacoTheme: 'light' | 'vs-dark';
+};
+
+// @public
+export const useReportPreview: (input?: ReportPreviewOptions) => ReportPreviewState;
+
+// @public
+export const useReportTemplate: () => ReportTemplateState;
 
 // (No @packageDocumentation comment for this package)
 ```

@@ -1,6 +1,6 @@
 {
   "name": "@helix-hq/pdf-report",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "JSON-defined PDF reports: a sandboxed code step computes the values, a json-render layout places them.",
   "keywords": [
     "pdf",

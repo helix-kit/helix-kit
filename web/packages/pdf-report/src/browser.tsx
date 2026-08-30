@@ -5,7 +5,8 @@ import type { ReactElement } from 'react';
 import { JSONUIProvider, Renderer } from '@json-render/react-pdf';
 import { pdf, type DocumentProps } from '@react-pdf/renderer';
 
-import { helixPdfComponents } from './components/registry';
+import { createHelixPdfComponents } from './components/registry';
+import { resolveReportPalette } from './components/theme';
 import { prepareReport, type PrepareReportOptions } from './pipeline';
 
 import type { ReportTemplate } from './types';
@@ -34,9 +35,18 @@ export const renderReportToBlob = async (
     },
   });
 
+  // The palette is fixed for a render, so it is bound into the registry rather
+  // than threaded through a context the RSC condition cannot build.
+  const registry = createHelixPdfComponents(
+    resolveReportPalette({
+      accent: options.branding?.accent,
+      chartPalette: options.branding?.chartPalette,
+    }),
+  );
+
   const element = (
     <JSONUIProvider initialState={data}>
-      <Renderer registry={helixPdfComponents} spec={spec} />
+      <Renderer registry={registry} spec={spec} />
     </JSONUIProvider>
   ) as ReactElement<DocumentProps>;
 

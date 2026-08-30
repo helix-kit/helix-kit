@@ -15,9 +15,8 @@ import {
   View,
 } from '@react-pdf/renderer';
 
-import { useReportPalette } from './palette-context';
 import { displayable } from './text';
-import { reportTheme } from './theme';
+import { reportTheme, type ReportPalette } from './theme';
 
 import type { BarChartProps, LineChartProps, PieChartProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -57,6 +56,23 @@ const ChartFrame = ({
 );
 
 const Empty = () => <Text style={styles.empty}>No chart data for this period.</Text>;
+
+/**
+ * The domain a bar chart is drawn against.
+ *
+ * `below` is zero unless something is actually negative — `niceAxisMax` floors
+ * at 1, so rounding an absent minimum would give every all-positive chart a
+ * phantom band under the axis and ticks like -1.
+ */
+export const signedDomain = (
+  values: number[],
+): { above: number; below: number; span: number } => {
+  const highest = Math.max(...values, 0);
+  const lowest = Math.min(...values, 0);
+  const above = niceAxisMax(highest);
+  const below = lowest < 0 ? niceAxisMax(Math.abs(lowest)) : 0;
+  return { above, below, span: above + below };
+};
 
 /** Chooses "nice" round axis ticks so charts don't show ragged max values. */
 const niceAxisMax = (max: number): number => {
@@ -152,8 +168,7 @@ const Baseline = ({
 );
 
 /** Vertical bar chart over pre-aggregated points, drawn as vector SVG. */
-export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
-  const palette = useReportPalette();
+export const BarChart = ({ props }: RenderProps<BarChartProps>, palette: ReportPalette) => {
   const { series } = props;
   if (series.length === 0) {
     return <Empty />;
@@ -167,11 +182,7 @@ export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
   // so a negative bar hangs below it instead of being drawn with a negative
   // height and having its label land on the category axis. An all-positive
   // series puts zero back on the baseline and renders exactly as before.
-  const highest = Math.max(...series.map((point) => point.value), 0);
-  const lowest = Math.min(...series.map((point) => point.value), 0);
-  const above = niceAxisMax(highest);
-  const below = niceAxisMax(Math.abs(lowest));
-  const span = above + below;
+  const { above, below, span } = signedDomain(series.map((point) => point.value));
   const zeroY = PAD_TOP + (span === 0 ? plotHeight : (above / span) * plotHeight);
   const unit = span === 0 ? 0 : plotHeight / span;
   const slot = plotWidth / series.length;
@@ -232,8 +243,7 @@ export const BarChart = ({ props }: RenderProps<BarChartProps>) => {
 };
 
 /** Line chart over pre-aggregated points, with an optional filled area. */
-export const LineChart = ({ props }: RenderProps<LineChartProps>) => {
-  const palette = useReportPalette();
+export const LineChart = ({ props }: RenderProps<LineChartProps>, palette: ReportPalette) => {
   const { series } = props;
   if (series.length === 0) {
     return <Empty />;
@@ -309,8 +319,7 @@ const polarPoint = (cx: number, cy: number, radius: number, angle: number) => ({
 });
 
 /** Pie / donut chart over pre-aggregated points. */
-export const PieChart = ({ props }: RenderProps<PieChartProps>) => {
-  const palette = useReportPalette();
+export const PieChart = ({ props }: RenderProps<PieChartProps>, palette: ReportPalette) => {
   const { series } = props;
   const total = series.reduce((sum, point) => sum + point.value, 0);
   if (series.length === 0 || total <= 0) {

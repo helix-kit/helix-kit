@@ -2,9 +2,8 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
-import { useReportPalette } from './palette-context';
 import { displayable } from './text';
-import { reportTheme } from './theme';
+import { reportTheme, type ReportPalette } from './theme';
 
 import type { KeepTogetherProps, MetricCardProps, SectionProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -51,8 +50,10 @@ const toneColors = (accent: string): Record<string, string> => ({
 });
 
 /** A titled panel that groups report content. */
-export const Section = ({ props, children }: RenderProps<SectionProps>): ReactElement => {
-  const palette = useReportPalette();
+export const Section = (
+  { props, children }: RenderProps<SectionProps>,
+  palette: ReportPalette,
+): ReactElement => {
   return (
   <View
     style={[
@@ -81,8 +82,10 @@ export const MetricGrid = ({ children }: RenderProps<Record<string, never>>): Re
 );
 
 /** A KPI tile. `value` is already formatted, so it is drawn as given. */
-export const MetricCard = ({ props }: RenderProps<MetricCardProps>): ReactElement => {
-  const palette = useReportPalette();
+export const MetricCard = (
+  { props }: RenderProps<MetricCardProps>,
+  palette: ReportPalette,
+): ReactElement => {
   return (
   <View style={[styles.card, { width: props.width ?? '32.3%' }]}>
     <Text style={styles.cardLabel}>{displayable(props.label)}</Text>

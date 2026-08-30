@@ -1,6 +1,7 @@
 import { renderToBuffer } from '@json-render/react-pdf/render';
 
-import { helixPdfComponents } from './components/registry';
+import { createHelixPdfComponents } from './components/registry';
+import { resolveReportPalette } from './components/theme';
 import { prepareReport, type PrepareReportOptions } from './pipeline';
 
 import type { ReportTemplate } from './types';
@@ -16,6 +17,14 @@ export const renderReportToBuffer = async (
   options: PrepareReportOptions = {},
 ): Promise<Uint8Array> => {
   const { spec, data } = await prepareReport(template, options);
+  // The palette is fixed for a render, so it is bound into the registry rather
+  // than threaded through a context the RSC condition cannot build.
+  const registry = createHelixPdfComponents(
+    resolveReportPalette({
+      accent: options.branding?.accent,
+      chartPalette: options.branding?.chartPalette,
+    }),
+  );
 
-  return renderToBuffer(spec, { registry: helixPdfComponents, state: data });
+  return renderToBuffer(spec, { registry, state: data });
 };

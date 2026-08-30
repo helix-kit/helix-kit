@@ -2,9 +2,8 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
-import { useReportPalette } from './palette-context';
 import { displayable } from './text';
-import { reportTheme } from './theme';
+import { reportTheme, type ReportPalette } from './theme';
 
 import type { CalloutProps } from '../catalog';
 import type { RenderProps } from './types';
@@ -37,9 +36,10 @@ const tones = (accent: string): Record<string, Tone> => ({
  * Empty text renders nothing, which is how a template shows one conditionally:
  * the code emits the message or an empty string.
  */
-export const Callout = ({ props }: RenderProps<CalloutProps>): ReactElement | null => {
-  // Read before the empty-text bail: a hook cannot sit behind an early return.
-  const palette = useReportPalette();
+export const Callout = (
+  { props }: RenderProps<CalloutProps>,
+  palette: ReportPalette,
+): ReactElement | null => {
   if (props.text === '') {
     return null;
   }

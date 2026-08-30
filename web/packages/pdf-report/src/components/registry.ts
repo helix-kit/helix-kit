@@ -5,6 +5,7 @@ import { BarChart, LineChart, PieChart } from './charts';
 import { DataTable } from './data-table';
 import { KeepTogether, MetricCard, MetricGrid, Section } from './layout';
 import { ReportPage } from './report-page';
+import { defaultReportPalette, type ReportPalette } from './theme';
 
 import { helixPackCatalog } from '../catalog';
 
@@ -27,17 +28,29 @@ import { helixPackCatalog } from '../catalog';
  * '@json-render/react-pdf']` is what upstream's own react-pdf example ships;
  * see this package's README.
  */
-export const { registry: helixPdfComponents } = defineRegistry(helixPackCatalog, {
-  components: {
-    ReportPage,
-    Section,
-    MetricGrid,
-    MetricCard,
-    DataTable,
-    Callout,
-    BarChart,
-    LineChart,
-    PieChart,
-    KeepTogether,
-  },
-});
+/**
+ * Builds the registry with a palette baked into the components that use one.
+ *
+ * A React context would be the obvious way to pass this down, but a context
+ * built at module scope is exactly what makes a package unbundleable under
+ * Next's `react-server` condition — the problem the note above describes. A
+ * closure has no such constraint, and the palette is fixed for a render anyway.
+ */
+export const createHelixPdfComponents = (palette: ReportPalette = defaultReportPalette) =>
+  defineRegistry(helixPackCatalog, {
+    components: {
+      ReportPage,
+      Section: (input) => Section(input, palette),
+      MetricGrid,
+      MetricCard: (input) => MetricCard(input, palette),
+      DataTable,
+      Callout: (input) => Callout(input, palette),
+      BarChart: (input) => BarChart(input, palette),
+      LineChart: (input) => LineChart(input, palette),
+      PieChart: (input) => PieChart(input, palette),
+      KeepTogether,
+    },
+  }).registry;
+
+/** The default registry, in Helix's own palette. */
+export const helixPdfComponents = createHelixPdfComponents();

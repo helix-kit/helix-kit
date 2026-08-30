@@ -3,7 +3,6 @@ import type { ReactElement } from 'react';
 import { Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 import { BrandMark } from './brand-mark';
-import { ReportPaletteContext } from './palette-context';
 import { displayable } from './text';
 import { reportLayout, reportTheme, resolveReportPalette } from './theme';
 
@@ -98,7 +97,7 @@ export const ReportPage = ({ props, children }: RenderProps<ReportPageProps>): R
         </View>
       </View>
 
-      <ReportPaletteContext value={palette}>{children}</ReportPaletteContext>
+      {children}
 
       <View fixed style={[styles.footer, { borderTopColor: palette.accentSoft }]}>
         <Text style={styles.footerText}>{displayable(footerNote ?? defaultFooter)}</Text>

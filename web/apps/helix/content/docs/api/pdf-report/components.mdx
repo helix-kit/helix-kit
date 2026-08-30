@@ -10,6 +10,9 @@ declarations. Anything absent here is not part of the package's contract.
 import { ComponentRegistry } from '@json-render/react-pdf';
 
 // @public
+export const createHelixPdfComponents: (palette?: ReportPalette) => ComponentRegistry;
+
+// @public
 export const helixPdfComponents: ComponentRegistry;
 
 // (No @packageDocumentation comment for this package)

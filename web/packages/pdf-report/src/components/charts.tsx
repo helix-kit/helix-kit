@@ -15,6 +15,7 @@ import {
   View,
 } from '@react-pdf/renderer';
 
+import { LinkHotspot, LinkOverlay, safeHref } from './link';
 import { displayable } from './text';
 import { reportTheme, type ReportPalette } from './theme';
 
@@ -26,6 +27,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 10, fontWeight: 'bold', color: reportTheme.text, marginBottom: 4 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
   legendItem: { flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 2 },
+  pieCanvas: { position: 'relative' },
   legendSwatch: { width: 8, height: 8, marginRight: 4 },
   legendLabel: { fontSize: 8, color: reportTheme.textSubtle },
   empty: { fontSize: 9, color: reportTheme.textMuted, paddingVertical: 6 },
@@ -319,6 +321,49 @@ const polarPoint = (cx: number, cy: number, radius: number, angle: number) => ({
 });
 
 /** Pie / donut chart over pre-aggregated points. */
+/**
+ * A square clickable region inside a pie slice, or null if the slice is too
+ * narrow to hold a usable one.
+ *
+ * A link annotation is a rectangle and a slice is a wedge, so the region is
+ * centred on the slice and sized by whichever constrains it — the depth between
+ * the two radii, or the slice's width at that depth. The result is scaled by
+ * `HOTSPOT_INSET` because the square is axis-aligned while the wedge it sits in
+ * is not, so a square at the full inscribed size would poke out of the corners
+ * into its neighbours.
+ *
+ * Thin slices legitimately produce nothing. Their legend entry is a full-size
+ * box and stays clickable, which is why the legend carries the same link.
+ */
+const HOTSPOT_INSET = 0.7;
+const MIN_HOTSPOT = 2;
+
+export const sliceHotspot = ({
+  cx,
+  cy,
+  innerRadius,
+  radius,
+  start,
+  sweep,
+}: {
+  cx: number;
+  cy: number;
+  innerRadius: number;
+  radius: number;
+  start: number;
+  sweep: number;
+}): { left: number; top: number; size: number } | null => {
+  const midRadius = (innerRadius + radius) / 2;
+  const depthHalf = (radius - innerRadius) / 2;
+  const widthHalf = midRadius * (sweep / 2);
+  const size = 2 * Math.min(depthHalf, widthHalf) * HOTSPOT_INSET;
+  if (size < MIN_HOTSPOT) {
+    return null;
+  }
+  const centre = polarPoint(cx, cy, midRadius, start + sweep / 2);
+  return { left: centre.x - size / 2, top: centre.y - size / 2, size };
+};
+
 export const PieChart = ({ props }: RenderProps<PieChartProps>, palette: ReportPalette) => {
   const { series } = props;
   const total = series.reduce((sum, point) => sum + point.value, 0);
@@ -370,6 +415,8 @@ export const PieChart = ({ props }: RenderProps<PieChartProps>, palette: ReportP
       color: palette.chartPalette[index % palette.chartPalette.length] ?? palette.chartPalette[0],
       label: point.label,
       value: point.value,
+      href: safeHref(props.links?.[index]),
+      hotspot: sliceHotspot({ cx, cy, innerRadius, radius, start, sweep }),
     };
   });
 
@@ -384,6 +431,7 @@ export const PieChart = ({ props }: RenderProps<PieChartProps>, palette: ReportP
                 <Text
                   style={styles.legendLabel}
                 >{`${displayable(slice.label)} (${slice.value})`}</Text>
+                <LinkOverlay href={slice.href} />
               </View>
             ))}
           </View>
@@ -391,11 +439,24 @@ export const PieChart = ({ props }: RenderProps<PieChartProps>, palette: ReportP
       }
       title={props.title}
     >
-      <Svg height={height} width={width}>
-        {slices.map((slice, index) => (
-          <Path key={`slice-${index}`} d={slice.path} fill={slice.color} />
-        ))}
-      </Svg>
+      <View style={[styles.pieCanvas, { width, height }]}>
+        <Svg height={height} width={width}>
+          {slices.map((slice, index) => (
+            <Path key={`slice-${index}`} d={slice.path} fill={slice.color} />
+          ))}
+        </Svg>
+        {slices.map((slice, index) =>
+          slice.hotspot === null ? null : (
+            <LinkHotspot
+              key={`hotspot-${index}`}
+              href={slice.href}
+              left={slice.hotspot.left}
+              size={slice.hotspot.size}
+              top={slice.hotspot.top}
+            />
+          ),
+        )}
+      </View>
     </ChartFrame>
   );
 };

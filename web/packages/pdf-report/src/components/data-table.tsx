@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
 
+import { LinkOverlay, safeHref } from './link';
 import { displayable } from './text';
 import { reportTheme } from './theme';
 
@@ -56,6 +57,7 @@ export const DataTable = ({ props }: RenderProps<DataTableProps>): ReactElement 
 
   const widthOf = (column: number): string => props.columnWidths?.[column] ?? defaultWidth;
   const alignOf = (column: number) => props.align?.[column] ?? 'left';
+  const linkOf = (row: number): string | null => safeHref(props.rowLinks?.[row]);
 
   const backgroundOf = (row: number): string => {
     const explicit = props.rowColors?.[row];
@@ -105,6 +107,7 @@ export const DataTable = ({ props }: RenderProps<DataTableProps>): ReactElement 
               </Text>
             </View>
           ))}
+          <LinkOverlay href={linkOf(row)} />
         </View>
       ))}
     </View>

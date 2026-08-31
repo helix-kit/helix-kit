@@ -84,6 +84,12 @@ export const helixComponentDefinitions = {
       align: opt(z.array(align)),
       /** Background colour per row, or null to leave it alone. Length matches `rows`. */
       rowColors: opt(z.array(z.string().nullable())),
+      /**
+       * A destination per row, or null for a row that is not a link. Length
+       * matches `rows`. The cell text is left exactly as it renders without
+       * one — the clickable region is an overlay, not styled link text.
+       */
+      rowLinks: opt(z.array(z.string().nullable())),
       striped: opt(z.boolean()),
       fontSize: opt(z.number()),
       headerBackgroundColor: opt(z.string()),
@@ -92,7 +98,7 @@ export const helixComponentDefinitions = {
     }),
     slots: [],
     description:
-      'A table of pre-formatted strings. Sorting, filtering, grouping and formatting belong in the code step; this renders the result. Row highlighting is driven by `rowColors`, which the code decides.',
+      'A table of pre-formatted strings. Sorting, filtering, grouping and formatting belong in the code step; this renders the result. Row highlighting is driven by `rowColors`, and `rowLinks` makes a row open a URL when clicked, both decided by the code.',
     example: {
       headers: ['Device', 'Faults'],
       rows: [
@@ -147,9 +153,16 @@ export const helixComponentDefinitions = {
       height: opt(z.number()),
       showLegend: opt(z.boolean()),
       innerRadius: opt(z.number()),
+      /**
+       * A destination per point, or null for one that is not a link. Length
+       * matches `series`. Both the slice and its legend entry become
+       * clickable, neither of them drawn any differently for it.
+       */
+      links: opt(z.array(z.string().nullable())),
     }),
     slots: [],
-    description: 'Pie chart over pre-aggregated points; set `innerRadius` above 0 for a donut.',
+    description:
+      'Pie chart over pre-aggregated points; set `innerRadius` above 0 for a donut. `links` makes each slice and its legend entry open a URL.',
   },
   KeepTogether: {
     props: z.object({

@@ -115,14 +115,42 @@ Presentational only — each places values it is handed and computes nothing:
 | `ReportPage`                          | Branded page with a repeating header/footer. Injected automatically — see _Branding_. |
 | `Section`                             | Titled panel that groups content.                                                     |
 | `MetricGrid` / `MetricCard`           | A KPI tile; `value` is already formatted.                                             |
-| `DataTable`                           | `headers: string[]`, `rows: string[][]`, and `rowColors` the code decided.            |
+| `DataTable`                           | `headers: string[]`, `rows: string[][]`, and `rowColors` / `rowLinks` the code decided. |
 | `Callout`                             | `text` and `tone`. Empty text renders nothing, which is how a template hides one.     |
-| `BarChart` / `LineChart` / `PieChart` | `series: { label, value }[]`, pre-aggregated.                                         |
+| `BarChart` / `LineChart` / `PieChart` | `series: { label, value }[]`, pre-aggregated. `PieChart` also takes `links`.          |
 | `KeepTogether`                        | Stops its children being split across a page break.                                   |
 
 They sit on top of the stock `@json-render/react-pdf` catalog (`Document`,
 `Page`, `View`, `Row`, `Column`, `Heading`, `Text`, `Image`, `Link`, `Table`,
 `List`, `Divider`, `Spacer`, `PageNumber`), which stays available.
+
+### Linking back to the app
+
+A report is often a summary of something the reader will then want to open. Two
+components take destinations, both as an array positional to what they already
+draw — `DataTable`'s `rowLinks` alongside `rows`, and `PieChart`'s `links`
+alongside `series` — with `null` for an entry that is not a link:
+
+```ts
+return {
+  rows: totals.map((entry) => [entry.category, money(entry.total)]),
+  rowLinks: totals.map((entry) => `${APP}/statements?category=${encodeURIComponent(entry.category)}`),
+};
+```
+
+Nothing is drawn differently for being a link. The clickable region is an
+annotation laid over the row or slice, so the cell text keeps the styling of the
+text beside it rather than picking up the blue underline `Link` would give it —
+a report full of links looks exactly like one with none.
+
+A pie slice is a wedge and a PDF annotation is a rectangle, so a slice's region
+is a square centred on it, sized to stay inside. Slices too thin to hold one get
+no region; their legend entry carries the same link and is always a full-size
+target, which is the reliable way to reach a small slice.
+
+Only `http`, `https` and `mailto` destinations are emitted. Template code is
+user-authored and a rendered report gets forwarded, so anything else — including
+a relative path, which a PDF has no base to resolve — is dropped.
 
 ## Branding
 

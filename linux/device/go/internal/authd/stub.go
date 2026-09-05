@@ -5,6 +5,7 @@ package authd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -36,12 +37,10 @@ func parseMethod(s string) (Method, bool) {
 	}
 }
 
-// stubAuthenticator stands in for the real methods while the PAM boundary is
-// being proven. It performs no authentication whatsoever: it selects a method
-// and returns a preconfigured verdict.
-//
-// It exists so the socket, the PAM module, the sshd stack and the Unix identity
-// can be tested on their own, and is replaced method by method in later phases.
+// stubAuthenticator stands in for a real method while the PAM boundary is being
+// exercised on its own. It performs no authentication whatsoever: it returns a
+// preconfigured verdict, and exists so the socket, the PAM module, the sshd stack
+// and the resulting Unix identity can be tested without a cloud.
 type stubAuthenticator struct {
 	approve bool
 }
@@ -58,11 +57,22 @@ func newStubAuthenticator(decision string) (*stubAuthenticator, error) {
 	}
 }
 
-func (a *stubAuthenticator) Authenticate(_ context.Context, req Request, conv Conversation) Outcome {
-	if err := conv.Display(fmt.Sprintf("Helix device %s", req.DeviceID)); err != nil {
-		return Deny("conversation_failed")
+func (a *stubAuthenticator) Authenticate(_ context.Context, _ Request, _ Conversation) Outcome {
+	if !a.approve {
+		return Deny("stub_denied")
 	}
+	return Approve()
+}
 
+// methodAuthenticator asks which method the user wants and hands the attempt to
+// it. Owning the choice in one place keeps every method free of the question, and
+// means an unimplemented one is refused rather than silently skipped.
+type methodAuthenticator struct {
+	methods map[Method]Authenticator
+	log     *slog.Logger
+}
+
+func (a *methodAuthenticator) Authenticate(ctx context.Context, req Request, conv Conversation) Outcome {
 	answer, err := conv.Prompt("auth_method", methodPrompt)
 	if err != nil {
 		return Deny("conversation_failed")
@@ -74,9 +84,13 @@ func (a *stubAuthenticator) Authenticate(_ context.Context, req Request, conv Co
 		return Deny("unknown_method")
 	}
 
-	if !a.approve {
-		return Deny("stub_denied")
+	impl, ok := a.methods[method]
+	if !ok {
+		a.log.Warn("method not available", "request_id", req.RequestID, "method", string(method))
+		_ = conv.Warn(fmt.Sprintf("%s authentication is not available on this device.", method))
+		return Deny("method_unavailable")
 	}
-	_ = conv.Display(fmt.Sprintf("Stub authenticator approved %s for %s.", method, req.Username))
-	return Approve()
+
+	a.log.Info("method selected", "request_id", req.RequestID, "method", string(method))
+	return impl.Authenticate(ctx, req, conv)
 }

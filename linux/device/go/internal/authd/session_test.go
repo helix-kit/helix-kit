@@ -37,12 +37,33 @@ func (r *fakeResolver) Resolve(_ context.Context, username string) (unixIdentity
 	return id, nil
 }
 
+// discardLog keeps test output about the code under test, not its logging.
+func discardLog() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
+
+// stubMethods assembles the daemon the way New does -- the dispatcher owns the
+// method prompt -- with a stub standing in for every method.
+func stubMethods(t *testing.T, decision string) Authenticator {
+	t.Helper()
+	stub, err := newStubAuthenticator(decision)
+	if err != nil {
+		t.Fatalf("newStubAuthenticator: %v", err)
+	}
+	return &methodAuthenticator{
+		log: discardLog(),
+		methods: map[Method]Authenticator{
+			MethodOnline:     stub,
+			MethodOffline:    stub,
+			MethodPersistent: stub,
+		},
+	}
+}
+
 // dial starts a session on one end of a pipe and returns the client end.
 func dial(t *testing.T, auth Authenticator) *authproto.Conn {
 	t.Helper()
 	server, client := net.Pipe()
 
-	s := newSession(server, auth, newFakeResolver(), "D123", slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := newSession(server, auth, newFakeResolver(), "D123", discardLog())
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	done := make(chan struct{})
 	go func() {
@@ -112,11 +133,7 @@ func start(username string) *authproto.Message {
 }
 
 func TestApprovedAttempt(t *testing.T) {
-	auth, err := newStubAuthenticator("approve")
-	if err != nil {
-		t.Fatal(err)
-	}
-	c := dial(t, auth)
+	c := dial(t, stubMethods(t, "approve"))
 
 	mustWrite(t, c, start(knownUser))
 	res := readUntilResult(t, c, map[string]string{"auth_method": "online"})
@@ -127,11 +144,7 @@ func TestApprovedAttempt(t *testing.T) {
 }
 
 func TestDeniedAttempt(t *testing.T) {
-	auth, err := newStubAuthenticator("deny")
-	if err != nil {
-		t.Fatal(err)
-	}
-	c := dial(t, auth)
+	c := dial(t, stubMethods(t, "deny"))
 
 	mustWrite(t, c, start(knownUser))
 	res := readUntilResult(t, c, map[string]string{"auth_method": "online"})
@@ -159,8 +172,7 @@ func TestStubRejectsUnknownDecision(t *testing.T) {
 }
 
 func TestUnknownMethodIsDenied(t *testing.T) {
-	auth, _ := newStubAuthenticator("approve")
-	c := dial(t, auth)
+	c := dial(t, stubMethods(t, "approve"))
 
 	mustWrite(t, c, start(knownUser))
 	res := readUntilResult(t, c, map[string]string{"auth_method": "sudo-please"})
@@ -211,7 +223,7 @@ func TestProtocolViolationsFailClosed(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			server, client := net.Pipe()
-			s := newSession(server, refusingAuthenticator{t}, newFakeResolver(), "D123", slog.New(slog.NewTextHandler(io.Discard, nil)))
+			s := newSession(server, refusingAuthenticator{t}, newFakeResolver(), "D123", discardLog())
 			go s.run(context.Background())
 			defer func() { _ = client.Close() }()
 
@@ -232,7 +244,7 @@ func TestProtocolViolationsFailClosed(t *testing.T) {
 
 func TestOversizedFrameFailsClosed(t *testing.T) {
 	server, client := net.Pipe()
-	s := newSession(server, refusingAuthenticator{t}, newFakeResolver(), "D123", slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := newSession(server, refusingAuthenticator{t}, newFakeResolver(), "D123", discardLog())
 	go s.run(context.Background())
 	defer func() { _ = client.Close() }()
 
@@ -261,8 +273,7 @@ func TestFirstFrameMustBeStart(t *testing.T) {
 // A response carrying the wrong prompt id means the conversation desynchronised;
 // crediting it to the pending prompt would attribute the wrong input.
 func TestMismatchedPromptResponseIsDenied(t *testing.T) {
-	auth, _ := newStubAuthenticator("approve")
-	c := dial(t, auth)
+	c := dial(t, stubMethods(t, "approve"))
 
 	mustWrite(t, c, start(knownUser))
 	for {
@@ -308,4 +319,25 @@ type silentAuthenticator struct{}
 
 func (silentAuthenticator) Authenticate(context.Context, Request, Conversation) Outcome {
 	return Outcome{}
+}
+
+// A method with no implementation must be refused, not silently handled by
+// another one.
+func TestUnimplementedMethodIsRefused(t *testing.T) {
+	stub, err := newStubAuthenticator("approve")
+	if err != nil {
+		t.Fatal(err)
+	}
+	onlineOnly := &methodAuthenticator{
+		log:     discardLog(),
+		methods: map[Method]Authenticator{MethodOnline: stub},
+	}
+	c := dial(t, onlineOnly)
+
+	mustWrite(t, c, start(knownUser))
+	res := readUntilResult(t, c, map[string]string{"auth_method": "offline"})
+
+	if res.Status != authproto.StatusDenied || res.Reason != "method_unavailable" {
+		t.Fatalf("status = %q reason = %q, want denied/method_unavailable", res.Status, res.Reason)
+	}
 }

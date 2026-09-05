@@ -96,6 +96,10 @@ func AuthSocketDir() string { return filepath.Join(RunDir(), "authd") }
 // can talk to it can drive an authentication decision.
 func AuthSocketPath() string { return filepath.Join(AuthSocketDir(), "auth.sock") }
 
+// AuthStatePath is helix-authd's SQLite state: who the cloud has authorized here,
+// and with what. Root-only, since it names who may log in.
+func AuthStatePath() string { return filepath.Join(StateDir(), "authd", "state.db") }
+
 // RuntimeSocketPath is runtime-manager's control socket for the local CLI.
 func RuntimeSocketPath() string { return filepath.Join(RunDir(), "runtime.sock") }
 

@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/helix-kit/helix-device/internal/shared/config"
@@ -25,15 +26,39 @@ import (
 // ServiceName is the service name used for config resolution and logging.
 const ServiceName = "helix-authd"
 
+const (
+	defaultAttemptTimeoutSec = 300
+	defaultRequestTimeoutSec = 10
+	defaultBrowserTimeoutSec = 120
+)
+
 // appConfig is the per-service section of the device config document.
 type appConfig struct {
 	// SocketPath overrides the default PAM socket location.
 	SocketPath string `json:"socketPath,omitempty"`
+	// StatePath overrides where cached authorizations are kept.
+	StatePath string `json:"statePath,omitempty"`
 	// AttemptTimeoutSec bounds one authentication attempt end to end.
 	AttemptTimeoutSec int `json:"attemptTimeoutSec,omitempty"`
-	// StubDecision drives the phase-1 placeholder authenticator: "approve" or
-	// "deny". It disappears once the real methods land.
-	StubDecision string `json:"stubDecision,omitempty"`
+	// Authenticator selects the decision engine: "helix" talks to the control
+	// plane, "stub" returns a fixed verdict for testing the PAM boundary alone.
+	Authenticator string `json:"authenticator,omitempty"`
+	// StubDecision is the verdict the stub returns: "approve" or "deny".
+	StubDecision string       `json:"stubDecision,omitempty"`
+	Cloud        cloudSection `json:"cloud,omitempty"`
+}
+
+// cloudSection points the daemon at the two control-plane surfaces it uses: the
+// browser sign-in endpoints, and the device-facing API.
+type cloudSection struct {
+	AuthURL           string `json:"authUrl,omitempty"`
+	GatewayURL        string `json:"gatewayUrl,omitempty"`
+	ClientID          string `json:"clientId,omitempty"`
+	RequestTimeoutSec int    `json:"requestTimeoutSec,omitempty"`
+	BrowserTimeoutSec int    `json:"browserTimeoutSec,omitempty"`
+	// PollIntervalSec overrides how often a pending sign-in is checked when the
+	// control plane states no interval of its own.
+	PollIntervalSec int `json:"pollIntervalSec,omitempty"`
 }
 
 type runner struct {
@@ -42,6 +67,7 @@ type runner struct {
 	log      *slog.Logger
 	auth     Authenticator
 	identity identityResolver
+	store    *Store
 
 	listener net.Listener
 }
@@ -55,17 +81,104 @@ func New(cfg *config.Config, log *slog.Logger) (servicemain.Runner, error) {
 	if r.app.SocketPath == "" {
 		r.app.SocketPath = config.AuthSocketPath()
 	}
+	if r.app.StatePath == "" {
+		r.app.StatePath = config.AuthStatePath()
+	}
 	if r.app.AttemptTimeoutSec <= 0 {
-		r.app.AttemptTimeoutSec = 300
+		r.app.AttemptTimeoutSec = defaultAttemptTimeoutSec
 	}
 
-	auth, err := newStubAuthenticator(r.app.StubDecision)
+	store, err := OpenStore(r.app.StatePath)
 	if err != nil {
+		return nil, err
+	}
+	r.store = store
+
+	auth, err := r.buildAuthenticator()
+	if err != nil {
+		_ = store.Close()
 		return nil, err
 	}
 	r.auth = auth
 	r.identity = newGetentResolver()
 	return r, nil
+}
+
+// buildAuthenticator assembles the method table. A method with no implementation
+// is refused at selection time rather than quietly behaving like another one.
+func (r *runner) buildAuthenticator() (Authenticator, error) {
+	if strings.EqualFold(r.app.Authenticator, "stub") {
+		stub, err := newStubAuthenticator(r.app.StubDecision)
+		if err != nil {
+			return nil, err
+		}
+		// Loud, because a device running this authenticates nobody.
+		r.log.Warn("STUB AUTHENTICATOR ENABLED: no real authentication is performed",
+			"decision", r.app.StubDecision)
+		return &methodAuthenticator{
+			log: r.log,
+			methods: map[Method]Authenticator{
+				MethodOnline:     stub,
+				MethodOffline:    stub,
+				MethodPersistent: stub,
+			},
+		}, nil
+	}
+
+	token, err := r.deviceAccessToken()
+	if err != nil {
+		return nil, err
+	}
+	if r.app.Cloud.AuthURL == "" || r.app.Cloud.GatewayURL == "" {
+		return nil, fmt.Errorf("cloud.authUrl and cloud.gatewayUrl are required")
+	}
+
+	cloud := NewCloud(CloudConfig{
+		AuthBaseURL:    r.app.Cloud.AuthURL,
+		GatewayBaseURL: r.app.Cloud.GatewayURL,
+		DeviceID:       r.cfg.Device.ID,
+		AccessToken:    token,
+		ClientID:       r.app.Cloud.ClientID,
+		Timeout:        seconds(r.app.Cloud.RequestTimeoutSec, defaultRequestTimeoutSec),
+	})
+
+	return &methodAuthenticator{
+		log: r.log,
+		methods: map[Method]Authenticator{
+			MethodOnline: &onlineAuthenticator{
+				cloud:          cloud,
+				store:          r.store,
+				log:            r.log,
+				browserTimeout: seconds(r.app.Cloud.BrowserTimeoutSec, defaultBrowserTimeoutSec),
+				pollInterval:   seconds(r.app.Cloud.PollIntervalSec, 0),
+			},
+		},
+	}, nil
+}
+
+// deviceAccessToken reads the credential the device already uses to authenticate
+// to the cloud, from the same file certificate enrollment reads.
+func (r *runner) deviceAccessToken() (string, error) {
+	path := r.cfg.Enrollment.AccessTokenFile
+	if path == "" {
+		return "", fmt.Errorf("enrollment.accessTokenFile is required to reach the cloud")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read device access token: %w", err)
+	}
+	token := strings.TrimSpace(string(data))
+	if token == "" {
+		return "", fmt.Errorf("device access token in %s is empty", path)
+	}
+	return token, nil
+}
+
+func seconds(configured, fallback int) time.Duration {
+	if configured <= 0 {
+		configured = fallback
+	}
+	return time.Duration(configured) * time.Second
 }
 
 // Run serves the PAM socket until the context is cancelled.
@@ -102,6 +215,9 @@ func (r *runner) Run(ctx context.Context) error {
 func (r *runner) Close() {
 	if r.listener != nil {
 		_ = r.listener.Close()
+	}
+	if r.store != nil {
+		_ = r.store.Close()
 	}
 	_ = os.Remove(r.app.SocketPath)
 }

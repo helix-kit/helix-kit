@@ -9,6 +9,7 @@ decision="${1:?usage: set-stub-decision <approve|deny>}"
 cat > /etc/helix/conf.d/helix-authd.json <<JSON
 {
   "socketPath": "/run/helix/authd/auth.sock",
+  "authenticator": "stub",
   "attemptTimeoutSec": 300,
   "stubDecision": "${decision}"
 }

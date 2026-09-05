@@ -42,6 +42,18 @@ func Deny(reason string) Outcome {
 	return Outcome{Status: authproto.StatusDenied, Reason: reason}
 }
 
+// Unavailable means the attempt could not be decided at all -- the cloud was
+// unreachable, a dependency was down. PAM maps it to PAM_AUTHINFO_UNAVAIL, which
+// tells sshd this was not a rejection of the user.
+func Unavailable(reason string) Outcome {
+	return Outcome{Status: authproto.StatusUnavailable, Reason: reason}
+}
+
+// Expired ends an attempt whose transaction outlived its window.
+func Expired(reason string) Outcome {
+	return Outcome{Status: authproto.StatusExpired, Reason: reason}
+}
+
 // Conversation is the authenticator's channel to the human at the other end of
 // the SSH session. It deliberately exposes nothing else about the transport.
 type Conversation interface {

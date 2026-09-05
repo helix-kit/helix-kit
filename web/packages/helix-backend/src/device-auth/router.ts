@@ -1,9 +1,16 @@
+import { and, eq, gt } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { type DeviceAuthorizationProvider, type UnixIdentityDirectory } from './types';
+import {
+  type DeviceAuthorizationProvider,
+  type LoginAuthorization,
+  type UnixIdentity,
+  type UnixIdentityDirectory,
+} from './types';
 
 import type { DatabaseClient } from '../db';
 
+import { session } from '../db/auth-schema';
 import { readBearerToken, verifyDeviceIdToken } from '../lib/device';
 import { createRouterFactory, TRPCError } from '../trpc';
 
@@ -23,6 +30,44 @@ export type DeviceAuthContext = Readonly<{
 
 const deviceIdInput = z.string().trim().min(1, 'deviceId is required');
 const userIdInput = z.string().trim().min(1, 'userId is required');
+const sessionTokenInput = z.string().trim().min(1, 'sessionToken is required');
+
+/** What a device is told about a login attempt, whoever asked. */
+const decisionOutput = z.object({
+  allowed: z.boolean(),
+  linuxUid: z.number().int().nullable(),
+  policyVersion: z.number().int(),
+  scopes: z.array(z.string()),
+  username: z.string().nullable(),
+  userId: z.string().nullable(),
+});
+
+type Decision = z.infer<typeof decisionOutput>;
+
+const DENIED: Decision = {
+  allowed: false,
+  linuxUid: null,
+  policyVersion: 0,
+  scopes: [],
+  username: null,
+  userId: null,
+};
+
+/** Combines the two lookups into the single answer a device acts on. */
+const decide = (
+  userId: string,
+  identity: UnixIdentity | null,
+  authorization: LoginAuthorization,
+): Decision => ({
+  // A user with no Unix identity cannot be logged in as anybody, whatever their
+  // scopes say.
+  allowed: authorization.allowed && identity !== null,
+  linuxUid: identity?.linuxUid ?? null,
+  policyVersion: authorization.policyVersion,
+  scopes: [...authorization.scopes],
+  username: identity?.username ?? null,
+  userId,
+});
 
 export const deviceAuthApiRouter = createRouterFactory<DeviceAuthContext>()((t) => {
   /**
@@ -51,37 +96,51 @@ export const deviceAuthApiRouter = createRouterFactory<DeviceAuthContext>()((t) 
     });
 
   return t.router({
+    /**
+     * For a user the device has already identified: it verified a persistent
+     * credential locally and now asks whether that user may still log in.
+     */
     authorizeLogin: deviceProcedure
       .meta({ openapi: { method: 'POST', path: '/api/device-auth/authorize' } })
       .input(z.object({ deviceId: deviceIdInput, userId: userIdInput }))
-      .output(
-        z.object({
-          allowed: z.boolean(),
-          linuxUid: z.number().int().nullable(),
-          policyVersion: z.number().int(),
-          scopes: z.array(z.string()),
-          username: z.string().nullable(),
-          userId: z.string(),
-        }),
-      )
+      .output(decisionOutput)
       .mutation(async ({ ctx, input }) => {
         const [identity, authorization] = await Promise.all([
           ctx.directory.lookup(input.userId),
           ctx.authorization.authorize(input.deviceId, input.userId),
         ]);
+        return decide(input.userId, identity, authorization);
+      }),
 
-        // A user with no Unix identity cannot be logged in as anybody, whatever
-        // their scopes say.
-        const allowed = authorization.allowed && identity !== null;
+    /**
+     * For a browser sign-in the device cannot interpret: it holds the session
+     * token the device-authorization flow handed back, and the cloud says who
+     * that is. The device never asserts an identity here, so approving somebody
+     * else's code cannot log anybody else in.
+     */
+    authorizeSession: deviceProcedure
+      .meta({ openapi: { method: 'POST', path: '/api/device-auth/authorize-session' } })
+      .input(z.object({ deviceId: deviceIdInput, sessionToken: sessionTokenInput }))
+      .output(decisionOutput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select({ userId: session.userId })
+          .from(session)
+          .where(and(eq(session.token, input.sessionToken), gt(session.expiresAt, new Date())))
+          .limit(1);
 
-        return {
-          allowed,
-          linuxUid: identity?.linuxUid ?? null,
-          policyVersion: authorization.policyVersion,
-          scopes: [...authorization.scopes],
-          username: identity?.username ?? null,
-          userId: input.userId,
-        };
+        const row = rows[0];
+        if (row === undefined) {
+          // An unknown or expired session is not an error the device can act on;
+          // it is simply nobody, and nobody may log in.
+          return DENIED;
+        }
+
+        const [identity, authorization] = await Promise.all([
+          ctx.directory.lookup(row.userId),
+          ctx.authorization.authorize(input.deviceId, row.userId),
+        ]);
+        return decide(row.userId, identity, authorization);
       }),
   });
 });

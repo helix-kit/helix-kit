@@ -14,6 +14,7 @@ const DEVICE_TOKEN = 'device-access-token';
 const ALICE = 'user_alice';
 const BOB = 'user_bob';
 const APP_SCOPE = 'app.foo.read';
+const SESSION_TOKEN = 'session-token';
 
 const fixture = () =>
   new FixtureAuthorization({
@@ -83,7 +84,10 @@ describe('FixtureAuthorization', () => {
     auth.revokeAll(DEVICE_ID, BOB);
     seen.push(auth.policyVersion);
 
-    const strictlyIncreasing = seen.every((version, i) => i === 0 || version > seen[i - 1]);
+    const strictlyIncreasing = seen.every((version, i) => {
+      const previous = seen[i - 1];
+      return previous === undefined || version > previous;
+    });
     expect(strictlyIncreasing).toBe(true);
 
     await expect(auth.authorize(DEVICE_ID, ALICE)).resolves.toMatchObject({
@@ -121,9 +125,14 @@ describe('parseFixture', () => {
   });
 });
 
-/** A database stub that answers the single device-token lookup this router makes. */
-const dbReturning = (rows: readonly unknown[]): DatabaseClient => {
-  const limit = () => Promise.resolve(rows);
+/**
+ * A database stub that serves one result set per query, in order. The router
+ * makes the device-token lookup first, then any lookup the procedure itself
+ * needs, so the queue mirrors what really happens.
+ */
+const dbServing = (resultSets: readonly (readonly unknown[])[]): DatabaseClient => {
+  const queue = [...resultSets];
+  const limit = () => Promise.resolve(queue.shift() ?? []);
   const where = () => ({ limit });
   const from = () => ({ where });
   return { select: () => ({ from }) } as unknown as DatabaseClient;
@@ -132,20 +141,23 @@ const dbReturning = (rows: readonly unknown[]): DatabaseClient => {
 const callerWith = ({
   auth,
   headers,
-  deviceRows = [{ id: DEVICE_ID }],
+  results = [[{ id: DEVICE_ID }]],
 }: {
   auth: FixtureAuthorization;
   headers: Headers;
-  deviceRows?: readonly unknown[];
+  results?: readonly (readonly unknown[])[];
 }) => {
   const { router } = createRootRouter({ deviceAuth: deviceAuthApiRouter });
   return router.createCaller({
-    db: dbReturning(deviceRows),
+    db: dbServing(results),
     headers,
     authorization: auth,
     directory: auth,
   });
 };
+
+/** The device token check passes, then the named session rows are returned. */
+const withSession = (sessionRows: readonly unknown[]) => [[{ id: DEVICE_ID }], sessionRows];
 
 const bearer = (token: string) => new Headers({ authorization: `Bearer ${token}` });
 
@@ -201,7 +213,7 @@ describe('deviceAuthApiRouter.authorizeLogin', () => {
   });
 
   it('refuses a token that matches no active device', async () => {
-    const caller = callerWith({ auth, headers: bearer('wrong-token'), deviceRows: [] });
+    const caller = callerWith({ auth, headers: bearer('wrong-token'), results: [[]] });
 
     await expect(
       caller.deviceAuth.authorizeLogin({ deviceId: DEVICE_ID, userId: ALICE }),
@@ -210,10 +222,75 @@ describe('deviceAuthApiRouter.authorizeLogin', () => {
 
   // The device authenticates as itself; it cannot ask about another device.
   it('checks the token against the device named in the request', async () => {
-    const caller = callerWith({ auth, headers: bearer(DEVICE_TOKEN), deviceRows: [] });
+    const caller = callerWith({ auth, headers: bearer(DEVICE_TOKEN), results: [[]] });
 
     await expect(
       caller.deviceAuth.authorizeLogin({ deviceId: 'D999', userId: ALICE }),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+});
+
+describe('deviceAuthApiRouter.authorizeSession', () => {
+  let auth: FixtureAuthorization;
+
+  beforeEach(() => {
+    auth = fixture();
+  });
+
+  // The device holds a session token and no opinion about whose it is.
+  it('resolves the session to its user and authorizes them', async () => {
+    const caller = callerWith({
+      auth,
+      headers: bearer(DEVICE_TOKEN),
+      results: withSession([{ userId: ALICE }]),
+    });
+
+    await expect(
+      caller.deviceAuth.authorizeSession({ deviceId: DEVICE_ID, sessionToken: SESSION_TOKEN }),
+    ).resolves.toEqual({
+      allowed: true,
+      linuxUid: 200001,
+      policyVersion: 1,
+      scopes: [DEVICE_LOGIN_SCOPE, APP_SCOPE],
+      username: 'alice',
+      userId: ALICE,
+    });
+  });
+
+  // An unknown or expired session is nobody, and nobody may log in.
+  it('denies an unknown or expired session without naming anyone', async () => {
+    const caller = callerWith({
+      auth,
+      headers: bearer(DEVICE_TOKEN),
+      results: withSession([]),
+    });
+
+    await expect(
+      caller.deviceAuth.authorizeSession({ deviceId: DEVICE_ID, sessionToken: 'stale' }),
+    ).resolves.toMatchObject({ allowed: false, userId: null, username: null, scopes: [] });
+  });
+
+  it('denies a resolved user whose login scope was withdrawn', async () => {
+    auth.revokeLogin(DEVICE_ID, ALICE);
+    const caller = callerWith({
+      auth,
+      headers: bearer(DEVICE_TOKEN),
+      results: withSession([{ userId: ALICE }]),
+    });
+
+    const result = await caller.deviceAuth.authorizeSession({
+      deviceId: DEVICE_ID,
+      sessionToken: SESSION_TOKEN,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.username).toBe('alice');
+  });
+
+  it('still requires the device to authenticate as itself', async () => {
+    const caller = callerWith({ auth, headers: new Headers(), results: withSession([]) });
+
+    await expect(
+      caller.deviceAuth.authorizeSession({ deviceId: DEVICE_ID, sessionToken: SESSION_TOKEN }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 });

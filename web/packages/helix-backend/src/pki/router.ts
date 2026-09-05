@@ -6,7 +6,7 @@ import { issueDeviceCertificate, type StepCaSettings } from './step-ca';
 import type { DatabaseClient } from '../db';
 
 import { deviceCertificate } from '../db/schema';
-import { verifyDeviceIdToken } from '../lib/device';
+import { readBearerToken, verifyDeviceIdToken } from '../lib/device';
 import { prefixedId } from '../releases/ids';
 import { createRouterFactory } from '../trpc';
 
@@ -20,16 +20,6 @@ const csrInputSchema = z
       value.includes('-----BEGIN NEW CERTIFICATE REQUEST-----'),
     'csr must be a PEM certificate signing request',
   );
-
-const BEARER_PREFIX = 'Bearer ';
-
-const readBearerToken = (headers: Headers): string | null => {
-  const headerValue = headers.get('authorization') ?? '';
-  const matchedToken = headerValue.startsWith(BEARER_PREFIX)
-    ? headerValue.slice(BEARER_PREFIX.length).trim()
-    : '';
-  return matchedToken === '' ? null : matchedToken;
-};
 
 type StepCaContext = Readonly<{
   db: DatabaseClient;

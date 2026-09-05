@@ -35,6 +35,11 @@ export const env = createEnv({
 
     HELIX_SERVER_ROLES: z.string().optional(),
 
+    // JSON seed for the experimental device-login authorization provider. Absent
+    // means every device login is denied, so a production server that has not
+    // opted in cannot authorize anyone by accident.
+    DEVICE_AUTH_FIXTURE: z.string().optional(),
+
     EVENT_QUEUE_BROKERS: z.string(),
     EVENT_QUEUE_TOPIC: z.string(),
     EVENT_QUEUE_CLIENT_ID: z.string().default('helix-server'),

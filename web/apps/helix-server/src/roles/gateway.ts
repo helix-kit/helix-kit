@@ -20,6 +20,11 @@ import {
   type FsStorageHttpOptions,
   type StepCaSettings,
 } from '@helix-hq/backend';
+import {
+  deviceAuthApiRouter,
+  FixtureAuthorization,
+  parseFixture,
+} from '@helix-hq/backend/device-auth';
 import { fileRouter, type DeviceMtlsContext } from '@helix-hq/backend/device-mtls/fileRouter';
 import {
   certSerialFromSocket,
@@ -106,11 +111,26 @@ const buildPublicServer = async ({
   };
   const publishOta = createOtaPublisher(mqttClient, db);
 
-  const { router: apiRouter } = createRootRouter({ pki: pkiRouter, releases: releasesApiRouter });
+  // The experimental device-login authorization provider. With no fixture
+  // configured it holds no grants, so it denies every login rather than
+  // defaulting a production server into authorizing anyone.
+  const deviceAuthorization = new FixtureAuthorization(
+    env.DEVICE_AUTH_FIXTURE === undefined
+      ? { identities: {}, grants: [] }
+      : parseFixture(env.DEVICE_AUTH_FIXTURE),
+  );
+
+  const { router: apiRouter } = createRootRouter({
+    deviceAuth: deviceAuthApiRouter,
+    pki: pkiRouter,
+    releases: releasesApiRouter,
+  });
   const apiHandler = createOpenApiHttpHandler({
     router: apiRouter,
     createContext: ({ req }) => ({
+      authorization: deviceAuthorization,
       db,
+      directory: deviceAuthorization,
       headers: toHeaders(req.headers),
       publishOta,
       stepCaSettings,

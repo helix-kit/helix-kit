@@ -45,6 +45,10 @@
       "types": "./src/db/auth-schema.ts",
       "import": "./src/db/auth-schema.ts"
     },
+    "./device-auth": {
+      "types": "./src/device-auth/index.ts",
+      "import": "./src/device-auth/index.ts"
+    },
     "./device-mtls/fileRouter": {
       "types": "./src/device-mtls/fileRouter.ts",
       "import": "./src/device-mtls/fileRouter.ts"
@@ -168,6 +172,10 @@
       "./db/auth-schema": {
         "types": "./dist/db/auth-schema.d.ts",
         "import": "./dist/db/auth-schema.js"
+      },
+      "./device-auth": {
+        "types": "./dist/device-auth/index.d.ts",
+        "import": "./dist/device-auth/index.js"
       },
       "./device-mtls/fileRouter": {
         "types": "./dist/device-mtls/fileRouter.d.ts",

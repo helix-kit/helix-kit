@@ -10,6 +10,7 @@ package authd
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -30,6 +31,11 @@ const (
 	defaultAttemptTimeoutSec = 300
 	defaultRequestTimeoutSec = 10
 	defaultBrowserTimeoutSec = 120
+
+	// offlineSecretKey names the shared device secret in the service secret file.
+	offlineSecretKey = "OFFLINE_DEVICE_SECRET"
+	// minOfflineSecretBytes rejects a "secret" that is really a passphrase.
+	minOfflineSecretBytes = 32
 )
 
 // appConfig is the per-service section of the device config document.
@@ -44,8 +50,21 @@ type appConfig struct {
 	// plane, "stub" returns a fixed verdict for testing the PAM boundary alone.
 	Authenticator string `json:"authenticator,omitempty"`
 	// StubDecision is the verdict the stub returns: "approve" or "deny".
-	StubDecision string       `json:"stubDecision,omitempty"`
-	Cloud        cloudSection `json:"cloud,omitempty"`
+	StubDecision string         `json:"stubDecision,omitempty"`
+	Cloud        cloudSection   `json:"cloud,omitempty"`
+	Offline      offlineSection `json:"offline,omitempty"`
+}
+
+// offlineSection configures Method 2. Without a device secret the method is not
+// offered at all, rather than offered and always failing.
+type offlineSection struct {
+	// VerificationURI is where the user goes on their phone.
+	VerificationURI string `json:"verificationUri,omitempty"`
+	// MaxScopeAgeSec is how long a cached authorization may still be acted on
+	// once the device is offline.
+	MaxScopeAgeSec  int `json:"maxScopeAgeSec,omitempty"`
+	ChallengeTTLSec int `json:"challengeTtlSec,omitempty"`
+	MaxAttempts     int `json:"maxAttempts,omitempty"`
 }
 
 // cloudSection points the daemon at the two control-plane surfaces it uses: the
@@ -142,18 +161,62 @@ func (r *runner) buildAuthenticator() (Authenticator, error) {
 		Timeout:        seconds(r.app.Cloud.RequestTimeoutSec, defaultRequestTimeoutSec),
 	})
 
-	return &methodAuthenticator{
-		log: r.log,
-		methods: map[Method]Authenticator{
-			MethodOnline: &onlineAuthenticator{
-				cloud:          cloud,
-				store:          r.store,
-				log:            r.log,
-				browserTimeout: seconds(r.app.Cloud.BrowserTimeoutSec, defaultBrowserTimeoutSec),
-				pollInterval:   seconds(r.app.Cloud.PollIntervalSec, 0),
-			},
+	methods := map[Method]Authenticator{
+		MethodOnline: &onlineAuthenticator{
+			cloud:          cloud,
+			store:          r.store,
+			log:            r.log,
+			browserTimeout: seconds(r.app.Cloud.BrowserTimeoutSec, defaultBrowserTimeoutSec),
+			pollInterval:   seconds(r.app.Cloud.PollIntervalSec, 0),
 		},
-	}, nil
+	}
+
+	// The offline method needs a device secret it shares with the cloud. Without
+	// one it is left unregistered, so choosing it says so plainly instead of
+	// failing after a challenge nobody can answer.
+	if secret, err := r.offlineSecret(); err != nil {
+		return nil, err
+	} else if secret != nil {
+		methods[MethodOffline] = &offlineAuthenticator{
+			secret:          secret,
+			store:           r.store,
+			log:             r.log,
+			maxScopeAge:     seconds(r.app.Offline.MaxScopeAgeSec, 0),
+			challengeTTL:    seconds(r.app.Offline.ChallengeTTLSec, 0),
+			maxAttempts:     r.app.Offline.MaxAttempts,
+			verificationURI: r.offlineVerificationURI(),
+		}
+	} else {
+		r.log.Info("offline authentication is unavailable: no device secret configured")
+	}
+
+	return &methodAuthenticator{log: r.log, methods: methods}, nil
+}
+
+// offlineSecret reads the shared device secret from the service's secret file.
+// It is hex encoded, and must be a real key rather than a short string.
+func (r *runner) offlineSecret() ([]byte, error) {
+	encoded, ok := r.cfg.Secret(offlineSecretKey)
+	if !ok || strings.TrimSpace(encoded) == "" {
+		return nil, nil
+	}
+	secret, err := hex.DecodeString(strings.TrimSpace(encoded))
+	if err != nil {
+		return nil, fmt.Errorf("%s must be hex encoded: %w", offlineSecretKey, err)
+	}
+	if len(secret) < minOfflineSecretBytes {
+		return nil, fmt.Errorf("%s must be at least %d bytes, got %d",
+			offlineSecretKey, minOfflineSecretBytes, len(secret))
+	}
+	return secret, nil
+}
+
+// offlineVerificationURI defaults to the offline page on the configured cloud.
+func (r *runner) offlineVerificationURI() string {
+	if r.app.Offline.VerificationURI != "" {
+		return r.app.Offline.VerificationURI
+	}
+	return strings.TrimRight(r.app.Cloud.AuthURL, "/") + "/device/offline"
 }
 
 // deviceAccessToken reads the credential the device already uses to authenticate

@@ -20,25 +20,8 @@ PEOPLE_DN='ou=People,dc=helix,dc=local'
 GROUPS_DN='ou=Groups,dc=helix,dc=local'
 SHELL_PATH='/usr/libexec/helix/session-launcher'
 
-PASSED=0
-FAILED=0
-FAILURES=()
-
-if [[ -t 1 ]]; then
-    C_PASS=$'\033[32m'; C_FAIL=$'\033[31m'; C_HEAD=$'\033[1m'; C_OFF=$'\033[0m'
-else
-    C_PASS=''; C_FAIL=''; C_HEAD=''; C_OFF=''
-fi
-
-section() { printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
-pass()    { PASSED=$((PASSED + 1)); printf '%s[PASS]%s %s\n' "$C_PASS" "$C_OFF" "$1"; }
-fail()    { FAILED=$((FAILED + 1)); FAILURES+=("$1"); printf '%s[FAIL]%s %s\n' "$C_FAIL" "$C_OFF" "$1"; }
-
-die() {
-    printf '%s[ABORT]%s %s\n' "$C_FAIL" "$C_OFF" "$1"
-    diagnostics
-    exit 1
-}
+# Shared PASS/FAIL harness, so both experiments report results identically.
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/e2e-checks.sh"
 
 # The LDAP facade is proven before SSSD is even started, so ldapsearch runs in a
 # throwaway container built from the client image with the SSSD entrypoint
@@ -47,81 +30,6 @@ ldap()    { docker compose run -T --rm --no-deps --entrypoint ldapsearch sssd-cl
 ldapmod() { docker compose run -T --rm --no-deps --entrypoint ldapmodify sssd-client -H ldap://helix-ldap:3389 "$@"; }
 asuser()  { docker compose exec -T sssd-client "$@"; }
 psql_c()  { docker compose exec -T postgres psql -U helix -d helix -qtAX -c "$1"; }
-
-# check_ok NAME -- CMD...        command must succeed
-check_ok() {
-    local name="$1"; shift; [[ "${1:-}" == "--" ]] && shift
-    local out
-    if out=$("$@" 2>&1); then
-        pass "$name"
-    else
-        fail "$name"
-        printf '       command: %s\n       output: %s\n' "$*" "${out//$'\n'/$'\n'               }"
-    fi
-}
-
-# check_fail NAME -- CMD...      command must NOT succeed
-check_fail() {
-    local name="$1"; shift; [[ "${1:-}" == "--" ]] && shift
-    local out
-    if out=$("$@" 2>&1); then
-        fail "$name"
-        printf '       command unexpectedly succeeded: %s\n       output: %s\n' "$*" "$out"
-    else
-        pass "$name"
-    fi
-}
-
-# check_match NAME PATTERN -- CMD...   stdout must match the extended regex
-check_match() {
-    local name="$1" pattern="$2"; shift 2; [[ "${1:-}" == "--" ]] && shift
-    local out
-    out=$("$@" 2>&1)
-    if grep -Eq -- "$pattern" <<<"$out"; then
-        pass "$name"
-    else
-        fail "$name"
-        printf '       expected match: %s\n       command: %s\n       output: %s\n' \
-            "$pattern" "$*" "${out//$'\n'/$'\n'               }"
-    fi
-}
-
-# check_nomatch NAME PATTERN -- CMD...  stdout must NOT match
-check_nomatch() {
-    local name="$1" pattern="$2"; shift 2; [[ "${1:-}" == "--" ]] && shift
-    local out
-    out=$("$@" 2>&1)
-    if grep -Eq -- "$pattern" <<<"$out"; then
-        fail "$name"
-        printf '       unexpected match: %s\n       output: %s\n' "$pattern" "$out"
-    else
-        pass "$name"
-    fi
-}
-
-wait_healthy() {
-    local service="$1" timeout="${2:-120}" id status
-    for ((i = 0; i < timeout; i++)); do
-        id=$(docker compose ps -q "$service" 2>/dev/null)
-        if [[ -n "$id" ]]; then
-            status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$id" 2>/dev/null)
-            [[ "$status" == "healthy" || "$status" == "running" ]] && return 0
-            [[ "$status" == "exited" ]] && return 1
-        fi
-        sleep 1
-    done
-    return 1
-}
-
-# retry_until DESCRIPTION TIMEOUT -- CMD...   poll until the command succeeds
-retry_until() {
-    local timeout="$1"; shift; [[ "${1:-}" == "--" ]] && shift
-    for ((i = 0; i < timeout; i++)); do
-        "$@" >/dev/null 2>&1 && return 0
-        sleep 1
-    done
-    return 1
-}
 
 diagnostics() {
     section "DIAGNOSTICS"
@@ -310,17 +218,7 @@ fi
 psql_c "DELETE FROM users WHERE username = 'dave';" >/dev/null
 
 ########################################################################
-section "SUMMARY"
-########################################################################
-printf '%s%d passed%s, %s%d failed%s\n' "$C_PASS" "$PASSED" "$C_OFF" \
-    "$([[ $FAILED -gt 0 ]] && echo "$C_FAIL" || echo '')" "$FAILED" "$C_OFF"
-
-if [[ $FAILED -gt 0 ]]; then
-    printf '\nFailed checks:\n'
-    printf '  - %s\n' "${FAILURES[@]}"
-    diagnostics
-    exit 1
-fi
+print_summary
 
 printf '\nPostgreSQL -> helix-ldap -> SSSD -> NSS is proven end to end.\n'
 printf 'The stack is still running: docker compose exec sssd-client getent passwd alice\n'

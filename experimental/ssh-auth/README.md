@@ -26,7 +26,8 @@ apart: **LDAP/SSSD supplies identity through NSS and never authenticates anyone.
 ## Status
 
 **Phase 1 of [HELIX-217] is complete** — the PAM boundary, proven by `make test`
-(38 checks). Authentication itself is still a stub: it selects a method and
+(38 checks) — and **Phase 2**, the cloud half, is built and verified separately
+(see below). Authentication itself is still a stub: it selects a method and
 returns a preconfigured verdict, so the socket, the PAM module, the sshd stack
 and the resulting Unix identity could be proven on their own. The three real
 methods land in later phases.
@@ -48,6 +49,25 @@ user=alice
 uid=200001
 gid=200001
 ```
+
+## The cloud half (Phase 2)
+
+Phase 2 lives in the web app, not here, because the pieces it needs already
+exist there:
+
+| Piece | Where |
+| --- | --- |
+| RFC 8628 device authorization | the real Better Auth `deviceAuthorization` plugin, enabled in `web/apps/helix/src/server/auth.ts` |
+| The browser approval page | `web/apps/helix/src/app/device` |
+| Authorization (`device.login`, scopes, `policyVersion`) | `web/packages/helix-backend/src/device-auth` — an interface with a fixture-backed mock |
+| The device-facing authorize endpoint | mounted on the helix-server gateway, authenticated by the device's existing access token |
+
+Authentication is real; only authorization is mocked, because Helix has no
+user-to-device authorization model yet and OpenFGA is not mature enough to wire
+in. Swapping the mock is a construction-site change: no caller touches it.
+
+Phase 3 is what connects the two halves — until then `helix-authd` still returns
+a stub verdict.
 
 ## Run it
 

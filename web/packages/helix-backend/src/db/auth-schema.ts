@@ -208,3 +208,23 @@ export const oauthConsent = pgTable(
     index('oauth_consent_user_id_idx').on(table.userId),
   ],
 );
+
+// RFC 8628 device authorization: a device asks for a code, a human approves it in
+// a browser under their own session, and the device polls for the outcome. Rows
+// are short-lived by design -- `expiresAt` is the whole security model.
+export const deviceCode = pgTable(
+  'device_code',
+  {
+    id: text('id').primaryKey(),
+    deviceCode: text('device_code').notNull().unique('device_code_device_code_unique'),
+    userCode: text('user_code').notNull().unique('device_code_user_code_unique'),
+    userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at').notNull(),
+    status: text('status').notNull(),
+    lastPolledAt: timestamp('last_polled_at'),
+    pollingInterval: integer('polling_interval'),
+    clientId: text('client_id'),
+    scope: text('scope'),
+  },
+  (table) => [index('device_code_user_id_idx').on(table.userId)],
+);

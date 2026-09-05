@@ -5,7 +5,7 @@ import { passkey } from '@better-auth/passkey';
 import * as schema from '@helix-hq/backend/db/auth-schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin, mcp } from 'better-auth/plugins';
+import { admin, deviceAuthorization, mcp } from 'better-auth/plugins';
 
 import AuthEmail from '@/emails/auth-email';
 import { env } from '@/lib/env';
@@ -17,6 +17,11 @@ const SESSION_CACHE_MAX_AGE_MINUTES = 5;
 const SECONDS_PER_MINUTE = 60;
 
 export const ADMIN_ROLES = ['admin', 'sysadmin'] as const;
+
+// A device login is a person walking to another machine; long enough to be
+// realistic, short enough that an abandoned code is not left standing.
+const DEVICE_CODE_EXPIRES_IN = '10m';
+const DEVICE_CODE_POLL_INTERVAL = '5s';
 
 const resolveBaseUrl = (): string => env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_BASE_URL;
 
@@ -60,6 +65,13 @@ const createHelixAuth = () =>
       // publishes the .well-known discovery docs and guards the MCP route via
       // withMcpAuth. Reuses the login page users already have.
       mcp({ loginPage: '/auth/login' }),
+      // RFC 8628 device authorization, for signing in on something with no
+      // browser of its own -- a Helix device asking who is at the keyboard.
+      deviceAuthorization({
+        expiresIn: DEVICE_CODE_EXPIRES_IN,
+        interval: DEVICE_CODE_POLL_INTERVAL,
+        verificationUri: '/device',
+      }),
     ],
     session: {
       cookieCache: {

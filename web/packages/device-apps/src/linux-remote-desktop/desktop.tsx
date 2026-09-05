@@ -333,7 +333,9 @@ export const RemoteDesktop = ({ clientStreamUrl, deviceStreamUrl }: RemoteDeskto
           <span className="flex items-center gap-1.5">
             <span className={`inline-block size-2 rounded-full ${statusDotClass(status)}`} />
             <span className="capitalize">{status}</span>
-            {desktopName === null ? null : <span className="hidden xl:inline">· {desktopName}</span>}
+            {desktopName === null ? null : (
+              <span className="hidden xl:inline">· {desktopName}</span>
+            )}
             {detail === null ? null : <span className="text-destructive">· {detail}</span>}
             {status === 'closed' || status === 'error' ? (
               <button

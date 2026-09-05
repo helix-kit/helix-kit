@@ -13,4 +13,5 @@ export { GpioControls } from './gpio-control/controls';
 export { linuxShellApp } from './linux-shell/app';
 export { uartConsoleApp } from './uart-console/app';
 export { linuxPortForwardApp } from './linux-port-forward/app';
+export { linuxRemoteDesktopApp } from './linux-remote-desktop/app';
 export { linuxFilesApp } from './linux-files/app';

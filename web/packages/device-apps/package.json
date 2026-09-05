@@ -55,6 +55,7 @@
     "@helix-hq/design-system": "workspace:*",
     "@helix-hq/protocol": "workspace:*",
     "@helix-hq/web-core": "workspace:*",
+    "@novnc/novnc": "^1.7.0",
     "@tanstack/react-query": "^5.101.2",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
@@ -67,10 +68,10 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "@tsdown/css": "0.22.4",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@tsdown/css": "0.22.4",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^10.6.0",

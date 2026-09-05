@@ -3,6 +3,7 @@ import {
   gpioControlApp,
   linuxFilesApp,
   linuxPortForwardApp,
+  linuxRemoteDesktopApp,
   linuxShellApp,
   uartConsoleApp,
   type DeviceApp,
@@ -13,6 +14,7 @@ export const deviceApps: readonly DeviceApp[] = [
   linuxShellApp,
   uartConsoleApp,
   linuxPortForwardApp,
+  linuxRemoteDesktopApp,
   linuxFilesApp,
   gpioControlApp,
 ];

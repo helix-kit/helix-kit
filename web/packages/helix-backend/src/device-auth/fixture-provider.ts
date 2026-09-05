@@ -9,6 +9,7 @@
 import {
   DEVICE_LOGIN_SCOPE,
   type DeviceAuthorizationProvider,
+  type DeviceSecretStore,
   type LoginAuthorization,
   type UnixIdentity,
   type UnixIdentityDirectory,
@@ -25,6 +26,8 @@ export type FixtureGrant = Readonly<{
 export type Fixture = Readonly<{
   identities: Readonly<Record<string, UnixIdentity>>;
   grants: readonly FixtureGrant[];
+  /** Per-device offline secrets, hex encoded. Absent means the device has none. */
+  deviceSecrets?: Readonly<Record<string, string>>;
 }>;
 
 const DENIED: LoginAuthorization = { allowed: false, scopes: [], policyVersion: 0 };
@@ -36,9 +39,12 @@ const grantKey = (deviceId: string, userId: string): string => `${deviceId} ${us
  * seed. Swapping it for an OpenFGA-backed implementation is a construction-site
  * change: no caller touches this class directly.
  */
-export class FixtureAuthorization implements DeviceAuthorizationProvider, UnixIdentityDirectory {
+export class FixtureAuthorization
+  implements DeviceAuthorizationProvider, UnixIdentityDirectory, DeviceSecretStore
+{
   readonly #identities: Map<string, UnixIdentity>;
   readonly #grants: Map<string, readonly string[]>;
+  readonly #deviceSecrets: Map<string, string>;
   #policyVersion: number;
 
   constructor(fixture: Fixture) {
@@ -46,7 +52,13 @@ export class FixtureAuthorization implements DeviceAuthorizationProvider, UnixId
     this.#grants = new Map(
       fixture.grants.map((grant) => [grantKey(grant.deviceId, grant.userId), [...grant.scopes]]),
     );
+    this.#deviceSecrets = new Map(Object.entries(fixture.deviceSecrets ?? {}));
     this.#policyVersion = 1;
+  }
+
+  secretFor(deviceId: string): Promise<Buffer | null> {
+    const hex = this.#deviceSecrets.get(deviceId);
+    return Promise.resolve(hex === undefined ? null : Buffer.from(hex, 'hex'));
   }
 
   /** The current policy version, bumped by every mutation below. */
@@ -116,8 +128,20 @@ export const parseFixture = (json: string): Fixture => {
   if (!Array.isArray(grants)) {
     throw new TypeError('device auth fixture needs a "grants" array');
   }
+  const { deviceSecrets } = parsed as { deviceSecrets?: unknown };
   return {
     identities: identities as Fixture['identities'],
     grants: grants as Fixture['grants'],
+    deviceSecrets: (deviceSecrets ?? {}) as Fixture['deviceSecrets'],
   };
 };
+
+/**
+ * Builds the provider from the environment. Absent configuration yields a fixture
+ * with no grants, which denies everyone: a deployment that has not opted in must
+ * not authorize anyone by accident.
+ */
+export const fixtureFromEnv = (json: string | undefined): FixtureAuthorization =>
+  new FixtureAuthorization(
+    json === undefined || json === '' ? { identities: {}, grants: [] } : parseFixture(json),
+  );

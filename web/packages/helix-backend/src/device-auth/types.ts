@@ -43,3 +43,14 @@ export interface UnixIdentityDirectory {
 export interface DeviceAuthorizationProvider {
   authorize(deviceId: string, userId: string): Promise<LoginAuthorization>;
 }
+
+/**
+ * Supplies the per-device secret the offline challenge/response is keyed on.
+ *
+ * A single fleet-wide secret is explicitly not a product design; per-device
+ * provisioning and hardware protection are deferred, so this is an interface with
+ * a fixture behind it rather than anything durable.
+ */
+export interface DeviceSecretStore {
+  secretFor(deviceId: string): Promise<Buffer | null>;
+}

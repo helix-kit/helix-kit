@@ -6,6 +6,7 @@ import { accountRouter } from '@helix-hq/backend/account';
 import { findAgentUser } from '@helix-hq/backend/agent';
 import { aiUsageRouter } from '@helix-hq/backend/ai-usage';
 import { conversationsRouter } from '@helix-hq/backend/conversations';
+import { fixtureFromEnv, offlineAuthRouter } from '@helix-hq/backend/device-auth';
 import { devicesAdminRouter } from '@helix-hq/backend/devices';
 import { featuresAdminRouter } from '@helix-hq/backend/features';
 import { iceRouter, type TurnSettings } from '@helix-hq/backend/ice';
@@ -81,6 +82,7 @@ export const { router: appRouter } = createRootRouter({
   reportConversations: conversationsRouter({ surface: 'pdf-report' }),
   aiUsage: aiUsageRouter,
   account: accountRouter,
+  offlineAuth: offlineAuthRouter,
 });
 export type AppRouter = typeof appRouter;
 
@@ -92,9 +94,16 @@ type CreateTRPCContextOptions = {
 // One place assembles the full request context so both the cookie-session path
 // (createTRPCContext) and the token path (createTRPCContextForUser, used by the
 // external MCP server) produce an identical context shape.
+// The experimental device-login fixture. One instance per process, so a scope
+// changed in a test is visible to the next request.
+const deviceAuthorization = fixtureFromEnv(env.DEVICE_AUTH_FIXTURE);
+
 const buildContext = (user: BlogSessionUser | null) =>
   ({
     db,
+    authorization: deviceAuthorization,
+    directory: deviceAuthorization,
+    secrets: deviceAuthorization,
     adminRoles: ADMIN_ROLES,
     user,
     storage,
@@ -104,6 +113,9 @@ const buildContext = (user: BlogSessionUser | null) =>
     buildWorkerUrl: env.HELIX_BUILD_WORKER_URL ?? null,
     buildCallbackBaseUrl: env.HELIX_BUILD_CALLBACK_BASE_URL ?? null,
   }) satisfies BlogContext & {
+    authorization: typeof deviceAuthorization;
+    directory: typeof deviceAuthorization;
+    secrets: typeof deviceAuthorization;
     storage: typeof storage;
     stepCaSettings: StepCaSettings | null;
     stunUrls: readonly string[];

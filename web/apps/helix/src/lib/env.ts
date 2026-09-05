@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 export const env = createEnv({
   server: {
+    // JSON seed for the experimental device-login authorization fixture. Absent
+    // means nobody is authorized, so a deployment that has not opted in cannot
+    // hand out offline responses by accident.
+    DEVICE_AUTH_FIXTURE: z.string().optional(),
     DATABASE_URL: z.url(),
 
     // Better Auth secret (required) and canonical origin (falls back to NEXT_PUBLIC_BASE_URL).
@@ -68,6 +72,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DEVICE_AUTH_FIXTURE: process.env['DEVICE_AUTH_FIXTURE'],
     BETTER_AUTH_SECRET: process.env['BETTER_AUTH_SECRET'],
     BETTER_AUTH_URL: process.env['BETTER_AUTH_URL'],
     DEV_ALLOWED_ORIGINS: process.env['DEV_ALLOWED_ORIGINS'],

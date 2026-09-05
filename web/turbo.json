@@ -8,6 +8,7 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "out/**"],
       "env": [
         "DATABASE_URL",
+    "DEVICE_AUTH_FIXTURE",
         "NODE_ENV",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",

@@ -88,6 +88,14 @@ func RunDir() string { return rooted("run", "helix") }
 // IPCSocketPath is helixd's local IPC bus.
 func IPCSocketPath() string { return filepath.Join(RunDir(), "helix-ipc.sock") }
 
+// AuthSocketDir holds helix-authd's PAM socket. It is a private subdirectory so
+// it can be root-only 0700 without locking non-root apps out of RunDir.
+func AuthSocketDir() string { return filepath.Join(RunDir(), "authd") }
+
+// AuthSocketPath is the socket pam_helix.so connects to. Root-only: anyone who
+// can talk to it can drive an authentication decision.
+func AuthSocketPath() string { return filepath.Join(AuthSocketDir(), "auth.sock") }
+
 // RuntimeSocketPath is runtime-manager's control socket for the local CLI.
 func RuntimeSocketPath() string { return filepath.Join(RunDir(), "runtime.sock") }
 

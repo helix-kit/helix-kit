@@ -1,0 +1,9 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Lab helper: stop helix-authd and remove its socket, to prove sshd fails closed
+# when the authentication engine is absent.
+set -euo pipefail
+pkill -f '/usr/local/bin/helix-authd' || true
+rm -f /run/helix/authd/auth.sock
+echo "helix-authd stopped"

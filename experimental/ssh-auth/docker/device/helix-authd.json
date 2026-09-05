@@ -1,0 +1,5 @@
+{
+  "socketPath": "/run/helix/authd/auth.sock",
+  "attemptTimeoutSec": 300,
+  "stubDecision": "approve"
+}

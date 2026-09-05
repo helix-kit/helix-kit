@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "device": {
+    "id": "D123",
+    "name": "helix-auth-lab-device"
+  },
+  "mqtt": {
+    "brokerUrl": "tls://mosquitto:8883"
+  },
+  "ipc": {
+    "socketPath": "/run/helix/helix-ipc.sock"
+  },
+  "gateway": {
+    "url": "https://helix-auth-backend:8443"
+  }
+}

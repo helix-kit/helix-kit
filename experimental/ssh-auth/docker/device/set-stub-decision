@@ -1,0 +1,32 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Lab helper: point helix-authd's stub authenticator at approve or deny and
+# restart it, so the e2e harness can drive both verdicts.
+set -euo pipefail
+
+decision="${1:?usage: set-stub-decision <approve|deny>}"
+cat > /etc/helix/conf.d/helix-authd.json <<JSON
+{
+  "socketPath": "/run/helix/authd/auth.sock",
+  "attemptTimeoutSec": 300,
+  "stubDecision": "${decision}"
+}
+JSON
+
+pkill -f '/usr/local/bin/helix-authd' || true
+for _ in $(seq 1 20); do
+    [ -S /run/helix/authd/auth.sock ] || break
+    sleep 0.2
+done
+
+helix-authd >>/var/log/helix-authd.log 2>&1 &
+for _ in $(seq 1 40); do
+    if [ -S /run/helix/authd/auth.sock ]; then
+        echo "helix-authd restarted with stubDecision=${decision}"
+        exit 0
+    fi
+    sleep 0.25
+done
+echo "helix-authd did not come back" >&2
+exit 1

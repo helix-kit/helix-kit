@@ -1,0 +1,11 @@
+#%PAM-1.0
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# helix-authd is the only authority. There is deliberately no pam_unix and no
+# pam_sss here: SSSD supplies identity through NSS, never authentication, and
+# there is no password to fall back to.
+
+auth    requisite   pam_helix.so socket=/run/helix/authd/auth.sock
+
+account required    pam_permit.so
+session required    pam_permit.so

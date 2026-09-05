@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+name: helix-ssh-auth-experiment
+
+services:
+  # Identity comes from the LDAP/SSSD experiment: same image, same migrations,
+  # same seeded users. Only the wiring is repeated here, never the code.
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-helix}
+      POSTGRES_USER: ${POSTGRES_USER:-helix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
+    volumes:
+      - ../ldap-sssd/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix} -d ${POSTGRES_DB:-helix}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [helix]
+
+  helix-ldap:
+    build:
+      context: ../ldap-sssd
+      dockerfile: docker/ldap/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://helix:dev-only-password@postgres:5432/helix?sslmode=disable}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-dev-only-password}
+      HELIX_LOGIN_SHELL: ${HELIX_LOGIN_SHELL:-/bin/bash}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 3389"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [helix]
+
+  device:
+    build:
+      context: .
+      dockerfile: docker/device/Dockerfile
+      additional_contexts:
+        # helix-authd is built from the real device runtime, and the identity
+        # configuration is taken from the LDAP lab.
+        device-go: ../../linux/device/go
+        ldap-lab: ../ldap-sssd
+    environment:
+      SSSD_DEBUG_LEVEL: ${SSSD_DEBUG_LEVEL:-2}
+      HELIX_AUTHD_ENABLED: ${HELIX_AUTHD_ENABLED:-true}
+    depends_on:
+      helix-ldap:
+        condition: service_healthy
+    healthcheck:
+      # bash's /dev/tcp avoids pulling netcat in just to probe a port. It must be
+      # bash explicitly: CMD-SHELL runs dash, which has no /dev/tcp.
+      test: ["CMD", "bash", "-c", "getent passwd alice >/dev/null && exec 3<>/dev/tcp/127.0.0.1/22"]
+      interval: 2s
+      timeout: 5s
+      retries: 40
+    networks: [helix]
+
+  ssh-client:
+    build:
+      context: .
+      dockerfile: docker/ssh-client/Dockerfile
+    depends_on:
+      device:
+        condition: service_healthy
+    networks: [helix]
+
+networks:
+  helix:
+    driver: bridge

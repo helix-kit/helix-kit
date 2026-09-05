@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Authentication is PAM keyboard-interactive and nothing else. Every other
+# method is off, so there is no path to a shell that bypasses helix-authd.
+
+UsePAM yes
+KbdInteractiveAuthentication yes
+AuthenticationMethods keyboard-interactive:pam
+
+PasswordAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication no
+GSSAPIAuthentication no
+HostbasedAuthentication no
+
+PermitRootLogin no
+
+# Browser-based methods need time for a human to finish in another window.
+LoginGraceTime 5m
+
+DisableForwarding yes
+X11Forwarding no
+PermitTunnel no
+AllowAgentForwarding no
+
+UseDNS no
+
+# Until the restricted shell exists, every session runs one command that proves
+# which Unix identity the process actually landed as.
+ForceCommand /usr/local/bin/helix-auth-success

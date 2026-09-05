@@ -1,0 +1,11 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Proves the whole chain landed correctly: LDAP/SSSD identity + PAM
+# authentication + the Unix identity the process actually runs as.
+set -eu
+
+echo "HELIX_AUTH_OK"
+echo "user=$(id -un)"
+echo "uid=$(id -u)"
+echo "gid=$(id -g)"

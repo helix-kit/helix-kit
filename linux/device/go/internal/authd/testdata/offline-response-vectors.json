@@ -1,0 +1,70 @@
+{
+  "description": "Shared vectors for the offline challenge/response. The Go device implementation and the TypeScript cloud implementation are both tested against this file, so neither can drift from the other.",
+  "algorithm": "response = base32(HMAC-SHA256(secret, \"HXOFF1\" || u16be(len(deviceId)) || deviceId || u16be(len(userId)) || userId || u64be(linuxUid) || challengeBytes)[0:5])",
+  "alphabet": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+  "vectors": [
+    {
+      "name": "alice",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D123",
+      "userId": "user_alice",
+      "linuxUid": 200001,
+      "challenge": "K7MPQ29X",
+      "response": "JZTP5MCS"
+    },
+    {
+      "name": "bob answering alice's challenge",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D123",
+      "userId": "user_bob",
+      "linuxUid": 200002,
+      "challenge": "K7MPQ29X",
+      "response": "URDKJ6L7"
+    },
+    {
+      "name": "alice on another device",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D999",
+      "userId": "user_alice",
+      "linuxUid": 200001,
+      "challenge": "K7MPQ29X",
+      "response": "QEPWW853"
+    },
+    {
+      "name": "alice on another challenge",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D123",
+      "userId": "user_alice",
+      "linuxUid": 200001,
+      "challenge": "ABCD2345",
+      "response": "VEPQCLPW"
+    },
+    {
+      "name": "alice with a different uid",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D123",
+      "userId": "user_alice",
+      "linuxUid": 200002,
+      "challenge": "K7MPQ29X",
+      "response": "P3U4UR8B"
+    },
+    {
+      "name": "a different device secret",
+      "secretHex": "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100",
+      "deviceId": "D123",
+      "userId": "user_alice",
+      "linuxUid": 200001,
+      "challenge": "K7MPQ29X",
+      "response": "4M68974G"
+    },
+    {
+      "name": "a real better-auth user id",
+      "secretHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "deviceId": "D123",
+      "userId": "qYucWUtxIH0ThMJ60qS57upCSF2404C2",
+      "linuxUid": 200001,
+      "challenge": "K7MPQ29X",
+      "response": "T66R2R67"
+    }
+  ]
+}

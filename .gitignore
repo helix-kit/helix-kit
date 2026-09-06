@@ -5,6 +5,8 @@
 __pycache__/
 *.py[oc]
 .pnpm-store/
+# Turborepo local task cache.
+.turbo/
 .keys.local
 # Pinned Go analyzers installed by `helix lint go` (staticcheck, shadow, ...).
 linux/device/go/.bin/

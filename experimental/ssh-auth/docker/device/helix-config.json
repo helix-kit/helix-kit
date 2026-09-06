@@ -12,5 +12,8 @@
   },
   "gateway": {
     "url": "https://helix-auth-backend:8443"
+  },
+  "enrollment": {
+    "accessTokenFile": "/etc/helix/secrets/device-access-token"
   }
 }

@@ -50,6 +50,12 @@ services:
     environment:
       SSSD_DEBUG_LEVEL: ${SSSD_DEBUG_LEVEL:-2}
       HELIX_AUTHD_ENABLED: ${HELIX_AUTHD_ENABLED:-true}
+    # The lab cloud runs on the host so a human can approve logins in their own
+    # browser; this is how the device reaches it.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./generated/device:/helix-generated:ro
     depends_on:
       helix-ldap:
         condition: service_healthy
@@ -69,6 +75,10 @@ services:
     depends_on:
       device:
         condition: service_healthy
+    # The lab cloud runs on the host, and this container plays the part of the
+    # user's browser as well as their terminal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks: [helix]
 
 networks:

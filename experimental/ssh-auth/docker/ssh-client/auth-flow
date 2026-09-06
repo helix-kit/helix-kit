@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+"""Drive a real Helix SSH login, playing the part of the human at both ends.
+
+A person logging in has a terminal and a browser. This has a PTY and an HTTP
+client, and uses them in the same order: read what the device asks, do the
+browser half, type the answer back.
+
+It is deliberately not a mock of anything. The SSH session is real, the device is
+real, and every browser action goes to the actual Helix app over HTTP.
+"""
+
+from __future__ import annotations
+
+import argparse
+import http.cookiejar
+import json
+import re
+import sys
+import urllib.error
+import urllib.request
+
+import pexpect
+
+METHOD_PROMPT = r"method \[online/offline/persistent\]"
+ACTION_PROMPT = r"Action \[use/rotate/back\]"
+SUCCESS = "HELIX_AUTH_OK"
+
+
+class Cloud:
+    """The browser half: a signed-in session against the real Helix app."""
+
+    def __init__(self, base_url: str, origin: str) -> None:
+        self._base = base_url.rstrip("/")
+        self._origin = origin.rstrip("/")
+        self._jar = http.cookiejar.CookieJar()
+        self._opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self._jar)
+        )
+
+    def _request(self, path: str, body: dict | None = None) -> dict:
+        url = f"{self._base}{path}"
+        data = None if body is None else json.dumps(body).encode()
+        request = urllib.request.Request(url, data=data, method="POST" if data else "GET")
+        request.add_header("Content-Type", "application/json")
+        # Better Auth refuses state-changing requests without a trusted origin.
+        request.add_header("Origin", self._origin)
+        with self._opener.open(request, timeout=30) as response:
+            raw = response.read().decode()
+        return json.loads(raw) if raw else {}
+
+    def sign_in(self, email: str, password: str) -> None:
+        self._request("/api/auth/sign-in/email", {"email": email, "password": password})
+
+    def trpc(self, procedure: str, payload: dict) -> dict:
+        """Calls a tRPC procedure and unwraps the one result."""
+        body = {"0": {"json": payload}}
+        result = self._request(f"/api/trpc/{procedure}?batch=1", body)
+        return result[0]["result"]["data"]["json"]
+
+    # -- Method 1 -----------------------------------------------------------
+    def approve_device_code(self, user_code: str) -> None:
+        # The server refuses to approve until a signed-in session has claimed it.
+        self._request(f"/api/auth/device?user_code={user_code}")
+        self._request("/api/auth/device/approve", {"userCode": user_code})
+
+    def deny_device_code(self, user_code: str) -> None:
+        self._request(f"/api/auth/device?user_code={user_code}")
+        self._request("/api/auth/device/deny", {"userCode": user_code})
+
+    # -- Method 2 -----------------------------------------------------------
+    def offline_response(self, device_id: str, challenge: str) -> str:
+        return self.trpc(
+            "offlineAuth.respond", {"deviceId": device_id, "challenge": challenge}
+        )["response"]
+
+    # -- Method 3 -----------------------------------------------------------
+    def approve_and_reveal(self, user_code: str) -> str:
+        self.trpc("deviceEnrollment.approve", {"userCode": user_code})
+        return self.trpc("deviceEnrollment.reveal", {"userCode": user_code})["credential"]
+
+    def reveal_again(self, user_code: str) -> str:
+        return self.trpc("deviceEnrollment.reveal", {"userCode": user_code})["credential"]
+
+
+def spawn_ssh(user: str, host: str, timeout: int) -> pexpect.spawn:
+    return pexpect.spawn(
+        "ssh",
+        [
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "PreferredAuthentications=keyboard-interactive",
+            # One attempt only: after a refusal OpenSSH would otherwise start the
+            # whole conversation again, and a test would wait for a prompt that
+            # belongs to a different attempt.
+            "-o", "NumberOfPasswordPrompts=1",
+            f"{user}@{host}",
+        ],
+        timeout=timeout,
+        encoding="utf-8",
+    )
+
+
+def find(pattern: str, text: str, what: str) -> str:
+    match = re.search(pattern, text)
+    if match is None:
+        raise SystemExit(f"could not find the {what} in:\n{text}")
+    return match.group(1)
+
+
+def run(args: argparse.Namespace) -> int:
+    cloud = Cloud(args.cloud, args.origin)
+    child = spawn_ssh(args.user, args.host, args.timeout)
+    transcript: list[str] = []
+    child.logfile_read = _Collector(transcript)
+
+    try:
+        drive(args, cloud, child)
+    except (pexpect.EOF, pexpect.TIMEOUT):
+        # A refused login ends the session early; the transcript below is what
+        # says whether that was expected.
+        pass
+
+    try:
+        child.expect(pexpect.EOF)
+    except (pexpect.EOF, pexpect.TIMEOUT):
+        pass
+    child.close(force=True)
+
+    output = "".join(transcript)
+    sys.stdout.write(output)
+    sys.stdout.flush()
+
+    if args.expect_fail:
+        return 0 if SUCCESS not in output else 1
+    return 0 if SUCCESS in output else 1
+
+
+def drive(args: argparse.Namespace, cloud: Cloud, child: pexpect.spawn) -> None:
+    """Plays the human's part of one login."""
+    child.expect(METHOD_PROMPT)
+
+    if args.method == "online":
+        child.sendline("online")
+        child.expect(r"Code: ([A-Z0-9]{8})")
+        user_code = child.match.group(1)
+        cloud.sign_in(args.email, args.password)
+        if args.deny:
+            cloud.deny_device_code(user_code)
+        else:
+            cloud.approve_device_code(user_code)
+        child.sendline("")
+
+    elif args.method == "offline":
+        child.sendline("offline")
+        child.expect(r"Challenge: ([A-Z0-9]{4}-[A-Z0-9]{4})")
+        challenge = child.match.group(1).replace("-", "")
+        cloud.sign_in(args.email, args.password)
+        response = cloud.offline_response(args.device_id, challenge)
+        child.sendline(args.response_override or response)
+
+    elif args.method == "persistent-enroll":
+        child.sendline("persistent")
+        # A user who already holds a credential is offered a choice first;
+        # rotating is how you enrol again, and revokes the old one immediately.
+        if child.expect([r"duration in hours", ACTION_PROMPT]) == 1:
+            child.sendline("rotate")
+            child.expect(r"duration in hours")
+        child.sendline(str(args.hours))
+        child.expect(r"Code: ([A-Z0-9]{8})")
+        user_code = child.match.group(1)
+        cloud.sign_in(args.email, args.password)
+        credential = cloud.approve_and_reveal(user_code)
+        if args.credential_out:
+            with open(args.credential_out, "w", encoding="utf-8") as handle:
+                handle.write(credential)
+        if args.second_reveal:
+            try:
+                cloud.reveal_again(user_code)
+                raise SystemExit("the credential was revealed a second time")
+            except urllib.error.HTTPError:
+                pass
+        child.sendline(credential)
+
+    elif args.method == "persistent-use":
+        child.sendline("persistent")
+        child.expect(ACTION_PROMPT)
+        child.sendline("use")
+        child.expect(r"Persistent credential:")
+        with open(args.credential_file, encoding="utf-8") as handle:
+            child.sendline(handle.read().strip())
+
+    else:
+        raise SystemExit(f"unknown method {args.method}")
+
+
+class _Collector:
+    """Collects the PTY transcript."""
+
+    def __init__(self, sink: list[str]) -> None:
+        self._sink = sink
+
+    def write(self, data: str) -> None:
+        self._sink.append(data)
+
+    def flush(self) -> None:
+        pass
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "method",
+        choices=["online", "offline", "persistent-enroll", "persistent-use"],
+    )
+    parser.add_argument("--host", default="device")
+    parser.add_argument("--user", default="alice")
+    parser.add_argument("--device-id", default="D123")
+    parser.add_argument("--cloud", default="http://host.docker.internal:3200")
+    parser.add_argument(
+        "--origin",
+        default="http://localhost:3200",
+        help="Origin header; must be one Better Auth trusts.",
+    )
+    parser.add_argument("--email", default="alice@example.com")
+    parser.add_argument("--password", default="DeviceFlow-Test-1")
+    parser.add_argument("--hours", type=int, default=24)
+    parser.add_argument("--credential-out")
+    parser.add_argument("--credential-file")
+    parser.add_argument("--response-override", help="type this instead of the real response")
+    parser.add_argument("--deny", action="store_true", help="refuse in the browser")
+    parser.add_argument(
+        "--second-reveal", action="store_true", help="assert a second reveal fails"
+    )
+    parser.add_argument("--expect-fail", action="store_true")
+    parser.add_argument("--timeout", type=int, default=90)
+    return run(parser.parse_args())
+
+
+if __name__ == "__main__":
+    sys.exit(main())

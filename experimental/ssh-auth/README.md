@@ -25,61 +25,108 @@ apart: **LDAP/SSSD supplies identity through NSS and never authenticates anyone.
 
 ## Status
 
-**Phase 1 of [HELIX-217] is complete** — the PAM boundary, proven by `make test`
-(38 checks) — and **Phase 2**, the cloud half, is built and verified separately
-(see below). Authentication itself is still a stub: it selects a method and
-returns a preconfigured verdict, so the socket, the PAM module, the sshd stack
-and the resulting Unix identity could be proven on their own. The three real
-methods land in later phases.
+All three authentication methods work end to end against a **real Helix cloud** —
+real Better Auth, real browser approval, real authorization on every login.
 
 ```
-$ make test
-38 passed, 0 failed
+$ make test        # the PAM boundary, no cloud needed      -> 38 passed
+$ make cloud       # a real Helix cloud, seeded
+$ make auth-test   # all three methods against it           -> 17 passed
 ```
 
-A login today looks like this:
+## How the pieces fit
 
 ```
-$ docker compose exec ssh-client ssh alice@device
-(alice@device) Helix device D123
-Helix authentication method [online/offline/persistent]: online
-Stub authenticator approved online for alice.
-HELIX_AUTH_OK
-user=alice
-uid=200001
-gid=200001
+your browser ──────────────┐
+                           v
+  make cloud ──> the real Helix app (Next.js, Better Auth) on the host :3200
+                           ^
+                           | device authorization, authorization, enrollment
+                           |
+  make up ────> device container ──> sshd -> PAM -> pam_helix.so -> helix-authd
+                     ^                                                   |
+                     | identity                          verifier + cached scopes
+                     +-- SSSD -> helix-ldap -> postgres              (SQLite)
 ```
 
-## The cloud half (Phase 2)
-
-Phase 2 lives in the web app, not here, because the pieces it needs already
-exist there:
+The cloud runs on the host rather than in a container precisely so you can open it
+in your own browser and approve things by hand.
 
 | Piece | Where |
 | --- | --- |
-| RFC 8628 device authorization | the real Better Auth `deviceAuthorization` plugin, enabled in `web/apps/helix/src/server/auth.ts` |
-| The browser approval page | `web/apps/helix/src/app/device` |
-| Authorization (`device.login`, scopes, `policyVersion`) | `web/packages/helix-backend/src/device-auth` — an interface with a fixture-backed mock |
-| The device-facing authorize endpoint | mounted on the helix-server gateway, authenticated by the device's existing access token |
+| RFC 8628 device authorization | Better Auth's `deviceAuthorization` plugin, enabled in `web/apps/helix` |
+| Browser pages | `web/apps/helix/src/app/device{,/offline,/enroll}` |
+| Device-facing API | `/api/device-auth/*` in the Next app, and the helix-server gateway |
+| Authorization | `@helix-hq/backend/device-auth` — an interface with a fixture behind it |
 
-Authentication is real; only authorization is mocked, because Helix has no
-user-to-device authorization model yet and OpenFGA is not mature enough to wire
-in. Swapping the mock is a construction-site change: no caller touches it.
+Authentication is real throughout; only **authorization** is mocked, because Helix
+has no user-to-device authorization model yet and OpenFGA is not mature enough to
+wire in. Swapping the fixture is a construction-site change: no caller touches it.
 
-Phase 3 is what connects the two halves — until then `helix-authd` still returns
-a stub verdict.
+## Try it yourself
 
-## Run it
+Two commands, then log in the way a person would.
 
 ```sh
-make test        # build, boot, and run the whole matrix from a clean checkout
-make up          # just start the stack
-make ssh         # log in as alice, answering the method prompt
-make shell       # a root shell on the device
-make down        # stop and remove volumes
+make cloud     # a real Helix app on http://localhost:3200, with a seeded user and device
+make up        # postgres, the LDAP facade, the device, and a client container
 ```
 
-`make unit` runs the Go tests alone, against `linux/device/go`.
+`make cloud` prints the credentials it seeded. Then:
+
+```sh
+make ssh       # an interactive SSH login: pick a method and follow the prompts
+```
+
+It asks which method you want:
+
+```
+(alice@device) Helix authentication method [online/offline/persistent]:
+```
+
+**online** — the device prints a URL and an eight-character code. Open the URL in
+your browser, sign in as `alice@example.com` / `DeviceFlow-Test-1`, approve the
+code, then press Enter in the terminal. You land as `uid=200001`.
+
+**offline** — the device prints a challenge like `7GP5-QN8B`. Open
+`http://localhost:3200/device/offline`, enter device `D123` and the challenge, and
+type the response back. Nothing on the device touches the network while this
+happens, and you can prove it by taking its cloud away first:
+
+```sh
+docker compose exec device set-cloud-url http://127.0.0.1:1   # the cloud is gone
+make ssh                                                      # offline still works; online does not
+docker compose exec device set-cloud-url http://host.docker.internal:3200
+```
+
+**persistent** — the device asks how many hours you want and prints an enrollment
+code. Approve it at `http://localhost:3200/device/enroll`; the credential is shown
+**once**. Paste it back into the terminal to activate it. Later logins just paste
+the credential, with no browser — but still call the cloud, so withdrawing access
+stops it working immediately.
+
+Watch what the daemon decided, in another terminal:
+
+```sh
+docker compose exec device tail -f /var/log/helix-authd.log
+```
+
+`make cloud-down` and `make down` when you are finished.
+
+### The same flows, scripted
+
+This is what `make auth-test` runs:
+
+```sh
+make ssh-online
+make ssh-offline
+make ssh-persistent
+docker compose exec ssh-client auth-flow online --deny --expect-fail
+```
+
+`make test` needs no cloud at all: it proves the PAM boundary with a stub verdict,
+which is what you want when you only care about sshd, PAM and the socket.
+`make unit` runs the Go tests alone.
 
 ## Where the code lives
 
@@ -180,10 +227,12 @@ reconciled first. The decisions, with reasons, are recorded on [HELIX-217]:
 ## Known rough edges
 
 - Home directories do not exist, so a session prints `Could not chdir to home
-  directory`. The PAM session stack is deliberately `pam_permit` only; account
-  and session policy are a later phase.
-- Malformed-protocol and unsupported-version handling is covered by the Go unit
-  tests rather than the container harness, because the device image has no
-  scripting runtime able to speak a deliberately broken protocol at the socket.
-
-[HELIX-217]: https://linear.app/helix-kit/issue/HELIX-217
+  directory`. The PAM session stack is deliberately `pam_permit` only; account and
+  session policy are a later phase.
+- The lab cloud is seeded by starting the app twice: the authorization fixture can
+  only be written once the seeded user has an id, and it is read at construction.
+- Authorization is a fixture, so revoking access mid-test means restarting the
+  cloud. Test-only mutation endpoints are the obvious next step.
+- `helix-ssh`, the custom client with arrow-key method selection and clipboard
+  handling, is not built. Everything here works with stock OpenSSH, which was the
+  more important half to prove.

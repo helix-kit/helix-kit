@@ -11,6 +11,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/ssh-client/ssh-login /usr/local/bin/ssh-login
-RUN chmod 0755 /usr/local/bin/ssh-login
+COPY docker/ssh-client/auth-flow /usr/local/bin/auth-flow
+RUN chmod 0755 /usr/local/bin/ssh-login /usr/local/bin/auth-flow
 
 ENTRYPOINT ["sleep", "infinity"]

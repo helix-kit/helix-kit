@@ -28,6 +28,15 @@ for i in $(seq 1 60); do
 done
 log "identity ready: $(getent passwd alice)"
 
+# When the lab cloud has been started, its generated configuration is mounted in
+# and takes over from the baked-in stub settings.
+if [ -f /helix-generated/conf.d/helix-authd.json ]; then
+    log "using the generated cloud configuration"
+    install -D -m 0644 /helix-generated/conf.d/helix-authd.json /etc/helix/conf.d/helix-authd.json
+    install -D -m 0600 /helix-generated/secrets/helix-authd.env /etc/helix/secrets/helix-authd.env
+    install -D -m 0600 /helix-generated/secrets/device-access-token /etc/helix/secrets/device-access-token
+fi
+
 # helix-authd owns the PAM socket. sshd fails closed if it is not there, which is
 # itself a tested behaviour, so this is started but not treated as fatal.
 if [ "${HELIX_AUTHD_ENABLED:-true}" = "true" ]; then

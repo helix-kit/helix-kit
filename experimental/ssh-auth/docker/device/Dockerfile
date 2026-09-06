@@ -27,6 +27,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
         sssd sssd-ldap sssd-tools libnss-sss ldap-utils \
         openssh-server \
         libjansson4 \
+        python3-minimal \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -49,9 +50,10 @@ COPY docker/device/helix-auth-success /usr/local/bin/helix-auth-success
 COPY docker/device/entrypoint.sh /usr/local/bin/entrypoint.sh
 # Lab-only helpers the e2e harness uses to drive the daemon's state.
 COPY docker/device/set-stub-decision /usr/local/bin/set-stub-decision
+COPY docker/device/set-cloud-url /usr/local/bin/set-cloud-url
 COPY docker/device/stop-authd /usr/local/bin/stop-authd
 RUN chmod 0755 /usr/local/bin/helix-auth-success /usr/local/bin/entrypoint.sh \
-    /usr/local/bin/set-stub-decision /usr/local/bin/stop-authd
+    /usr/local/bin/set-stub-decision /usr/local/bin/set-cloud-url /usr/local/bin/stop-authd
 
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

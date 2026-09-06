@@ -1,0 +1,10 @@
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CPU        |       6 |            pp64 |         22.20 ± 1.49 |
+| qwen2 1B Q4_K - Medium         | 373.71 MiB |   494.03 M | CPU        |       6 |            tg64 |          7.62 ± 0.52 |
+| qwen2 1B Q4_0                  | 330.95 MiB |   494.03 M | CPU        |       6 |            pp64 |        72.34 ± 10.96 |
+| qwen2 1B Q4_0                  | 330.95 MiB |   494.03 M | CPU        |       6 |            tg64 |         11.30 ± 1.18 |
+| qwen2 1B Q3_K - Small          | 316.92 MiB |   494.03 M | CPU        |       6 |            pp64 |         19.81 ± 0.89 |
+| qwen2 1B Q3_K - Small          | 316.92 MiB |   494.03 M | CPU        |       6 |            tg64 |          9.03 ± 0.90 |
+
+build: unknown (0)

@@ -1,18 +1,38 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Radxa LLM — small-model tool calling (experimental)
+# Radxa LLM — running (and teaching) a small model on-device
 
-Can a **0.5B** model do real **tool / function calling** if taught properly? We already
-run `Qwen2.5-0.5B-Instruct` on the **Radxa Cubie A7Z** (Allwinner A733) at ~24 t/s (Q4_0,
-ARM-repacked). Fast enough to be an on-device agent — *if* it can reliably pick the right
-tool, emit well-formed arguments, and know when **not** to call.
+Exploratory — a practice board, **nothing here is wired into the main Helix build**.
 
-This lab answers that with numbers. Exploratory — a practice board, **nothing here is
-wired into the main Helix build**. All training happens on the laptop **GTX 1650** so
-iteration stays fast; the tuned model is only *eventually* pushed back to the board (a
-deferred step, gated on the results below).
+Two tracks, in order:
 
-## Approach
+| | track | state |
+| --- | --- | --- |
+| **A** | [`runtime/`](runtime/) — get llama.cpp running fast on the board | **done, measured** |
+| **B** | tool-calling fine-tune (below) | scaffolded, not started |
+
+## A. Runtime — how fast is the board? (done)
+
+`Qwen2.5-0.5B-Instruct` at **Q4_0, 6 threads, 12k context: 23.8 t/s generation /
+148.9 t/s prompt** on the **Radxa Cubie A7Z** (Allwinner A733, 2× A76 + 6× A55, 961 MB
+RAM), CPU only. Readable typing speed.
+
+The three findings that got it there: the board cannot build llama.cpp itself (cross-
+compile instead), `+dotprod` plus Q4_0 is worth +35% generation and 3.7× prompt because
+of ggml's ARM weight repacking, and on a 961 MB machine a contaminated benchmark looks
+exactly like a clean one.
+
+→ [`runtime/README.md`](runtime/README.md) to run it,
+[`docs/00-llama-cpp-bringup.md`](docs/00-llama-cpp-bringup.md) for the method, numbers
+and open threads.
+
+## B. Tool calling — can a 0.5B model drive real tools? (not started)
+
+Fast enough to be an on-device agent — *if* it can reliably pick the right tool, emit
+well-formed arguments, and know when **not** to call. This track answers that with
+numbers. All training happens on the laptop **GTX 1650** so iteration stays fast; the
+tuned model is only *eventually* pushed back to the board (a deferred step, gated on the
+results below).
 
 ```
 [0] setup      uv venv (py3.11) + Unsloth stack + pull Qwen2.5-0.5B-Instruct (HF safetensors)
@@ -26,13 +46,13 @@ We teach the model's **native** tool-call format (Qwen2.5 already ships a Hermes
 `<tools>…</tools>` / `<tool_call>{"name","arguments"}</tool_call>` template), rendered via
 `tokenizer.apply_chat_template(..., tools=...)` — not a bespoke format.
 
-## Hardware constraints (baked into the scripts)
+### Hardware constraints (baked into the scripts)
 
 - **GTX 1650, 4 GB VRAM, Turing (sm_75)** → **fp16** (no bf16), no FlashAttention-2
   (Unsloth's kernels handle it). 0.5B in 16-bit LoRA fits 4 GB with grad checkpointing.
 - Base Python is 3.14 (too new for the ML stack) → dedicated **Python 3.11** venv via `uv`.
 
-## Layout
+### Layout (to be written)
 
 ```
 setup.sh                 # env + deps + model download + smoke test
@@ -44,10 +64,10 @@ train.py                 # Unsloth 16-bit LoRA SFT (--stage a|b, --base, --out)
 eval.py                  # BFCL-lite harness (transformers+peft; decoupled from Unsloth)
 chat.py                  # interactive spot-check
 data/  adapters/  results/  models/   # gitignored artifacts
-docs/00-tool-calling-spike.md          # lab notes + final verdict table
+docs/01-tool-calling-spike.md          # lab notes + final verdict table
 ```
 
-## Run
+### Run
 
 ```sh
 cd experimental/radxa-llm
@@ -65,11 +85,12 @@ python eval.py --base adapters/stage-a-merged --adapter adapters/stage-b --stage
     --sets helix
 ```
 
-## Status
+### Status
 
 - [ ] M0 — env + model + smoke generate on the GPU
 - [ ] M1 — BFCL-lite harness + stock baseline numbers
 - [ ] M2 — stage-A (xLAM) fine-tune + eval lift
 - [ ] M3 — stage-B (Helix tools) fine-tune + eval
 - [ ] M4 — verdict table + gate decision
-- [ ] (deferred) GGUF Q4_0 export + Radxa on-device verify
+- [ ] (deferred) GGUF export + Radxa on-device verify — track A is already the runtime
+      for this; export at **Q4_0**, not Q4_K_M, and re-measure quality

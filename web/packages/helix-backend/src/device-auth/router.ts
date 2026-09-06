@@ -1,6 +1,7 @@
 import { and, eq, gt } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { type EnrollmentRelay } from './enrollment-relay';
 import {
   type DeviceAuthorizationProvider,
   type LoginAuthorization,
@@ -26,6 +27,9 @@ export type DeviceAuthContext = Readonly<{
   headers: Headers;
   authorization: DeviceAuthorizationProvider;
   directory: UnixIdentityDirectory;
+  enrollments: EnrollmentRelay;
+  /** Where the owner goes to approve an enrollment. */
+  enrollmentVerificationUri: string;
 }>;
 
 const deviceIdInput = z.string().trim().min(1, 'deviceId is required');
@@ -43,6 +47,19 @@ const decisionOutput = z.object({
 });
 
 type Decision = z.infer<typeof decisionOutput>;
+
+/** A week is the longest a credential may live, matching the device's own cap. */
+const MAX_DURATION_HOURS = 168;
+
+/** What a device learns about an enrollment it started. Never the credential. */
+const enrollmentOutput = z.object({
+  id: z.string(),
+  userCode: z.string(),
+  status: z.enum(['pending', 'approved', 'revealed', 'denied', 'expired']),
+  userId: z.string().nullable(),
+  approvedDurationHours: z.number().int().nullable(),
+  verificationUri: z.string(),
+});
 
 const DENIED: Decision = {
   allowed: false,
@@ -141,6 +158,72 @@ export const deviceAuthApiRouter = createRouterFactory<DeviceAuthContext>()((t) 
           ctx.authorization.authorize(input.deviceId, row.userId),
         ]);
         return decide(row.userId, identity, authorization);
+      }),
+
+    /**
+     * Takes a freshly minted credential so its owner can be shown it once. The
+     * plaintext lives only in the relay's memory until then, and never reaches
+     * durable storage.
+     */
+    createEnrollment: deviceProcedure
+      .meta({ openapi: { method: 'POST', path: '/api/device-auth/enrollment' } })
+      .input(
+        z.object({
+          deviceId: deviceIdInput,
+          username: z.string().trim().min(1),
+          linuxUid: z.number().int().nonnegative(),
+          credentialId: z.string().trim().min(1),
+          credential: z.string().trim().min(1),
+          durationHours: z.number().int().positive().max(MAX_DURATION_HOURS),
+        }),
+      )
+      .output(enrollmentOutput)
+      .mutation(({ ctx, input }) => {
+        const created = ctx.enrollments.create({
+          deviceId: input.deviceId,
+          username: input.username,
+          linuxUid: input.linuxUid,
+          credentialId: input.credentialId,
+          credential: input.credential,
+          durationHours: input.durationHours,
+        });
+        return {
+          id: created.id,
+          userCode: created.userCode,
+          status: created.status,
+          userId: created.userId,
+          approvedDurationHours: created.approvedDurationHours,
+          verificationUri: ctx.enrollmentVerificationUri,
+        };
+      }),
+
+    /** Tells a waiting device whether the owner approved, and on what terms. */
+    enrollmentStatus: deviceProcedure
+      .meta({ openapi: { method: 'POST', path: '/api/device-auth/enrollment-status' } })
+      .input(z.object({ deviceId: deviceIdInput, enrollmentId: z.string().trim().min(1) }))
+      .output(enrollmentOutput)
+      .mutation(({ ctx, input }) => {
+        const state = ctx.enrollments.poll(input.enrollmentId);
+        if (state === null) {
+          // An enrollment nobody completed simply expires; the device treats that
+          // as a refusal rather than an error it has to interpret.
+          return {
+            id: input.enrollmentId,
+            userCode: '',
+            status: 'expired' as const,
+            userId: null,
+            approvedDurationHours: null,
+            verificationUri: ctx.enrollmentVerificationUri,
+          };
+        }
+        return {
+          id: state.id,
+          userCode: state.userCode,
+          status: state.status,
+          userId: state.userId,
+          approvedDurationHours: state.approvedDurationHours,
+          verificationUri: ctx.enrollmentVerificationUri,
+        };
       }),
   });
 });

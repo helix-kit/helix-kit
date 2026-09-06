@@ -455,7 +455,7 @@
       "message": "Could not resolve router expression of kind PropertyAccessExpression.",
       "location": {
         "file": "apps/helix-server/src/roles/gateway.ts",
-        "line": 85,
+        "line": 89,
         "column": 13
       }
     },
@@ -464,7 +464,7 @@
       "message": "Could not resolve identifier \"apiRouter\" to a router definition.",
       "location": {
         "file": "apps/helix-server/src/roles/gateway.ts",
-        "line": 121,
+        "line": 128,
         "column": 13
       }
     }
@@ -1025,10 +1025,10 @@
         "path": "/api/device-auth/authorize"
       },
       "path": "deviceAuth.authorizeLogin",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/device-auth/router.ts",
-        "line": 103,
+        "line": 120,
         "column": 5
       },
       "ignoreReason": null,
@@ -1039,7 +1039,7 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/helix-backend/src/device-auth/router.ts",
-            "line": 104,
+            "line": 121,
             "column": 49
           }
         }
@@ -1052,10 +1052,10 @@
         "path": "/api/device-auth/authorize-session"
       },
       "path": "deviceAuth.authorizeSession",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/device-auth/router.ts",
-        "line": 121,
+        "line": 138,
         "column": 5
       },
       "ignoreReason": null,
@@ -1066,7 +1066,61 @@
           "kind": "openapi-path",
           "location": {
             "file": "packages/helix-backend/src/device-auth/router.ts",
-            "line": 122,
+            "line": 139,
+            "column": 49
+          }
+        }
+      ]
+    },
+    {
+      "kind": "mutation",
+      "openapi": {
+        "method": "POST",
+        "path": "/api/device-auth/enrollment"
+      },
+      "path": "deviceAuth.createEnrollment",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
+      "definedAt": {
+        "file": "packages/helix-backend/src/device-auth/router.ts",
+        "line": 168,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "openapi-path",
+          "location": {
+            "file": "packages/helix-backend/src/device-auth/router.ts",
+            "line": 169,
+            "column": 49
+          }
+        }
+      ]
+    },
+    {
+      "kind": "mutation",
+      "openapi": {
+        "method": "POST",
+        "path": "/api/device-auth/enrollment-status"
+      },
+      "path": "deviceAuth.enrollmentStatus",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
+      "definedAt": {
+        "file": "packages/helix-backend/src/device-auth/router.ts",
+        "line": 201,
+        "column": 5
+      },
+      "ignoreReason": null,
+      "status": "used",
+      "usageCount": 1,
+      "usages": [
+        {
+          "kind": "openapi-path",
+          "location": {
+            "file": "packages/helix-backend/src/device-auth/router.ts",
+            "line": 202,
             "column": 49
           }
         }
@@ -1451,7 +1505,7 @@
         "path": "/api/storage/devices/download-session"
       },
       "path": "file.createDeviceDownloadSession",
-      "surface": "apps/helix-server/src/roles/gateway.ts:85:13",
+      "surface": "apps/helix-server/src/roles/gateway.ts:89:13",
       "definedAt": {
         "file": "packages/helix-backend/src/device-mtls/fileRouter.ts",
         "line": 66,
@@ -1478,7 +1532,7 @@
         "path": "/api/storage/devices/upload-session"
       },
       "path": "file.createDeviceUploadSession",
-      "surface": "apps/helix-server/src/roles/gateway.ts:85:13",
+      "surface": "apps/helix-server/src/roles/gateway.ts:89:13",
       "definedAt": {
         "file": "packages/helix-backend/src/device-mtls/fileRouter.ts",
         "line": 75,
@@ -1505,7 +1559,7 @@
         "path": "/api/storage/packages/download-session"
       },
       "path": "file.createPackageDownloadSession",
-      "surface": "apps/helix-server/src/roles/gateway.ts:85:13",
+      "surface": "apps/helix-server/src/roles/gateway.ts:89:13",
       "definedAt": {
         "file": "packages/helix-backend/src/device-mtls/fileRouter.ts",
         "line": 85,
@@ -1540,7 +1594,7 @@
         "path": "/api/device/events"
       },
       "path": "file.ingestEvents",
-      "surface": "apps/helix-server/src/roles/gateway.ts:85:13",
+      "surface": "apps/helix-server/src/roles/gateway.ts:89:13",
       "definedAt": {
         "file": "packages/helix-backend/src/device-mtls/fileRouter.ts",
         "line": 107,
@@ -1630,7 +1684,7 @@
         "path": "/api/certificates/device"
       },
       "path": "pki.issueDeviceCertificate",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/pki/router.ts",
         "line": 32,
@@ -2081,7 +2135,7 @@
         "path": "/api/build/artifact-url"
       },
       "path": "releases.buildArtifactUrl",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 198,
@@ -2124,7 +2178,7 @@
         "path": "/api/build/complete"
       },
       "path": "releases.buildComplete",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 214,
@@ -2311,7 +2365,7 @@
         "path": "/api/builds/request"
       },
       "path": "releases.buildsRequest",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 174,
@@ -2346,7 +2400,7 @@
         "path": "/api/ci/artifacts/upload-url"
       },
       "path": "releases.ciArtifactUploadUrl",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 142,
@@ -2381,7 +2435,7 @@
         "path": "/api/ci/releases"
       },
       "path": "releases.ciRegisterRelease",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 158,
@@ -2496,7 +2550,7 @@
         "path": "/api/ota/trigger"
       },
       "path": "releases.otaTrigger",
-      "surface": "apps/helix-server/src/roles/gateway.ts:115:33",
+      "surface": "apps/helix-server/src/roles/gateway.ts:122:33",
       "definedAt": {
         "file": "packages/helix-backend/src/releases/api-router.ts",
         "line": 263,

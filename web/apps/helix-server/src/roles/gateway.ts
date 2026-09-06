@@ -20,7 +20,11 @@ import {
   type FsStorageHttpOptions,
   type StepCaSettings,
 } from '@helix-hq/backend';
-import { deviceAuthApiRouter, fixtureFromEnv } from '@helix-hq/backend/device-auth';
+import {
+  deviceAuthApiRouter,
+  EnrollmentRelay,
+  fixtureFromEnv,
+} from '@helix-hq/backend/device-auth';
 import { fileRouter, type DeviceMtlsContext } from '@helix-hq/backend/device-mtls/fileRouter';
 import {
   certSerialFromSocket,
@@ -111,6 +115,9 @@ const buildPublicServer = async ({
   // configured it holds no grants, so it denies every login rather than
   // defaulting a production server into authorizing anyone.
   const deviceAuthorization = fixtureFromEnv(env.DEVICE_AUTH_FIXTURE);
+  // Pending credentials live here and nowhere else: in memory, until their owner
+  // takes them. Losing them on restart is the intended behaviour.
+  const enrollments = new EnrollmentRelay();
 
   const { router: apiRouter } = createRootRouter({
     deviceAuth: deviceAuthApiRouter,
@@ -123,6 +130,8 @@ const buildPublicServer = async ({
       authorization: deviceAuthorization,
       db,
       directory: deviceAuthorization,
+      enrollments,
+      enrollmentVerificationUri: `${env.PUBLIC_APP_URL ?? ''}/device/enroll`,
       headers: toHeaders(req.headers),
       publishOta,
       stepCaSettings,

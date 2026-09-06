@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { EnrollmentRelay } from './enrollment-relay';
 import { FixtureAuthorization, parseFixture } from './fixture-provider';
 import { deviceAuthApiRouter } from './router';
 import { DEVICE_LOGIN_SCOPE } from './types';
@@ -153,6 +154,8 @@ const callerWith = ({
     headers,
     authorization: auth,
     directory: auth,
+    enrollments: new EnrollmentRelay(),
+    enrollmentVerificationUri: 'https://helix-kit.com/device/enroll',
   });
 };
 

@@ -1,4 +1,12 @@
 export {
+  AlreadyRevealedError,
+  EnrollmentRelay,
+  type EnrollmentRequest,
+  type EnrollmentState,
+  type EnrollmentStatus,
+  type EnrollmentSummary,
+} from './enrollment-relay';
+export {
   FixtureAuthorization,
   fixtureFromEnv,
   parseFixture,

@@ -33,6 +33,36 @@ type Cloud interface {
 	AuthorizeSession(ctx context.Context, sessionToken string) (*Decision, error)
 	// AuthorizeUser asks whether an already-identified user may still log in.
 	AuthorizeUser(ctx context.Context, userID string) (*Decision, error)
+	// CreateEnrollment hands a freshly minted credential to the cloud so its owner
+	// can be shown it once in a browser.
+	CreateEnrollment(ctx context.Context, req EnrollmentRequest) (*EnrollmentState, error)
+	// PollEnrollment reports whether the owner approved it, and on what terms.
+	PollEnrollment(ctx context.Context, enrollmentID string) (*EnrollmentState, error)
+}
+
+// EnrollmentRequest is a device asking the cloud to relay a new credential.
+type EnrollmentRequest struct {
+	Username      string
+	LinuxUID      uint32
+	CredentialID  string
+	Credential    string
+	DurationHours int
+}
+
+// EnrollmentState is what the cloud says about a pending enrollment.
+type EnrollmentState struct {
+	ID                    string  `json:"id"`
+	UserCode              string  `json:"userCode"`
+	Status                string  `json:"status"`
+	UserID                *string `json:"userId"`
+	ApprovedDurationHours *int    `json:"approvedDurationHours"`
+	VerificationURI       string  `json:"verificationUri"`
+}
+
+// Approved reports whether the owner has accepted the enrollment. A credential
+// that has already been revealed counts: the reveal is what follows approval.
+func (e *EnrollmentState) Approved() bool {
+	return e.Status == "approved" || e.Status == "revealed"
 }
 
 // DeviceAuthRequest is a pending browser sign-in.
@@ -203,6 +233,39 @@ func (c *httpCloud) AuthorizeUser(ctx context.Context, userID string) (*Decision
 // authorize calls the device-facing API and insists on a clean 200. Anything else
 // -- a rejected device token, a gateway error -- is unavailability, not a denial:
 // a zero-valued Decision would otherwise read as a legitimate refusal.
+func (c *httpCloud) CreateEnrollment(ctx context.Context, req EnrollmentRequest) (*EnrollmentState, error) {
+	var out EnrollmentState
+	status, err := c.postJSON(ctx, c.gatewayURL("/api/device-auth/enrollment"), c.cfg.AccessToken,
+		map[string]any{
+			"deviceId":      c.cfg.DeviceID,
+			"username":      req.Username,
+			"linuxUid":      req.LinuxUID,
+			"credentialId":  req.CredentialID,
+			"credential":    req.Credential,
+			"durationHours": req.DurationHours,
+		}, &out)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK || out.ID == "" {
+		return nil, fmt.Errorf("%w: enrollment endpoint returned %d", ErrCloudUnavailable, status)
+	}
+	return &out, nil
+}
+
+func (c *httpCloud) PollEnrollment(ctx context.Context, enrollmentID string) (*EnrollmentState, error) {
+	var out EnrollmentState
+	status, err := c.postJSON(ctx, c.gatewayURL("/api/device-auth/enrollment-status"), c.cfg.AccessToken,
+		map[string]any{"deviceId": c.cfg.DeviceID, "enrollmentId": enrollmentID}, &out)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("%w: enrollment status returned %d", ErrCloudUnavailable, status)
+	}
+	return &out, nil
+}
+
 func (c *httpCloud) authorize(ctx context.Context, path string, body map[string]string) (*Decision, error) {
 	var out Decision
 	status, err := c.postJSON(ctx, c.gatewayURL(path), c.cfg.AccessToken, body, &out)

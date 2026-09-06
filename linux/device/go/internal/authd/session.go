@@ -54,6 +54,11 @@ func Expired(reason string) Outcome {
 	return Outcome{Status: authproto.StatusExpired, Reason: reason}
 }
 
+// invalidCredential is the status for a credential that is malformed, unknown or
+// does not verify. PAM treats it as an authentication failure, like any other
+// wrong secret.
+const invalidCredential = authproto.StatusInvalidCredential
+
 // Conversation is the authenticator's channel to the human at the other end of
 // the SSH session. It deliberately exposes nothing else about the transport.
 type Conversation interface {

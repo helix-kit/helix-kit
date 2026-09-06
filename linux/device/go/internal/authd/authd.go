@@ -34,8 +34,11 @@ const (
 
 	// offlineSecretKey names the shared device secret in the service secret file.
 	offlineSecretKey = "OFFLINE_DEVICE_SECRET"
-	// minOfflineSecretBytes rejects a "secret" that is really a passphrase.
-	minOfflineSecretBytes = 32
+	// credentialKeyKey names the key persistent credential verifiers are derived
+	// with. It never leaves the device.
+	credentialKeyKey = "CREDENTIAL_DEVICE_KEY"
+	// minSecretBytes rejects a "secret" that is really a passphrase.
+	minSecretBytes = 32
 )
 
 // appConfig is the per-service section of the device config document.
@@ -50,9 +53,18 @@ type appConfig struct {
 	// plane, "stub" returns a fixed verdict for testing the PAM boundary alone.
 	Authenticator string `json:"authenticator,omitempty"`
 	// StubDecision is the verdict the stub returns: "approve" or "deny".
-	StubDecision string         `json:"stubDecision,omitempty"`
-	Cloud        cloudSection   `json:"cloud,omitempty"`
-	Offline      offlineSection `json:"offline,omitempty"`
+	StubDecision string            `json:"stubDecision,omitempty"`
+	Cloud        cloudSection      `json:"cloud,omitempty"`
+	Offline      offlineSection    `json:"offline,omitempty"`
+	Persistent   persistentSection `json:"persistent,omitempty"`
+}
+
+// persistentSection configures Method 3. Like the offline method, without a
+// device key the method is not offered at all.
+type persistentSection struct {
+	MinDurationHours int `json:"minDurationHours,omitempty"`
+	MaxDurationHours int `json:"maxDurationHours,omitempty"`
+	EnrollTimeoutSec int `json:"enrollTimeoutSec,omitempty"`
 }
 
 // offlineSection configures Method 2. Without a device secret the method is not
@@ -190,23 +202,45 @@ func (r *runner) buildAuthenticator() (Authenticator, error) {
 		r.log.Info("offline authentication is unavailable: no device secret configured")
 	}
 
+	// The persistent method needs its own key: the verifier it stores must not be
+	// derivable from anything else the device holds.
+	if key, err := r.namedSecret(credentialKeyKey); err != nil {
+		return nil, err
+	} else if key != nil {
+		methods[MethodPersistent] = &persistentAuthenticator{
+			cloud:            cloud,
+			store:            r.store,
+			log:              r.log,
+			deviceKey:        key,
+			minDurationHours: r.app.Persistent.MinDurationHours,
+			maxDurationHours: r.app.Persistent.MaxDurationHours,
+			enrollTimeout:    seconds(r.app.Persistent.EnrollTimeoutSec, 0),
+		}
+	} else {
+		r.log.Info("persistent authentication is unavailable: no credential key configured")
+	}
+
 	return &methodAuthenticator{log: r.log, methods: methods}, nil
 }
 
 // offlineSecret reads the shared device secret from the service's secret file.
 // It is hex encoded, and must be a real key rather than a short string.
-func (r *runner) offlineSecret() ([]byte, error) {
-	encoded, ok := r.cfg.Secret(offlineSecretKey)
+func (r *runner) offlineSecret() ([]byte, error) { return r.namedSecret(offlineSecretKey) }
+
+// namedSecret reads a hex-encoded key from the service secret file. A key that is
+// really a short passphrase is refused rather than silently accepted.
+func (r *runner) namedSecret(key string) ([]byte, error) {
+	encoded, ok := r.cfg.Secret(key)
 	if !ok || strings.TrimSpace(encoded) == "" {
 		return nil, nil
 	}
 	secret, err := hex.DecodeString(strings.TrimSpace(encoded))
 	if err != nil {
-		return nil, fmt.Errorf("%s must be hex encoded: %w", offlineSecretKey, err)
+		return nil, fmt.Errorf("%s must be hex encoded: %w", key, err)
 	}
-	if len(secret) < minOfflineSecretBytes {
+	if len(secret) < minSecretBytes {
 		return nil, fmt.Errorf("%s must be at least %d bytes, got %d",
-			offlineSecretKey, minOfflineSecretBytes, len(secret))
+			key, minSecretBytes, len(secret))
 	}
 	return secret, nil
 }

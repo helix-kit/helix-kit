@@ -59,6 +59,11 @@ func OpenStore(path string) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1) // single writer; avoids SQLITE_BUSY under WAL
 
+	if _, err := db.Exec(createCredentialsTable); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("create credentials: %w", err)
+	}
+
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS cached_users (
 		username       TEXT PRIMARY KEY,
 		user_id        TEXT NOT NULL,

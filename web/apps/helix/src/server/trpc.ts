@@ -6,7 +6,7 @@ import { accountRouter } from '@helix-hq/backend/account';
 import { findAgentUser } from '@helix-hq/backend/agent';
 import { aiUsageRouter } from '@helix-hq/backend/ai-usage';
 import { conversationsRouter } from '@helix-hq/backend/conversations';
-import { fixtureFromEnv, offlineAuthRouter } from '@helix-hq/backend/device-auth';
+import { enrollmentRouter, offlineAuthRouter } from '@helix-hq/backend/device-auth';
 import { devicesAdminRouter } from '@helix-hq/backend/devices';
 import { featuresAdminRouter } from '@helix-hq/backend/features';
 import { iceRouter, type TurnSettings } from '@helix-hq/backend/ice';
@@ -27,6 +27,9 @@ import { env } from '@/lib/env';
 
 import { ADMIN_ROLES, auth } from './auth';
 import { db } from './db';
+// Shared with the device-facing API route, so both surfaces see one fixture and
+// one enrollment relay.
+import { deviceAuthorization, deviceEnrollments } from './device-auth';
 import { reportTemplatesRouter } from './report-templates/router';
 import { storage } from './storage';
 
@@ -83,6 +86,7 @@ export const { router: appRouter } = createRootRouter({
   aiUsage: aiUsageRouter,
   account: accountRouter,
   offlineAuth: offlineAuthRouter,
+  deviceEnrollment: enrollmentRouter,
 });
 export type AppRouter = typeof appRouter;
 
@@ -96,13 +100,13 @@ type CreateTRPCContextOptions = {
 // external MCP server) produce an identical context shape.
 // The experimental device-login fixture. One instance per process, so a scope
 // changed in a test is visible to the next request.
-const deviceAuthorization = fixtureFromEnv(env.DEVICE_AUTH_FIXTURE);
 
 const buildContext = (user: BlogSessionUser | null) =>
   ({
     db,
     authorization: deviceAuthorization,
     directory: deviceAuthorization,
+    enrollments: deviceEnrollments,
     secrets: deviceAuthorization,
     adminRoles: ADMIN_ROLES,
     user,
@@ -115,6 +119,7 @@ const buildContext = (user: BlogSessionUser | null) =>
   }) satisfies BlogContext & {
     authorization: typeof deviceAuthorization;
     directory: typeof deviceAuthorization;
+    enrollments: typeof deviceEnrollments;
     secrets: typeof deviceAuthorization;
     storage: typeof storage;
     stepCaSettings: StepCaSettings | null;

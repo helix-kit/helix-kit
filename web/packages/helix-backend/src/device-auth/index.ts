@@ -7,6 +7,11 @@ export {
   type EnrollmentSummary,
 } from './enrollment-relay';
 export {
+  enrollmentRouter,
+  type EnrollmentContext,
+  type EnrollmentRouter,
+} from './enrollment-router';
+export {
   FixtureAuthorization,
   fixtureFromEnv,
   parseFixture,
